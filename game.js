@@ -133,8 +133,8 @@ function makeItem(){
 }
 function power(i){ return i?((i.atk||0)+(i.def||0)+Math.floor((i.hp||0)/4)+Math.floor((i.speed||0)/12)+(i.leech||0)*2+(i.reduce||0)*2+(i.crit||0)):0; }
 function itemText(i){ return `${SLOTS[i.slot]} / 攻撃+${i.atk||0} 防御+${i.def||0} HP+${i.hp||0} 速度+${i.speed||0} 吸収+${i.leech||0}% 軽減+${i.reduce||0}% クリ+${i.crit||0}%`; }
-function equipItem(id){ const idx=state.inventory.findIndex(i=>i.id===id); if(idx<0)return; const item=state.inventory.splice(idx,1)[0]; const old=state.equipped[item.slot]; if(old) state.inventory.unshift(old); state.equipped[item.slot]=item; hideTip(); play('equip'); addLog(`<b class="${item.cls}">${item.name}</b>を装備した`); renderAll(); save(); }
-function sellItem(id){ const idx=state.inventory.findIndex(i=>i.id===id); if(idx<0)return; const item=state.inventory.splice(idx,1)[0]; const g=Math.max(5,power(item)*4); state.gold+=g; hideTip(); play('sell'); addLog(`${item.name}を売却 +${g} Gold`); renderAll(); save(); }
+function equipItem(id){ const idx=state.inventory.findIndex(i=>i.id===id); if(idx<0)return; const item=state.inventory.splice(idx,1)[0]; const old=state.equipped[item.slot]; if(old) state.inventory.unshift(old); state.equipped[item.slot]=item; hideTip(); hideMenu(); hideDetail(); play('equip'); addLog(`<b class="${item.cls}">${item.name}</b>を装備した`); renderAll(); save(); }
+function sellItem(id){ const idx=state.inventory.findIndex(i=>i.id===id); if(idx<0)return; const item=state.inventory.splice(idx,1)[0]; const g=Math.max(5,power(item)*4); state.gold+=g; hideTip(); hideMenu(); hideDetail(); play('sell'); addLog(`${item.name}を売却 +${g} Gold`); renderAll(); save(); }
 function upgrade(key){ const c=cost(key); if(state.gold<c) return addLog(`${c} Gold必要`); state.gold-=c; state[key]++; state.hp=Math.min(stats().maxHp,state.hp+20); play('equip'); renderAll(); save(); }
 function heal(){ const c=Math.max(10,Math.floor(stats().maxHp*.25)); if(state.gold<c) return addLog(`回復には${c} Gold必要`); state.gold-=c; state.hp=stats().maxHp; play('heal'); renderAll(); save(); }
 function changeStage(){ const n=Number($('stageSelect').value||1); setStageByNo(n); state.kills=0; enemy=makeEnemy(); addLog(`ステージ ${stageText()} へ移動`); spawnEnemy(); renderAll(); save(); }
@@ -153,10 +153,86 @@ function renderAll(){
   renderEquips(); renderInventory(); refreshStageSelect();
 }
 function renderEquips(){ const box=$('equips'); box.innerHTML=Object.keys(SLOTS).map(slot=>{ const i=state.equipped[slot]; return `<div class="equip"><div class="equip-icon ${i?i.cls:''}">${i?ICON[slot]:'□'}</div><div><b>${SLOTS[slot]}</b><br>${i?`<span class="${i.cls}">${i.name}</span><small>${itemText(i)}</small>`:'<span class="muted">未装備</span>'}</div></div>`; }).join(''); }
-function renderInventory(){ const box=$('inventory'); box.innerHTML=''; for(let n=0;n<49;n++){ const i=state.inventory[n]; const b=document.createElement('button'); b.className='slot '+(i?i.cls:'empty'); if(i){ b.innerHTML=`${ICON[i.slot]}<small>${power(i)}</small>`; b.onclick=(e)=>showTip(i,e.clientX,e.clientY); b.onmouseenter=(e)=>showTip(i,e.clientX,e.clientY); b.onmousemove=(e)=>moveTip(e.clientX,e.clientY); b.onmouseleave=hideTip; } box.appendChild(b); } }
-function showTip(i,x,y){ const eq=state.equipped[i.slot]; const diff=power(i)-power(eq); const t=$('tooltip'); t.innerHTML=`<div class="tip-title ${i.cls}">${ICON[i.slot]} ${i.name}</div><div>${i.rarity}</div><div>${itemText(i)}</div><hr><div>現在装備：${eq?`<span class="${eq.cls}">${eq.name}</span>`:'なし'}</div><div class="${diff>=0?'diff-plus':'diff-minus'}">戦力差 ${diff>=0?'+':''}${diff}</div><div class="tip-actions"><button class="btn" onclick="equipItem('${i.id}')">装備</button><button class="btn danger" onclick="sellItem('${i.id}')">売却</button></div>`; t.classList.add('show'); moveTip(x,y); }
-function moveTip(x,y){ const t=$('tooltip'); t.style.left=Math.min(innerWidth-370,Math.max(8,x+14))+'px'; t.style.top=Math.min(innerHeight-240,Math.max(8,y-20))+'px'; }
+function renderInventory(){
+  const box=$('inventory'); box.innerHTML='';
+  for(let n=0;n<49;n++){
+    const i=state.inventory[n];
+    const b=document.createElement('button');
+    b.className='slot '+(i?i.cls:'empty');
+    if(i){
+      b.innerHTML=`${ICON[i.slot]}<small>${power(i)}</small>`;
+      b.onclick=(e)=>{ e.stopPropagation(); showMenu(i,e.clientX,e.clientY); };
+      b.oncontextmenu=(e)=>{ e.preventDefault(); e.stopPropagation(); showDetail(i,e.clientX,e.clientY); };
+      b.onmouseenter=(e)=>showTip(i,e.clientX,e.clientY);
+      b.onmousemove=(e)=>moveTip(e.clientX,e.clientY);
+      b.onmouseleave=hideTip;
+    }
+    box.appendChild(b);
+  }
+}
+function statRows(i,eq){
+  const keys=[['atk','攻撃'],['def','防御'],['hp','HP'],['speed','速度'],['crit','会心']];
+  return keys.filter(([k])=>(i[k]||0)||(eq&&eq[k])).map(([k,label])=>{
+    const v=i[k]||0, ev=eq?eq[k]||0:0, d=v-ev;
+    const sign=k==='speed'?'%':'';
+    const cls=d>=0?'diff-plus':'diff-minus';
+    return `<div>${label}</div><div><b>${v}${sign}</b> <span class="${cls}">(${d>=0?'+':''}${d}${sign})</span></div>`;
+  }).join('');
+}
+function showTip(i,x,y){
+  const eq=state.equipped[i.slot];
+  const diff=power(i)-power(eq);
+  const t=$('tooltip');
+  t.innerHTML=`<div class="tip-title ${i.cls}">${ICON[i.slot]} ${i.name}</div>
+    <div>${i.rarity} / ${SLOTS[i.slot]}</div>
+    <div>${itemText(i)}</div><hr>
+    <div>現在装備：${eq?`<span class="${eq.cls}">${eq.name}</span>`:'なし'}</div>
+    <div class="compare-grid">${statRows(i,eq)||'<div class="muted">比較なし</div><div></div>'}</div>
+    <div class="${diff>=0?'diff-plus':'diff-minus'}">総合戦力差 ${diff>=0?'+':''}${diff}</div>
+    <div class="muted">クリックで装備/売却メニュー</div>`;
+  t.classList.add('show'); moveTip(x,y);
+}
+function showMenu(i,x,y){
+  hideTip();
+  const m=$('itemMenu');
+  const sellGold=Math.max(5,power(i)*4);
+  m.innerHTML=`<div class="item-menu-title ${i.cls}">${ICON[i.slot]} ${i.name}</div>
+    <button class="btn" onclick="equipItem('${i.id}')">装備する</button>
+    <button class="btn danger" onclick="sellItem('${i.id}')">売却する +${sellGold} Gold</button>
+    <button class="btn" onclick="hideMenu()">閉じる</button>`;
+  m.classList.add('show'); moveMenu(x,y);
+}
+function detailEl(){
+  let d=$('itemDetail');
+  if(!d){ d=document.createElement('div'); d.id='itemDetail'; d.className='item-detail'; document.body.appendChild(d); }
+  return d;
+}
+function showDetail(i,x,y){
+  hideTip(); hideMenu();
+  const eq=state.equipped[i.slot];
+  const diff=power(i)-power(eq);
+  const sellGold=Math.max(5,power(i)*4);
+  const d=detailEl();
+  d.innerHTML=`<div class="detail-title ${i.cls}">${ICON[i.slot]} ${i.name}</div>
+    <div class="detail-sub">${i.rarity} / ${SLOTS[i.slot]}</div>
+    <div>${itemText(i)}</div><hr>
+    <div>現在装備：${eq?`<span class="${eq.cls}">${eq.name}</span>`:'なし'}</div>
+    <div class="compare-grid">${statRows(i,eq)||'<div class="muted">比較なし</div><div></div>'}</div>
+    <div class="${diff>=0?'diff-plus':'diff-minus'}">総合戦力差 ${diff>=0?'+':''}${diff}</div>
+    <div class="detail-actions">
+      <button class="btn" onclick="equipItem('${i.id}')">装備する</button>
+      <button class="btn danger" onclick="sellItem('${i.id}')">売却 +${sellGold} Gold</button>
+      <button class="btn" onclick="hideDetail()">閉じる</button>
+    </div>
+    <div class="muted detail-note">右クリック詳細 / 左クリック操作</div>`;
+  d.classList.add('show'); moveDetail(x,y);
+}
+function moveDetail(x,y){ const d=detailEl(); d.style.left=Math.min(innerWidth-390,Math.max(8,x+12))+'px'; d.style.top=Math.min(innerHeight-330,Math.max(8,y+12))+'px'; }
+function hideDetail(){ const d=$('itemDetail'); if(d) d.classList.remove('show'); }
+function moveMenu(x,y){ const m=$('itemMenu'); m.style.left=Math.min(innerWidth-190,Math.max(8,x+12))+'px'; m.style.top=Math.min(innerHeight-170,Math.max(8,y+12))+'px'; }
+function moveTip(x,y){ const t=$('tooltip'); t.style.left=Math.min(innerWidth-370,Math.max(8,x+16))+'px'; t.style.top=Math.min(innerHeight-260,Math.max(8,y-18))+'px'; }
 function hideTip(){ $('tooltip').classList.remove('show'); }
+function hideMenu(){ $('itemMenu').classList.remove('show'); }
 function showSlash(){ const e=$('slash'); e.classList.remove('show'); void e.offsetWidth; e.classList.add('show'); }
 function showDamage(txt){ const e=$('damageText'); e.textContent=txt; e.classList.remove('show'); void e.offsetWidth; e.classList.add('show'); }
 function flash(id){ const e=$(id); e.classList.remove('hit'); void e.offsetWidth; e.classList.add('hit'); }
@@ -180,5 +256,12 @@ $('openChestBtn').onclick=openChest; $('sortBtn').onclick=sortInventory; $('weap
 $('muteBtn').onclick=()=>{state.sound.muted=!state.sound.muted; play('equip'); renderAll(); save();};
 $('volume').oninput=(e)=>{state.sound.volume=Number(e.target.value)/100; state.sound.muted=state.sound.volume===0; renderAll(); save();};
 window.addEventListener('pointerdown', ensureAudio, {once:true});
+// ブラウザ標準の右クリックメニューは出さず、ゲーム内操作だけにする
+// アイテム上の右クリックは詳細固定表示、それ以外の右クリックは何も起きない
+window.addEventListener('contextmenu', (e)=>{ e.preventDefault(); });
+document.addEventListener('click', (e)=>{
+  if(!e.target.closest('.slot') && !e.target.closest('#itemMenu')) hideMenu();
+  if(!e.target.closest('.slot') && !e.target.closest('#itemDetail')) hideDetail();
+});
 addLog('冒険開始！敵は左、英雄は右。自動で戦うよ。');
 refreshStageSelect(); spawnEnemy(); renderAll(); requestAnimationFrame(loop);
