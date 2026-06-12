@@ -23,7 +23,7 @@
               <div id="enemy" class="unit enemy walking enter"><div class="slime-eye"></div></div>
             </div>
             <div id="slash" class="slash"></div>
-            <div id="damageText" class="damage-text"></div>
+            <div id="damageText" class="damage-text"></div><div id="skillName" class="skill-name"></div>
             <div class="unit-wrap hero-wrap">
               <div class="hpplate hero-hp"><span>英雄HP</span><em id="heroHpText">0/0</em><div class="bar"><i id="heroHpBar"></i></div></div>
               <div id="hero" class="unit hero walking">
@@ -38,8 +38,20 @@
         </section>
 
         <section class="panel warehouse">
-          <div class="section-head"><h2>倉庫</h2><div class="actions"><button id="openChestBtn">宝箱を開ける ×0</button><button id="open10Btn">10個開封</button><button id="bestEquipBtn">最強装備を一括装備</button><button id="sortBtn">整頓</button><button id="bulkSellBtn">一括売却</button><button id="debugChestBtn">宝箱+10</button></div></div>
-          <div id="inventory" class="inventory"></div>
+          <div class="section-head"><h2>倉庫</h2><div class="actions"><button id="openChestBtn">宝箱を開ける ×0</button><button id="open10Btn">10個開封</button><button id="bestEquipBtn">最強装備を一括装備</button><button id="sortBtn">整頓</button><button id="toggleBulkSellBtn">一括売却設定</button><button id="debugChestBtn">宝箱+10</button></div></div>
+          <div class="warehouse-body">
+            <div id="inventory" class="inventory"></div>
+            <div id="bulkSellPanel" class="bulk-sell-panel">
+              <h3>一括売却</h3>
+              <label><input type="checkbox" data-sell-rarity="common" checked> コモン</label>
+              <label><input type="checkbox" data-sell-rarity="rare" checked> レア</label>
+              <label><input type="checkbox" data-sell-rarity="epic"> エピック</label>
+              <label><input type="checkbox" data-sell-rarity="legendary"> レジェンダリー</label>
+              <label><input type="checkbox" data-sell-rarity="divine"> ディヴァイン以上</label>
+              <div id="bulkSellPreview" class="bulk-sell-preview">売却予定 0個 / 0 Gold</div>
+              <button id="bulkSellRunBtn">選択した装備を売却</button>
+            </div>
+          </div>
         </section>
       </section>
 
