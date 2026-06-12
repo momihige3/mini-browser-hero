@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ミニブラウザヒーロー</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div>
+        <h1>ミニブラウザヒーロー</h1>
+        <p>横スクロール自動戦闘 × レベル上げ × 宝箱ドロップ</p>
+      </div>
+      <div class="resources">
+        <div>Lv <span id="heroLevel">1</span></div>
+        <div>Gold <span id="gold">0</span></div>
+        <div>Wave <span id="wave">1</span></div>
+        <div>宝箱 <span id="chestCount">0</span></div>
+      </div>
+    </header>
+
+    <section class="stage">
+      <div class="sky"></div>
+      <div class="mountain m1"></div>
+      <div class="mountain m2"></div>
+      <div class="road"></div>
+
+      <div class="hero" id="hero">
+        <div class="hero-head"></div>
+        <div class="hero-body"></div>
+        <div class="sword"></div>
+        <div class="level-badge">Lv <span id="heroLevelBadge">1</span></div>
+      </div>
+
+      <div class="enemy enemy-spawn" id="enemy">
+        <div class="enemy-eye"></div>
+        <div class="enemy-horn left"></div>
+        <div class="enemy-horn right"></div>
+      </div>
+
+      <div class="slash" id="slash"></div>
+      <div class="damage-pop" id="damagePop"></div>
+      <div class="levelup-pop" id="levelupPop">LEVEL UP!</div>
+      <div class="chest-drop" id="chestDrop">
+        <div class="chest-lid"></div>
+        <div class="chest-body"></div>
+        <div class="chest-light"></div>
+      </div>
+    </section>
+
+    <section class="bars">
+      <div class="bar-card">
+        <div class="bar-label">Hero HP <span id="heroHpText"></span></div>
+        <div class="bar"><div id="heroHpBar"></div></div>
+      </div>
+      <div class="bar-card">
+        <div class="bar-label">Enemy HP <span id="enemyHpText"></span></div>
+        <div class="bar"><div id="enemyHpBar"></div></div>
+      </div>
+      <div class="bar-card">
+        <div class="bar-label">EXP <span id="expText"></span></div>
+        <div class="bar"><div id="expBar"></div></div>
+      </div>
+    </section>
+
+    <section class="panel-grid">
+      <article class="panel">
+        <h2>ステータス</h2>
+        <div class="stat-row"><span>攻撃力</span><b id="atk">0</b></div>
+        <div class="stat-row"><span>防御力</span><b id="def">0</b></div>
+        <div class="stat-row"><span>最大HP</span><b id="maxHp">0</b></div>
+        <div class="stat-row"><span>攻撃速度</span><b id="atkSpeed">0</b></div>
+        <button id="healBtn">宿屋で回復</button>
+      </article>
+
+      <article class="panel">
+        <h2>装備強化</h2>
+        <button id="weaponBtn">武器強化 Lv <span id="weaponLv">1</span><br><small>費用 <span id="weaponCost">0</span> Gold</small></button>
+        <button id="armorBtn">防具強化 Lv <span id="armorLv">1</span><br><small>費用 <span id="armorCost">0</span> Gold</small></button>
+        <button id="ringBtn">指輪強化 Lv <span id="ringLv">1</span><br><small>費用 <span id="ringCost">0</span> Gold</small></button>
+      </article>
+
+      <article class="panel">
+        <h2>宝箱</h2>
+        <p>敵を倒すと確率で宝箱が落ちる。開けるとGoldと経験値が手に入るよ。</p>
+        <button id="openChestBtn">宝箱を開ける ×<span id="openChestCount">0</span></button>
+        <div class="drop-note">通常敵 12% / ボス 100%</div>
+      </article>
+
+      <article class="panel">
+        <h2>戦闘ログ</h2>
+        <div class="log" id="log"></div>
+      </article>
+
+      <article class="panel save-panel">
+        <h2>セーブ</h2>
+        <p>自動保存あり。GitHub PagesでもlocalStorageで保存されるよ。</p>
+        <button id="saveBtn">手動セーブ</button>
+        <button id="resetBtn" class="danger">データリセット</button>
+      </article>
+    </section>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>
