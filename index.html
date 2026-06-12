@@ -19,6 +19,7 @@
         <span>Gold <b id="gold">0</b></span>
         <span>Stage <b id="stage">1-1</b></span>
         <span>宝箱 <b id="chests">0</b></span>
+        <span>素材 <b id="materialsTop">0/0/0</b></span>
       </div>
     </header>
 
@@ -30,10 +31,19 @@
         <div class="enemy-body"><span></span></div>
         <div class="unit-name" id="enemyName">スライム</div>
       </div>
-      <div id="hero" class="unit hero">
-        <div class="hero-head"></div>
+      <div id="hero" class="unit hero cool-hero">
+        <div class="hero-shadow"></div>
+        <div class="hero-cloak"></div>
+        <div class="hero-head"><span class="hero-eye left"></span><span class="hero-eye right"></span></div>
+        <div class="hero-hair"></div>
         <div class="hero-body"></div>
+        <div class="hero-shoulder"></div>
+        <div class="hero-arm shield-arm"></div>
+        <div class="hero-arm sword-arm"></div>
+        <div class="hero-shield"></div>
         <div class="hero-sword"></div>
+        <div class="hero-leg leg-a"></div>
+        <div class="hero-leg leg-b"></div>
       </div>
       <div id="slash" class="slash"></div>
       <div id="damageText" class="damage-text"></div>
@@ -54,6 +64,8 @@
         <div class="inventory-toolbar">
           <button id="openChestBtn" class="btn primary">宝箱を開ける ×<span id="openChestCount">0</span></button>
           <button id="sortBtn" class="btn">整頓</button>
+          <button id="bulkSellBtn" class="btn danger">一括売却</button>
+          <button id="debugChestBtn" class="btn debug">デバッグ宝箱+10</button>
         </div>
         <div id="inventory" class="inventory"></div>
       </section>
@@ -66,12 +78,19 @@
           <div>最大HP <b id="maxHp">0</b></div>
           <div>攻撃速度 <b id="speed">0</b></div>
           <div>撃破 <b id="kills">0/5</b></div>
+          <div>強化素材 <b id="materialText">0/0/0</b></div>
         </div>
-        <div id="equips" class="equips"></div>
+        <div class="equip-area">
+          <div id="equips" class="equips"></div>
+          <div class="material-panel">
+            <b>所持素材</b>
+            <div>武器石 <span id="matWeapon">0</span></div>
+            <div>防具石 <span id="matArmor">0</span></div>
+            <div>装飾石 <span id="matRing">0</span></div>
+          </div>
+        </div>
         <div class="upgrade-list">
-          <button id="weaponUp" class="btn">武器強化 Lv<span id="weaponLv">1</span><small id="weaponCost"></small></button>
-          <button id="armorUp" class="btn">防具強化 Lv<span id="armorLv">1</span><small id="armorCost"></small></button>
-          <button id="ringUp" class="btn">指輪強化 Lv<span id="ringLv">1</span><small id="ringCost"></small></button>
+          <button id="upgradeBtn" class="btn" disabled>強化</button>
         </div>
       </section>
 
@@ -88,6 +107,7 @@
         <div class="control-line">
           <button id="healBtn" class="btn">回復</button>
           <button id="saveBtn" class="btn">保存</button>
+          <button id="debugModeBtn" class="btn debug">デバッグOFF</button>
           <button id="resetBtn" class="btn danger">リセット</button>
         </div>
         <div id="log" class="log"></div>

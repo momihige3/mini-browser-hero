@@ -34,3 +34,85 @@
 .detail-actions .btn:last-child{grid-column:1/-1;}
 .detail-note{font-size:12px;margin-top:8px;text-align:center;}
 @media(max-width:620px){.item-detail{left:8px!important;right:8px!important;top:auto!important;bottom:8px!important;width:auto;}.detail-actions{grid-template-columns:1fr;}.detail-actions .btn:last-child{grid-column:auto;}}
+
+/* v10: 倉庫の見切れ修正・クリック操作変更 */
+.app{max-width:1180px;overflow-x:hidden;}
+.main-grid{grid-template-columns:minmax(360px,430px) minmax(330px,1fr) minmax(280px,310px);}
+.inventory-window{min-width:0;overflow:hidden;}
+.inventory-toolbar{display:grid;grid-template-columns:1fr auto auto;align-items:center;}
+.inventory-toolbar .btn{white-space:nowrap;}
+.inventory{width:100%;max-width:100%;grid-template-columns:repeat(auto-fill,minmax(48px,1fr));grid-auto-rows:52px;overflow-y:auto;overflow-x:hidden;justify-content:stretch;}
+.slot{width:100%;height:52px;min-width:0;}
+.equips{grid-template-columns:1fr;max-height:360px;overflow:auto;padding-right:2px;}
+.equip{grid-template-columns:42px minmax(0,1fr);}
+.equip div:last-child{min-width:0;overflow:hidden;}
+.equip small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.detail-note{display:none!important;}
+.item-detail.show ~ .tooltip,.tooltip.blocked{display:none!important;}
+.upgrade-list .btn small{font-size:11px;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+@media(max-width:1080px){.main-grid{grid-template-columns:1fr 1fr}.inventory-window{grid-column:1/-1}.inventory{grid-template-columns:repeat(auto-fill,minmax(50px,1fr));}.system-window{grid-column:1/-1}}
+@media(max-width:620px){.inventory-toolbar{grid-template-columns:1fr 1fr}.inventory-toolbar .primary{grid-column:1/-1}.inventory{grid-template-columns:repeat(5,1fr);grid-auto-rows:50px}.slot{height:50px}.equips{max-height:none}.upgrade-list .btn small{max-width:130px}}
+
+
+/* v11: no internal scrollbars + debug button */
+html,body{overflow-x:hidden;}
+.app{overflow:visible;}
+.main-grid{grid-template-columns:minmax(360px,430px) minmax(360px,1fr) minmax(260px,310px);}
+.window,.inventory-window,.hero-window,.system-window,.inventory,.equips,.log,.tooltip,.item-menu{overflow:visible!important;}
+.inventory{grid-template-columns:repeat(7,52px)!important;grid-auto-rows:52px!important;width:auto!important;max-width:100%!important;justify-content:start!important;align-content:start!important;min-height:0!important;}
+.slot{width:52px!important;height:52px!important;}
+.equips{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:6px!important;max-height:none!important;padding-right:0!important;}
+.equip{min-height:48px!important;grid-template-columns:36px minmax(0,1fr)!important;padding:5px!important;}
+.equip-icon{height:34px!important;font-size:19px!important;}
+.equip b{font-size:12px!important;}
+.equip span,.equip small{font-size:10px!important;line-height:1.15!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;display:block!important;}
+.log{height:138px!important;max-height:138px!important;}
+.log div:nth-child(n+8){display:none;}
+.btn.debug{background:linear-gradient(#305ab0,#10204d);box-shadow:0 0 0 2px #7fb1ff inset;color:#eaf3ff;}
+.inventory-toolbar{align-items:center;}
+.inventory-toolbar .btn{min-height:32px;padding:5px 8px;font-size:12px;}
+@media(max-width:1080px){.main-grid{grid-template-columns:1fr!important}.inventory{grid-template-columns:repeat(7,52px)!important;justify-content:center!important}.equips{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+@media(max-width:620px){.inventory{grid-template-columns:repeat(5,52px)!important;justify-content:center!important}.equips{grid-template-columns:repeat(2,minmax(0,1fr))!important}.control-line{gap:5px}.btn{font-size:12px;padding:5px 7px}}
+
+/* v12: 強化ボタン統合 + かっこいい主人公 */
+.equip-area{display:grid;grid-template-columns:minmax(0,1fr) 145px;gap:8px;align-items:start;margin-top:10px;}
+.material-panel{background:#080504;border:2px solid #543717;box-shadow:0 0 0 1px #9d641f inset;padding:8px;color:#e9d7b7;font-size:12px;min-height:120px;}
+.material-panel b{display:block;color:#ffd36a;margin-bottom:7px;text-align:center;border-bottom:1px solid #5f4427;padding-bottom:4px;}
+.material-panel div{display:flex;justify-content:space-between;gap:6px;padding:4px 0;border-bottom:1px dotted #3a2b1d;}
+.material-panel span{color:#fff4bd;font-weight:900;}
+.upgrade-list{grid-template-columns:1fr!important;}
+#upgradeBtn{width:100%;min-height:40px;font-size:15px;}
+#upgradeBtn:disabled{filter:grayscale(1);opacity:.38;}
+.equip{cursor:pointer;text-align:left;color:inherit;font:inherit;width:100%;}
+.equip:hover{filter:brightness(1.18);}
+.equip.selected{border-color:#ffd36a!important;box-shadow:0 0 0 2px #ffd36a inset,0 0 12px rgba(255,211,106,.45);background:linear-gradient(#201207,#090504);}
+.equip.selected .equip-icon{box-shadow:0 0 10px rgba(255,211,106,.5);}
+.upgrade-pop{top:150px!important;color:#78ff8c!important;}
+
+.hero.cool-hero{width:96px;height:124px;right:122px;bottom:55px;animation:heroIdle .75s ease-in-out infinite alternate;}
+.hero-shadow{position:absolute;left:20px;bottom:0;width:64px;height:12px;background:rgba(0,0,0,.38);border-radius:50%;}
+.hero-cloak{position:absolute;left:28px;top:32px;width:50px;height:72px;background:linear-gradient(135deg,#6b0c13,#1b0508 65%);border:4px solid #130604;clip-path:polygon(25% 0,90% 12%,76% 100%,8% 94%,0 18%);animation:cloakWave .58s ease-in-out infinite alternate;z-index:1;}
+.hero-head{left:32px!important;top:8px!important;width:36px!important;height:32px!important;background:#f1c08d!important;border:4px solid #130604!important;border-radius:8px 8px 7px 7px!important;z-index:5;}
+.hero-head:before{display:none!important;}
+.hero-hair{position:absolute;left:27px;top:0;width:46px;height:24px;background:#17110d;border:4px solid #130604;border-radius:12px 12px 5px 5px;clip-path:polygon(0 35%,15% 0,37% 18%,55% 0,72% 18%,100% 5%,88% 74%,62% 48%,41% 88%,24% 50%,8% 80%);z-index:6;}
+.hero-eye{position:absolute;top:15px;width:5px;height:4px;background:#111;border-radius:50%;box-shadow:0 0 4px #fff;}
+.hero-eye.left{left:8px}.hero-eye.right{right:8px}
+.hero-body{left:26px!important;top:38px!important;width:44px!important;height:50px!important;background:linear-gradient(#222a36 0 25%,#c9a24a 26% 34%,#31486d 35% 100%)!important;border:5px solid #100604!important;border-radius:10px 10px 7px 7px!important;z-index:4;box-shadow:inset 0 0 0 3px #172235;}
+.hero-shoulder{position:absolute;left:18px;top:39px;width:62px;height:20px;background:linear-gradient(#d6b55c,#74531d);border:4px solid #100604;border-radius:16px;z-index:4;}
+.hero-arm{position:absolute;top:55px;width:16px;height:39px;background:#24324a;border:4px solid #100604;border-radius:8px;z-index:3;}
+.hero-arm.shield-arm{left:16px;transform:rotate(12deg)}
+.hero-arm.sword-arm{right:18px;transform:rotate(-18deg)}
+.hero-shield{position:absolute;left:2px;top:58px;width:30px;height:38px;background:linear-gradient(135deg,#b51d28,#331016);border:4px solid #100604;border-radius:14px 14px 18px 18px;z-index:5;box-shadow:inset 0 0 0 3px #d6a44d;}
+.hero-sword{left:70px!important;top:26px!important;width:13px!important;height:78px!important;background:linear-gradient(90deg,#6d7d8e,#e9f6ff,#758596)!important;border:3px solid #100604!important;transform:rotate(-34deg)!important;border-radius:7px 7px 2px 2px;z-index:5;box-shadow:0 0 10px rgba(255,255,255,.3);}
+.hero-sword:before{content:"";position:absolute;left:-12px;top:48px;width:34px;height:8px;background:#d6a44d;border:3px solid #100604;border-radius:8px;}
+.hero-leg{position:absolute;top:83px;width:18px;height:32px;background:#171d29;border:4px solid #100604;border-radius:7px;z-index:2;}
+.hero-leg.leg-a{left:31px;animation:legA .45s ease-in-out infinite alternate;}
+.hero-leg.leg-b{left:53px;animation:legB .45s ease-in-out infinite alternate;}
+@keyframes heroIdle{from{translate:0 0}to{translate:0 -3px}}
+@keyframes cloakWave{from{translate:0 0;filter:brightness(.95)}to{translate:-2px 1px;filter:brightness(1.1)}}
+@keyframes legA{from{rotate:-3deg}to{rotate:5deg}}
+@keyframes legB{from{rotate:5deg}to{rotate:-3deg}}
+.hero.hit .hero-head,.hero.hit .hero-body,.hero.hit .hero-cloak,.hero.hit .hero-shield,.hero.hit .hero-sword,.hero.hit .hero-shoulder,.hero.hit .hero-arm,.hero.hit .hero-leg,.hero.hit .hero-hair{filter:brightness(7) saturate(0)!important;}
+.hero.cool-hero:has(.cosmic),.hero.cosmic{filter:drop-shadow(0 0 10px #a271ff);}
+@media(max-width:1080px){.hero.cool-hero{right:64px;}.equip-area{grid-template-columns:minmax(0,1fr) 145px;}}
+@media(max-width:620px){.hero.cool-hero{right:22px;transform:scale(.78)!important;transform-origin:bottom right;}.equip-area{grid-template-columns:1fr}.material-panel{min-height:auto}.material-panel div{display:flex}.upgrade-pop{top:120px!important}}
