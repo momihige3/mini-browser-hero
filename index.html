@@ -11,21 +11,38 @@
     <header class="topbar">
       <div>
         <h1>ミニブラウザヒーロー</h1>
-        <p>横スクロール自動戦闘 × レベル上げ × 宝箱ドロップ</p>
+        <p>右のヒーローが左から来る敵を自動で倒す放置ブラウザゲーム</p>
       </div>
       <div class="resources">
         <div>Lv <span id="heroLevel">1</span></div>
         <div>Gold <span id="gold">0</span></div>
-        <div>Wave <span id="wave">1</span></div>
+        <div>Stage <span id="stageText">1-1</span></div>
         <div>宝箱 <span id="chestCount">0</span></div>
       </div>
     </header>
+
+    <section class="controls-row">
+      <div class="sound-box">
+        <button id="muteBtn" class="small-btn">🔊 SE ON</button>
+        <label>音量 <input id="volumeRange" type="range" min="0" max="100" value="35"></label>
+      </div>
+      <div class="stage-select-box">
+        <label>ステージ選択 <select id="stageSelect"></select></label>
+        <button id="goStageBtn" class="small-btn">移動</button>
+      </div>
+    </section>
 
     <section class="stage">
       <div class="sky"></div>
       <div class="mountain m1"></div>
       <div class="mountain m2"></div>
       <div class="road"></div>
+
+      <div class="enemy enemy-spawn" id="enemy">
+        <div class="enemy-eye"></div>
+        <div class="enemy-horn left"></div>
+        <div class="enemy-horn right"></div>
+      </div>
 
       <div class="hero" id="hero">
         <div class="hero-head"></div>
@@ -34,15 +51,10 @@
         <div class="level-badge">Lv <span id="heroLevelBadge">1</span></div>
       </div>
 
-      <div class="enemy enemy-spawn" id="enemy">
-        <div class="enemy-eye"></div>
-        <div class="enemy-horn left"></div>
-        <div class="enemy-horn right"></div>
-      </div>
-
       <div class="slash" id="slash"></div>
       <div class="damage-pop" id="damagePop"></div>
       <div class="levelup-pop" id="levelupPop">LEVEL UP!</div>
+      <div class="stage-pop" id="stagePop">STAGE CLEAR!</div>
       <div class="chest-drop" id="chestDrop">
         <div class="chest-lid"></div>
         <div class="chest-body"></div>
@@ -72,6 +84,7 @@
         <div class="stat-row"><span>防御力</span><b id="def">0</b></div>
         <div class="stat-row"><span>最大HP</span><b id="maxHp">0</b></div>
         <div class="stat-row"><span>攻撃速度</span><b id="atkSpeed">0</b></div>
+        <div class="stat-row"><span>撃破数</span><b id="stageKills">0/5</b></div>
         <button id="healBtn">宿屋で回復</button>
       </article>
 
@@ -82,14 +95,24 @@
         <button id="ringBtn">指輪強化 Lv <span id="ringLv">1</span><br><small>費用 <span id="ringCost">0</span> Gold</small></button>
       </article>
 
-      <article class="panel">
-        <h2>宝箱</h2>
-        <p>敵を倒すと確率で宝箱が落ちる。開けるとGoldと経験値が手に入るよ。</p>
-        <button id="openChestBtn">宝箱を開ける ×<span id="openChestCount">0</span></button>
-        <div class="drop-note">通常敵 12% / ボス 100%</div>
+      <article class="panel equip-panel">
+        <h2>装備中</h2>
+        <div id="equippedList"></div>
       </article>
 
       <article class="panel">
+        <h2>宝箱</h2>
+        <p>敵を倒すと確率で宝箱が落ちる。開けるとGold・経験値・装備が出るよ。</p>
+        <button id="openChestBtn">宝箱を開ける ×<span id="openChestCount">0</span></button>
+        <div class="drop-note">通常敵 14% / ボス 100% / 装備 55%</div>
+      </article>
+
+      <article class="panel inventory-panel">
+        <h2>装備バッグ</h2>
+        <div id="inventoryList" class="inventory-list"></div>
+      </article>
+
+      <article class="panel log-panel">
         <h2>戦闘ログ</h2>
         <div class="log" id="log"></div>
       </article>
