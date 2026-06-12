@@ -7,33 +7,27 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <main class="app">
-    <header class="topbar">
-      <div>
+  <main class="game-shell">
+    <header class="ornate topbar">
+      <button class="corner-btn">⚔</button>
+      <div class="title-wrap">
         <h1>ミニブラウザヒーロー</h1>
-        <p>右のヒーローが左から来る敵を自動で倒す放置ブラウザゲーム</p>
+        <p>横スクロール自動戦闘 × 装備ハクスラ</p>
       </div>
-      <div class="resources">
-        <div>Lv <span id="heroLevel">1</span></div>
-        <div>Gold <span id="gold">0</span></div>
-        <div>Stage <span id="stageText">1-1</span></div>
-        <div>宝箱 <span id="chestCount">0</span></div>
+      <div class="top-stats">
+        <span>Lv <b id="heroLevel">1</b></span>
+        <span>Gold <b id="gold">0</b></span>
+        <span>Stage <b id="stageText">1-1</b></span>
+        <span>宝箱 <b id="chestCount">0</b></span>
       </div>
+      <button class="corner-btn">✕</button>
     </header>
 
-    <section class="controls-row">
-      <div class="sound-box">
-        <button id="muteBtn" class="small-btn">🔊 SE ON</button>
-        <label>音量 <input id="volumeRange" type="range" min="0" max="100" value="35"></label>
-      </div>
-      <div class="stage-select-box">
-        <label>ステージ選択 <select id="stageSelect"></select></label>
-        <button id="goStageBtn" class="small-btn">移動</button>
-      </div>
-    </section>
-
-    <section class="stage">
+    <section class="battle-board ornate">
+      <div class="stage-label"><span id="battleStageText">1-1</span></div>
       <div class="sky"></div>
+      <div class="cloud c1"></div>
+      <div class="cloud c2"></div>
       <div class="mountain m1"></div>
       <div class="mountain m2"></div>
       <div class="road"></div>
@@ -62,68 +56,68 @@
       </div>
     </section>
 
-    <section class="bars">
-      <div class="bar-card">
-        <div class="bar-label">Hero HP <span id="heroHpText"></span></div>
-        <div class="bar"><div id="heroHpBar"></div></div>
-      </div>
-      <div class="bar-card">
-        <div class="bar-label">Enemy HP <span id="enemyHpText"></span></div>
-        <div class="bar"><div id="enemyHpBar"></div></div>
-      </div>
-      <div class="bar-card">
-        <div class="bar-label">EXP <span id="expText"></span></div>
-        <div class="bar"><div id="expBar"></div></div>
-      </div>
+    <section class="bars ornate mini-frame">
+      <div class="bar-card hp-card"><div class="bar-label">英雄HP <span id="heroHpText"></span></div><div class="bar"><div id="heroHpBar"></div></div></div>
+      <div class="bar-card enemy-card"><div class="bar-label">敵HP <span id="enemyHpText"></span></div><div class="bar"><div id="enemyHpBar"></div></div></div>
+      <div class="bar-card exp-card"><div class="bar-label">EXP <span id="expText"></span></div><div class="bar"><div id="expBar"></div></div></div>
     </section>
 
-    <section class="panel-grid">
-      <article class="panel">
-        <h2>ステータス</h2>
-        <div class="stat-row"><span>攻撃力</span><b id="atk">0</b></div>
-        <div class="stat-row"><span>防御力</span><b id="def">0</b></div>
-        <div class="stat-row"><span>最大HP</span><b id="maxHp">0</b></div>
-        <div class="stat-row"><span>攻撃速度</span><b id="atkSpeed">0</b></div>
-        <div class="stat-row"><span>撃破数</span><b id="stageKills">0/5</b></div>
+    <section class="rpg-layout">
+      <aside class="window warehouse-window ornate">
+        <div class="window-title"><span>倉庫</span><button class="fake-close">✕</button></div>
+        <div class="tabs" id="bagTabs"></div>
+        <div id="inventoryGrid" class="inventory-grid"></div>
+        <div class="window-footer">
+          <button id="sortBtn">自動整頓</button>
+          <button id="openChestBtn">宝箱を開ける ×<span id="openChestCount">0</span></button>
+        </div>
+      </aside>
+
+      <section class="window hero-window ornate">
+        <div class="window-title"><span>英雄</span><button class="fake-close">▾</button></div>
+        <div class="hero-status-grid">
+          <div class="stat-row"><span>攻撃力</span><b id="atk">0</b></div>
+          <div class="stat-row"><span>防御力</span><b id="def">0</b></div>
+          <div class="stat-row"><span>最大HP</span><b id="maxHp">0</b></div>
+          <div class="stat-row"><span>攻撃速度</span><b id="atkSpeed">0</b></div>
+          <div class="stat-row"><span>撃破数</span><b id="stageKills">0/5</b></div>
+        </div>
+        <div class="equip-slots" id="equippedList"></div>
+        <div class="upgrade-box">
+          <button id="weaponBtn">武器強化 Lv <span id="weaponLv">1</span><small><span id="weaponCost">0</span> Gold</small></button>
+          <button id="armorBtn">防具強化 Lv <span id="armorLv">1</span><small><span id="armorCost">0</span> Gold</small></button>
+          <button id="ringBtn">指輪強化 Lv <span id="ringLv">1</span><small><span id="ringCost">0</span> Gold</small></button>
+        </div>
+      </section>
+
+      <aside class="window info-window ornate">
+        <div class="window-title"><span>情報</span><button class="fake-close">✕</button></div>
+        <div class="controls-row">
+          <button id="muteBtn" class="small-btn">🔊 SE ON</button>
+          <label>音量 <input id="volumeRange" type="range" min="0" max="100" value="35"></label>
+        </div>
+        <div class="stage-select-box">
+          <label>ステージ選択 <select id="stageSelect"></select></label>
+          <button id="goStageBtn" class="small-btn">移動</button>
+        </div>
         <button id="healBtn">宿屋で回復</button>
-      </article>
-
-      <article class="panel">
-        <h2>装備強化</h2>
-        <button id="weaponBtn">武器強化 Lv <span id="weaponLv">1</span><br><small>費用 <span id="weaponCost">0</span> Gold</small></button>
-        <button id="armorBtn">防具強化 Lv <span id="armorLv">1</span><br><small>費用 <span id="armorCost">0</span> Gold</small></button>
-        <button id="ringBtn">指輪強化 Lv <span id="ringLv">1</span><br><small>費用 <span id="ringCost">0</span> Gold</small></button>
-      </article>
-
-      <article class="panel equip-panel">
-        <h2>装備中</h2>
-        <div id="equippedList"></div>
-      </article>
-
-      <article class="panel">
-        <h2>宝箱</h2>
-        <p>敵を倒すと確率で宝箱が落ちる。開けるとGold・経験値・装備が出るよ。</p>
-        <button id="openChestBtn">宝箱を開ける ×<span id="openChestCount">0</span></button>
         <div class="drop-note">通常敵 14% / ボス 100% / 装備 55%</div>
-      </article>
-
-      <article class="panel inventory-panel">
-        <h2>装備バッグ</h2>
-        <div id="inventoryList" class="inventory-list"></div>
-      </article>
-
-      <article class="panel log-panel">
-        <h2>戦闘ログ</h2>
         <div class="log" id="log"></div>
-      </article>
-
-      <article class="panel save-panel">
-        <h2>セーブ</h2>
-        <p>自動保存あり。GitHub PagesでもlocalStorageで保存されるよ。</p>
-        <button id="saveBtn">手動セーブ</button>
-        <button id="resetBtn" class="danger">データリセット</button>
-      </article>
+        <div class="save-actions">
+          <button id="saveBtn">手動セーブ</button>
+          <button id="resetBtn" class="danger">リセット</button>
+        </div>
+      </aside>
     </section>
+
+    <div id="itemTooltip" class="item-tooltip"></div>
+    <nav class="bottom-menu ornate">
+      <button>🎒<span>倉庫</span></button>
+      <button>⚔<span>英雄</span></button>
+      <button>🗺<span>冒険</span></button>
+      <button>📦<span>宝箱</span></button>
+      <button>⚙<span>設定</span></button>
+    </nav>
   </main>
   <script src="game.js"></script>
 </body>

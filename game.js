@@ -1,15 +1,22 @@
 const $ = (id) => document.getElementById(id);
 
-const SAVE_KEY = 'mini-browser-hero-save-v3';
-const OLD_KEYS = ['mini-browser-hero-save-v2','mini-auto-hero-save'];
+const SAVE_KEY = 'mini-browser-hero-save-v5';
+const BAG_PAGES = 7;
+let currentBagPage = 1;
+let selectedItemId = null;
+const OLD_KEYS = ['mini-browser-hero-save-v3','mini-browser-hero-save-v2','mini-auto-hero-save'];
 const STAGE_KILLS_NEEDED = 5;
 const SLOT_LABEL = { weapon:'武器', armor:'防具', ring:'指輪' };
 const RARITIES = [
-  {key:'Common', name:'Common', rate:58, mul:1, cls:'common'},
-  {key:'Rare', name:'Rare', rate:27, mul:1.45, cls:'rare'},
-  {key:'Epic', name:'Epic', rate:10, mul:2.05, cls:'epic'},
-  {key:'Legendary', name:'Legendary', rate:4, mul:3.0, cls:'legendary'},
-  {key:'Cosmic', name:'Cosmic', rate:1, mul:4.4, cls:'cosmic'}
+  {key:'Common', name:'コモン', rate:5200, mul:1.00, cls:'common'},
+  {key:'Rare', name:'レア', rate:2600, mul:1.35, cls:'rare'},
+  {key:'Epic', name:'エピック', rate:1300, mul:1.85, cls:'epic'},
+  {key:'Legendary', name:'レジェンダリー', rate:650, mul:2.65, cls:'legendary'},
+  {key:'Divine', name:'ディヴァイン', rate:180, mul:3.5, cls:'divine'},
+  {key:'Celestial', name:'セレスティアル', rate:55, mul:4.4, cls:'celestial'},
+  {key:'Arcana', name:'アルカナ', rate:12, mul:5.4, cls:'arcana'},
+  {key:'Beyond', name:'ビヨンド', rate:3, mul:6.8, cls:'beyond'},
+  {key:'Cosmic', name:'コズミック', rate:1, mul:8.5, cls:'cosmic'}
 ];
 
 const defaultState = {
@@ -78,13 +85,16 @@ function nextStage(){
 }
 
 function equipBonus(){
-  const bonus = {atk:0, def:0, hp:0, speed:0};
+  const bonus = {atk:0, def:0, hp:0, speed:0, reduce:0, leech:0, crit:0};
   Object.values(state.equipped).forEach(item => {
     if (!item) return;
     bonus.atk += item.atk || 0;
     bonus.def += item.def || 0;
     bonus.hp += item.hp || 0;
     bonus.speed += item.speed || 0;
+    bonus.reduce += item.reduce || 0;
+    bonus.leech += item.leech || 0;
+    bonus.crit += item.crit || 0;
   });
   return bonus;
 }
@@ -95,7 +105,7 @@ function stats(){
   const atk = 7 + state.level * 3 + state.weaponLv * 6 + b.atk;
   const def = Math.floor(state.armorLv * 2 + state.level * 0.6 + b.def);
   const atkSpeed = Math.max(300, 1120 - state.ringLv * 30 - state.level * 4 - b.speed);
-  return {maxHp, atk, def, atkSpeed};
+  return {maxHp, atk, def, atkSpeed, reduce:Math.min(80,b.reduce), leech:Math.min(30,b.leech), crit:0.12 + Math.min(0.5,b.crit/100)};
 }
 
 function expNeed(){ return 45 + state.level * 30; }
@@ -118,9 +128,10 @@ function makeEnemy(){
 function attack(){
   if (enemyDying || enemySpawning) return;
   const s = stats();
-  const crit = Math.random() < 0.12;
+  const crit = Math.random() < s.crit;
   const damage = Math.max(1, Math.floor(s.atk * (crit ? 1.8 : 1) * (0.85 + Math.random() * 0.3)));
   enemy.hp -= damage;
+  if (s.leech > 0) state.heroHp = Math.min(s.maxHp, state.heroHp + Math.ceil(damage * s.leech / 100));
   showSlash(); showDamage((crit ? 'CRIT ' : '') + damage); flashEnemy(); playSE(crit ? 'crit' : 'hit');
   if (enemy.hp <= 0) win();
 }
@@ -128,7 +139,8 @@ function attack(){
 function enemyAttack(){
   if (enemyDying || enemySpawning) return;
   const s = stats();
-  const damage = Math.max(1, enemy.atk - s.def + Math.floor(Math.random() * 3));
+  const rawDamage = Math.max(1, enemy.atk - s.def + Math.floor(Math.random() * 3));
+  const damage = Math.max(1, Math.floor(rawDamage * (1 - s.reduce / 100)));
   state.heroHp -= damage;
   flashHero();
   if (state.heroHp <= 0) {
@@ -211,17 +223,28 @@ function makeItem(){
   const rarity = pickRarity();
   const sn = stageNumber();
   const power = Math.max(1, Math.floor((state.level + sn * 1.5) * rarity.mul));
-  const item = { id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()+Math.random()), slot, rarity:rarity.name, rarityCls:rarity.cls, atk:0, def:0, hp:0, speed:0 };
-  if (slot === 'weapon') { item.atk = power + rand(1, 5); item.def = rand(0, Math.floor(power/5)); }
-  if (slot === 'armor') { item.def = Math.floor(power/2) + rand(1, 4); item.hp = power * 4 + rand(5, 18); }
-  if (slot === 'ring') { item.atk = rand(0, Math.floor(power/2)); item.hp = rand(0, power * 2); item.speed = 15 + Math.floor(power * 2.3); }
-  const base = slot === 'weapon' ? '剣' : slot === 'armor' ? '鎧' : '指輪';
-  item.name = `${rarity.name} ${base} +${itemPower(item)}`;
+  const item = { id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()+Math.random()), slot, rarity:rarity.name, rarityCls:rarity.cls, atk:0, def:0, hp:0, speed:0, reduce:0, leech:0, crit:0 };
+  if (slot === 'weapon') { item.atk = power + rand(1, 5); item.crit = rand(0, Math.floor(power/3)); }
+  if (slot === 'armor') { item.def = Math.floor(power/2) + rand(1, 4); item.hp = power * 4 + rand(5, 18); item.reduce = rand(0, Math.floor(power/4)); }
+  if (slot === 'ring') { item.atk = rand(0, Math.floor(power/2)); item.hp = rand(0, power * 2); item.speed = 15 + Math.floor(power * 2.3); item.leech = rand(0, Math.floor(power/4)); }
+  const base = slot === 'weapon' ? 'ソード' : slot === 'armor' ? 'アーマー' : 'オーブ';
+  const prefix = rarity.cls === 'cosmic' ? '次元の' : rarity.cls === 'beyond' ? '超越の' : rarity.cls === 'arcana' ? '秘奥の' : rarity.cls === 'celestial' ? '星天の' : rarity.cls === 'divine' ? '神威の' : rarity.name;
+  item.name = `${prefix}${base}`;
   return item;
 }
 function rand(min,max){ return Math.floor(min + Math.random() * (max - min + 1)); }
-function itemPower(i){ return (i.atk||0) + (i.def||0) + Math.floor((i.hp||0)/4) + Math.floor((i.speed||0)/12); }
-function itemText(i){ return `${SLOT_LABEL[i.slot]} / 攻撃+${i.atk||0} 防御+${i.def||0} HP+${i.hp||0} 速度+${i.speed||0}`; }
+function itemPower(i){ return (i.atk||0) + (i.def||0) + Math.floor((i.hp||0)/4) + Math.floor((i.speed||0)/12) + (i.reduce||0)*2 + (i.leech||0)*2 + (i.crit||0); }
+function itemIcon(i){ return i.slot === 'weapon' ? '⚔️' : i.slot === 'armor' ? '🛡️' : '🔮'; }
+function itemText(i){ return `${SLOT_LABEL[i.slot]} / 攻撃+${i.atk||0} 防御+${i.def||0} HP+${i.hp||0} 速度+${i.speed||0} 軽減+${i.reduce||0}% 吸収+${i.leech||0}% クリ+${i.crit||0}%`; }
+function itemLines(i){
+  if (!i) return '<div class="muted">未装備</div>';
+  return `
+    <div class="tip-title ${i.rarityCls}">${itemIcon(i)} ${i.name}</div>
+    <div class="tip-rarity ${i.rarityCls}">${i.rarity} 等級</div>
+    <div class="tip-main">${SLOT_LABEL[i.slot]} / 戦力 ${itemPower(i)}</div>
+    <hr>
+    <div>攻撃力 +${i.atk||0}</div><div>防御力 +${i.def||0}</div><div>最大HP +${i.hp||0}</div><div>攻撃速度 +${i.speed||0}</div><div>ダメージ軽減 +${i.reduce||0}%</div><div>ライフ吸収 +${i.leech||0}%</div><div>クリ率 +${i.crit||0}%</div>`;
+}
 
 function equipItem(id){
   const idx = state.inventory.findIndex(i => i.id === id);
@@ -326,29 +349,69 @@ function log(text){
   while (box.children.length > 100) box.lastChild.remove();
 }
 
+function renderTabs(){
+  const tabs = $('bagTabs');
+  if (!tabs) return;
+  tabs.innerHTML = '';
+  for (let i=1;i<=BAG_PAGES;i++){
+    const b=document.createElement('button');
+    b.textContent=i;
+    b.className = i===currentBagPage ? 'active' : '';
+    b.onclick=()=>{currentBagPage=i; renderInventory();};
+    tabs.appendChild(b);
+  }
+}
+
+function showTooltip(item, x=0, y=0){
+  const tip = $('itemTooltip');
+  if (!tip || !item) return;
+  const eq = state.equipped[item.slot];
+  const diff = itemPower(item) - itemPower(eq || {slot:item.slot});
+  tip.innerHTML = `<div class="compare-grid"><div>${itemLines(item)}<div class="tip-actions"><button onclick="equipItem('${item.id}')">装備</button><button onclick="sellItem('${item.id}')">売却</button></div></div><div>${eq ? itemLines(eq) : '<div class="tip-title">現在装備</div><div class="muted">未装備</div>'}<hr><div class="diff ${diff>=0?'plus':'minus'}">戦力差 ${diff>=0?'+':''}${diff}</div></div></div>`;
+  tip.classList.add('show');
+  tip.style.left = Math.min(window.innerWidth - 360, Math.max(12, x + 12)) + 'px';
+  tip.style.top = Math.min(window.innerHeight - 260, Math.max(12, y - 20)) + 'px';
+}
+function hideTooltip(){ const tip=$('itemTooltip'); if(tip) tip.classList.remove('show'); }
+
 function renderInventory(){
+  renderTabs();
   const eq = $('equippedList');
   eq.innerHTML = ['weapon','armor','ring'].map(slot => {
     const i = state.equipped[slot];
-    return `<div class="equip-card"><b>${SLOT_LABEL[slot]}</b><br>${i ? `<span class="${i.rarityCls}">${i.name}</span><small>${itemText(i)}</small>` : '<span class="muted">未装備</span>'}</div>`;
+    return `<div class="equip-card ${i ? i.rarityCls : ''}" data-eqid="${slot}"><div class="slot-icon">${i ? itemIcon(i) : '⬚'}</div><div><b>${SLOT_LABEL[slot]}</b><br>${i ? `<span class="${i.rarityCls}">${i.name}</span><small>${itemText(i)}</small>` : '<span class="muted">未装備</span>'}</div></div>`;
   }).join('');
-  const inv = $('inventoryList');
-  if (!state.inventory.length) { inv.innerHTML = '<p class="muted">宝箱から装備を入手しよう。</p>'; return; }
-  inv.innerHTML = state.inventory.map(i => `
-    <div class="item-card">
-      <b class="${i.rarityCls}">${i.name}</b>
-      <small>${itemText(i)}</small>
-      <div class="item-actions">
-        <button onclick="equipItem('${i.id}')">装備</button>
-        <button onclick="sellItem('${i.id}')" class="sell-btn">売却</button>
-      </div>
-    </div>`).join('');
+
+  const grid = $('inventoryGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  const pageSize = 35;
+  const start = (currentBagPage-1)*pageSize;
+  const items = state.inventory.slice(start, start+pageSize);
+  for(let i=0;i<pageSize;i++){
+    const item=items[i];
+    const cell=document.createElement('button');
+    cell.className='inv-cell' + (item ? ` filled ${item.rarityCls}` : '');
+    if(item){
+      cell.innerHTML = `<span class="cell-icon">${itemIcon(item)}</span><span class="cell-rank">${itemPower(item)}</span>`;
+      cell.onclick = (e)=>{ selectedItemId=item.id; showTooltip(item, e.clientX, e.clientY); };
+      cell.onmouseenter = (e)=> showTooltip(item, e.clientX, e.clientY);
+      cell.onmousemove = (e)=> showTooltip(item, e.clientX, e.clientY);
+      cell.onmouseleave = hideTooltip;
+    }
+    grid.appendChild(cell);
+  }
+}
+
+function sortInventory(){
+  state.inventory.sort((a,b)=> itemPower(b)-itemPower(a));
+  playSE('equip'); renderInventory(); save(false);
 }
 
 function render(){
   const s = stats(); state.heroHp = Math.min(state.heroHp, s.maxHp);
   $('heroLevel').textContent = state.level; $('heroLevelBadge').textContent = state.level;
-  $('gold').textContent = state.gold; $('stageText').textContent = stageText();
+  $('gold').textContent = state.gold; $('stageText').textContent = stageText(); $('battleStageText').textContent = stageText();
   $('chestCount').textContent = state.chestCount; $('openChestCount').textContent = state.chestCount;
   $('atk').textContent = s.atk; $('def').textContent = s.def; $('maxHp').textContent = s.maxHp;
   $('atkSpeed').textContent = `${(1000 / s.atkSpeed).toFixed(2)}回/秒`;
@@ -383,6 +446,7 @@ $('healBtn').addEventListener('click', heal);
 $('openChestBtn').addEventListener('click', openChest);
 $('saveBtn').addEventListener('click', () => save(true));
 $('resetBtn').addEventListener('click', reset);
+$('sortBtn').addEventListener('click', sortInventory);
 $('goStageBtn').addEventListener('click', changeStage);
 $('muteBtn').addEventListener('click', () => { state.sound.muted = !state.sound.muted; playSE('equip'); render(); save(false); });
 $('volumeRange').addEventListener('input', e => { state.sound.volume = Number(e.target.value) / 100; state.sound.muted = state.sound.volume === 0; playSE('hit'); render(); save(false); });
