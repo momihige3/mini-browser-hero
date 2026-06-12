@@ -1,124 +1,102 @@
 <!doctype html>
 <html lang="ja">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ミニブラウザヒーロー</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <main class="game-shell">
-    <header class="ornate topbar">
-      <button class="corner-btn">⚔</button>
-      <div class="title-wrap">
+  <main class="app">
+    <header class="title-panel">
+      <div class="title-mark">⚔</div>
+      <div>
         <h1>ミニブラウザヒーロー</h1>
-        <p>横スクロール自動戦闘 × 装備ハクスラ</p>
+        <p>自動戦闘・ステージ進行・装備ハクスラ</p>
       </div>
       <div class="top-stats">
-        <span>Lv <b id="heroLevel">1</b></span>
+        <span>Lv <b id="lv">1</b></span>
         <span>Gold <b id="gold">0</b></span>
-        <span>Stage <b id="stageText">1-1</b></span>
-        <span>宝箱 <b id="chestCount">0</b></span>
+        <span>Stage <b id="stage">1-1</b></span>
+        <span>宝箱 <b id="chests">0</b></span>
       </div>
-      <button class="corner-btn">✕</button>
     </header>
 
-    <section class="battle-board ornate">
-      <div class="stage-label"><span id="battleStageText">1-1</span></div>
-      <div class="sky"></div>
-      <div class="cloud c1"></div>
-      <div class="cloud c2"></div>
-      <div class="mountain m1"></div>
-      <div class="mountain m2"></div>
-      <div class="road"></div>
-
-      <div class="enemy enemy-spawn" id="enemy">
-        <div class="enemy-eye"></div>
-        <div class="enemy-horn left"></div>
-        <div class="enemy-horn right"></div>
+    <section class="battle-panel">
+      <div class="stage-badge" id="battleStage">1-1</div>
+      <div class="bg-sky"></div>
+      <div class="ground"></div>
+      <div id="enemy" class="unit enemy walking">
+        <div class="enemy-body"><span></span></div>
+        <div class="unit-name" id="enemyName">スライム</div>
       </div>
-
-      <div class="hero" id="hero">
+      <div id="hero" class="unit hero">
         <div class="hero-head"></div>
         <div class="hero-body"></div>
-        <div class="sword"></div>
-        <div class="level-badge">Lv <span id="heroLevelBadge">1</span></div>
+        <div class="hero-sword"></div>
+        <div class="unit-name">英雄</div>
       </div>
-
-      <div class="slash" id="slash"></div>
-      <div class="damage-pop" id="damagePop"></div>
-      <div class="levelup-pop" id="levelupPop">LEVEL UP!</div>
-      <div class="stage-pop" id="stagePop">STAGE CLEAR!</div>
-      <div class="chest-drop" id="chestDrop">
-        <div class="chest-lid"></div>
-        <div class="chest-body"></div>
-        <div class="chest-light"></div>
-      </div>
+      <div id="slash" class="slash"></div>
+      <div id="damageText" class="damage-text"></div>
+      <div id="stageClear" class="center-pop">STAGE CLEAR!</div>
+      <div id="levelUp" class="center-pop level">LEVEL UP!</div>
+      <div id="chestAnim" class="chest-anim">📦</div>
     </section>
 
-    <section class="bars ornate mini-frame">
-      <div class="bar-card hp-card"><div class="bar-label">英雄HP <span id="heroHpText"></span></div><div class="bar"><div id="heroHpBar"></div></div></div>
-      <div class="bar-card enemy-card"><div class="bar-label">敵HP <span id="enemyHpText"></span></div><div class="bar"><div id="enemyHpBar"></div></div></div>
-      <div class="bar-card exp-card"><div class="bar-label">EXP <span id="expText"></span></div><div class="bar"><div id="expBar"></div></div></div>
+    <section class="bars">
+      <div class="bar-box"><label>英雄HP <b id="heroHpText"></b></label><div class="bar"><i id="heroHpBar"></i></div></div>
+      <div class="bar-box"><label>敵HP <b id="enemyHpText"></b></label><div class="bar enemybar"><i id="enemyHpBar"></i></div></div>
+      <div class="bar-box"><label>EXP <b id="expText"></b></label><div class="bar expbar"><i id="expBar"></i></div></div>
     </section>
 
-    <section class="rpg-layout">
-      <aside class="window warehouse-window ornate">
-        <div class="window-title"><span>倉庫</span><button class="fake-close">✕</button></div>
-        <div class="tabs" id="bagTabs"></div>
-        <div id="inventoryGrid" class="inventory-grid"></div>
-        <div class="window-footer">
-          <button id="sortBtn">自動整頓</button>
-          <button id="openChestBtn">宝箱を開ける ×<span id="openChestCount">0</span></button>
+    <section class="main-grid">
+      <section class="window inventory-window">
+        <div class="window-title">倉庫</div>
+        <div class="inventory-toolbar">
+          <button id="openChestBtn" class="btn primary">宝箱を開ける ×<span id="openChestCount">0</span></button>
+          <button id="sortBtn" class="btn">整頓</button>
         </div>
-      </aside>
+        <div id="inventory" class="inventory"></div>
+      </section>
 
-      <section class="window hero-window ornate">
-        <div class="window-title"><span>英雄</span><button class="fake-close">▾</button></div>
-        <div class="hero-status-grid">
-          <div class="stat-row"><span>攻撃力</span><b id="atk">0</b></div>
-          <div class="stat-row"><span>防御力</span><b id="def">0</b></div>
-          <div class="stat-row"><span>最大HP</span><b id="maxHp">0</b></div>
-          <div class="stat-row"><span>攻撃速度</span><b id="atkSpeed">0</b></div>
-          <div class="stat-row"><span>撃破数</span><b id="stageKills">0/5</b></div>
+      <section class="window hero-window">
+        <div class="window-title">英雄</div>
+        <div class="stats-grid">
+          <div>攻撃力 <b id="atk">0</b></div>
+          <div>防御力 <b id="def">0</b></div>
+          <div>最大HP <b id="maxHp">0</b></div>
+          <div>攻撃速度 <b id="speed">0</b></div>
+          <div>撃破 <b id="kills">0/5</b></div>
         </div>
-        <div class="equip-slots" id="equippedList"></div>
-        <div class="upgrade-box">
-          <button id="weaponBtn">武器強化 Lv <span id="weaponLv">1</span><small><span id="weaponCost">0</span> Gold</small></button>
-          <button id="armorBtn">防具強化 Lv <span id="armorLv">1</span><small><span id="armorCost">0</span> Gold</small></button>
-          <button id="ringBtn">指輪強化 Lv <span id="ringLv">1</span><small><span id="ringCost">0</span> Gold</small></button>
+        <div id="equips" class="equips"></div>
+        <div class="upgrade-list">
+          <button id="weaponUp" class="btn">武器強化 Lv<span id="weaponLv">1</span><small id="weaponCost"></small></button>
+          <button id="armorUp" class="btn">防具強化 Lv<span id="armorLv">1</span><small id="armorCost"></small></button>
+          <button id="ringUp" class="btn">指輪強化 Lv<span id="ringLv">1</span><small id="ringCost"></small></button>
         </div>
       </section>
 
-      <aside class="window info-window ornate">
-        <div class="window-title"><span>情報</span><button class="fake-close">✕</button></div>
-        <div class="controls-row">
-          <button id="muteBtn" class="small-btn">🔊 SE ON</button>
-          <label>音量 <input id="volumeRange" type="range" min="0" max="100" value="35"></label>
+      <section class="window system-window">
+        <div class="window-title">設定・冒険</div>
+        <div class="control-line">
+          <button id="muteBtn" class="btn">🔊 SE ON</button>
+          <label>音量 <input id="volume" type="range" min="0" max="100" value="35"></label>
         </div>
-        <div class="stage-select-box">
-          <label>ステージ選択 <select id="stageSelect"></select></label>
-          <button id="goStageBtn" class="small-btn">移動</button>
+        <div class="control-line">
+          <label>ステージ <select id="stageSelect"></select></label>
+          <button id="goStage" class="btn">移動</button>
         </div>
-        <button id="healBtn">宿屋で回復</button>
-        <div class="drop-note">通常敵 14% / ボス 100% / 装備 55%</div>
-        <div class="log" id="log"></div>
-        <div class="save-actions">
-          <button id="saveBtn">手動セーブ</button>
-          <button id="resetBtn" class="danger">リセット</button>
+        <div class="control-line">
+          <button id="healBtn" class="btn">回復</button>
+          <button id="saveBtn" class="btn">保存</button>
+          <button id="resetBtn" class="btn danger">リセット</button>
         </div>
-      </aside>
+        <div id="log" class="log"></div>
+      </section>
     </section>
-
-    <div id="itemTooltip" class="item-tooltip"></div>
-    <nav class="bottom-menu ornate">
-      <button>🎒<span>倉庫</span></button>
-      <button>⚔<span>英雄</span></button>
-      <button>🗺<span>冒険</span></button>
-      <button>📦<span>宝箱</span></button>
-      <button>⚙<span>設定</span></button>
-    </nav>
   </main>
+
+  <div id="tooltip" class="tooltip"></div>
   <script src="game.js"></script>
 </body>
 </html>

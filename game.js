@@ -1,487 +1,184 @@
+'use strict';
 const $ = (id) => document.getElementById(id);
-
-const SAVE_KEY = 'mini-browser-hero-save-v5';
-const BAG_PAGES = 7;
-let currentBagPage = 1;
-let selectedItemId = null;
-const OLD_KEYS = ['mini-browser-hero-save-v3','mini-browser-hero-save-v2','mini-auto-hero-save'];
-const STAGE_KILLS_NEEDED = 5;
-const SLOT_LABEL = { weapon:'武器', armor:'防具', ring:'指輪' };
+const SAVE_KEY = 'mini-browser-hero-v7';
+const KILLS_TO_CLEAR = 5;
 const RARITIES = [
-  {key:'Common', name:'コモン', rate:5200, mul:1.00, cls:'common'},
-  {key:'Rare', name:'レア', rate:2600, mul:1.35, cls:'rare'},
-  {key:'Epic', name:'エピック', rate:1300, mul:1.85, cls:'epic'},
-  {key:'Legendary', name:'レジェンダリー', rate:650, mul:2.65, cls:'legendary'},
-  {key:'Divine', name:'ディヴァイン', rate:180, mul:3.5, cls:'divine'},
-  {key:'Celestial', name:'セレスティアル', rate:55, mul:4.4, cls:'celestial'},
-  {key:'Arcana', name:'アルカナ', rate:12, mul:5.4, cls:'arcana'},
-  {key:'Beyond', name:'ビヨンド', rate:3, mul:6.8, cls:'beyond'},
-  {key:'Cosmic', name:'コズミック', rate:1, mul:8.5, cls:'cosmic'}
+  ['common','コモン',5200,1.00],['rare','レア',2600,1.35],['epic','エピック',1300,1.85],
+  ['legendary','レジェンダリー',650,2.6],['divine','ディヴァイン',180,3.5],['celestial','セレスティアル',55,4.4],
+  ['arcana','アルカナ',12,5.4],['beyond','ビヨンド',3,6.8],['cosmic','コズミック',1,8.5]
 ];
-
+const SLOTS = {weapon:'武器', armor:'防具', ring:'指輪'};
+const ICON = {weapon:'⚔️', armor:'🛡️', ring:'🔮'};
 const defaultState = {
-  level: 1, exp: 0, gold: 0,
-  stageWorld: 1, stageArea: 1, maxStageWorld: 1, maxStageArea: 1, stageKills: 0,
-  heroHp: 100, weaponLv: 1, armorLv: 1, ringLv: 1,
-  chestCount: 0, totalChests: 0,
-  inventory: [],
-  equipped: { weapon:null, armor:null, ring:null },
-  sound: { muted:false, volume:0.35 },
-  lastSave: Date.now()
+  lv:1, exp:0, gold:0, hp:100,
+  world:1, area:1, maxStage:1, kills:0,
+  weaponLv:1, armorLv:1, ringLv:1,
+  chests:0, inventory:[], equipped:{weapon:null, armor:null, ring:null},
+  sound:{muted:false, volume:0.35}
 };
-
 let state = load();
 let enemy = makeEnemy();
-let lastAttack = 0;
-let lastEnemyAttack = 0;
-let saveTimer = 0;
+let dying = false;
+let spawning = true;
+let lastHeroAttack = performance.now();
+let lastEnemyAttack = performance.now();
+let lastSave = performance.now();
 let audioCtx = null;
-let enemyDying = false;
-let enemySpawning = false;
-let uiDirty = true;
-let inventoryDirty = true;
-let stageSelectDirty = true;
 
+function clone(obj){ return JSON.parse(JSON.stringify(obj)); }
 function load(){
-  try {
-    let raw = localStorage.getItem(SAVE_KEY);
-    if (!raw) for (const k of OLD_KEYS) { raw = localStorage.getItem(k); if (raw) break; }
-    if (!raw) return structuredClone(defaultState);
-    const saved = JSON.parse(raw);
-    const merged = {...structuredClone(defaultState), ...saved};
-    merged.equipped = {...defaultState.equipped, ...(saved.equipped || {})};
-    merged.sound = {...defaultState.sound, ...(saved.sound || {})};
-    merged.inventory ||= [];
-    return merged;
-  } catch { return structuredClone(defaultState); }
+  try{
+    const raw = localStorage.getItem(SAVE_KEY);
+    if(!raw) return clone(defaultState);
+    const s = {...clone(defaultState), ...JSON.parse(raw)};
+    s.equipped = {...defaultState.equipped, ...(s.equipped||{})};
+    s.sound = {...defaultState.sound, ...(s.sound||{})};
+    s.inventory = Array.isArray(s.inventory) ? s.inventory : [];
+    return s;
+  }catch(e){ return clone(defaultState); }
 }
-
-function markDirty(){ uiDirty = true; inventoryDirty = true; stageSelectDirty = true; }
-function markUiDirty(){ uiDirty = true; }
-function markInventoryDirty(){ inventoryDirty = true; uiDirty = true; }
-
-function save(showLog = true){
-  state.lastSave = Date.now();
-  localStorage.setItem(SAVE_KEY, JSON.stringify(state));
-  if (showLog) log('セーブした！');
+function save(show=false){ localStorage.setItem(SAVE_KEY, JSON.stringify(state)); if(show) addLog('保存した！'); }
+function stageNo(){ return (state.world-1)*10+state.area; }
+function stageText(){ return `${state.world}-${state.area}`; }
+function setStageByNo(n){ state.world = Math.floor((n-1)/10)+1; state.area = ((n-1)%10)+1; }
+function maxStageNo(){ return state.maxStage || 1; }
+function nextStage(){ const n=stageNo()+1; setStageByNo(n); state.maxStage=Math.max(maxStageNo(),n); state.kills=0; pop('stageClear'); addLog(`<b>ステージ ${stageText()} 開放！</b>`); refreshStageSelect(); }
+function bonus(){
+  const b={atk:0,def:0,hp:0,speed:0,leech:0,reduce:0,crit:0};
+  Object.values(state.equipped).forEach(i=>{ if(!i)return; Object.keys(b).forEach(k=>b[k]+=i[k]||0); });
+  return b;
 }
-
-function reset(){
-  if (!confirm('本当にリセットする？')) return;
-  localStorage.removeItem(SAVE_KEY);
-  OLD_KEYS.forEach(k => localStorage.removeItem(k));
-  state = structuredClone(defaultState);
-  enemy = makeEnemy();
-  markDirty();
-  log('データをリセットした');
-  spawnEnemyAnimation();
-  render();
-}
-
-function stageNumber(w = state.stageWorld, a = state.stageArea){ return (w - 1) * 10 + a; }
-function stageText(w = state.stageWorld, a = state.stageArea){ return `${w}-${a}`; }
-function maxStageNumber(){ return stageNumber(state.maxStageWorld, state.maxStageArea); }
-function setMaxStageByNumber(n){ state.maxStageWorld = Math.floor((n - 1) / 10) + 1; state.maxStageArea = ((n - 1) % 10) + 1; }
-function nextStage(){
-  const n = stageNumber() + 1;
-  state.stageWorld = Math.floor((n - 1) / 10) + 1;
-  state.stageArea = ((n - 1) % 10) + 1;
-  if (n > maxStageNumber()) setMaxStageByNumber(n);
-  state.stageKills = 0;
-  stageSelectDirty = true; uiDirty = true;
-  showStageClear();
-  log(`<b>ステージ ${stageText()} に進んだ！</b>`);
-}
-
-function equipBonus(){
-  const bonus = {atk:0, def:0, hp:0, speed:0, reduce:0, leech:0, crit:0};
-  Object.values(state.equipped).forEach(item => {
-    if (!item) return;
-    bonus.atk += item.atk || 0;
-    bonus.def += item.def || 0;
-    bonus.hp += item.hp || 0;
-    bonus.speed += item.speed || 0;
-    bonus.reduce += item.reduce || 0;
-    bonus.leech += item.leech || 0;
-    bonus.crit += item.crit || 0;
-  });
-  return bonus;
-}
-
 function stats(){
-  const b = equipBonus();
-  const maxHp = 90 + state.level * 12 + state.armorLv * 20 + b.hp;
-  const atk = 7 + state.level * 3 + state.weaponLv * 6 + b.atk;
-  const def = Math.floor(state.armorLv * 2 + state.level * 0.6 + b.def);
-  const atkSpeed = Math.max(300, 1120 - state.ringLv * 30 - state.level * 4 - b.speed);
-  return {maxHp, atk, def, atkSpeed, reduce:Math.min(80,b.reduce), leech:Math.min(30,b.leech), crit:0.12 + Math.min(0.5,b.crit/100)};
-}
-
-function expNeed(){ return 45 + state.level * 30; }
-function upgradeCost(kind){ return Math.floor(35 * Math.pow(state[kind], 1.55)); }
-
-function makeEnemy(){
-  const sn = stageNumber();
-  const isBoss = state.stageArea === 10 || state.stageKills === STAGE_KILLS_NEEDED - 1;
-  const hpBase = 30 + sn * 16 + Math.pow(sn, 1.23) * 7;
-  const hp = Math.floor(isBoss ? hpBase * 2.6 : hpBase);
+  const b=bonus();
   return {
-    name: isBoss ? `ボススライム ${stageText()}` : `スライム ${stageText()}`,
-    isBoss, maxHp: hp, hp,
-    atk: Math.floor((5 + sn * 1.5) * (isBoss ? 1.7 : 1)),
-    gold: Math.floor((9 + sn * 4) * (isBoss ? 3 : 1)),
-    exp: Math.floor((12 + sn * 5.5) * (isBoss ? 3 : 1))
+    maxHp: 90 + state.lv*14 + state.armorLv*20 + b.hp,
+    atk: 8 + state.lv*3 + state.weaponLv*7 + b.atk,
+    def: Math.floor(state.lv*0.8 + state.armorLv*2.2 + b.def),
+    interval: Math.max(320, 1100 - state.ringLv*35 - state.lv*5 - b.speed),
+    leech: Math.min(30,b.leech), reduce: Math.min(75,b.reduce), crit: Math.min(.55,.08+b.crit/100)
   };
 }
-
-function attack(){
-  if (enemyDying || enemySpawning) return;
-  const s = stats();
-  const crit = Math.random() < s.crit;
-  const damage = Math.max(1, Math.floor(s.atk * (crit ? 1.8 : 1) * (0.85 + Math.random() * 0.3)));
-  enemy.hp -= damage;
-  if (s.leech > 0) state.heroHp = Math.min(s.maxHp, state.heroHp + Math.ceil(damage * s.leech / 100));
-  showSlash(); showDamage((crit ? 'CRIT ' : '') + damage); flashEnemy(); playSE(crit ? 'crit' : 'hit');
-  if (enemy.hp <= 0) win();
+function expNeed(){ return 60 + state.lv*32; }
+function cost(key){ return Math.floor(35*Math.pow(state[key],1.55)); }
+function makeEnemy(){
+  const n=stageNo();
+  const boss = state.area===10 || state.kills===KILLS_TO_CLEAR-1;
+  const base = 36 + n*18 + Math.pow(n,1.18)*8;
+  const hp = Math.floor(base*(boss?2.7:1));
+  return {name: boss?`ボス ${stageText()}`:`スライム ${stageText()}`, boss, hp, maxHp:hp, atk:Math.floor((5+n*1.7)*(boss?1.65:1)), gold:Math.floor((10+n*4)*(boss?3:1)), exp:Math.floor((14+n*6)*(boss?3:1))};
 }
-
+function heroAttack(){
+  if(dying||spawning) return;
+  const s=stats();
+  const crit=Math.random()<s.crit;
+  const dmg=Math.max(1, Math.floor(s.atk*(crit?1.8:1)*(0.85+Math.random()*0.3)));
+  enemy.hp-=dmg;
+  if(s.leech>0) state.hp=Math.min(s.maxHp, state.hp+Math.ceil(dmg*s.leech/100));
+  showSlash(); showDamage((crit?'CRIT ':'')+dmg); flash('enemy'); play(crit?'crit':'hit');
+  if(enemy.hp<=0) defeatEnemy();
+}
 function enemyAttack(){
-  if (enemyDying || enemySpawning) return;
-  const s = stats();
-  const rawDamage = Math.max(1, enemy.atk - s.def + Math.floor(Math.random() * 3));
-  const damage = Math.max(1, Math.floor(rawDamage * (1 - s.reduce / 100)));
-  state.heroHp -= damage;
-  flashHero();
-  if (state.heroHp <= 0) {
-    state.heroHp = Math.ceil(s.maxHp * 0.45);
-    state.gold = Math.max(0, Math.floor(state.gold * 0.9));
-    playSE('down');
-    log('倒れた……Goldを少し落として復活');
-  }
+  if(dying||spawning) return;
+  const s=stats();
+  const dmg=Math.max(1, Math.floor(Math.max(1, enemy.atk-s.def+rand(0,3))*(1-s.reduce/100)));
+  state.hp-=dmg; flash('hero');
+  if(state.hp<=0){ state.hp=Math.ceil(s.maxHp*.45); state.gold=Math.max(0,Math.floor(state.gold*.9)); play('down'); addLog('倒れた！Goldを少し落として復活'); }
 }
-
-function win(){
-  if (enemyDying) return;
-  enemyDying = true;
-  const defeated = {...enemy};
-  enemy.hp = 0;
-  playSE(enemy.isBoss ? 'boss' : 'win');
-  defeatEnemyAnimation();
-
-  setTimeout(() => {
-    markDirty();
-    state.gold += defeated.gold;
-    state.exp += defeated.exp;
-    state.stageKills++;
-    log(`<b>${defeated.name}</b>を倒した！ +${defeated.gold} Gold / +${defeated.exp} EXP`);
-    rollChest(defeated.isBoss);
-    levelCheck();
-    if (state.stageKills >= STAGE_KILLS_NEEDED) nextStage();
-    enemy = makeEnemy();
-    enemyDying = false;
-    spawnEnemyAnimation();
-    render();
-  }, 520);
+function defeatEnemy(){
+  if(dying) return; dying=true; enemy.hp=0;
+  const dead={...enemy};
+  const el=$('enemy'); el.classList.remove('enter','walking','hit'); void el.offsetWidth; el.classList.add('dead');
+  play(dead.boss?'boss':'win');
+  setTimeout(()=>{
+    state.gold+=dead.gold; state.exp+=dead.exp; state.kills++;
+    addLog(`${dead.name}を倒した！ +${dead.gold} Gold / +${dead.exp} EXP`);
+    rollChest(dead.boss); levelCheck();
+    if(state.kills>=KILLS_TO_CLEAR) nextStage();
+    enemy=makeEnemy(); dying=false; spawnEnemy(); renderAll();
+  },560);
 }
-
+function spawnEnemy(){
+  spawning=true;
+  const el=$('enemy');
+  $('enemyName').textContent=enemy.name;
+  el.className='unit enemy walking';
+  if(enemy.boss) el.classList.add('boss');
+  void el.offsetWidth; el.classList.add('enter');
+  setTimeout(()=>{spawning=false; lastHeroAttack=performance.now(); lastEnemyAttack=performance.now();},760);
+}
 function levelCheck(){
-  let leveled = false;
-  while (state.exp >= expNeed()) {
-    state.exp -= expNeed(); state.level++; leveled = true;
-    state.heroHp = stats().maxHp;
-    log(`レベルアップ！ Lv ${state.level} / 攻撃・防御・最大HPが上がった`);
-  }
-  if (leveled) { showLevelUp(); playSE('level'); }
+  let up=false;
+  while(state.exp>=expNeed()){ state.exp-=expNeed(); state.lv++; state.hp=stats().maxHp; up=true; addLog(`レベルアップ！ Lv${state.lv}`); }
+  if(up){ pop('levelUp'); play('level'); }
 }
-
-function rollChest(isBoss){
-  const dropRate = isBoss ? 1 : 0.14;
-  if (Math.random() > dropRate) return;
-  state.chestCount++; state.totalChests++;
-  showChestDrop(); playSE('chest');
-  log(isBoss ? '<b>ボス宝箱</b>が落ちた！' : '<b>宝箱</b>が落ちた！');
-}
-
+function rollChest(boss){ if(boss||Math.random()<.14){ state.chests++; pop('chestAnim'); play('chest'); addLog(boss?'ボス宝箱が落ちた！':'宝箱が落ちた！'); } }
 function openChest(){
-  if (state.chestCount <= 0) return log('開ける宝箱がないよ');
-  markDirty();
-  state.chestCount--;
-  const sn = stageNumber();
-  const gold = Math.floor(25 + sn * 7 + Math.random() * (35 + state.level * 8));
-  const exp = Math.floor(15 + state.level * 8 + Math.random() * 25);
-  state.gold += gold; state.exp += exp;
-  showChestDrop(); playSE('open');
-  let msg = `<b>宝箱を開けた！</b> +${gold} Gold / +${exp} EXP`;
-  if (Math.random() < 0.55) {
-    const item = makeItem();
-    state.inventory.unshift(item);
-    markInventoryDirty();
-    state.inventory = state.inventory.slice(0, 30);
-    msg += `<br>装備ドロップ：<b class="${item.rarityCls}">${item.name}</b>`;
-    playSE('drop');
-  }
-  log(msg); levelCheck(); render();
+  if(state.chests<=0) return addLog('宝箱がないよ');
+  state.chests--; const n=stageNo(); const gold=rand(20+n*5,55+n*10); const exp=rand(10+state.lv*5,38+state.lv*8);
+  state.gold+=gold; state.exp+=exp; let msg=`宝箱を開けた！ +${gold} Gold / +${exp} EXP`;
+  if(Math.random()<.6){ const item=makeItem(); state.inventory.unshift(item); state.inventory=state.inventory.slice(0,49); msg += `<br>装備：<b class="${item.cls}">${item.name}</b>`; play('drop'); }
+  pop('chestAnim'); play('open'); addLog(msg); levelCheck(); renderAll(); save();
 }
-
-function pickRarity(){
-  const total = RARITIES.reduce((a,r)=>a+r.rate,0);
-  let roll = Math.random() * total;
-  for (const r of RARITIES) { roll -= r.rate; if (roll <= 0) return r; }
-  return RARITIES[0];
-}
-
+function pickRarity(){ let total=RARITIES.reduce((a,r)=>a+r[2],0), roll=Math.random()*total; for(const r of RARITIES){ roll-=r[2]; if(roll<=0) return r; } return RARITIES[0]; }
 function makeItem(){
-  const slot = ['weapon','armor','ring'][Math.floor(Math.random()*3)];
-  const rarity = pickRarity();
-  const sn = stageNumber();
-  const power = Math.max(1, Math.floor((state.level + sn * 1.5) * rarity.mul));
-  const item = { id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()+Math.random()), slot, rarity:rarity.name, rarityCls:rarity.cls, atk:0, def:0, hp:0, speed:0, reduce:0, leech:0, crit:0 };
-  if (slot === 'weapon') { item.atk = power + rand(1, 5); item.crit = rand(0, Math.floor(power/3)); }
-  if (slot === 'armor') { item.def = Math.floor(power/2) + rand(1, 4); item.hp = power * 4 + rand(5, 18); item.reduce = rand(0, Math.floor(power/4)); }
-  if (slot === 'ring') { item.atk = rand(0, Math.floor(power/2)); item.hp = rand(0, power * 2); item.speed = 15 + Math.floor(power * 2.3); item.leech = rand(0, Math.floor(power/4)); }
-  const base = slot === 'weapon' ? 'ソード' : slot === 'armor' ? 'アーマー' : 'オーブ';
-  const prefix = rarity.cls === 'cosmic' ? '次元の' : rarity.cls === 'beyond' ? '超越の' : rarity.cls === 'arcana' ? '秘奥の' : rarity.cls === 'celestial' ? '星天の' : rarity.cls === 'divine' ? '神威の' : rarity.name;
-  item.name = `${prefix}${base}`;
-  return item;
+  const slot=['weapon','armor','ring'][rand(0,2)], r=pickRarity(), n=stageNo();
+  const power=Math.max(1,Math.floor((state.lv+n*1.5)*r[3]));
+  const i={id:Date.now().toString(36)+Math.random().toString(36).slice(2), slot, cls:r[0], rarity:r[1], atk:0,def:0,hp:0,speed:0,leech:0,reduce:0,crit:0};
+  if(slot==='weapon'){ i.atk=power+rand(1,6); i.crit=rand(0,Math.floor(power/3)); }
+  if(slot==='armor'){ i.def=Math.floor(power/2)+rand(1,5); i.hp=power*4+rand(8,24); i.reduce=rand(0,Math.floor(power/4)); }
+  if(slot==='ring'){ i.atk=rand(0,Math.floor(power/2)); i.hp=rand(0,power*2); i.speed=20+Math.floor(power*2.2); i.leech=rand(0,Math.floor(power/4)); }
+  const base={weapon:'ソード',armor:'アーマー',ring:'オーブ'}[slot];
+  const prefix={cosmic:'次元の',beyond:'超越の',arcana:'秘奥の',celestial:'星天の',divine:'神威の'}[i.cls] || i.rarity;
+  i.name=prefix+base; return i;
 }
-function rand(min,max){ return Math.floor(min + Math.random() * (max - min + 1)); }
-function itemPower(i){ return (i.atk||0) + (i.def||0) + Math.floor((i.hp||0)/4) + Math.floor((i.speed||0)/12) + (i.reduce||0)*2 + (i.leech||0)*2 + (i.crit||0); }
-function itemIcon(i){ return i.slot === 'weapon' ? '⚔️' : i.slot === 'armor' ? '🛡️' : '🔮'; }
-function itemText(i){ return `${SLOT_LABEL[i.slot]} / 攻撃+${i.atk||0} 防御+${i.def||0} HP+${i.hp||0} 速度+${i.speed||0} 軽減+${i.reduce||0}% 吸収+${i.leech||0}% クリ+${i.crit||0}%`; }
-function itemLines(i){
-  if (!i) return '<div class="muted">未装備</div>';
-  return `
-    <div class="tip-title ${i.rarityCls}">${itemIcon(i)} ${i.name}</div>
-    <div class="tip-rarity ${i.rarityCls}">${i.rarity} 等級</div>
-    <div class="tip-main">${SLOT_LABEL[i.slot]} / 戦力 ${itemPower(i)}</div>
-    <hr>
-    <div>攻撃力 +${i.atk||0}</div><div>防御力 +${i.def||0}</div><div>最大HP +${i.hp||0}</div><div>攻撃速度 +${i.speed||0}</div><div>ダメージ軽減 +${i.reduce||0}%</div><div>ライフ吸収 +${i.leech||0}%</div><div>クリ率 +${i.crit||0}%</div>`;
+function power(i){ return i?((i.atk||0)+(i.def||0)+Math.floor((i.hp||0)/4)+Math.floor((i.speed||0)/12)+(i.leech||0)*2+(i.reduce||0)*2+(i.crit||0)):0; }
+function itemText(i){ return `${SLOTS[i.slot]} / 攻撃+${i.atk||0} 防御+${i.def||0} HP+${i.hp||0} 速度+${i.speed||0} 吸収+${i.leech||0}% 軽減+${i.reduce||0}% クリ+${i.crit||0}%`; }
+function equipItem(id){ const idx=state.inventory.findIndex(i=>i.id===id); if(idx<0)return; const item=state.inventory.splice(idx,1)[0]; const old=state.equipped[item.slot]; if(old) state.inventory.unshift(old); state.equipped[item.slot]=item; hideTip(); play('equip'); addLog(`<b class="${item.cls}">${item.name}</b>を装備した`); renderAll(); save(); }
+function sellItem(id){ const idx=state.inventory.findIndex(i=>i.id===id); if(idx<0)return; const item=state.inventory.splice(idx,1)[0]; const g=Math.max(5,power(item)*4); state.gold+=g; hideTip(); play('sell'); addLog(`${item.name}を売却 +${g} Gold`); renderAll(); save(); }
+function upgrade(key){ const c=cost(key); if(state.gold<c) return addLog(`${c} Gold必要`); state.gold-=c; state[key]++; state.hp=Math.min(stats().maxHp,state.hp+20); play('equip'); renderAll(); save(); }
+function heal(){ const c=Math.max(10,Math.floor(stats().maxHp*.25)); if(state.gold<c) return addLog(`回復には${c} Gold必要`); state.gold-=c; state.hp=stats().maxHp; play('heal'); renderAll(); save(); }
+function changeStage(){ const n=Number($('stageSelect').value||1); setStageByNo(n); state.kills=0; enemy=makeEnemy(); addLog(`ステージ ${stageText()} へ移動`); spawnEnemy(); renderAll(); save(); }
+function refreshStageSelect(){ const sel=$('stageSelect'); const cur=stageNo(); sel.innerHTML=''; for(let n=1;n<=maxStageNo();n++){ const w=Math.floor((n-1)/10)+1,a=((n-1)%10)+1; const op=document.createElement('option'); op.value=n; op.textContent=`${w}-${a}`; if(n===cur)op.selected=true; sel.appendChild(op); } }
+function renderAll(){
+  const s=stats(); state.hp=Math.min(state.hp,s.maxHp);
+  $('lv').textContent=state.lv; $('gold').textContent=state.gold; $('stage').textContent=stageText(); $('battleStage').textContent=stageText(); $('chests').textContent=state.chests; $('openChestCount').textContent=state.chests;
+  $('heroHpText').textContent=`${state.hp}/${s.maxHp}`; $('enemyHpText').textContent=`${Math.max(0,enemy.hp)}/${enemy.maxHp}`; $('expText').textContent=`${state.exp}/${expNeed()}`;
+  $('heroHpBar').style.width=(state.hp/s.maxHp*100)+'%'; $('enemyHpBar').style.width=(Math.max(0,enemy.hp)/enemy.maxHp*100)+'%'; $('expBar').style.width=(state.exp/expNeed()*100)+'%';
+  $('atk').textContent=s.atk; $('def').textContent=s.def; $('maxHp').textContent=s.maxHp; $('speed').textContent=(1000/s.interval).toFixed(2)+'回/秒'; $('kills').textContent=`${state.kills}/${KILLS_TO_CLEAR}`;
+  ['weapon','armor','ring'].forEach(slot=>{});
+  $('weaponLv').textContent=state.weaponLv; $('armorLv').textContent=state.armorLv; $('ringLv').textContent=state.ringLv;
+  $('weaponCost').textContent=cost('weaponLv')+' Gold'; $('armorCost').textContent=cost('armorLv')+' Gold'; $('ringCost').textContent=cost('ringLv')+' Gold';
+  $('weaponUp').disabled=state.gold<cost('weaponLv'); $('armorUp').disabled=state.gold<cost('armorLv'); $('ringUp').disabled=state.gold<cost('ringLv'); $('openChestBtn').disabled=state.chests<=0;
+  $('muteBtn').textContent=state.sound.muted?'🔇 SE OFF':'🔊 SE ON'; $('volume').value=Math.round(state.sound.volume*100);
+  renderEquips(); renderInventory(); refreshStageSelect();
 }
-
-function equipItem(id){
-  const idx = state.inventory.findIndex(i => i.id === id);
-  if (idx < 0) return;
-  const item = state.inventory.splice(idx,1)[0];
-  const old = state.equipped[item.slot];
-  if (old) state.inventory.unshift(old);
-  state.equipped[item.slot] = item;
-  state.heroHp = Math.min(stats().maxHp, state.heroHp + (item.hp || 0));
-  markInventoryDirty(); playSE('equip'); log(`<b>${item.name}</b>を装備した！`); render(true);
+function renderEquips(){ const box=$('equips'); box.innerHTML=Object.keys(SLOTS).map(slot=>{ const i=state.equipped[slot]; return `<div class="equip"><div class="equip-icon ${i?i.cls:''}">${i?ICON[slot]:'□'}</div><div><b>${SLOTS[slot]}</b><br>${i?`<span class="${i.cls}">${i.name}</span><small>${itemText(i)}</small>`:'<span class="muted">未装備</span>'}</div></div>`; }).join(''); }
+function renderInventory(){ const box=$('inventory'); box.innerHTML=''; for(let n=0;n<49;n++){ const i=state.inventory[n]; const b=document.createElement('button'); b.className='slot '+(i?i.cls:'empty'); if(i){ b.innerHTML=`${ICON[i.slot]}<small>${power(i)}</small>`; b.onclick=(e)=>showTip(i,e.clientX,e.clientY); b.onmouseenter=(e)=>showTip(i,e.clientX,e.clientY); b.onmousemove=(e)=>moveTip(e.clientX,e.clientY); b.onmouseleave=hideTip; } box.appendChild(b); } }
+function showTip(i,x,y){ const eq=state.equipped[i.slot]; const diff=power(i)-power(eq); const t=$('tooltip'); t.innerHTML=`<div class="tip-title ${i.cls}">${ICON[i.slot]} ${i.name}</div><div>${i.rarity}</div><div>${itemText(i)}</div><hr><div>現在装備：${eq?`<span class="${eq.cls}">${eq.name}</span>`:'なし'}</div><div class="${diff>=0?'diff-plus':'diff-minus'}">戦力差 ${diff>=0?'+':''}${diff}</div><div class="tip-actions"><button class="btn" onclick="equipItem('${i.id}')">装備</button><button class="btn danger" onclick="sellItem('${i.id}')">売却</button></div>`; t.classList.add('show'); moveTip(x,y); }
+function moveTip(x,y){ const t=$('tooltip'); t.style.left=Math.min(innerWidth-370,Math.max(8,x+14))+'px'; t.style.top=Math.min(innerHeight-240,Math.max(8,y-20))+'px'; }
+function hideTip(){ $('tooltip').classList.remove('show'); }
+function showSlash(){ const e=$('slash'); e.classList.remove('show'); void e.offsetWidth; e.classList.add('show'); }
+function showDamage(txt){ const e=$('damageText'); e.textContent=txt; e.classList.remove('show'); void e.offsetWidth; e.classList.add('show'); }
+function flash(id){ const e=$(id); e.classList.remove('hit'); void e.offsetWidth; e.classList.add('hit'); }
+function pop(id){ const e=$(id); e.classList.remove('show'); void e.offsetWidth; e.classList.add('show'); }
+function addLog(html){ const l=$('log'); const d=document.createElement('div'); d.innerHTML=html; l.prepend(d); while(l.children.length>80) l.lastChild.remove(); }
+function rand(a,b){ return Math.floor(a+Math.random()*(b-a+1)); }
+function ensureAudio(){ if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)(); }
+function play(type){ if(state.sound.muted||state.sound.volume<=0)return; try{ ensureAudio(); const map={hit:[250,.05],crit:[560,.08],win:[660,.09],boss:[170,.18],chest:[850,.12],open:[730,.14],drop:[980,.16],level:[1050,.22],equip:[430,.08],sell:[320,.06],heal:[620,.12],down:[120,.22]}; const [f,d]=map[type]||map.hit, now=audioCtx.currentTime, o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.type=type==='down'?'sawtooth':'square'; o.frequency.setValueAtTime(f,now); o.frequency.exponentialRampToValueAtTime(Math.max(60,f*.55),now+d); g.gain.setValueAtTime(.0001,now); g.gain.exponentialRampToValueAtTime(state.sound.volume*.12,now+.01); g.gain.exponentialRampToValueAtTime(.0001,now+d); o.connect(g); g.connect(audioCtx.destination); o.start(now); o.stop(now+d+.02); }catch(e){} }
+function loop(now){
+  const s=stats();
+  if(!dying&&!spawning&&now-lastHeroAttack>s.interval){ heroAttack(); lastHeroAttack=now; }
+  if(!dying&&!spawning&&now-lastEnemyAttack>1300){ enemyAttack(); lastEnemyAttack=now; }
+  if(now-lastSave>5000){ save(); lastSave=now; }
+  renderBarsOnly(); requestAnimationFrame(loop);
 }
-function sellItem(id){
-  const idx = state.inventory.findIndex(i => i.id === id);
-  if (idx < 0) return;
-  const item = state.inventory.splice(idx,1)[0];
-  const price = 10 + itemPower(item) * 6;
-  state.gold += price;
-  markInventoryDirty(); playSE('sell'); log(`${item.name}を売った +${price} Gold`); render(true);
-}
+function renderBarsOnly(){ const s=stats(); state.hp=Math.min(state.hp,s.maxHp); $('heroHpText').textContent=`${state.hp}/${s.maxHp}`; $('enemyHpText').textContent=`${Math.max(0,enemy.hp)}/${enemy.maxHp}`; $('expText').textContent=`${state.exp}/${expNeed()}`; $('heroHpBar').style.width=(state.hp/s.maxHp*100)+'%'; $('enemyHpBar').style.width=(Math.max(0,enemy.hp)/enemy.maxHp*100)+'%'; $('expBar').style.width=(state.exp/expNeed()*100)+'%'; }
+function sortInventory(){ state.inventory.sort((a,b)=>power(b)-power(a)); renderAll(); save(); }
+function reset(){ if(!confirm('本当にリセットする？')) return; localStorage.removeItem(SAVE_KEY); state=clone(defaultState); enemy=makeEnemy(); addLog('リセットした'); spawnEnemy(); renderAll(); }
 
-function upgrade(kind){
-  const cost = upgradeCost(kind);
-  if (state.gold < cost) return;
-  state.gold -= cost; state[kind]++;
-  if (kind === 'armorLv') state.heroHp = Math.min(stats().maxHp, state.heroHp + 35);
-  markUiDirty(); playSE('equip'); log('装備を強化した！'); render(true);
-}
-
-function heal(){
-  const cost = Math.max(10, Math.floor(stats().maxHp * 0.25));
-  if (state.gold < cost) return log(`回復には ${cost} Gold 必要`);
-  state.gold -= cost; state.heroHp = stats().maxHp;
-  markUiDirty(); playSE('heal'); log('宿屋で全回復！'); render(true);
-}
-
-function changeStage(){
-  const n = Number($('stageSelect').value);
-  state.stageWorld = Math.floor((n - 1) / 10) + 1;
-  state.stageArea = ((n - 1) % 10) + 1;
-  state.stageKills = 0;
-  markDirty();
-  enemy = makeEnemy();
-  spawnEnemyAnimation();
-  log(`ステージ ${stageText()} に移動した`);
-  render();
-}
-
-function setupStageSelect(force=false){
-  const sel = $('stageSelect');
-  if (!sel) return;
-  if (!force && !stageSelectDirty) return;
-  const selectedStage = stageNumber();
-  sel.innerHTML = '';
-  for (let n = 1; n <= maxStageNumber(); n++) {
-    const w = Math.floor((n - 1) / 10) + 1;
-    const a = ((n - 1) % 10) + 1;
-    const op = document.createElement('option');
-    op.value = n; op.textContent = `${w}-${a}`;
-    if (n === selectedStage) op.selected = true;
-    sel.appendChild(op);
-  }
-  stageSelectDirty = false;
-}
-
-function ensureAudio(){ if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
-function playSE(type){
-  if (state.sound.muted || state.sound.volume <= 0) return;
-  try {
-    ensureAudio();
-    const o = audioCtx.createOscillator();
-    const g = audioCtx.createGain();
-    const now = audioCtx.currentTime;
-    const map = { hit:[220,0.05], crit:[520,0.08], win:[660,0.09], boss:[180,0.18], chest:[880,0.12], open:[740,0.14], drop:[980,0.18], level:[1040,0.22], equip:[430,0.08], sell:[330,0.06], heal:[620,0.12], down:[120,0.22] };
-    const [freq,dur] = map[type] || map.hit;
-    o.type = type === 'down' ? 'sawtooth' : 'square';
-    o.frequency.setValueAtTime(freq, now);
-    o.frequency.exponentialRampToValueAtTime(Math.max(60, freq * 0.55), now + dur);
-    g.gain.setValueAtTime(0.0001, now);
-    g.gain.exponentialRampToValueAtTime(state.sound.volume * 0.12, now + 0.01);
-    g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
-    o.connect(g); g.connect(audioCtx.destination); o.start(now); o.stop(now + dur + 0.02);
-  } catch {}
-}
-
-function showSlash(){ const el = $('slash'); el.classList.remove('show'); void el.offsetWidth; el.classList.add('show'); }
-function showDamage(text){ const el = $('damagePop'); el.textContent = text; el.classList.remove('show'); void el.offsetWidth; el.classList.add('show'); }
-function showLevelUp(){ const el = $('levelupPop'); el.classList.remove('show'); void el.offsetWidth; el.classList.add('show'); }
-function showStageClear(){ const el = $('stagePop'); el.classList.remove('show'); void el.offsetWidth; el.classList.add('show'); }
-function showChestDrop(){ const el = $('chestDrop'); el.classList.remove('show'); void el.offsetWidth; el.classList.add('show'); }
-function flashHero(){ const el = $('hero'); el.classList.remove('hit-flash'); void el.offsetWidth; el.classList.add('hit-flash'); }
-function flashEnemy(){ const el = $('enemy'); el.classList.remove('hit-flash'); void el.offsetWidth; el.classList.add('hit-flash'); }
-function defeatEnemyAnimation(){ const el = $('enemy'); el.classList.remove('enemy-spawn','enemy-defeat'); void el.offsetWidth; el.classList.add('enemy-defeat'); }
-function spawnEnemyAnimation(){
-  const el = $('enemy');
-  enemySpawning = true;
-  el.classList.toggle('boss', enemy.isBoss);
-  el.classList.remove('enemy-defeat','enemy-spawn','hit-flash');
-  void el.offsetWidth;
-  el.classList.add('enemy-spawn');
-  setTimeout(() => { enemySpawning = false; }, 850);
-}
-
-function log(text){
-  const box = $('log'); const line = document.createElement('div'); line.innerHTML = text; box.prepend(line);
-  while (box.children.length > 100) box.lastChild.remove();
-}
-
-function renderTabs(){
-  const tabs = $('bagTabs');
-  if (!tabs) return;
-  tabs.innerHTML = '';
-  for (let i=1;i<=BAG_PAGES;i++){
-    const b=document.createElement('button');
-    b.textContent=i;
-    b.className = i===currentBagPage ? 'active' : '';
-    b.onclick=()=>{currentBagPage=i; renderInventory();};
-    tabs.appendChild(b);
-  }
-}
-
-function showTooltip(item, x=0, y=0){
-  const tip = $('itemTooltip');
-  if (!tip || !item) return;
-  const eq = state.equipped[item.slot];
-  const diff = itemPower(item) - itemPower(eq || {slot:item.slot});
-  tip.innerHTML = `<div class="compare-grid"><div>${itemLines(item)}<div class="tip-actions"><button onclick="equipItem('${item.id}')">装備</button><button onclick="sellItem('${item.id}')">売却</button></div></div><div>${eq ? itemLines(eq) : '<div class="tip-title">現在装備</div><div class="muted">未装備</div>'}<hr><div class="diff ${diff>=0?'plus':'minus'}">戦力差 ${diff>=0?'+':''}${diff}</div></div></div>`;
-  tip.classList.add('show');
-  tip.style.left = Math.min(window.innerWidth - 360, Math.max(12, x + 12)) + 'px';
-  tip.style.top = Math.min(window.innerHeight - 260, Math.max(12, y - 20)) + 'px';
-}
-function hideTooltip(){ const tip=$('itemTooltip'); if(tip) tip.classList.remove('show'); }
-
-function renderInventory(){
-  renderTabs();
-  const eq = $('equippedList');
-  eq.innerHTML = ['weapon','armor','ring'].map(slot => {
-    const i = state.equipped[slot];
-    return `<div class="equip-card ${i ? i.rarityCls : ''}" data-eqid="${slot}"><div class="slot-icon">${i ? itemIcon(i) : '⬚'}</div><div><b>${SLOT_LABEL[slot]}</b><br>${i ? `<span class="${i.rarityCls}">${i.name}</span><small>${itemText(i)}</small>` : '<span class="muted">未装備</span>'}</div></div>`;
-  }).join('');
-
-  const grid = $('inventoryGrid');
-  if (!grid) return;
-  grid.innerHTML = '';
-  const pageSize = 35;
-  const start = (currentBagPage-1)*pageSize;
-  const items = state.inventory.slice(start, start+pageSize);
-  for(let i=0;i<pageSize;i++){
-    const item=items[i];
-    const cell=document.createElement('button');
-    cell.className='inv-cell' + (item ? ` filled ${item.rarityCls}` : '');
-    if(item){
-      cell.innerHTML = `<span class="cell-icon">${itemIcon(item)}</span><span class="cell-rank">${itemPower(item)}</span>`;
-      cell.onclick = (e)=>{ selectedItemId=item.id; showTooltip(item, e.clientX, e.clientY); };
-      cell.onmouseenter = (e)=> showTooltip(item, e.clientX, e.clientY);
-      cell.onmousemove = (e)=> showTooltip(item, e.clientX, e.clientY);
-      cell.onmouseleave = hideTooltip;
-    }
-    grid.appendChild(cell);
-  }
-}
-
-function sortInventory(){
-  state.inventory.sort((a,b)=> itemPower(b)-itemPower(a));
-  markInventoryDirty();
-  playSE('equip'); renderInventory(); save(false);
-}
-
-function render(force=false){
-  const s = stats();
-  state.heroHp = Math.min(state.heroHp, s.maxHp);
-
-  // HPバーなど、戦闘中に動く場所だけ毎フレーム更新
-  $('heroHpText').textContent = `${state.heroHp}/${s.maxHp}`;
-  $('enemyHpText').textContent = `${Math.max(0, enemy.hp)}/${enemy.maxHp}`;
-  $('expText').textContent = `${state.exp}/${expNeed()}`;
-  $('heroHpBar').style.width = `${(state.heroHp / s.maxHp) * 100}%`;
-  $('enemyHpBar').style.width = `${Math.max(0, enemy.hp / enemy.maxHp) * 100}%`;
-  $('expBar').style.width = `${(state.exp / expNeed()) * 100}%`;
-
-  if (!force && !uiDirty) return;
-  uiDirty = false;
-
-  $('heroLevel').textContent = state.level; $('heroLevelBadge').textContent = state.level;
-  $('gold').textContent = state.gold; $('stageText').textContent = stageText(); $('battleStageText').textContent = stageText();
-  $('chestCount').textContent = state.chestCount; $('openChestCount').textContent = state.chestCount;
-  $('atk').textContent = s.atk; $('def').textContent = s.def; $('maxHp').textContent = s.maxHp;
-  $('atkSpeed').textContent = `${(1000 / s.atkSpeed).toFixed(2)}回/秒`;
-  $('stageKills').textContent = `${state.stageKills}/${STAGE_KILLS_NEEDED}`;
-  $('weaponLv').textContent = state.weaponLv; $('armorLv').textContent = state.armorLv; $('ringLv').textContent = state.ringLv;
-  $('weaponCost').textContent = upgradeCost('weaponLv'); $('armorCost').textContent = upgradeCost('armorLv'); $('ringCost').textContent = upgradeCost('ringLv');
-  $('weaponBtn').disabled = state.gold < upgradeCost('weaponLv'); $('armorBtn').disabled = state.gold < upgradeCost('armorLv'); $('ringBtn').disabled = state.gold < upgradeCost('ringLv');
-  $('openChestBtn').disabled = state.chestCount <= 0; $('enemy').classList.toggle('boss', enemy.isBoss);
-  $('muteBtn').textContent = state.sound.muted ? '🔇 SE OFF' : '🔊 SE ON';
-  $('volumeRange').value = Math.round(state.sound.volume * 100);
-  setupStageSelect(force);
-  if (inventoryDirty || force) { inventoryDirty = false; renderInventory(); }
-}
-
-
-function gameLoop(now){
-  try {
-    const s = stats();
-    if (!enemyDying && !enemySpawning && now - lastAttack > s.atkSpeed) { attack(); lastAttack = now; }
-    if (!enemyDying && !enemySpawning && now - lastEnemyAttack > 1300) { enemyAttack(); lastEnemyAttack = now; }
-    saveTimer += 16; if (saveTimer > 5000) { save(false); saveTimer = 0; }
-    render(false);
-  } catch (e) {
-    console.error(e);
-    log('エラーが出たので戦闘を継続できるように復帰するよ: ' + e.message);
-  }
-  requestAnimationFrame(gameLoop);
-}
-
-$('weaponBtn').addEventListener('click', () => upgrade('weaponLv'));
-$('armorBtn').addEventListener('click', () => upgrade('armorLv'));
-$('ringBtn').addEventListener('click', () => upgrade('ringLv'));
-$('healBtn').addEventListener('click', heal);
-$('openChestBtn').addEventListener('click', openChest);
-$('saveBtn').addEventListener('click', () => save(true));
-$('resetBtn').addEventListener('click', reset);
-$('sortBtn').addEventListener('click', sortInventory);
-$('goStageBtn').addEventListener('click', changeStage);
-$('muteBtn').addEventListener('click', () => { state.sound.muted = !state.sound.muted; playSE('equip'); markUiDirty(); render(true); save(false); });
-$('volumeRange').addEventListener('input', e => { state.sound.volume = Number(e.target.value) / 100; state.sound.muted = state.sound.volume === 0; playSE('hit'); markUiDirty(); render(true); save(false); });
+$('openChestBtn').onclick=openChest; $('sortBtn').onclick=sortInventory; $('weaponUp').onclick=()=>upgrade('weaponLv'); $('armorUp').onclick=()=>upgrade('armorLv'); $('ringUp').onclick=()=>upgrade('ringLv'); $('healBtn').onclick=heal; $('saveBtn').onclick=()=>save(true); $('resetBtn').onclick=reset; $('goStage').onclick=changeStage;
+$('muteBtn').onclick=()=>{state.sound.muted=!state.sound.muted; play('equip'); renderAll(); save();};
+$('volume').oninput=(e)=>{state.sound.volume=Number(e.target.value)/100; state.sound.muted=state.sound.volume===0; renderAll(); save();};
 window.addEventListener('pointerdown', ensureAudio, {once:true});
-
-log('冒険開始！ヒーローは右、敵は左から出てくるよ');
-spawnEnemyAnimation(); render(true); requestAnimationFrame(gameLoop);
+addLog('冒険開始！敵は左、英雄は右。自動で戦うよ。');
+refreshStageSelect(); spawnEnemy(); renderAll(); requestAnimationFrame(loop);
