@@ -725,3 +725,54 @@
     min-height:0!important;
   }
 }
+
+/* v48: card frame tightly follows scaled card image + restore PC hover tooltip */
+@media (hover:hover) and (pointer:fine){
+  .tooltip:not(.hidden){display:block!important;}
+  .inventory .item:hover{filter:brightness(1.18)!important;outline:1px solid rgba(255,215,107,.75)!important;}
+}
+
+/* 高さが足りない時はカード枠ごと同じ比率で縮小する。枠だけ大きく残さない */
+@media (max-height:700px), (orientation:landscape){
+  :root{
+    --mbh-fit-card-h:clamp(105px, calc(100dvh - var(--mbh-topbar-h, 46px) - 120px), 300px);
+    --mbh-fit-card-w:calc(var(--mbh-fit-card-h) * 0.710526);
+  }
+  .enemy-zone,.hero-zone{
+    width:var(--mbh-fit-card-w)!important;
+  }
+  .card{
+    width:var(--mbh-fit-card-w)!important;
+    height:var(--mbh-fit-card-h)!important;
+    aspect-ratio:270 / 380!important;
+  }
+  .card img{
+    width:100%!important;
+    height:100%!important;
+    object-fit:cover!important;
+    background:#070707!important;
+  }
+  .enemy-card img{transform:scaleX(-1)!important;}
+}
+
+@media (max-width:760px) and (orientation:portrait) and (max-height:780px){
+  :root{
+    --mbh-fit-card-h:clamp(170px, calc(100dvh - var(--mbh-topbar-h, 74px) - 235px), 285px);
+    --mbh-fit-card-w:calc(var(--mbh-fit-card-h) * 0.710526);
+  }
+  .enemy-zone,.hero-zone{
+    width:var(--mbh-fit-card-w)!important;
+  }
+  .card{
+    width:var(--mbh-fit-card-w)!important;
+    height:var(--mbh-fit-card-h)!important;
+    aspect-ratio:270 / 380!important;
+  }
+  .card img{
+    width:100%!important;
+    height:100%!important;
+    object-fit:cover!important;
+    background:#070707!important;
+  }
+  .enemy-card img{transform:scaleX(-1)!important;}
+}
