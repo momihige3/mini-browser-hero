@@ -44,11 +44,15 @@ const state = {
   log:[], debug:{killEnemy:false, killHero:false}, audio:null, masterGain:null, bgmGain:null, bgmTimer:null, audioUnlocked:false
 };
 
+const SAVE_KEY = 'mini-browser-hero-save-v36';
+let saveTimer = null;
+
 function init(){
   slots.forEach(slot => state.equip[slot]=null);
   state.equip['武器'] = makeItem('武器', rarities[1]);
   state.equip['鎧'] = makeItem('鎧', rarities[0]);
   for(let i=0;i<10;i++) state.inventory.push(makeRandomItem());
+  loadGame();
   bind();
   startAudio();
   state.lastHeroAttack = -999999;
@@ -57,6 +61,65 @@ function init(){
   renderAll();
   log('ゲーム開始。騎士が自動で戦闘を開始。');
   requestAnimationFrame(loop);
+  setInterval(saveGame, 5000);
+  window.addEventListener('beforeunload', saveGame);
+}
+
+
+function cleanItem(it){
+  if(!it) return null;
+  return {...it};
+}
+function serializeEquip(){
+  const out={};
+  slots.forEach(slot=>out[slot]=cleanItem(state.equip[slot]));
+  return out;
+}
+function saveGame(){
+  try{
+    const data={
+      version:36,
+      level:state.level, xp:state.xp, xpNext:state.xpNext, lastXpGain:state.lastXpGain,
+      chests:state.chests, mats:state.mats, defeated:state.defeated,
+      hp:Math.max(1, Math.floor(state.hp||1)), base:state.base,
+      inventory:state.inventory.map(cleanItem), equip:serializeEquip(), selectedEquip:state.selectedEquip,
+      volume:state.volume, debug:state.debug,
+      savedAt:Date.now()
+    };
+    localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+  }catch(e){ console.warn('save failed', e); }
+}
+function loadGame(){
+  try{
+    const raw = localStorage.getItem(SAVE_KEY) || localStorage.getItem('mini-browser-hero-save');
+    if(!raw) return;
+    const data=JSON.parse(raw);
+    if(!data || typeof data!=='object') return;
+    state.level = Number(data.level)||state.level;
+    state.xp = Number(data.xp)||0;
+    state.xpNext = Number(data.xpNext)||state.xpNext;
+    state.lastXpGain = Number(data.lastXpGain)||0;
+    state.chests = Number(data.chests)||0;
+    state.mats = Number(data.mats)||0;
+    state.defeated = Number(data.defeated)||0;
+    if(data.base) state.base = {...state.base, ...data.base};
+    state.inventory = Array.isArray(data.inventory) ? data.inventory.filter(Boolean) : state.inventory;
+    if(data.equip){ slots.forEach(slot=>{ state.equip[slot] = data.equip[slot] || null; }); }
+    state.selectedEquip = data.selectedEquip || null;
+    state.volume = Math.min(2, Math.max(0, Number(data.volume ?? state.volume)));
+    state.debug = {...state.debug, ...(data.debug||{})};
+    state.hp = Math.min(Number(data.hp)||maxHp(), maxHp());
+    if(state.hp<=0) state.hp=Math.floor(maxHp()*0.5);
+    state.down=false; state.deathDance=false;
+    console.info('save loaded');
+  }catch(e){ console.warn('load failed', e); }
+}
+function resetSave(){
+  localStorage.removeItem(SAVE_KEY);
+}
+function scheduleSave(){
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(saveGame, 250);
 }
 
 function bind(){
@@ -73,6 +136,7 @@ function bind(){
       state.volume = Number(els.volumeSlider.value)/100;
       if(els.volumeText) els.volumeText.textContent = `${Math.round(state.volume*100)}%`;
       applyVolume();
+      scheduleSave();
       startAudio();
     };
   }
@@ -83,11 +147,11 @@ function bind(){
   ['pointerdown','mousedown','keydown','touchstart','wheel'].forEach(ev=>document.addEventListener(ev, startAudio, {once:true, passive:true}));
   els.debugBtn.onclick = () => { els.debugPanel.classList.toggle('hidden'); startAudio(); };
   els.debugClose.onclick = () => els.debugPanel.classList.add('hidden');
-  els.debugAddChests.onclick = () => { state.chests += 50; renderAll(); log('デバッグ：宝箱を50個追加。','good'); };
-  els.debugBestSword.onclick = () => { const it=makeDebugSword(); state.inventory.unshift(it); renderAll(); log('デバッグ：最強剣を倉庫に追加。','good'); };
-  els.debugBestAccessory.onclick = () => { const a=makeDebugAccessory('リング'); const b=makeDebugAccessory('アミュレット'); state.inventory.unshift(a,b); renderAll(); log('デバッグ：最強アクセを倉庫に追加。','good'); };
-  els.debugKillEnemy.onchange = () => { state.debug.killEnemy = els.debugKillEnemy.checked; log(`デバッグ：敵への攻撃で即死 ${state.debug.killEnemy?'ON':'OFF'}`, state.debug.killEnemy?'danger':''); };
-  els.debugKillHero.onchange = () => { state.debug.killHero = els.debugKillHero.checked; log(`デバッグ：敵からの攻撃で即死 ${state.debug.killHero?'ON':'OFF'}`, state.debug.killHero?'danger':''); };
+  els.debugAddChests.onclick = () => { state.chests += 50; renderAll(); log('デバッグ：宝箱を50個追加。','good'); scheduleSave(); };
+  els.debugBestSword.onclick = () => { const it=makeDebugSword(); state.inventory.unshift(it); renderAll(); log('デバッグ：最強剣を倉庫に追加。','good'); scheduleSave(); };
+  els.debugBestAccessory.onclick = () => { const a=makeDebugAccessory('リング'); const b=makeDebugAccessory('アミュレット'); state.inventory.unshift(a,b); renderAll(); log('デバッグ：最強アクセを倉庫に追加。','good'); scheduleSave(); };
+  els.debugKillEnemy.onchange = () => { state.debug.killEnemy = els.debugKillEnemy.checked; log(`デバッグ：敵への攻撃で即死 ${state.debug.killEnemy?'ON':'OFF'}`, state.debug.killEnemy?'danger':''); scheduleSave(); };
+  els.debugKillHero.onchange = () => { state.debug.killHero = els.debugKillHero.checked; log(`デバッグ：敵からの攻撃で即死 ${state.debug.killHero?'ON':'OFF'}`, state.debug.killHero?'danger':''); scheduleSave(); };
 
   els.openAllBtn.onclick = () => openChests(state.chests);
   els.bestEquipBtn.onclick = bestEquip;
@@ -274,7 +338,7 @@ function enemyDefeated(){
   state.lastXpGain = gainXp; state.xp += gainXp; if(Math.random()<.33) state.chests++;
   if(Math.random()<.18){ const it=makeRandomItem(); state.inventory.unshift(it); log(`${it.name} を獲得。`,'good'); }
   log(`${e.name} を撃破！ 経験値+${gainXp}`,'good'); playSfx('win');
-  checkLevelUp(); renderAll();
+  checkLevelUp(); renderAll(); scheduleSave();
   setTimeout(spawnEnemy,850);
 }
 function checkLevelUp(){
@@ -416,24 +480,24 @@ function itemPower(it){return (it.atk||0)*3 + (it.def||0)*2 + (it.hp||0)*.25 + (
 function equipItem(it){
   const idx=state.inventory.findIndex(x=>x.id===it.id); if(idx>=0) state.inventory.splice(idx,1);
   if(state.equip[it.slot]) state.inventory.unshift(state.equip[it.slot]);
-  state.equip[it.slot]=it; state.hp=Math.min(state.hp,maxHp()); log(`${it.name} を装備。`,'good'); renderAll();
+  state.equip[it.slot]=it; state.hp=Math.min(state.hp,maxHp()); log(`${it.name} を装備。`,'good'); renderAll(); scheduleSave();
 }
 function bestEquip(){
   let changed=0;
   [...state.inventory].forEach(it=>{ if(!state.equip[it.slot] || itemPower(it)>itemPower(state.equip[it.slot])){ equipItem(it); changed++; } });
   log(`最強装備を一括装備（${changed}件）。`,'good'); renderAll();
 }
-function sellByRarity(rarity){ const before=state.inventory.length; const label=rarity==='normal'?'ノーマル':rarity==='rare'?'レア':rarity; state.inventory=state.inventory.filter(it=>it.rarity!==rarity); log(`${label}装備を${before-state.inventory.length}個売却。`); renderAll(); }
-function sellAll(){ const before=state.inventory.length; state.inventory=[]; log(`倉庫装備を${before}個すべて売却。`); renderAll(); }
+function sellByRarity(rarity){ const before=state.inventory.length; const label=rarity==='normal'?'ノーマル':rarity==='rare'?'レア':rarity; state.inventory=state.inventory.filter(it=>it.rarity!==rarity); log(`${label}装備を${before-state.inventory.length}個売却。`); renderAll(); scheduleSave(); }
+function sellAll(){ const before=state.inventory.length; state.inventory=[]; log(`倉庫装備を${before}個すべて売却。`); renderAll(); scheduleSave(); }
 function openChests(n){
   const count=Math.min(n,state.chests); if(count<=0){log('宝箱がない。','danger');return;}
   for(let i=0;i<count;i++){ state.chests--; if(Math.random()<.55) state.inventory.unshift(makeRandomItem()); else state.mats+=randInt(1,3); }
-  log(`宝箱を${count}個開封。`,'good'); renderAll();
+  log(`宝箱を${count}個開封。`,'good'); renderAll(); scheduleSave();
 }
 function upgradeSelected(){
   const slot=state.selectedEquip; if(!slot || !state.equip[slot]) return;
   if(state.mats<=0){ log('強化石が足りない。','danger'); return; }
-  const it=state.equip[slot]; state.mats--; it.level++; it.atk=Math.floor((it.atk||0)*1.08)+(it.slot==='武器'?3:0); it.def=Math.floor((it.def||0)*1.08)+(it.slot!=='武器'?2:0); it.hp=Math.floor((it.hp||0)*1.06); log(`${it.name} +${it.level} に強化。`,'good'); renderAll();
+  const it=state.equip[slot]; state.mats--; it.level++; it.atk=Math.floor((it.atk||0)*1.08)+(it.slot==='武器'?3:0); it.def=Math.floor((it.def||0)*1.08)+(it.slot!=='武器'?2:0); it.hp=Math.floor((it.hp||0)*1.06); log(`${it.name} +${it.level} に強化。`,'good'); renderAll(); scheduleSave();
 }
 
 

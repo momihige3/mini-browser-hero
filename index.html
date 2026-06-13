@@ -5,7 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>ミニブラウザヒーロー</title>
   <link rel="stylesheet" href="style.css" />
-<!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "f48e7088e55c41f4a0a6044f8bf3531b"}'></script><!-- End Cloudflare Web Analytics -->
+
+    <!-- Cloudflare Web Analytics -->
+    <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token":"f48e7088e55c41f4a0a6044f8bf3531b"}'></script>
+    <!-- End Cloudflare Web Analytics -->
 </head>
 <body>
   <div id="game">
@@ -52,6 +55,7 @@
       </section>
 
       <aside class="side-panel">
+        <div class="menu-col menu-left">
         <div class="panel hero-stats">
           <h2>ステータス</h2>
           <div class="stat-grid">
@@ -71,6 +75,8 @@
           <button id="upgradeBtn" class="wide">装備を選択して強化</button>
         </div>
 
+        </div>
+        <div class="menu-col menu-right">
         <div class="panel inventory-panel">
           <h2>倉庫</h2>
           <div class="inventory-actions">
@@ -87,6 +93,7 @@
         <div class="panel log-panel">
           <h2>バトルログ</h2>
           <div id="log" class="log"></div>
+        </div>
         </div>
       </aside>
     </main>
