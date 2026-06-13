@@ -41,7 +41,7 @@ const state = {
   level:1, xp:0, xpNext:80, chests:0, mats:3, defeated:0,
   base:{hp:520, atk:48, def:14}, hp:520, enemy:null, enemyHp:1,
   inventory:[], equip:{}, down:false, downUntil:0, deathDance:false, deathDanceUntil:0, lastHeroAttack:0, lastEnemyAttack:0,
-  log:[], debug:{killEnemy:false, killHero:false}, audio:null, masterGain:null, bgmGain:null, bgmTimer:null, audioUnlocked:false, mobileMuted:false, menuPage:'stats'
+  log:[], debug:{killEnemy:false, killHero:false}, audio:null, masterGain:null, bgmGain:null, bgmTimer:null, audioUnlocked:false, mobileMuted:false, menuPage:'stats', inventoryMenuItemId:null
 };
 
 const SAVE_KEY = 'mini-browser-hero-save-v36';
@@ -62,8 +62,7 @@ function updateMuteButton(){
   els.muteBtn.textContent = state.mobileMuted ? '🔇 ミュート' : '🔊 音ON';
   els.muteBtn.setAttribute('aria-pressed', state.mobileMuted ? 'true' : 'false');
   if(els.audioHint){
-    els.audioHint.classList.toggle('hidden', !mobile || !state.mobileMuted);
-    els.audioHint.textContent = 'タップで音声ON';
+    els.audioHint.classList.add('hidden');
   }
 }
 function setMobileMuted(flag){
@@ -201,11 +200,17 @@ function bind(){
   // iPhone/Safari はユーザー操作の直後でないと音声が開始できない。
   // 画面タップ・音声ONボタン・各UI操作の全部から解除を試す。
   if(els.audioHint){
-    els.audioHint.classList.remove('hidden');
-    els.audioHint.onclick = (e) => { e.preventDefault(); if(isMobileAudioMode()) setMobileMuted(false); startAudio(); };
+    els.audioHint.classList.add('hidden');
+    els.audioHint.onclick = null;
   }
   const audioEvents = ['pointerdown','pointerup','click','touchstart','touchend','mousedown','keydown'];
   audioEvents.forEach(ev=>document.addEventListener(ev, () => { if(!isMobileAudioMode() || !state.mobileMuted) startAudio(); }, {passive:true}));
+  document.addEventListener('click', (e) => {
+    if(!els.inventory || els.inventory.contains(e.target)) return;
+    state.inventoryMenuItemId = null;
+    const menu = document.getElementById('inventoryActionMenu');
+    if(menu) menu.remove();
+  });
   setTimeout(()=>{ if(!isMobileAudioMode() || !state.mobileMuted) startAudio(); }, 300);
   els.debugBtn.onclick = () => { els.debugPanel.classList.toggle('hidden'); startAudio(); };
   if(els.muteBtn) els.muteBtn.onclick = (e) => { e.preventDefault(); setMobileMuted(!state.mobileMuted); if(!state.mobileMuted) startAudio(); };
@@ -577,6 +582,8 @@ function applyNameBonus(it){
 
 function itemPower(it){return (it.atk||0)*3 + (it.def||0)*2 + (it.hp||0)*.25 + (it.fireRes||0)*400 + (it.fireDmg||0)*420 + (it.thunderDmg||0)*420 + (it.fireDamageHeal||0)*550 + (it.deathDanceChance||0)*700 + (it.crit||0)*500 + (it.lifeSteal||0)*600 + (it.guard||0)*500 + it.level*15;}
 function equipItem(it){
+  state.inventoryMenuItemId = null;
+  const actionMenu=document.getElementById('inventoryActionMenu'); if(actionMenu) actionMenu.remove();
   const idx=state.inventory.findIndex(x=>x.id===it.id); if(idx>=0) state.inventory.splice(idx,1);
   if(state.equip[it.slot]) state.inventory.unshift(state.equip[it.slot]);
   state.equip[it.slot]=it; state.hp=Math.min(state.hp,maxHp()); log(`${it.name} を装備。`,'good'); renderAll(); scheduleSave();
@@ -647,8 +654,50 @@ function renderEquip(){
 }
 function renderInventory(){
   els.inventory.innerHTML='';
-  state.inventory.forEach(it=>{ const div=document.createElement('div'); div.className=`item ${it.rarity}`; div.innerHTML=`<b>${it.name}</b><span>${it.slot}</span>`; div.onclick=()=>equipItem(it); div.onmousemove=(e)=>showTip(e,it); div.onmouseleave=()=>els.tooltip.classList.add('hidden'); els.inventory.appendChild(div); });
+  const selectedId = state.inventoryMenuItemId;
+  state.inventory.forEach(it=>{
+    const div=document.createElement('div');
+    div.className=`item ${it.rarity}${selectedId===it.id?' selected-inventory':''}`;
+    div.innerHTML=`<b>${it.name}</b><span>${it.slot}</span>`;
+    div.onclick=(e)=>{ e.preventDefault(); e.stopPropagation(); showInventoryActionMenu(it, div); };
+    div.onmousemove=(e)=>showTip(e,it);
+    div.onmouseleave=()=>{ if(state.inventoryMenuItemId!==it.id) els.tooltip.classList.add('hidden'); };
+    els.inventory.appendChild(div);
+    if(selectedId===it.id) setTimeout(()=>showInventoryActionMenu(it, div), 0);
+  });
   if(els.openAllBtn){ els.openAllBtn.style.display='none'; }
+}
+
+function showInventoryActionMenu(it, anchor){
+  state.inventoryMenuItemId = it.id;
+  document.querySelectorAll('.item.selected-inventory').forEach(el=>el.classList.remove('selected-inventory'));
+  if(anchor) anchor.classList.add('selected-inventory');
+  let menu = document.getElementById('inventoryActionMenu');
+  if(!menu){
+    menu = document.createElement('div');
+    menu.id = 'inventoryActionMenu';
+    menu.className = 'inventory-action-menu';
+    document.body.appendChild(menu);
+  }
+  const current=state.equip[it.slot];
+  const diff=current ? Math.round(itemPower(it)-itemPower(current)) : 0;
+  menu.innerHTML = `<div class="inventory-action-title"><b>${escapeHtml(it.name)}+${it.level}</b><small>${escapeHtml(it.slot)} / ${escapeHtml(it.rarityName||it.rarity)}</small></div><div class="inventory-action-summary">${escapeHtml(itemSummary(it)||'追加能力なし')}${current?`<br>現在: ${escapeHtml(current.name)}+${current.level} / 戦力差: ${diff>=0?'+':''}${diff}`:'<br>現在: 未装備'}</div><div class="inventory-action-buttons"><button type="button" data-action="equip">装備</button><button type="button" data-action="cancel">キャンセル</button></div>`;
+  const r = anchor.getBoundingClientRect();
+  const width = Math.min(300, window.innerWidth - 16);
+  let left = Math.min(Math.max(8, r.left), window.innerWidth - width - 8);
+  let top = r.bottom + 6;
+  menu.style.width = width + 'px';
+  menu.style.left = left + 'px';
+  menu.style.top = top + 'px';
+  menu.classList.remove('hidden');
+  requestAnimationFrame(()=>{
+    const mr = menu.getBoundingClientRect();
+    if(mr.bottom > window.innerHeight - 8){
+      menu.style.top = Math.max(8, r.top - mr.height - 6) + 'px';
+    }
+  });
+  menu.querySelector('[data-action="equip"]').onclick=(e)=>{ e.stopPropagation(); state.inventoryMenuItemId=null; menu.remove(); els.tooltip.classList.add('hidden'); equipItem(it); };
+  menu.querySelector('[data-action="cancel"]').onclick=(e)=>{ e.stopPropagation(); state.inventoryMenuItemId=null; menu.remove(); els.tooltip.classList.add('hidden'); renderInventory(); };
 }
 function itemSummary(it){
   const arr=[];
