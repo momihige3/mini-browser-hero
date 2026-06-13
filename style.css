@@ -945,3 +945,8 @@ body.using-touch .tooltip{display:none!important;}
 }
 
 .right-panel,.warehouse{min-height:0}.warehouse-list{overflow-y:auto;max-height:60vh;}
+
+/* v55: バトル背景ランダム切替 */
+.battle-bg{transition:opacity .45s ease, filter .45s ease, transform .45s ease;}
+.battle-bg.bg-changing{animation:battleBgChange .75s ease;}
+@keyframes battleBgChange{0%{opacity:.35;transform:scale(1.08)}100%{opacity:1;transform:scale(1.04)}}

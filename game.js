@@ -4,6 +4,7 @@ document.addEventListener('contextmenu', e => e.preventDefault());
 
 const $ = (id) => document.getElementById(id);
 const els = {
+  battleBg:document.querySelector('.battle-bg'),
   chests:$('chests'), mats:$('mats'), volumeSlider:$('volumeSlider'), muteBtn:$('muteBtn'), expLabel:$('expLabel'), expGainLabel:$('expGainLabel'), expFill:$('expFill'),
   enemyName:$('enemyName'), enemyLevel:$('enemyLevel'), enemyTag:$('enemyTag'), enemyImg:$('enemyImg'), enemyCard:$('enemyCard'), enemyHpFill:$('enemyHpFill'), enemyHpText:$('enemyHpText'),
   heroCard:$('heroCard'), heroHpFill:$('heroHpFill'), heroHpText:$('heroHpText'), heroLevel:$('heroLevel'), deathDanceStatus:$('deathDanceStatus'),
@@ -12,6 +13,17 @@ const els = {
   equipList:$('equipList'), upgradeBtn:$('upgradeBtn'), inventory:$('inventory'), tooltip:$('tooltip'), log:$('log'),
   equipToggleBtn:$('equipToggleBtn'), sidePanel:document.querySelector('.side-panel'), volumeSlider:$('volumeSlider'), volumeText:$('volumeText'), debugBtn:$('debugBtn'), debugPanel:$('debugPanel'), debugAddChests:$('debugAddChests'), debugResetData:$('debugResetData'), debugBestSword:$('debugBestSword'), debugBestAccessory:$('debugBestAccessory'), debugKillEnemy:$('debugKillEnemy'), debugKillHero:$('debugKillHero'), debugClose:$('debugClose'), openAllBtn:$('openAllBtn'), bestEquipBtn:$('bestEquipBtn'), sellSelectedBtn:$('sellSelectedBtn'), sellNormalChk:$('sellNormalChk'), sellRareChk:$('sellRareChk'), sellLegendaryChk:$('sellLegendaryChk')
 };
+
+
+const BATTLE_BACKGROUNDS = [
+  {id:'forest', name:'草原遺跡', src:'assets/bg_forest_ruins.jpg'},
+  {id:'city', name:'市街地', src:'assets/bg_city.jpg'},
+  {id:'desert', name:'砂漠', src:'assets/bg_desert.jpg'},
+  {id:'volcano', name:'火山地帯', src:'assets/bg_volcano.jpg'},
+  {id:'meteor_hill', name:'流星の丘', src:'assets/bg_meteor_hill.jpg'},
+];
+let currentBattleBgId = '';
+let battleBgTimer = null;
 
 const ENEMIES = [
   {id:'slime', name:'スライム', type:'雑魚', img:'assets/enemy_slime.jpg', element:'normal', hp:1200, atk:28, def:5, xp:22, gold:25, weight:'normal'},
@@ -48,6 +60,22 @@ const SAVE_KEY = 'mini-browser-hero-save-v36';
 let isResettingUserData = false;
 let saveTimer = null;
 
+
+
+function switchRandomBattleBackground(initial=false){
+  if(!els.battleBg || !BATTLE_BACKGROUNDS.length) return;
+  let candidates = BATTLE_BACKGROUNDS;
+  if(BATTLE_BACKGROUNDS.length > 1 && currentBattleBgId){
+    candidates = BATTLE_BACKGROUNDS.filter(bg => bg.id !== currentBattleBgId);
+  }
+  const bg = candidates[Math.floor(Math.random() * candidates.length)] || BATTLE_BACKGROUNDS[0];
+  currentBattleBgId = bg.id;
+  els.battleBg.style.backgroundImage = `url('${bg.src}')`;
+  els.battleBg.dataset.bgName = bg.name;
+  els.battleBg.classList.remove('bg-changing');
+  void els.battleBg.offsetWidth;
+  if(!initial) els.battleBg.classList.add('bg-changing');
+}
 
 function isMobileAudioMode(){
   return window.matchMedia('(max-width: 760px), (pointer: coarse)').matches;
@@ -114,6 +142,9 @@ function init(){
   state.inventory = [];
   loadGame();
   bind();
+  switchRandomBattleBackground(true);
+  if(battleBgTimer) clearInterval(battleBgTimer);
+  battleBgTimer = setInterval(()=>switchRandomBattleBackground(false), 5 * 60 * 1000);
   if(!state.mobileMuted) startAudio();
   state.lastHeroAttack = -999999;
   state.lastEnemyAttack = performance.now();
