@@ -18,6 +18,7 @@
       <div class="controls">
         <button id="equipToggleBtn">メニュー</button>
         <button id="debugBtn">デバッグ</button>
+        <button id="muteBtn" class="mute-btn" type="button" aria-pressed="true">🔇 ミュート</button>
         <label class="volume-control">音量 <input id="volumeSlider" type="range" min="0" max="200" value="100" step="1"><span id="volumeText">100%</span></label>
       </div>
     </header>
@@ -56,6 +57,12 @@
       </section>
 
       <aside class="side-panel">
+        <nav class="mobile-menu-tabs" aria-label="メニューページ切り替え">
+          <button type="button" data-menu-page="stats" class="active">ステータス</button>
+          <button type="button" data-menu-page="equip">装備/強化</button>
+          <button type="button" data-menu-page="inventory">倉庫</button>
+          <button type="button" data-menu-page="log">ログ</button>
+        </nav>
         <div class="menu-col menu-left">
         <div class="panel hero-stats">
           <h2>ステータス</h2>

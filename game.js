@@ -4,7 +4,7 @@ document.addEventListener('contextmenu', e => e.preventDefault());
 
 const $ = (id) => document.getElementById(id);
 const els = {
-  chests:$('chests'), mats:$('mats'), volumeSlider:$('volumeSlider'), expLabel:$('expLabel'), expGainLabel:$('expGainLabel'), expFill:$('expFill'),
+  chests:$('chests'), mats:$('mats'), volumeSlider:$('volumeSlider'), muteBtn:$('muteBtn'), expLabel:$('expLabel'), expGainLabel:$('expGainLabel'), expFill:$('expFill'),
   enemyName:$('enemyName'), enemyLevel:$('enemyLevel'), enemyTag:$('enemyTag'), enemyImg:$('enemyImg'), enemyCard:$('enemyCard'), enemyHpFill:$('enemyHpFill'), enemyHpText:$('enemyHpText'),
   heroCard:$('heroCard'), heroHpFill:$('heroHpFill'), heroHpText:$('heroHpText'), heroLevel:$('heroLevel'), deathDanceStatus:$('deathDanceStatus'),
   enemyEffectLayer:$('enemyEffectLayer'), enemyFloats:$('enemyFloats'), levelEffect:$('levelEffect'), centerBanner:$('centerBanner'), dropToast:$('dropToast'), audioHint:$('audioHint'), deathAura:$('deathAura'), downOverlay:$('downOverlay'), downCount:$('downCount'),
@@ -41,13 +41,54 @@ const state = {
   level:1, xp:0, xpNext:80, chests:0, mats:3, defeated:0,
   base:{hp:520, atk:48, def:14}, hp:520, enemy:null, enemyHp:1,
   inventory:[], equip:{}, down:false, downUntil:0, deathDance:false, deathDanceUntil:0, lastHeroAttack:0, lastEnemyAttack:0,
-  log:[], debug:{killEnemy:false, killHero:false}, audio:null, masterGain:null, bgmGain:null, bgmTimer:null, audioUnlocked:false
+  log:[], debug:{killEnemy:false, killHero:false}, audio:null, masterGain:null, bgmGain:null, bgmTimer:null, audioUnlocked:false, mobileMuted:false, menuPage:'stats'
 };
 
 const SAVE_KEY = 'mini-browser-hero-save-v36';
 let isResettingUserData = false;
 let saveTimer = null;
 
+
+function isMobileAudioMode(){
+  return window.matchMedia('(max-width: 760px), (pointer: coarse)').matches;
+}
+function isCompactMenuMode(){
+  return window.matchMedia('(max-width: 1279px), (max-height: 700px)').matches;
+}
+function updateMuteButton(){
+  if(!els.muteBtn) return;
+  const mobile = isMobileAudioMode();
+  els.muteBtn.style.display = mobile ? 'inline-flex' : 'none';
+  els.muteBtn.textContent = state.mobileMuted ? '🔇 ミュート' : '🔊 音ON';
+  els.muteBtn.setAttribute('aria-pressed', state.mobileMuted ? 'true' : 'false');
+  if(els.audioHint){
+    els.audioHint.classList.toggle('hidden', !mobile || !state.mobileMuted);
+    els.audioHint.textContent = 'タップで音声ON';
+  }
+}
+function setMobileMuted(flag){
+  state.mobileMuted = !!flag;
+  applyVolume();
+  updateMuteButton();
+  scheduleSave();
+}
+function setMenuPage(page){
+  state.menuPage = page || 'stats';
+  const map = {stats:'.hero-stats', equip:'.equip-panel', inventory:'.inventory-panel', log:'.log-panel'};
+  document.querySelectorAll('.mobile-menu-tabs button').forEach(btn=>btn.classList.toggle('active', btn.dataset.menuPage === state.menuPage));
+  document.querySelectorAll('.side-panel .panel').forEach(p=>p.classList.remove('active-page'));
+  const target = document.querySelector(map[state.menuPage] || map.stats);
+  if(target) target.classList.add('active-page');
+}
+function syncCompactLayout(){
+  updateMuteButton();
+  setMenuPage(state.menuPage || 'stats');
+  if(!isCompactMenuMode() && window.innerWidth >= 1280){
+    state.uiOpen=false;
+    els.sidePanel.classList.remove('open');
+    els.equipToggleBtn.textContent='メニュー';
+  }
+}
 function init(){
   // 初期状態は完全に空にする。
   // 以前はここで固定装備と倉庫アイテムを作っていたため、
@@ -55,8 +96,9 @@ function init(){
   slots.forEach(slot => state.equip[slot]=null);
   state.inventory = [];
   loadGame();
+  if(isMobileAudioMode()) state.mobileMuted = true;
   bind();
-  startAudio();
+  if(!isMobileAudioMode() || !state.mobileMuted) startAudio();
   state.lastHeroAttack = -999999;
   state.lastEnemyAttack = performance.now();
   spawnEnemy();
@@ -86,7 +128,7 @@ function saveGame(){
       chests:state.chests, mats:state.mats, defeated:state.defeated,
       hp:Math.max(1, Math.floor(state.hp||1)), base:state.base,
       inventory:state.inventory.map(cleanItem), equip:serializeEquip(), selectedEquip:state.selectedEquip,
-      volume:state.volume, debug:state.debug,
+      volume:state.volume, mobileMuted:state.mobileMuted, debug:state.debug,
       savedAt:Date.now()
     };
     localStorage.setItem(SAVE_KEY, JSON.stringify(data));
@@ -111,6 +153,7 @@ function loadGame(){
     state.selectedEquip = data.selectedEquip || null;
     state.volume = Math.min(2, Math.max(0, Number(data.volume ?? state.volume)));
     state.debug = {...state.debug, ...(data.debug||{})};
+    if(typeof data.mobileMuted === 'boolean') state.mobileMuted = data.mobileMuted;
     state.hp = Math.min(Number(data.hp)||maxHp(), maxHp());
     if(state.hp<=0) state.hp=Math.floor(maxHp()*0.5);
     state.down=false; state.deathDance=false;
@@ -159,12 +202,14 @@ function bind(){
   // 画面タップ・音声ONボタン・各UI操作の全部から解除を試す。
   if(els.audioHint){
     els.audioHint.classList.remove('hidden');
-    els.audioHint.onclick = (e) => { e.preventDefault(); startAudio(); };
+    els.audioHint.onclick = (e) => { e.preventDefault(); if(isMobileAudioMode()) setMobileMuted(false); startAudio(); };
   }
   const audioEvents = ['pointerdown','pointerup','click','touchstart','touchend','mousedown','keydown'];
-  audioEvents.forEach(ev=>document.addEventListener(ev, startAudio, {passive:true}));
-  setTimeout(startAudio, 300);
+  audioEvents.forEach(ev=>document.addEventListener(ev, () => { if(!isMobileAudioMode() || !state.mobileMuted) startAudio(); }, {passive:true}));
+  setTimeout(()=>{ if(!isMobileAudioMode() || !state.mobileMuted) startAudio(); }, 300);
   els.debugBtn.onclick = () => { els.debugPanel.classList.toggle('hidden'); startAudio(); };
+  if(els.muteBtn) els.muteBtn.onclick = (e) => { e.preventDefault(); setMobileMuted(!state.mobileMuted); if(!state.mobileMuted) startAudio(); };
+  document.querySelectorAll('.mobile-menu-tabs button').forEach(btn=>btn.onclick=()=>setMenuPage(btn.dataset.menuPage));
   els.debugClose.onclick = () => els.debugPanel.classList.add('hidden');
   if(els.debugResetData) els.debugResetData.onclick = resetUserData;
   els.debugAddChests.onclick = () => { for(let i=0;i<50;i++) state.inventory.unshift(makeRandomItem()); renderAll(); log('デバッグ：装備を50個追加。','good'); scheduleSave(); };
@@ -179,14 +224,12 @@ function bind(){
   els.upgradeBtn.onclick = upgradeSelected;
   window.addEventListener('resize', syncMenuByWidth);
   syncMenuByWidth();
+  setMenuPage(state.menuPage || 'stats');
+  updateMuteButton();
 }
 
 function syncMenuByWidth(){
-  if(window.innerWidth >= 1280){
-    state.uiOpen=false;
-    els.sidePanel.classList.remove('open');
-    els.equipToggleBtn.textContent='メニュー';
-  }
+  syncCompactLayout();
 }
 
 function calcStats(){
@@ -462,7 +505,7 @@ function startAudio(){
   }
 }
 function applyVolume(){
-  if(state.masterGain) state.masterGain.gain.value = Math.max(0, Math.min(2, state.volume));
+  if(state.masterGain) state.masterGain.gain.value = state.mobileMuted ? 0 : Math.max(0, Math.min(2, state.volume));
 }
 function tone(freq=440, dur=.08, type='sine', vol=.05){
   if(!state.audio || !state.masterGain) return;

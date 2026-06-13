@@ -441,3 +441,76 @@
     white-space:nowrap!important;
   }
 }
+
+
+/* v44: mobile mute button + compact menu pages + landscape fit */
+.mute-btn{display:none;align-items:center;justify-content:center;gap:4px;white-space:nowrap;}
+.mobile-menu-tabs{display:none;gap:6px;width:100%;min-width:0;}
+.mobile-menu-tabs button{flex:1 1 0;min-width:0;padding:8px 6px;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.mobile-menu-tabs button.active{outline:2px solid #ffd76b;filter:brightness(1.18);}
+.side-panel .panel.active-page{display:block;}
+.side-panel .inventory-panel.active-page{display:flex;}
+
+@media (max-width: 760px), (pointer: coarse){
+  .volume-control{display:none!important;}
+  .mute-btn{display:inline-flex!important;}
+}
+
+@media (max-width:1279px), (max-height:700px){
+  #equipToggleBtn{display:inline-block!important;}
+  .layout{grid-template-columns:1fr!important;max-width:100vw!important;overflow:hidden!important;}
+  .side-panel{display:none!important;}
+  .side-panel.open{
+    position:fixed!important;left:8px!important;right:8px!important;top:calc(var(--mbh-topbar-h, 58px) + 8px)!important;bottom:8px!important;
+    width:auto!important;max-width:calc(100vw - 16px)!important;z-index:70!important;
+    display:flex!important;flex-direction:column!important;gap:8px!important;
+    overflow:hidden!important;padding:8px!important;background:rgba(0,0,0,.94)!important;border:2px solid #c99b39!important;box-shadow:0 0 35px #000!important;
+  }
+  .side-panel.open .mobile-menu-tabs{display:flex!important;flex:0 0 auto;}
+  .side-panel.open .menu-col,.side-panel.open .menu-left,.side-panel.open .menu-right{display:contents!important;}
+  .side-panel.open .panel{display:none!important;width:100%!important;max-width:100%!important;min-height:0!important;overflow:auto!important;}
+  .side-panel.open .panel.active-page{display:block!important;flex:1 1 auto!important;}
+  .side-panel.open .inventory-panel.active-page{display:flex!important;flex-direction:column!important;}
+  .side-panel.open .inventory{flex:1 1 auto!important;max-height:none!important;grid-template-columns:repeat(auto-fill,minmax(96px,1fr))!important;}
+  .side-panel.open .log{height:auto!important;max-height:none!important;}
+  .side-panel.open .equip-list{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))!important;}
+}
+
+@media (max-width:760px){
+  :root{--mbh-topbar-h:96px;}
+  html,body{overflow:hidden!important;}
+  .topbar{height:auto!important;min-height:88px!important;}
+  .controls{align-items:center!important;}
+  .mute-btn{height:36px!important;padding:6px 10px!important;font-size:13px!important;}
+  .layout{height:calc(100dvh - 96px)!important;min-height:0!important;padding:6px!important;}
+  .battle-panel{min-height:0!important;height:100%!important;}
+  .enemy-zone,.hero-zone{width:42vw!important;top:18%!important;}
+  .card{height:min(48dvh,360px)!important;}
+  .expbar,.battle-expbar{left:8px!important;right:8px!important;bottom:8px!important;}
+}
+
+@media (orientation:landscape), (max-height:700px){
+  :root{--mbh-topbar-h:56px;--mbh-ui-scale:.82;}
+  html,body{overflow:hidden!important;}
+  .topbar{height:50px!important;min-height:50px!important;padding:4px 10px!important;display:flex!important;grid-template-areas:none!important;}
+  .brand{font-size:clamp(16px,2.4vw,22px)!important;line-height:1!important;}
+  .resources{font-size:clamp(12px,1.8vw,16px)!important;}
+  .controls{display:flex!important;flex-wrap:nowrap!important;gap:6px!important;width:auto!important;}
+  .controls button,.mute-btn{height:34px!important;padding:5px 10px!important;font-size:clamp(12px,1.7vw,14px)!important;}
+  .volume-control{height:34px!important;padding:4px 8px!important;}
+  .layout{height:calc(100dvh - 50px)!important;min-height:0!important;padding:6px!important;}
+  .battle-panel{height:100%!important;min-height:0!important;}
+  .enemy-zone,.hero-zone{width:clamp(170px,30vw,330px)!important;top:15%!important;}
+  .enemy-zone{left:5%!important}.hero-zone{right:5%!important}
+  .card{height:clamp(155px,48dvh,360px)!important;}
+  .name-line{height:22px!important;font-size:clamp(13px,1.7vw,18px)!important;}
+  .hpbar{height:20px!important;margin-bottom:5px!important;}
+  .expbar,.battle-expbar{left:20px!important;right:20px!important;bottom:10px!important;}
+  .side-panel.open{top:58px!important;bottom:6px!important;}
+  .debug-panel{top:58px!important;bottom:6px!important;max-height:none!important;overflow:auto!important;}
+}
+
+@media (min-width:1280px) and (max-height:700px){
+  .side-panel{display:none!important;}
+  .side-panel.open{display:flex!important;}
+}
