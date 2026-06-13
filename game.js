@@ -11,7 +11,7 @@ const els = {
   enemyEffectLayer:$('enemyEffectLayer'), enemyFloats:$('enemyFloats'), levelEffect:$('levelEffect'), centerBanner:$('centerBanner'), dropToast:$('dropToast'), audioHint:$('audioHint'), deathAura:$('deathAura'), downOverlay:$('downOverlay'), downCount:$('downCount'),
   statLv:$('statLv'), statXp:$('statXp'), statXpNext:$('statXpNext'), statXpGain:$('statXpGain'), statAtk:$('statAtk'), statDef:$('statDef'), statFireRes:$('statFireRes'), monsterRecords:$('monsterRecords'),
   equipList:$('equipList'), upgradeBtn:$('upgradeBtn'), inventory:$('inventory'), tooltip:$('tooltip'), log:$('log'),
-  equipToggleBtn:$('equipToggleBtn'), sidePanel:document.querySelector('.side-panel'), volumeSlider:$('volumeSlider'), volumeText:$('volumeText'), debugBtn:$('debugBtn'), debugPanel:$('debugPanel'), debugAddChests:$('debugAddChests'), debugResetData:$('debugResetData'), debugBestSword:$('debugBestSword'), debugBestAccessory:$('debugBestAccessory'), debugKillEnemy:$('debugKillEnemy'), debugKillHero:$('debugKillHero'), debugClose:$('debugClose'), openAllBtn:$('openAllBtn'), bestEquipBtn:$('bestEquipBtn'), sellSelectedBtn:$('sellSelectedBtn'), sellNormalChk:$('sellNormalChk'), sellRareChk:$('sellRareChk'), sellLegendaryChk:$('sellLegendaryChk')
+  equipToggleBtn:$('equipToggleBtn'), sidePanel:document.querySelector('.side-panel'), volumeSlider:$('volumeSlider'), volumeText:$('volumeText'), debugBtn:$('debugBtn'), debugPanel:$('debugPanel'), debugAddChests:$('debugAddChests'), debugResetData:$('debugResetData'), debugBestSword:$('debugBestSword'), debugBestAccessory:$('debugBestAccessory'), debugKillEnemy:$('debugKillEnemy'), debugKillHero:$('debugKillHero'), debugClose:$('debugClose'), openAllBtn:$('openAllBtn'), bestEquipBtn:$('bestEquipBtn'), sellSelectedBtn:$('sellSelectedBtn'), sellNormalChk:$('sellNormalChk'), sellRareChk:$('sellRareChk'), sellLegendaryChk:$('sellLegendaryChk'), creditBtn:$('creditBtn'), termsBtn:$('termsBtn'), privacyBtn:$('privacyBtn'), legalModal:$('legalModal'), legalModalTitle:$('legalModalTitle'), legalModalBody:$('legalModalBody'), legalModalClose:$('legalModalClose')
 };
 
 
@@ -134,6 +134,52 @@ function syncCompactLayout(){
     els.equipToggleBtn.textContent='メニュー';
   }
 }
+
+const LEGAL_CONTENT = {
+  credit: {
+    title: 'クレジット',
+    body: `
+      <p><b>Mini Browser Hero</b></p>
+      <p>© 2026 もみヒゲ</p>
+      <p>本作品の企画・開発・最終実装は、もみヒゲが行っています。</p>
+      <p>本作品の一部素材・プログラム・文章・画像の制作には、生成AI（ChatGPT等）を利用しています。</p>
+      <p>生成された内容は制作者による確認・編集・調整を経て、ゲーム内に実装されています。</p>
+      <p>使用している画像・音声・フォント等の権利は、各権利者に帰属します。</p>
+    `
+  },
+  terms: {
+    title: '利用規約',
+    body: `
+      <p>本作品は無保証で提供されます。</p>
+      <p>本作品の利用によって発生した損害について、制作者は一切の責任を負いません。</p>
+      <p>本作品の無断転載、再配布、改変後の再配布を禁止します。</p>
+    `
+  },
+  privacy: {
+    title: 'プライバシーポリシー',
+    body: `
+      <p>本作品のセーブデータは、お使いのブラウザのローカルストレージにのみ保存されます。</p>
+      <p>個人情報やセーブデータをゲーム側の外部サーバーへ送信することはありません。</p>
+      <p>アクセス数の確認を目的として、GitHub Pages等のホスティングサービスが提供するアクセス情報、またはCloudflare Web Analytics等のアクセス解析ツールを利用する場合があります。</p>
+      <p>取得する情報は、ページ閲覧数、アクセス日時、使用ブラウザ、参照元などの統計情報です。</p>
+      <p>個人を直接特定する目的では利用しません。</p>
+    `
+  }
+};
+
+function openLegalModal(type){
+  const data = LEGAL_CONTENT[type] || LEGAL_CONTENT.credit;
+  if(!els.legalModal || !els.legalModalTitle || !els.legalModalBody) return;
+  els.legalModalTitle.textContent = data.title;
+  els.legalModalBody.innerHTML = data.body;
+  els.legalModal.classList.remove('hidden');
+  document.body.classList.add('modal-open');
+}
+function closeLegalModal(){
+  if(els.legalModal) els.legalModal.classList.add('hidden');
+  document.body.classList.remove('modal-open');
+}
+
 function init(){
   // 初期状態は完全に空にする。
   // 以前はここで固定装備と倉庫アイテムを作っていたため、
@@ -141,6 +187,9 @@ function init(){
   slots.forEach(slot => state.equip[slot]=null);
   state.inventory = [];
   loadGame();
+  // v57: 音声は保存状態に関係なく、起動・リロード直後は必ずミュートON。
+  state.mobileMuted = true;
+  state.audioUnlocked = false;
   bind();
   switchRandomBattleBackground(true);
   if(battleBgTimer) clearInterval(battleBgTimer);
@@ -200,7 +249,8 @@ function loadGame(){
     state.selectedEquip = data.selectedEquip || null;
     state.volume = Math.min(2, Math.max(0, Number(data.volume ?? state.volume)));
     state.debug = {...state.debug, ...(data.debug||{})};
-    if(typeof data.mobileMuted === 'boolean') state.mobileMuted = data.mobileMuted;
+    // v57: 起動時ミュート固定のため、保存済みミュート状態は読み込まない。
+    state.mobileMuted = true;
     state.enemyRecords = sanitizeEnemyRecords(data.enemyRecords || {});
     state.hp = Math.min(Number(data.hp)||maxHp(), maxHp());
     if(state.hp<=0) state.hp=Math.floor(maxHp()*0.5);
@@ -280,10 +330,15 @@ function bind(){
     const menu = document.getElementById('inventoryActionMenu');
     if(menu && !menu.contains(e.target)) cancelInventoryActionMenu();
   });
-  document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape') cancelInventoryActionMenu(); });
+  document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape'){ cancelInventoryActionMenu(); closeLegalModal(); } });
   setTimeout(()=>{ if(!state.mobileMuted) startAudio(); }, 300);
   els.debugBtn.onclick = () => { els.debugPanel.classList.toggle('hidden'); startAudio(); playUiClick(); };
   if(els.muteBtn) els.muteBtn.onclick = (e) => { e.preventDefault(); setMobileMuted(!state.mobileMuted); if(!state.mobileMuted) startAudio(); playUiClick(); };
+  if(els.creditBtn) els.creditBtn.onclick = () => { playUiClick(); openLegalModal('credit'); };
+  if(els.termsBtn) els.termsBtn.onclick = () => { playUiClick(); openLegalModal('terms'); };
+  if(els.privacyBtn) els.privacyBtn.onclick = () => { playUiClick(); openLegalModal('privacy'); };
+  if(els.legalModalClose) els.legalModalClose.onclick = () => { playUiClick(); closeLegalModal(); };
+  if(els.legalModal) els.legalModal.addEventListener('click', (e)=>{ if(e.target && e.target.dataset && e.target.dataset.legalClose) closeLegalModal(); });
   document.querySelectorAll('.mobile-menu-tabs button').forEach(btn=>btn.onclick=()=>{setMenuPage(btn.dataset.menuPage); playUiClick();});
   els.debugClose.onclick = () => { els.debugPanel.classList.add('hidden'); playUiClick(); };
   if(els.debugResetData) els.debugResetData.onclick = () => { playUiClick(); resetUserData(); };
@@ -953,4 +1008,4 @@ function randInt(a,b){ return Math.floor(rand(a,b+1)); }
 init();
 
 
-window.addEventListener("load",()=>{window.isMuted=true;try{applyMuteState&&applyMuteState()}catch(e){};localStorage.removeItem("isMuted")});
+window.addEventListener("load",()=>{ state.mobileMuted = true; updateMuteButton(); applyVolume(); });

@@ -950,3 +950,43 @@ body.using-touch .tooltip{display:none!important;}
 .battle-bg{transition:opacity .45s ease, filter .45s ease, transform .45s ease;}
 .battle-bg.bg-changing{animation:battleBgChange .75s ease;}
 @keyframes battleBgChange{0%{opacity:.35;transform:scale(1.08)}100%{opacity:1;transform:scale(1.04)}}
+
+
+/* v57: credits / terms / privacy modal */
+.legal-links{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  align-items:center;
+  justify-content:center;
+  padding:6px;
+  border:1px solid rgba(201,155,57,.45);
+  border-radius:8px;
+  background:rgba(8,6,4,.72);
+  min-height:0;
+}
+.legal-links button{
+  flex:1 1 auto;
+  min-width:86px;
+  padding:7px 8px;
+  font-size:12px;
+  line-height:1.2;
+  white-space:nowrap;
+}
+.legal-modal.hidden{display:none!important;}
+.legal-modal{position:fixed;inset:0;z-index:500;display:grid;place-items:center;padding:18px;}
+.legal-modal-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(2px);}
+.legal-modal-card{position:relative;z-index:1;width:min(720px,94vw);max-height:min(82vh,720px);overflow:auto;border:2px solid #c99b39;border-radius:12px;background:linear-gradient(180deg,rgba(31,21,10,.98),rgba(8,6,4,.98));box-shadow:0 0 36px #000,inset 0 0 18px rgba(255,220,120,.12);color:#ffe8b5;padding:18px 18px 16px;}
+.legal-modal-card h2{margin:0 36px 12px 0;color:#ffd76b;text-shadow:0 1px 2px #000;font-size:20px;}
+.legal-modal-body{font-size:14px;line-height:1.75;}
+.legal-modal-body p{margin:0 0 10px;}
+.legal-modal-close{position:absolute;right:10px;top:8px;width:32px;height:32px;border-radius:50%;font-size:20px;line-height:1;padding:0;}
+body.modal-open{overflow:hidden;}
+@media (max-width:760px), (max-height:700px){
+  .legal-links{display:flex!important;flex:0 0 auto;width:100%;box-sizing:border-box;}
+  .legal-links button{font-size:11px!important;padding:7px 5px!important;min-width:0;}
+  .legal-modal{padding:10px;}
+  .legal-modal-card{width:96vw;max-height:86vh;padding:14px 14px 12px;}
+  .legal-modal-card h2{font-size:17px;}
+  .legal-modal-body{font-size:12px;line-height:1.65;}
+}
