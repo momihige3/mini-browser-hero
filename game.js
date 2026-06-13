@@ -8,7 +8,7 @@ const els = {
   enemyName:$('enemyName'), enemyLevel:$('enemyLevel'), enemyTag:$('enemyTag'), enemyImg:$('enemyImg'), enemyCard:$('enemyCard'), enemyHpFill:$('enemyHpFill'), enemyHpText:$('enemyHpText'),
   heroCard:$('heroCard'), heroHpFill:$('heroHpFill'), heroHpText:$('heroHpText'), heroLevel:$('heroLevel'), deathDanceStatus:$('deathDanceStatus'),
   enemyEffectLayer:$('enemyEffectLayer'), enemyFloats:$('enemyFloats'), levelEffect:$('levelEffect'), centerBanner:$('centerBanner'), dropToast:$('dropToast'), audioHint:$('audioHint'), deathAura:$('deathAura'), downOverlay:$('downOverlay'), downCount:$('downCount'),
-  statLv:$('statLv'), statXp:$('statXp'), statXpNext:$('statXpNext'), statXpGain:$('statXpGain'), statAtk:$('statAtk'), statDef:$('statDef'), statFireRes:$('statFireRes'),
+  statLv:$('statLv'), statXp:$('statXp'), statXpNext:$('statXpNext'), statXpGain:$('statXpGain'), statAtk:$('statAtk'), statDef:$('statDef'), statFireRes:$('statFireRes'), monsterRecords:$('monsterRecords'),
   equipList:$('equipList'), upgradeBtn:$('upgradeBtn'), inventory:$('inventory'), tooltip:$('tooltip'), log:$('log'),
   equipToggleBtn:$('equipToggleBtn'), sidePanel:document.querySelector('.side-panel'), volumeSlider:$('volumeSlider'), volumeText:$('volumeText'), debugBtn:$('debugBtn'), debugPanel:$('debugPanel'), debugAddChests:$('debugAddChests'), debugResetData:$('debugResetData'), debugBestSword:$('debugBestSword'), debugBestAccessory:$('debugBestAccessory'), debugKillEnemy:$('debugKillEnemy'), debugKillHero:$('debugKillHero'), debugClose:$('debugClose'), openAllBtn:$('openAllBtn'), bestEquipBtn:$('bestEquipBtn'), sellSelectedBtn:$('sellSelectedBtn'), sellNormalChk:$('sellNormalChk'), sellRareChk:$('sellRareChk'), sellLegendaryChk:$('sellLegendaryChk')
 };
@@ -41,7 +41,7 @@ const state = {
   level:1, xp:0, xpNext:80, chests:0, mats:3, defeated:0,
   base:{hp:520, atk:48, def:14}, hp:520, enemy:null, enemyHp:1,
   inventory:[], equip:{}, down:false, downUntil:0, deathDance:false, deathDanceUntil:0, lastHeroAttack:0, lastEnemyAttack:0,
-  log:[], debug:{killEnemy:false, killHero:false}, audio:null, masterGain:null, bgmGain:null, bgmTimer:null, audioUnlocked:false, mobileMuted:false, menuPage:'stats', inventoryMenuItemId:null
+  log:[], debug:{killEnemy:false, killHero:false}, audio:null, masterGain:null, bgmGain:null, bgmTimer:null, audioUnlocked:false, mobileMuted:false, menuPage:'stats', inventoryMenuItemId:null, enemyRecords:{}
 };
 
 const SAVE_KEY = 'mini-browser-hero-save-v36';
@@ -141,12 +141,12 @@ function saveGame(){
   if(isResettingUserData) return;
   try{
     const data={
-      version:41,
+      version:42,
       level:state.level, xp:state.xp, xpNext:state.xpNext, lastXpGain:state.lastXpGain,
       chests:state.chests, mats:state.mats, defeated:state.defeated,
       hp:Math.max(1, Math.floor(state.hp||1)), base:state.base,
       inventory:state.inventory.map(cleanItem), equip:serializeEquip(), selectedEquip:state.selectedEquip,
-      volume:state.volume, mobileMuted:state.mobileMuted, debug:state.debug,
+      volume:state.volume, mobileMuted:state.mobileMuted, debug:state.debug, enemyRecords:state.enemyRecords,
       savedAt:Date.now()
     };
     localStorage.setItem(SAVE_KEY, JSON.stringify(data));
@@ -172,6 +172,7 @@ function loadGame(){
     state.volume = Math.min(2, Math.max(0, Number(data.volume ?? state.volume)));
     state.debug = {...state.debug, ...(data.debug||{})};
     if(typeof data.mobileMuted === 'boolean') state.mobileMuted = data.mobileMuted;
+    state.enemyRecords = sanitizeEnemyRecords(data.enemyRecords || {});
     state.hp = Math.min(Number(data.hp)||maxHp(), maxHp());
     if(state.hp<=0) state.hp=Math.floor(maxHp()*0.5);
     state.down=false; state.deathDance=false;
@@ -189,6 +190,29 @@ function clearGameStorage(){
     }
     keys.forEach(k=>localStorage.removeItem(k));
   }catch(e){ console.warn('clear storage failed', e); }
+}
+function sanitizeEnemyRecords(records){
+  const out={};
+  ENEMIES.forEach(e=>{
+    const r = records && records[e.id] ? records[e.id] : {};
+    out[e.id] = { seen: !!r.seen, kills: Math.max(0, Number(r.kills)||0), maxDefeatLevel: Math.max(0, Number(r.maxDefeatLevel)||0) };
+  });
+  return out;
+}
+function ensureEnemyRecord(id){
+  if(!state.enemyRecords) state.enemyRecords = {};
+  if(!state.enemyRecords[id]) state.enemyRecords[id] = {seen:false, kills:0, maxDefeatLevel:0};
+  return state.enemyRecords[id];
+}
+function markEnemySeen(e){
+  const r = ensureEnemyRecord(e.id);
+  if(!r.seen){ r.seen = true; scheduleSave(); }
+}
+function markEnemyDefeated(e){
+  const r = ensureEnemyRecord(e.id);
+  r.seen = true;
+  r.kills = (Number(r.kills)||0) + 1;
+  r.maxDefeatLevel = Math.max(Number(r.maxDefeatLevel)||0, Number(e.level)||1);
 }
 function resetSave(){
   clearGameStorage();
@@ -224,11 +248,10 @@ function bind(){
     els.audioHint.onclick = null;
   }
   document.addEventListener('click', (e) => {
-    if(!els.inventory || els.inventory.contains(e.target)) return;
-    state.inventoryMenuItemId = null;
     const menu = document.getElementById('inventoryActionMenu');
-    if(menu) menu.remove();
+    if(menu && !menu.contains(e.target)) cancelInventoryActionMenu();
   });
+  document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape') cancelInventoryActionMenu(); });
   setTimeout(()=>{ if(!isMobileAudioMode() || !state.mobileMuted) startAudio(); }, 300);
   els.debugBtn.onclick = () => { els.debugPanel.classList.toggle('hidden'); startAudio(); playUiClick(); };
   if(els.muteBtn) els.muteBtn.onclick = (e) => { e.preventDefault(); setMobileMuted(!state.mobileMuted); if(!state.mobileMuted) startAudio(); playUiClick(); };
@@ -240,10 +263,11 @@ function bind(){
   els.debugBestAccessory.onclick = () => { playUiClick(); const a=makeDebugAccessory('リング'); const b=makeDebugAccessory('アミュレット'); state.inventory.unshift(a,b); renderAll(); log('デバッグ：最強アクセを倉庫に追加。','good'); scheduleSave(); };
   els.debugKillEnemy.onchange = () => { state.debug.killEnemy = els.debugKillEnemy.checked; log(`デバッグ：敵への攻撃で即死 ${state.debug.killEnemy?'ON':'OFF'}`, state.debug.killEnemy?'danger':''); scheduleSave(); };
   els.debugKillHero.onchange = () => { state.debug.killHero = els.debugKillHero.checked; log(`デバッグ：敵からの攻撃で即死 ${state.debug.killHero?'ON':'OFF'}`, state.debug.killHero?'danger':''); scheduleSave(); };
+  [els.sellNormalChk, els.sellRareChk, els.sellLegendaryChk].filter(Boolean).forEach(chk=>chk.onchange=()=>updateSellButtonState());
 
   if(els.openAllBtn) els.openAllBtn.style.display='none';
   els.bestEquipBtn.onclick = () => { playUiClick(); bestEquip(); };
-  els.sellSelectedBtn.onclick = () => { playUiClick(); sellSelectedRarities(); };
+  els.sellSelectedBtn.onclick = () => { if(els.sellSelectedBtn.disabled) return; playUiClick(); sellSelectedRarities(); };
   els.upgradeBtn.onclick = () => { if(!els.upgradeBtn.disabled) playUiClick(); upgradeSelected(); };
   window.addEventListener('resize', syncMenuByWidth);
   window.addEventListener('orientationchange', syncCompactLayout);
@@ -292,6 +316,7 @@ function spawnEnemy(){
   e.maxHp=Math.floor(e.hp*scale); e.atk=Math.floor(e.atk*scale); e.def=Math.floor(e.def*scale);
   e.xp=Math.floor(e.xp*(1+e.level*.045));
   state.enemy=e; state.enemyHp=e.maxHp;
+  markEnemySeen(e);
   els.enemyImg.src=e.img; els.enemyCard.className='card enemy-card enter';
   setTimeout(()=>els.enemyCard.classList.remove('enter'),600);
   renderBattle();
@@ -424,6 +449,7 @@ function enemyDefeated(){
   const e=state.enemy; state.enemy=null;
   els.enemyCard.classList.add('dead');
   state.defeated++;
+  markEnemyDefeated(e);
   const xpMult = 1 + Math.max(0, (e.level || 1) - 1) * 0.08;
   const gainXp = Math.max(1, Math.floor(e.xp * xpMult));
   state.lastXpGain = gainXp; state.xp += gainXp;
@@ -616,10 +642,7 @@ function bestEquip(){
   log(`最強装備を一括装備（${changed}件）。`,'good'); renderAll();
 }
 function sellSelectedRarities(){
-  const targets=[];
-  if(els.sellNormalChk?.checked) targets.push('normal');
-  if(els.sellRareChk?.checked) targets.push('rare');
-  if(els.sellLegendaryChk?.checked) targets.push('legendary');
+  const targets=selectedSellRarities();
   if(targets.length===0){ log('売却対象のレアリティを選択して。','danger'); return; }
 
   const before=state.inventory.length;
@@ -665,7 +688,20 @@ function renderBattle(){
   if(els.expFill){ els.expFill.style.width=`${Math.max(0,Math.min(100,state.xp/state.xpNext*100))}%`; els.expLabel.textContent=`Lv.${state.level} EXP ${state.xp} / ${state.xpNext}`; els.expGainLabel.textContent=`+${state.lastXpGain}`; }
   if(state.deathDance){ els.deathDanceStatus.textContent = `死線の剣舞 残り${Math.max(0, Math.ceil((state.deathDanceUntil-performance.now())/1000))}秒`; }
 }
-function renderStats(){ const st=calcStats(); els.statLv.textContent=state.level; els.statXp.textContent=`${state.xp} / ${state.xpNext}`; els.statXpNext.textContent=state.xpNext; els.statXpGain.textContent=`+${state.lastXpGain}`; els.statAtk.textContent=Math.floor(st.atk); els.statDef.textContent=Math.floor(st.def); els.statFireRes.textContent=`${Math.round(st.fireRes*100)}%`; }
+function renderStats(){ const st=calcStats(); els.statLv.textContent=state.level; els.statXp.textContent=`${state.xp} / ${state.xpNext}`; els.statXpNext.textContent=state.xpNext; els.statXpGain.textContent=`+${state.lastXpGain}`; els.statAtk.textContent=Math.floor(st.atk); els.statDef.textContent=Math.floor(st.def); els.statFireRes.textContent=`${Math.round(st.fireRes*100)}%`; renderMonsterRecords(); }
+function renderMonsterRecords(){
+  if(!els.monsterRecords) return;
+  if(!state.enemyRecords) state.enemyRecords = {};
+  els.monsterRecords.innerHTML = ENEMIES.map(e=>{
+    const r = state.enemyRecords[e.id] || {seen:false,kills:0,maxDefeatLevel:0};
+    const seen = !!r.seen;
+    const name = seen ? e.name : '？？？';
+    const kills = seen ? (Number(r.kills)||0) : '？';
+    const maxLv = seen && Number(r.maxDefeatLevel) > 0 ? `Lv.${Number(r.maxDefeatLevel)}` : (seen ? '-' : '？');
+    const type = seen ? e.type : '未遭遇';
+    return `<div class="monster-record-row ${seen?'seen':'unknown'}"><b>${escapeHtml(name)}</b><span>${escapeHtml(type)}</span><em>討伐 ${kills}</em><strong>最高 ${maxLv}</strong></div>`;
+  }).join('');
+}
 function renderEquip(){
   els.equipList.innerHTML='';
   slots.forEach(slot=>{ const it=state.equip[slot]; const div=document.createElement('div'); div.className='equip'+(it?` ${it.rarity}`:'')+(state.selectedEquip===slot?' selected':''); div.innerHTML=it?`<b>${slot}: ${it.name}+${it.level}</b><small>${itemSummary(it)}</small>`:`<b>${slot}: 未装備</b>`; div.onclick=()=>{state.selectedEquip=slot; renderEquip();}; if(it){ div.onmousemove=(e)=>showTip(e,it); div.onmouseleave=()=>els.tooltip.classList.add('hidden'); } els.equipList.appendChild(div); });
@@ -700,7 +736,30 @@ function renderInventory(){
     if(selectedId===it.id) setTimeout(()=>showInventoryActionMenu(it, div), 0);
   });
   if(els.openAllBtn){ els.openAllBtn.style.display='none'; }
+  updateSellButtonState();
 }
+function selectedSellRarities(){
+  const targets=[];
+  if(els.sellNormalChk?.checked) targets.push('normal');
+  if(els.sellRareChk?.checked) targets.push('rare');
+  if(els.sellLegendaryChk?.checked) targets.push('legendary');
+  return targets;
+}
+function updateSellButtonState(){
+  if(!els.sellSelectedBtn) return;
+  const targets = selectedSellRarities();
+  const count = state.inventory.filter(it=>targets.includes(it.rarity)).length;
+  els.sellSelectedBtn.disabled = targets.length === 0;
+  els.sellSelectedBtn.textContent = `売却 (${count})`;
+}
+function cancelInventoryActionMenu(){
+  const menu = document.getElementById('inventoryActionMenu');
+  if(menu) menu.remove();
+  state.inventoryMenuItemId = null;
+  if(els.tooltip) els.tooltip.classList.add('hidden');
+  document.querySelectorAll('.item.selected-inventory').forEach(el=>el.classList.remove('selected-inventory'));
+}
+
 
 function showInventoryActionMenu(it, anchor){
   state.inventoryMenuItemId = it.id;
@@ -744,8 +803,9 @@ function showInventoryActionMenu(it, anchor){
       }
     });
   }
-  menu.querySelector('[data-action="equip"]').onclick=(e)=>{ e.stopPropagation(); playUiClick(); state.inventoryMenuItemId=null; menu.remove(); els.tooltip.classList.add('hidden'); equipItem(it); };
-  menu.querySelector('[data-action="cancel"]').onclick=(e)=>{ e.stopPropagation(); playUiClick(); state.inventoryMenuItemId=null; menu.remove(); els.tooltip.classList.add('hidden'); renderInventory(); };
+  menu.querySelector('[data-action="equip"]').onclick=(e)=>{ e.stopPropagation(); playUiClick(); cancelInventoryActionMenu(); equipItem(it); };
+  menu.querySelector('[data-action="cancel"]').onclick=(e)=>{ e.stopPropagation(); playUiClick(); cancelInventoryActionMenu(); renderInventory(); };
+  menu.onclick=(e)=>e.stopPropagation();
 }
 function itemSummary(it){
   const arr=[];
@@ -816,6 +876,7 @@ function resetUserData(){
   state.lastEnemyAttack = performance.now();
   state.log = [];
   state.debug = {killEnemy:false, killHero:false};
+  state.enemyRecords = sanitizeEnemyRecords({});
   if(els.debugKillEnemy) els.debugKillEnemy.checked = false;
   if(els.debugKillHero) els.debugKillHero.checked = false;
   if(els.log) els.log.innerHTML='';

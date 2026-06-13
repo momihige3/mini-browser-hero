@@ -873,3 +873,29 @@ body.using-touch .tooltip{display:none!important;}
   .layout{grid-template-columns:minmax(720px,1fr) minmax(390px,430px)!important;}
   .side-panel{font-size:14px!important;}
 }
+
+/* v51: monster records + right-side log clamp + sell disabled */
+.monster-records{margin-top:10px;border-top:1px solid rgba(255,215,107,.22);padding-top:8px;min-height:0;}
+.monster-records h3{margin:0 0 6px;font-size:14px;color:#ffd76b;}
+.monster-record-list{display:grid;gap:4px;max-height:210px;overflow-y:auto;padding-right:4px;}
+.monster-record-row{display:grid;grid-template-columns:1.2fr .7fr .8fr .9fr;gap:6px;align-items:center;border:1px solid rgba(255,255,255,.08);background:rgba(0,0,0,.22);border-radius:4px;padding:4px 6px;font-size:12px;line-height:1.2;}
+.monster-record-row b{color:#fff3bd;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.monster-record-row span{color:#9bdcff;}
+.monster-record-row em{font-style:normal;color:#d8c69a;}
+.monster-record-row strong{color:#94ff85;font-weight:900;}
+.monster-record-row.unknown b,.monster-record-row.unknown span,.monster-record-row.unknown em,.monster-record-row.unknown strong{color:#8b806b;}
+.sell-box button:disabled,#sellSelectedBtn:disabled{filter:grayscale(1) brightness(.65)!important;opacity:.45!important;cursor:not-allowed!important;box-shadow:none!important;}
+@media (min-width:1280px){
+  .side-panel{min-height:0!important;}
+  .menu-col,.menu-right,.log-panel{min-height:0!important;overflow:hidden!important;}
+  .menu-right{grid-template-rows:minmax(0,1fr) minmax(140px,var(--pc-log-h, 190px))!important;}
+  .log-panel{height:auto!important;max-height:var(--pc-log-h, 190px)!important;display:flex!important;flex-direction:column!important;}
+  .log-panel h2{flex:0 0 auto!important;}
+  .log{flex:1 1 auto!important;height:auto!important;max-height:none!important;min-height:0!important;overflow-y:auto!important;}
+  .monster-record-list{max-height:calc(130px * var(--pc-ui-scale, 1))!important;}
+}
+@media (max-width:760px){
+  .monster-records h3{font-size:12px!important;}
+  .monster-record-list{max-height:180px;}
+  .monster-record-row{grid-template-columns:1fr .6fr;font-size:11px;padding:4px;}
+}
