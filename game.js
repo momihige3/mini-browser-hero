@@ -616,20 +616,43 @@ function resetUserData(){
   isResettingUserData = true;
   clearTimeout(saveTimer);
   clearGameStorage();
-  // メモリ上の装備/倉庫も即空にしてから再読み込みする。
+
+  // URLは絶対に変更しない。ページ遷移もリロードもしない。
+  // メモリ上の状態だけ初期化して、その場で新規ゲームとして再開する。
   slots.forEach(slot => state.equip[slot]=null);
   state.inventory = [];
+  state.selectedEquip = null;
   state.level = 1;
   state.xp = 0;
   state.xpNext = 80;
   state.lastXpGain = 0;
+  state.chests = 0;
   state.mats = 3;
   state.defeated = 0;
+  state.base = {hp:520, atk:48, def:14};
   state.hp = maxHp();
+  state.enemy = null;
+  state.enemyHp = 1;
+  state.down = false;
+  state.downUntil = 0;
+  state.deathDance = false;
+  state.deathDanceUntil = 0;
+  state.lastHeroAttack = -999999;
+  state.lastEnemyAttack = performance.now();
   state.log = [];
+  state.debug = {killEnemy:false, killHero:false};
+  if(els.debugKillEnemy) els.debugKillEnemy.checked = false;
+  if(els.debugKillHero) els.debugKillHero.checked = false;
   if(els.log) els.log.innerHTML='';
+  if(els.tooltip) els.tooltip.classList.add('hidden');
+
+  spawnEnemy();
   renderAll();
-  setTimeout(()=>location.replace(location.pathname + '?reset=' + Date.now()), 80);
+  log('ユーザーデータをリセットしました。');
+
+  // 初期化後の空データを保存。以後の自動保存も再開。
+  isResettingUserData = false;
+  saveGame();
 }
 function log(msg, cls='', html=false){
   const time=new Date().toLocaleTimeString('ja-JP',{hour12:false});
