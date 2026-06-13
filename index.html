@@ -14,7 +14,7 @@
   <div id="game">
     <header class="topbar">
       <div class="brand">ミニブラウザヒーロー</div>
-      <div class="resources"><b id="chests">0</b> 宝箱 / <b id="mats">0</b> 強化石</div>
+      <div class="resources"><b id="mats">0</b> 強化石</div>
       <div class="controls">
         <button id="equipToggleBtn">メニュー</button>
         <button id="debugBtn">デバッグ</button>
@@ -80,7 +80,6 @@
         <div class="panel inventory-panel">
           <h2>倉庫</h2>
           <div class="inventory-actions">
-            <button id="openAllBtn">一括開封</button>
             <button id="bestEquipBtn">最強装備</button>
             <div class="sell-box">
               <button id="sellSelectedBtn">売却</button>
@@ -102,7 +101,8 @@
     </main>
       <div id="debugPanel" class="debug-panel hidden">
         <div class="debug-head">デバッグ</div>
-        <button id="debugAddChests">宝箱+50</button>
+        <button id="debugAddChests">装備+50</button>
+        <button id="debugResetData">ユーザーデータリセット</button>
         <button id="debugBestSword">最強剣を倉庫に付与</button>
         <button id="debugBestAccessory">最強アクセを倉庫に付与</button>
         <label><input id="debugKillEnemy" type="checkbox"> 敵への攻撃で即死</label>

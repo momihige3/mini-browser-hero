@@ -10,7 +10,7 @@ const els = {
   enemyEffectLayer:$('enemyEffectLayer'), enemyFloats:$('enemyFloats'), levelEffect:$('levelEffect'), centerBanner:$('centerBanner'), audioHint:$('audioHint'), deathAura:$('deathAura'), downOverlay:$('downOverlay'), downCount:$('downCount'),
   statLv:$('statLv'), statXp:$('statXp'), statXpNext:$('statXpNext'), statXpGain:$('statXpGain'), statAtk:$('statAtk'), statDef:$('statDef'), statFireRes:$('statFireRes'),
   equipList:$('equipList'), upgradeBtn:$('upgradeBtn'), inventory:$('inventory'), tooltip:$('tooltip'), log:$('log'),
-  equipToggleBtn:$('equipToggleBtn'), sidePanel:document.querySelector('.side-panel'), volumeSlider:$('volumeSlider'), volumeText:$('volumeText'), debugBtn:$('debugBtn'), debugPanel:$('debugPanel'), debugAddChests:$('debugAddChests'), debugBestSword:$('debugBestSword'), debugBestAccessory:$('debugBestAccessory'), debugKillEnemy:$('debugKillEnemy'), debugKillHero:$('debugKillHero'), debugClose:$('debugClose'), openAllBtn:$('openAllBtn'), bestEquipBtn:$('bestEquipBtn'), sellSelectedBtn:$('sellSelectedBtn'), sellNormalChk:$('sellNormalChk'), sellRareChk:$('sellRareChk'), sellLegendaryChk:$('sellLegendaryChk')
+  equipToggleBtn:$('equipToggleBtn'), sidePanel:document.querySelector('.side-panel'), volumeSlider:$('volumeSlider'), volumeText:$('volumeText'), debugBtn:$('debugBtn'), debugPanel:$('debugPanel'), debugAddChests:$('debugAddChests'), debugResetData:$('debugResetData'), debugBestSword:$('debugBestSword'), debugBestAccessory:$('debugBestAccessory'), debugKillEnemy:$('debugKillEnemy'), debugKillHero:$('debugKillHero'), debugClose:$('debugClose'), openAllBtn:$('openAllBtn'), bestEquipBtn:$('bestEquipBtn'), sellSelectedBtn:$('sellSelectedBtn'), sellNormalChk:$('sellNormalChk'), sellRareChk:$('sellRareChk'), sellLegendaryChk:$('sellLegendaryChk')
 };
 
 const ENEMIES = [
@@ -38,7 +38,7 @@ const equipNames = {
 
 const state = {
   auto:true, selectedEquip:null, uiOpen:false, lastXpGain:0, volume:1.0,
-  level:1, xp:0, xpNext:80, chests:8, mats:3, defeated:0,
+  level:1, xp:0, xpNext:80, chests:0, mats:3, defeated:0,
   base:{hp:520, atk:48, def:14}, hp:520, enemy:null, enemyHp:1,
   inventory:[], equip:{}, down:false, downUntil:0, deathDance:false, deathDanceUntil:0, lastHeroAttack:0, lastEnemyAttack:0,
   log:[], debug:{killEnemy:false, killHero:false}, audio:null, masterGain:null, bgmGain:null, bgmTimer:null, audioUnlocked:false
@@ -147,13 +147,14 @@ function bind(){
   ['pointerdown','mousedown','keydown','touchstart','wheel'].forEach(ev=>document.addEventListener(ev, startAudio, {once:true, passive:true}));
   els.debugBtn.onclick = () => { els.debugPanel.classList.toggle('hidden'); startAudio(); };
   els.debugClose.onclick = () => els.debugPanel.classList.add('hidden');
-  els.debugAddChests.onclick = () => { state.chests += 50; renderAll(); log('デバッグ：宝箱を50個追加。','good'); scheduleSave(); };
+  if(els.debugResetData) els.debugResetData.onclick = resetUserData;
+  els.debugAddChests.onclick = () => { for(let i=0;i<50;i++) state.inventory.unshift(makeRandomItem()); renderAll(); log('デバッグ：装備を50個追加。','good'); scheduleSave(); };
   els.debugBestSword.onclick = () => { const it=makeDebugSword(); state.inventory.unshift(it); renderAll(); log('デバッグ：最強剣を倉庫に追加。','good'); scheduleSave(); };
   els.debugBestAccessory.onclick = () => { const a=makeDebugAccessory('リング'); const b=makeDebugAccessory('アミュレット'); state.inventory.unshift(a,b); renderAll(); log('デバッグ：最強アクセを倉庫に追加。','good'); scheduleSave(); };
   els.debugKillEnemy.onchange = () => { state.debug.killEnemy = els.debugKillEnemy.checked; log(`デバッグ：敵への攻撃で即死 ${state.debug.killEnemy?'ON':'OFF'}`, state.debug.killEnemy?'danger':''); scheduleSave(); };
   els.debugKillHero.onchange = () => { state.debug.killHero = els.debugKillHero.checked; log(`デバッグ：敵からの攻撃で即死 ${state.debug.killHero?'ON':'OFF'}`, state.debug.killHero?'danger':''); scheduleSave(); };
 
-  els.openAllBtn.onclick = () => openChests(state.chests);
+  if(els.openAllBtn) els.openAllBtn.style.display='none';
   els.bestEquipBtn.onclick = bestEquip;
   els.sellSelectedBtn.onclick = sellSelectedRarities;
   els.upgradeBtn.onclick = upgradeSelected;
@@ -333,8 +334,9 @@ function enemyDefeated(){
   els.enemyCard.classList.add('dead');
   state.defeated++;
   const gainXp=e.xp;
-  state.lastXpGain = gainXp; state.xp += gainXp; if(Math.random()<.33) state.chests++;
-  if(Math.random()<.18){ const it=makeRandomItem(); state.inventory.unshift(it); log(`${it.name} を獲得。`,'good'); }
+  state.lastXpGain = gainXp; state.xp += gainXp;
+  if(Math.random()<.38){ const it=makeRandomItem(); state.inventory.unshift(it); logItemDrop(it); }
+  if(Math.random()<.22){ const m=randInt(1,3); state.mats += m; log(`強化石+${m} を獲得。`,'good'); }
   log(`${e.name} を撃破！ 経験値+${gainXp}`,'good'); playSfx('win');
   checkLevelUp(); renderAll(); scheduleSave();
   setTimeout(spawnEnemy,850);
@@ -531,7 +533,7 @@ function renderAll(){ renderBattle(); renderStats(); renderEquip(); renderInvent
 function renderBattle(){
   const mh=maxHp(); els.heroLevel.textContent=`Lv.${state.level}`; els.heroHpFill.style.width=`${Math.max(0,state.hp/mh*100)}%`; els.heroHpText.textContent=`${Math.floor(state.hp)} / ${Math.floor(mh)}`;
   if(state.enemy){ els.enemyName.textContent=state.enemy.name; if(els.enemyLevel) els.enemyLevel.textContent=`Lv.${state.enemy.level||1}`; els.enemyTag.textContent=state.enemy.type==='ボス'?'BOSS':''; els.enemyHpFill.style.width=`${Math.max(0,state.enemyHp/state.enemy.maxHp*100)}%`; els.enemyHpText.textContent=`${Math.floor(state.enemyHp)} / ${state.enemy.maxHp}`; }
-  els.chests.textContent=state.chests; els.mats.textContent=state.mats;
+  if(els.chests) els.chests.textContent=state.chests; els.mats.textContent=state.mats;
   if(els.expFill){ els.expFill.style.width=`${Math.max(0,Math.min(100,state.xp/state.xpNext*100))}%`; els.expLabel.textContent=`Lv.${state.level} EXP ${state.xp} / ${state.xpNext}`; els.expGainLabel.textContent=`+${state.lastXpGain}`; }
   if(state.deathDance){ els.deathDanceStatus.textContent = `死線の剣舞 残り${Math.max(0, Math.ceil((state.deathDanceUntil-performance.now())/1000))}秒`; }
 }
@@ -547,7 +549,7 @@ function renderEquip(){
 function renderInventory(){
   els.inventory.innerHTML='';
   state.inventory.forEach(it=>{ const div=document.createElement('div'); div.className=`item ${it.rarity}`; div.innerHTML=`<b>${it.name}</b><span>${it.slot}</span>`; div.onclick=()=>equipItem(it); div.onmousemove=(e)=>showTip(e,it); div.onmouseleave=()=>els.tooltip.classList.add('hidden'); els.inventory.appendChild(div); });
-  if(els.openAllBtn){ els.openAllBtn.disabled = state.chests<=0; els.openAllBtn.textContent = state.chests>0 ? `一括開封 ×${state.chests}` : '一括開封'; }
+  if(els.openAllBtn){ els.openAllBtn.style.display='none'; }
 }
 function itemSummary(it){
   const arr=[];
@@ -569,7 +571,26 @@ function showTip(e,it){
   html+= current ? `現在: ${current.name}+${current.level}<br>戦力差: ${Math.round(itemPower(it)-itemPower(current))}` : '現在: 未装備';
   els.tooltip.innerHTML=html; els.tooltip.style.left=(e.clientX+14)+'px'; els.tooltip.style.top=(e.clientY+14)+'px'; els.tooltip.classList.remove('hidden');
 }
-function log(msg, cls=''){ const time=new Date().toLocaleTimeString('ja-JP',{hour12:false}); state.log.unshift({time,msg,cls}); state.log=state.log.slice(0,80); els.log.innerHTML=state.log.map(l=>`<div class="${l.cls}">[${l.time}] ${l.msg}</div>`).join(''); }
+
+function escapeHtml(v){ return String(v).replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
+function rarityColor(r){ return r==='legendary' ? '#ff9b24' : r==='rare' ? '#4d8dff' : '#eeeeee'; }
+function logItemDrop(it){
+  const color = rarityColor(it.rarity);
+  const rarity = it.rarityName || (rarities.find(r=>r.id===it.rarity)?.name || it.rarity);
+  log(`装備ドロップ：<span class="log-item ${it.rarity}" style="color:${color}">${escapeHtml(it.name)}</span> <span class="log-rarity ${it.rarity}" style="color:${color}">${escapeHtml(rarity)}</span>`, 'good', true);
+}
+function resetUserData(){
+  if(!confirm('ユーザーデータをリセットする？')) return;
+  try{ localStorage.removeItem(SAVE_KEY); }catch(e){}
+  location.reload();
+}
+function log(msg, cls='', html=false){
+  const time=new Date().toLocaleTimeString('ja-JP',{hour12:false});
+  state.log.unshift({time,msg: html ? msg : escapeHtml(msg),cls,html:true});
+  state.log=state.log.slice(0,100);
+  if(els.log) els.log.innerHTML=state.log.map(l=>`<div class="${l.cls}">[${l.time}] ${l.msg}</div>`).join('');
+}
+
 function rand(a,b){ return Math.random()*(b-a)+a; }
 function randInt(a,b){ return Math.floor(rand(a,b+1)); }
 

@@ -278,3 +278,8 @@
   .volume-control{font-size:calc(13px * var(--mbh-ui-scale))!important;padding:calc(6px * var(--mbh-ui-scale)) calc(8px * var(--mbh-ui-scale))!important;}
   .volume-control input{width:calc(118px * var(--mbh-ui-scale))!important;}
 }
+
+/* v38: 直接ドロップログ */
+.log-item{font-weight:900;text-shadow:0 0 8px currentColor;}
+.log-rarity{font-weight:900;border:1px solid currentColor;border-radius:999px;padding:0 5px;margin-left:4px;font-size:.9em;background:rgba(0,0,0,.35);}
+.resources{min-width:auto;}
