@@ -7,7 +7,7 @@ const els = {
   chests:$('chests'), mats:$('mats'), volumeSlider:$('volumeSlider'), expLabel:$('expLabel'), expGainLabel:$('expGainLabel'), expFill:$('expFill'),
   enemyName:$('enemyName'), enemyLevel:$('enemyLevel'), enemyTag:$('enemyTag'), enemyImg:$('enemyImg'), enemyCard:$('enemyCard'), enemyHpFill:$('enemyHpFill'), enemyHpText:$('enemyHpText'),
   heroCard:$('heroCard'), heroHpFill:$('heroHpFill'), heroHpText:$('heroHpText'), heroLevel:$('heroLevel'), deathDanceStatus:$('deathDanceStatus'),
-  enemyEffectLayer:$('enemyEffectLayer'), enemyFloats:$('enemyFloats'), levelEffect:$('levelEffect'), centerBanner:$('centerBanner'), audioHint:$('audioHint'), deathAura:$('deathAura'), downOverlay:$('downOverlay'), downCount:$('downCount'),
+  enemyEffectLayer:$('enemyEffectLayer'), enemyFloats:$('enemyFloats'), levelEffect:$('levelEffect'), centerBanner:$('centerBanner'), dropToast:$('dropToast'), audioHint:$('audioHint'), deathAura:$('deathAura'), downOverlay:$('downOverlay'), downCount:$('downCount'),
   statLv:$('statLv'), statXp:$('statXp'), statXpNext:$('statXpNext'), statXpGain:$('statXpGain'), statAtk:$('statAtk'), statDef:$('statDef'), statFireRes:$('statFireRes'),
   equipList:$('equipList'), upgradeBtn:$('upgradeBtn'), inventory:$('inventory'), tooltip:$('tooltip'), log:$('log'),
   equipToggleBtn:$('equipToggleBtn'), sidePanel:document.querySelector('.side-panel'), volumeSlider:$('volumeSlider'), volumeText:$('volumeText'), debugBtn:$('debugBtn'), debugPanel:$('debugPanel'), debugAddChests:$('debugAddChests'), debugResetData:$('debugResetData'), debugBestSword:$('debugBestSword'), debugBestAccessory:$('debugBestAccessory'), debugKillEnemy:$('debugKillEnemy'), debugKillHero:$('debugKillHero'), debugClose:$('debugClose'), openAllBtn:$('openAllBtn'), bestEquipBtn:$('bestEquipBtn'), sellSelectedBtn:$('sellSelectedBtn'), sellNormalChk:$('sellNormalChk'), sellRareChk:$('sellRareChk'), sellLegendaryChk:$('sellLegendaryChk')
@@ -315,7 +315,12 @@ function applyHeroHit(skill){
   if(st.lifeSteal && !absorbed){
     const heal=Math.floor(dmg*st.lifeSteal); if(heal>0){state.hp=Math.min(maxHp(),state.hp+heal); showHeroFloat(`+${heal}`,'heal')}
   }
-  if(state.enemyHp<=0){ enemyDefeated(); }
+  if(state.enemyHp<=0){
+    state.enemyHp = 0;
+    renderBattle();
+    setTimeout(enemyDefeated, 120);
+    return;
+  }
   renderBattle();
 }
 function enemyAttack(now){
@@ -347,9 +352,10 @@ function enemyDefeated(){
   const e=state.enemy; state.enemy=null;
   els.enemyCard.classList.add('dead');
   state.defeated++;
-  const gainXp=e.xp;
+  const xpMult = 1 + Math.max(0, (e.level || 1) - 1) * 0.08;
+  const gainXp = Math.max(1, Math.floor(e.xp * xpMult));
   state.lastXpGain = gainXp; state.xp += gainXp;
-  if(Math.random()<.38){ const it=makeRandomItem(); state.inventory.unshift(it); logItemDrop(it); }
+  if(Math.random()<.38){ const it=makeRandomItem(); state.inventory.unshift(it); logItemDrop(it); showDropToast(it); }
   if(Math.random()<.22){ const m=randInt(1,3); state.mats += m; log(`強化石+${m} を獲得。`,'good'); }
   log(`${e.name} を撃破！ 経験値+${gainXp}`,'good'); playSfx('win');
   checkLevelUp(); renderAll(); scheduleSave();
@@ -364,7 +370,7 @@ function startDown(){
   banner('DOWN...'); playSfx('down'); log('騎士は倒れた。5秒後に復活。','danger');
 }
 function revive(){
-  state.down=false; els.heroCard.classList.remove('down'); els.downOverlay.classList.add('hidden'); state.hp=Math.floor(maxHp()*0.5); renderBattle(); banner('復活'); log('騎士はHP50%で復活した。','good');
+  state.down=false; els.heroCard.classList.remove('down'); els.downOverlay.classList.add('hidden'); state.hp=maxHp(); renderBattle(); banner('復活'); log('騎士はHP100%で復活した。','good');
 }
 function startDeathDance(){
   state.deathDance=true; state.deathDanceUntil=performance.now()+10000; state.hp=1; els.heroCard.classList.add('deathdance'); els.deathAura.classList.remove('hidden'); els.deathDanceStatus.classList.remove('hidden'); banner('死線の剣舞！'); playSfx('dance'); log('死線の剣舞発動！ 10秒間無敵で連撃。','skilllog'); renderBattle();
@@ -593,6 +599,17 @@ function logItemDrop(it){
   const rarity = it.rarityName || (rarities.find(r=>r.id===it.rarity)?.name || it.rarity);
   log(`装備ドロップ：<span class="log-item ${it.rarity}" style="color:${color}">${escapeHtml(it.name)}</span> <span class="log-rarity ${it.rarity}" style="color:${color}">${escapeHtml(rarity)}</span>`, 'good', true);
 }
+
+function showDropToast(it){
+  if(!els.dropToast) return;
+  const color = rarityColor(it.rarity);
+  const rarity = it.rarityName || (rarities.find(r=>r.id===it.rarity)?.name || it.rarity);
+  els.dropToast.innerHTML = `<span style="color:${color}">${escapeHtml(it.name)}</span><small style="color:${color}">${escapeHtml(rarity)}</small>`;
+  els.dropToast.className = `drop-toast ${it.rarity}`;
+  clearTimeout(state.dropToastTimer);
+  state.dropToastTimer = setTimeout(()=>els.dropToast.classList.add('hidden'), 3000);
+}
+
 function resetUserData(){
   if(!confirm('ユーザーデータをリセットする？')) return;
   isResettingUserData = true;

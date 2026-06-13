@@ -283,3 +283,7 @@
 .log-item{font-weight:900;text-shadow:0 0 8px currentColor;}
 .log-rarity{font-weight:900;border:1px solid currentColor;border-radius:999px;padding:0 5px;margin-left:4px;font-size:.9em;background:rgba(0,0,0,.35);}
 .resources{min-width:auto;}
+
+/* v40: drop toast */
+.drop-toast{position:absolute;left:50%;top:18px;transform:translateX(-50%);z-index:12;min-width:260px;max-width:min(620px,70vw);padding:10px 18px;text-align:center;background:linear-gradient(180deg,rgba(18,12,7,.94),rgba(2,2,2,.9));border:2px solid #c99b39;border-radius:999px;box-shadow:0 0 28px #000,inset 0 0 18px rgba(255,215,107,.12);animation:dropToastIn 3s ease forwards;pointer-events:none}
+.drop-toast span{display:block;font-size:22px;font-weight:1000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 2px 3px #000,0 0 16px currentColor}.drop-toast small{display:block;font-size:12px;font-weight:900;letter-spacing:.12em;margin-top:1px;text-shadow:0 1px 2px #000,0 0 10px currentColor}.drop-toast.legendary{border-color:#ff9b24;box-shadow:0 0 34px rgba(255,155,36,.55),inset 0 0 18px rgba(255,155,36,.18)}.drop-toast.rare{border-color:#337dff;box-shadow:0 0 30px rgba(51,125,255,.38),inset 0 0 18px rgba(51,125,255,.14)}@keyframes dropToastIn{0%{opacity:0;transform:translate(-50%,-14px) scale(.92)}10%{opacity:1;transform:translate(-50%,0) scale(1.04)}82%{opacity:1;transform:translate(-50%,0) scale(1)}100%{opacity:0;transform:translate(-50%,-10px) scale(.96)}}
