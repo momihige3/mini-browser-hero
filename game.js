@@ -491,12 +491,20 @@ function sellSelectedRarities(){
   if(els.sellRareChk?.checked) targets.push('rare');
   if(els.sellLegendaryChk?.checked) targets.push('legendary');
   if(targets.length===0){ log('売却対象のレアリティを選択して。','danger'); return; }
+
   const before=state.inventory.length;
-  state.inventory=state.inventory.filter(it=>!targets.includes(it.rarity));
-  const sold=before-state.inventory.length;
-  const label=targets.map(r=>RARITIES[r]?.label||r).join('・');
-  log(`${label}装備を${sold}個売却。`, sold?'good':'');
-  renderAll(); scheduleSave();
+  state.inventory = state.inventory.filter(it => !targets.includes(it.rarity));
+  const sold = before - state.inventory.length;
+  const label = targets.map(r=>RARITIES[r]?.label||r).join('・');
+
+  // v37.1: 売却直後に倉庫表示・ログ・保存を即時反映する。
+  if(els.tooltip) els.tooltip.classList.add('hidden');
+  log(`${label}装備を${sold}個売却。`, sold ? 'good' : '');
+  renderInventory();
+  renderEquip();
+  renderStats();
+  renderBattle();
+  scheduleSave();
 }
 function openChests(n){
   const count=Math.min(n,state.chests); if(count<=0){log('宝箱がない。','danger');return;}

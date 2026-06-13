@@ -214,3 +214,67 @@
   .sell-box{gap:5px;}
   .sell-box label{font-size:11px;}
 }
+
+/* v37.1: 売却即時反映 + 大画面レスポンシブ拡大 */
+:root{
+  --mbh-card-w:270px;
+  --mbh-card-h:380px;
+  --mbh-ui-scale:1;
+  --mbh-side-w:700px;
+  --mbh-log-h:190px;
+  --mbh-gap:10px;
+}
+@media (min-width:1280px){
+  :root{--mbh-card-w:300px;--mbh-card-h:422px;--mbh-ui-scale:1.08;--mbh-side-w:720px;--mbh-log-h:210px;--mbh-gap:11px;}
+}
+@media (min-width:1600px){
+  :root{--mbh-card-w:350px;--mbh-card-h:492px;--mbh-ui-scale:1.22;--mbh-side-w:840px;--mbh-log-h:250px;--mbh-gap:13px;}
+}
+@media (min-width:1920px){
+  :root{--mbh-card-w:410px;--mbh-card-h:578px;--mbh-ui-scale:1.36;--mbh-side-w:980px;--mbh-log-h:300px;--mbh-gap:15px;}
+}
+@media (min-width:1280px){
+  .layout{
+    grid-template-columns:minmax(820px,1fr) minmax(620px,var(--mbh-side-w))!important;
+    gap:var(--mbh-gap)!important;
+    padding:var(--mbh-gap)!important;
+  }
+  .battle-panel{min-height:calc(100vh - 58px - (var(--mbh-gap) * 2))!important;}
+  .enemy-zone,.hero-zone{width:var(--mbh-card-w)!important;top:12%!important;}
+  .enemy-zone{left:7%!important;}
+  .hero-zone{right:7%!important;}
+  .card{width:var(--mbh-card-w)!important;height:var(--mbh-card-h)!important;}
+  .name-line{height:calc(28px * var(--mbh-ui-scale))!important;font-size:calc(18px * var(--mbh-ui-scale))!important;}
+  .name-line b{font-size:calc(15px * var(--mbh-ui-scale))!important;}
+  .enemy-level{font-size:calc(12px * var(--mbh-ui-scale))!important;padding:calc(1px * var(--mbh-ui-scale)) calc(6px * var(--mbh-ui-scale))!important;}
+  .hpbar{height:calc(22px * var(--mbh-ui-scale))!important;margin-bottom:calc(8px * var(--mbh-ui-scale))!important;}
+  .hpbar span{line-height:calc(18px * var(--mbh-ui-scale))!important;font-size:calc(12px * var(--mbh-ui-scale))!important;}
+  .effect{width:calc(230px * var(--mbh-ui-scale))!important;height:calc(120px * var(--mbh-ui-scale))!important;}
+  .effect.fire{width:calc(260px * var(--mbh-ui-scale))!important;height:calc(140px * var(--mbh-ui-scale))!important;}
+  .effect.multi{width:calc(250px * var(--mbh-ui-scale))!important;height:calc(145px * var(--mbh-ui-scale))!important;}
+  .effect.heavy{width:calc(250px * var(--mbh-ui-scale))!important;height:calc(170px * var(--mbh-ui-scale))!important;}
+  .effect.bolt{height:calc(190px * var(--mbh-ui-scale))!important;}
+  .float{font-size:calc(32px * var(--mbh-ui-scale))!important;}
+  .float.crit{font-size:calc(39px * var(--mbh-ui-scale))!important;}
+  .side-panel{font-size:calc(14px * var(--mbh-ui-scale))!important;gap:var(--mbh-gap)!important;}
+  .menu-col{gap:var(--mbh-gap)!important;}
+  .menu-right{grid-template-rows:minmax(0,1fr) var(--mbh-log-h)!important;gap:var(--mbh-gap)!important;}
+  .panel{padding:calc(10px * var(--mbh-ui-scale))!important;}
+  .panel h2{font-size:calc(16px * var(--mbh-ui-scale))!important;margin-bottom:calc(8px * var(--mbh-ui-scale))!important;padding-bottom:calc(5px * var(--mbh-ui-scale))!important;}
+  .stat-grid{font-size:calc(14px * var(--mbh-ui-scale))!important;gap:calc(4px * var(--mbh-ui-scale)) calc(12px * var(--mbh-ui-scale))!important;}
+  .equip-list{gap:calc(6px * var(--mbh-ui-scale))!important;}
+  .equip{font-size:calc(12px * var(--mbh-ui-scale))!important;min-height:calc(42px * var(--mbh-ui-scale))!important;padding:calc(6px * var(--mbh-ui-scale))!important;}
+  .inventory-actions{gap:calc(6px * var(--mbh-ui-scale))!important;margin-bottom:calc(7px * var(--mbh-ui-scale))!important;}
+  .inventory-actions button,.sell-box button{font-size:calc(12px * var(--mbh-ui-scale))!important;padding:calc(7px * var(--mbh-ui-scale)) calc(8px * var(--mbh-ui-scale))!important;}
+  .sell-box{gap:calc(8px * var(--mbh-ui-scale))!important;padding:calc(6px * var(--mbh-ui-scale))!important;}
+  .sell-box label{font-size:calc(12px * var(--mbh-ui-scale))!important;}
+  .inventory{grid-template-columns:repeat(auto-fill,minmax(calc(92px * var(--mbh-ui-scale)),1fr))!important;gap:calc(6px * var(--mbh-ui-scale))!important;}
+  .item{height:calc(48px * var(--mbh-ui-scale))!important;font-size:calc(11px * var(--mbh-ui-scale))!important;padding:calc(4px * var(--mbh-ui-scale))!important;}
+  .item span{font-size:calc(10px * var(--mbh-ui-scale))!important;}
+  .log{font-size:calc(12px * var(--mbh-ui-scale))!important;line-height:1.45!important;}
+  .expbar,.battle-expbar{font-size:calc(13px * var(--mbh-ui-scale))!important;left:calc(18px * var(--mbh-ui-scale))!important;right:calc(18px * var(--mbh-ui-scale))!important;bottom:calc(14px * var(--mbh-ui-scale))!important;}
+  .exp-info{font-size:calc(13px * var(--mbh-ui-scale))!important;}
+  button{padding:calc(8px * var(--mbh-ui-scale)) calc(10px * var(--mbh-ui-scale))!important;}
+  .volume-control{font-size:calc(13px * var(--mbh-ui-scale))!important;padding:calc(6px * var(--mbh-ui-scale)) calc(8px * var(--mbh-ui-scale))!important;}
+  .volume-control input{width:calc(118px * var(--mbh-ui-scale))!important;}
+}
