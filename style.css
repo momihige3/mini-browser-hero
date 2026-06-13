@@ -786,3 +786,90 @@ body.using-touch .tooltip{display:none!important;}
 @media (hover:hover), (pointer:fine){
   .inventory .item:hover{filter:brightness(1.18)!important;outline:1px solid rgba(255,215,107,.75)!important;}
 }
+
+/* v50: PCで縦幅に余裕がある時、バトル画面＋右メニュー＋文字をウィンドウサイズに合わせて拡大 */
+@media (min-width:1280px) and (min-height:760px) and (hover:hover){
+  :root{
+    --pc-ui-scale: clamp(1, min(calc(100vw / 1600), calc(100vh / 900)), 1.45);
+    --pc-side-w: clamp(430px, 28vw, 640px);
+    --pc-gap: calc(10px * var(--pc-ui-scale));
+    --pc-pad: calc(10px * var(--pc-ui-scale));
+  }
+
+  html,body{font-size:calc(16px * var(--pc-ui-scale))!important;}
+
+  .topbar{
+    height:calc(58px * var(--pc-ui-scale))!important;
+    min-height:calc(58px * var(--pc-ui-scale))!important;
+    padding:calc(9px * var(--pc-ui-scale)) calc(14px * var(--pc-ui-scale))!important;
+    gap:calc(14px * var(--pc-ui-scale))!important;
+  }
+  .brand{font-size:calc(20px * var(--pc-ui-scale))!important;}
+  .resources{font-size:calc(16px * var(--pc-ui-scale))!important;}
+  .controls{gap:calc(8px * var(--pc-ui-scale))!important;}
+  button{padding:calc(8px * var(--pc-ui-scale)) calc(10px * var(--pc-ui-scale))!important;border-radius:calc(4px * var(--pc-ui-scale))!important;}
+  .volume-control{font-size:calc(14px * var(--pc-ui-scale))!important;}
+
+  .layout{
+    height:calc(100vh - (58px * var(--pc-ui-scale)))!important;
+    grid-template-columns:minmax(760px,1fr) var(--pc-side-w)!important;
+    gap:var(--pc-gap)!important;
+    padding:var(--pc-pad)!important;
+  }
+
+  .battle-panel{min-height:0!important;height:100%!important;}
+  .enemy-zone,.hero-zone{
+    width:clamp(270px, min(23vw, 43vh), 430px)!important;
+    top:clamp(70px, 12vh, 150px)!important;
+  }
+  .enemy-zone{left:clamp(55px, 8vw, 150px)!important;}
+  .hero-zone{right:clamp(55px, 8vw, 150px)!important;}
+  .card{
+    width:100%!important;
+    height:auto!important;
+    aspect-ratio:270 / 380!important;
+    border-width:calc(4px * var(--pc-ui-scale))!important;
+    border-radius:calc(11px * var(--pc-ui-scale))!important;
+  }
+  .card:before{inset:calc(8px * var(--pc-ui-scale))!important;border-radius:calc(8px * var(--pc-ui-scale))!important;}
+  .name-line{height:calc(28px * var(--pc-ui-scale))!important;font-size:calc(18px * var(--pc-ui-scale))!important;}
+  .name-line b,.enemy-level{font-size:calc(16px * var(--pc-ui-scale))!important;}
+  .hpbar{height:calc(22px * var(--pc-ui-scale))!important;margin-bottom:calc(8px * var(--pc-ui-scale))!important;}
+  .hpbar span{line-height:calc(18px * var(--pc-ui-scale))!important;font-size:calc(14px * var(--pc-ui-scale))!important;}
+  .expbar{left:calc(28px * var(--pc-ui-scale))!important;right:calc(28px * var(--pc-ui-scale))!important;bottom:calc(16px * var(--pc-ui-scale))!important;height:calc(28px * var(--pc-ui-scale))!important;}
+  .expbar span{line-height:calc(24px * var(--pc-ui-scale))!important;font-size:calc(15px * var(--pc-ui-scale))!important;}
+  .expbar b{font-size:calc(15px * var(--pc-ui-scale))!important;}
+  .drop-toast{font-size:calc(24px * var(--pc-ui-scale))!important;}
+  .center-banner{font-size:calc(46px * var(--pc-ui-scale))!important;}
+  .float{font-size:calc(32px * var(--pc-ui-scale))!important;}
+  .float.crit{font-size:calc(39px * var(--pc-ui-scale))!important;}
+
+  .side-panel{
+    grid-template-columns:minmax(calc(240px * var(--pc-ui-scale)), .9fr) minmax(calc(360px * var(--pc-ui-scale)), 1.1fr)!important;
+    gap:var(--pc-gap)!important;
+    font-size:calc(14px * var(--pc-ui-scale))!important;
+  }
+  .menu-col{gap:var(--pc-gap)!important;}
+  .menu-right{grid-template-rows:minmax(0,1fr) calc(190px * var(--pc-ui-scale))!important;gap:var(--pc-gap)!important;}
+  .panel{padding:calc(10px * var(--pc-ui-scale))!important;}
+  .panel h2{font-size:calc(16px * var(--pc-ui-scale))!important;margin-bottom:calc(8px * var(--pc-ui-scale))!important;padding-bottom:calc(5px * var(--pc-ui-scale))!important;}
+  .stat-grid{font-size:calc(14px * var(--pc-ui-scale))!important;gap:calc(4px * var(--pc-ui-scale)) calc(12px * var(--pc-ui-scale))!important;}
+  .equip-list{gap:calc(6px * var(--pc-ui-scale))!important;}
+  .equip{min-height:calc(42px * var(--pc-ui-scale))!important;padding:calc(6px * var(--pc-ui-scale))!important;font-size:calc(12px * var(--pc-ui-scale))!important;border-radius:calc(4px * var(--pc-ui-scale))!important;}
+  .equip small{font-size:calc(11px * var(--pc-ui-scale))!important;}
+  .inventory-actions{gap:calc(6px * var(--pc-ui-scale))!important;margin-bottom:calc(7px * var(--pc-ui-scale))!important;}
+  .sell-box{gap:calc(8px * var(--pc-ui-scale))!important;padding:calc(6px * var(--pc-ui-scale))!important;border-radius:calc(5px * var(--pc-ui-scale))!important;}
+  .sell-box label{font-size:calc(12px * var(--pc-ui-scale))!important;}
+  .sell-box input{width:calc(13px * var(--pc-ui-scale))!important;height:calc(13px * var(--pc-ui-scale))!important;}
+  .inventory{grid-template-columns:repeat(5,1fr)!important;gap:calc(6px * var(--pc-ui-scale))!important;padding-right:calc(4px * var(--pc-ui-scale))!important;}
+  .item{height:calc(42px * var(--pc-ui-scale))!important;padding:calc(4px * var(--pc-ui-scale))!important;font-size:calc(11px * var(--pc-ui-scale))!important;border-radius:calc(4px * var(--pc-ui-scale))!important;}
+  .item span{font-size:calc(10px * var(--pc-ui-scale))!important;}
+  .log{font-size:calc(12px * var(--pc-ui-scale))!important;line-height:1.45!important;padding-right:calc(6px * var(--pc-ui-scale))!important;}
+  .tooltip{max-width:calc(260px * var(--pc-ui-scale))!important;padding:calc(9px * var(--pc-ui-scale))!important;font-size:calc(12px * var(--pc-ui-scale))!important;}
+}
+
+/* v50: PCでも縦幅が狭い時は拡大せず、切れない方向を優先 */
+@media (min-width:1280px) and (max-height:759px){
+  .layout{grid-template-columns:minmax(720px,1fr) minmax(390px,430px)!important;}
+  .side-panel{font-size:14px!important;}
+}
