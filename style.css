@@ -943,3 +943,5 @@ body.using-touch .tooltip{display:none!important;}
     align-content:start!important;
   }
 }
+
+.right-panel,.warehouse{min-height:0}.warehouse-list{overflow-y:auto;max-height:60vh;}

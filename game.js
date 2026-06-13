@@ -920,3 +920,6 @@ function rand(a,b){ return Math.random()*(b-a)+a; }
 function randInt(a,b){ return Math.floor(rand(a,b+1)); }
 
 init();
+
+
+window.addEventListener("load",()=>{window.isMuted=true;try{applyMuteState&&applyMuteState()}catch(e){};localStorage.removeItem("isMuted")});
