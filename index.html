@@ -3,81 +3,98 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ミニブラウザヒーロー</title>
+  <title>ミニブラウザヒーロー v24 高画質カード版</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div id="app">
+  <div id="game">
     <header class="topbar">
-      <div class="brand"><span>⚔</span><div><h1>ミニブラウザヒーロー</h1><p>自動戦闘・装備ハクスラ・宝箱</p></div></div>
-      <div id="topStats" class="top-stats"></div>
+      <div class="brand">ミニブラウザヒーロー <span>高画質カードバトル</span></div>
+      <div class="resources"><b id="gold">0</b> Gold / <b id="chests">0</b> 宝箱 / <b id="mats">0</b> 強化石</div>
+      <div class="controls">
+        <button id="autoBtn">AUTO ON</button>
+        <button id="debugChestBtn">宝箱+10</button>
+        <button id="muteBtn">MUTE OFF</button>
+      </div>
     </header>
 
     <main class="layout">
-      <section class="left">
-        <section class="panel battle-panel">
-          <div class="stage-row"><b id="stageLabel">1-1</b><span id="enemyName">スライム</span></div>
-          <div class="battlefield">
-            <div class="unit-wrap enemy-wrap">
-              <div class="hpplate enemy-hp"><span>敵HP</span><em id="enemyHpText">0/0</em><div class="bar"><i id="enemyHpBar"></i></div></div>
-              <div id="enemy" class="unit enemy walking enter"><div class="slime-eye"></div></div>
-            </div>
-            <div id="slash" class="slash"></div>
-            <div id="damageText" class="damage-text"></div><div id="skillName" class="skill-name"></div>
-            <div class="unit-wrap hero-wrap">
-              <div class="hpplate hero-hp"><span>英雄HP</span><em id="heroHpText">0/0</em><div class="bar"><i id="heroHpBar"></i></div></div>
-              <div id="hero" class="unit hero walking">
-                <div class="hero-cape"></div><div class="hero-head"></div><div class="hero-hair"></div><div class="hero-body"></div><div class="hero-shield"></div><div class="hero-sword"></div><div class="hero-leg l1"></div><div class="hero-leg l2"></div>
-              </div>
-            </div>
-            <div id="stageClear" class="battle-pop">STAGE CLEAR!</div>
-            <div id="levelUp" class="battle-pop level">LEVEL UP!</div>
-            <div id="chestAnim" class="chest-pop">📦</div>
-          </div>
-          <div class="exp-row"><span>EXP</span><div class="bar exp"><i id="expBar"></i></div><em id="expText">0/0</em></div>
-        </section>
+      <section class="battle-panel">
+        <div class="battle-bg"></div>
+        <div class="battle-vignette"></div>
+        <div id="levelEffect" class="level-effect hidden"><img src="assets/fx_levelup.png"><span>LEVEL UP!</span></div>
+        <div id="centerBanner" class="center-banner hidden"></div>
 
-        <section class="panel warehouse">
-          <div class="section-head"><h2>倉庫</h2><div class="actions"><button id="openChestBtn">宝箱を開ける ×0</button><button id="open10Btn">10個開封</button><button id="bestEquipBtn">最強装備を一括装備</button><button id="sortBtn">整頓</button><button id="toggleBulkSellBtn">一括売却設定</button><button id="debugChestBtn">宝箱+10</button></div></div>
-          <div class="warehouse-body">
-            <div id="inventory" class="inventory"></div>
-            <div id="bulkSellPanel" class="bulk-sell-panel">
-              <h3>一括売却</h3>
-              <label><input type="checkbox" data-sell-rarity="common" checked> コモン</label>
-              <label><input type="checkbox" data-sell-rarity="rare" checked> レア</label>
-              <label><input type="checkbox" data-sell-rarity="epic"> エピック</label>
-              <label><input type="checkbox" data-sell-rarity="legendary"> レジェンダリー</label>
-              <label><input type="checkbox" data-sell-rarity="divine"> ディヴァイン以上</label>
-              <div id="bulkSellPreview" class="bulk-sell-preview">売却予定 0個 / 0 Gold</div>
-              <button id="bulkSellRunBtn">選択した装備を売却</button>
-            </div>
+        <div class="enemy-zone">
+          <div class="name-line"><span id="enemyName">スライム</span><b id="enemyTag"></b></div>
+          <div class="hpbar enemy-hp"><div id="enemyHpFill"></div><span id="enemyHpText"></span></div>
+          <div id="enemyCard" class="card enemy-card">
+            <img id="enemyImg" src="assets/enemy_slime.jpg" alt="敵" />
+            <div class="card-flash"></div>
+            <div id="enemyEffectLayer" class="effect-layer"></div>
+            <div id="enemyFloats" class="float-layer"></div>
           </div>
-        </section>
+        </div>
+
+        <div class="hero-zone">
+          <div class="name-line"><span>ハクスラ剣士</span><b id="heroLevel">Lv.1</b></div>
+          <div class="hpbar hero-hp"><div id="heroHpFill"></div><span id="heroHpText"></span></div>
+          <div id="heroCard" class="card hero-card">
+            <img src="assets/hero_card.jpg" alt="主人公" />
+            <div id="deathAura" class="death-aura hidden"></div>
+            <div id="downOverlay" class="down-overlay hidden"><div class="down-text">DOWN...</div><strong id="downCount">5</strong></div>
+            <div class="card-flash"></div>
+          </div>
+        </div>
+
+        <div class="skill-row">
+          <button class="skill active" data-skill="slash"><span>斬撃</span><em>物理</em></button>
+          <button class="skill" data-skill="fire"><span>炎斬り</span><em>火属性</em></button>
+          <button class="skill" data-skill="thunder"><span>雷撃</span><em>雷属性</em></button>
+          <button class="skill" data-skill="multi"><span>連続攻撃</span><em>物理×3</em></button>
+          <button class="skill" data-skill="heavy"><span>大攻撃</span><em>物理</em></button>
+        </div>
       </section>
 
-      <aside class="right">
-        <section class="panel hero-panel">
-          <div class="section-head"><h2>英雄</h2><button id="upgradeBtn" disabled>装備を選択して強化</button></div>
-          <div class="hero-grid">
-            <div id="equipped" class="equipped"></div>
-            <div class="side-info"><div id="heroStats" class="stats"></div><h3>所持素材</h3><div id="materials" class="materials"></div></div>
+      <aside class="side-panel">
+        <div class="panel hero-stats">
+          <h2>ステータス</h2>
+          <div class="stat-grid">
+            <span>Lv</span><b id="statLv">1</b>
+            <span>経験値</span><b id="statXp">0 / 80</b>
+            <span>攻撃力</span><b id="statAtk">42</b>
+            <span>防御力</span><b id="statDef">12</b>
+            <span>火軽減</span><b id="statFireRes">0%</b>
+            <span>雷軽減</span><b id="statThunderRes">0%</b>
           </div>
-        </section>
-        <section class="panel settings-panel">
-          <h2>設定・冒険</h2>
-          <div class="settings-grid">
-            <button id="muteBtn">SE ON</button><label>音量<input id="volume" type="range" min="0" max="100"></label>
-            <label>ステージ<select id="stageSelect"></select></label><button id="goStage">移動</button>
-            <button id="healBtn">回復</button><button id="saveBtn">保存</button><button id="debugModeBtn">デバッグOFF</button><button id="resetBtn">リセット</button>
+        </div>
+
+        <div class="panel equip-panel">
+          <h2>現在装備</h2>
+          <div id="equipList" class="equip-list"></div>
+          <button id="upgradeBtn" class="wide">装備を選択して強化</button>
+          <div class="tiny-note">防具には属性軽減率が付くことがある</div>
+        </div>
+
+        <div class="panel inventory-panel">
+          <h2>倉庫</h2>
+          <div class="inventory-actions">
+            <button id="openOneBtn">宝箱開封</button>
+            <button id="openTenBtn">10個開封</button>
+            <button id="bestEquipBtn">最強装備</button>
+            <button id="sellCommonBtn">Common売却</button>
           </div>
-        </section>
-        <section class="panel log-panel"><h2>ログ</h2><div id="log" class="log"></div></section>
+          <div id="inventory" class="inventory"></div>
+          <div id="tooltip" class="tooltip hidden"></div>
+        </div>
+
+        <div class="panel log-panel">
+          <h2>バトルログ</h2>
+          <div id="log" class="log"></div>
+        </div>
       </aside>
     </main>
   </div>
-
-  <div id="tooltip" class="tooltip"></div>
-  <div id="itemDetail" class="item-detail"></div>
   <script src="game.js"></script>
 </body>
 </html>
