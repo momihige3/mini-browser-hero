@@ -5,9 +5,9 @@ document.addEventListener('contextmenu', e => e.preventDefault());
 const $ = (id) => document.getElementById(id);
 const els = {
   chests:$('chests'), mats:$('mats'), volumeSlider:$('volumeSlider'), expLabel:$('expLabel'), expGainLabel:$('expGainLabel'), expFill:$('expFill'),
-  enemyName:$('enemyName'), enemyTag:$('enemyTag'), enemyImg:$('enemyImg'), enemyCard:$('enemyCard'), enemyHpFill:$('enemyHpFill'), enemyHpText:$('enemyHpText'),
+  enemyName:$('enemyName'), enemyLevel:$('enemyLevel'), enemyTag:$('enemyTag'), enemyImg:$('enemyImg'), enemyCard:$('enemyCard'), enemyHpFill:$('enemyHpFill'), enemyHpText:$('enemyHpText'),
   heroCard:$('heroCard'), heroHpFill:$('heroHpFill'), heroHpText:$('heroHpText'), heroLevel:$('heroLevel'), deathDanceStatus:$('deathDanceStatus'),
-  enemyEffectLayer:$('enemyEffectLayer'), enemyFloats:$('enemyFloats'), levelEffect:$('levelEffect'), centerBanner:$('centerBanner'), deathAura:$('deathAura'), downOverlay:$('downOverlay'), downCount:$('downCount'),
+  enemyEffectLayer:$('enemyEffectLayer'), enemyFloats:$('enemyFloats'), levelEffect:$('levelEffect'), centerBanner:$('centerBanner'), audioHint:$('audioHint'), deathAura:$('deathAura'), downOverlay:$('downOverlay'), downCount:$('downCount'),
   statLv:$('statLv'), statXp:$('statXp'), statXpNext:$('statXpNext'), statXpGain:$('statXpGain'), statAtk:$('statAtk'), statDef:$('statDef'), statFireRes:$('statFireRes'),
   equipList:$('equipList'), upgradeBtn:$('upgradeBtn'), inventory:$('inventory'), tooltip:$('tooltip'), log:$('log'),
   equipToggleBtn:$('equipToggleBtn'), sidePanel:document.querySelector('.side-panel'), volumeSlider:$('volumeSlider'), volumeText:$('volumeText'), debugBtn:$('debugBtn'), debugPanel:$('debugPanel'), debugAddChests:$('debugAddChests'), debugBestSword:$('debugBestSword'), debugBestAccessory:$('debugBestAccessory'), debugKillEnemy:$('debugKillEnemy'), debugKillHero:$('debugKillHero'), debugClose:$('debugClose'), openAllBtn:$('openAllBtn'), bestEquipBtn:$('bestEquipBtn'), sellNormalBtn:$('sellNormalBtn'), sellRareBtn:$('sellRareBtn'), sellAllBtn:$('sellAllBtn')
@@ -38,7 +38,7 @@ const equipNames = {
 
 const state = {
   auto:true, selectedEquip:null, uiOpen:false, lastXpGain:0, volume:1.0,
-  level:1, xp:0, xpNext:80, chests:8, mats:3,
+  level:1, xp:0, xpNext:80, chests:8, mats:3, defeated:0,
   base:{hp:520, atk:48, def:14}, hp:520, enemy:null, enemyHp:1,
   inventory:[], equip:{}, down:false, downUntil:0, deathDance:false, deathDanceUntil:0, lastHeroAttack:0, lastEnemyAttack:0,
   log:[], debug:{killEnemy:false, killHero:false}, audio:null, masterGain:null, bgmGain:null, bgmTimer:null, audioUnlocked:false
@@ -76,9 +76,11 @@ function bind(){
       startAudio();
     };
   }
-  // ブラウザ仕様で完全な自動再生は止められることがあるため、起動時に試行しつつ最初の操作でも解除する。
+  // GitHub Pages/Chromeでは「音あり自動再生」がブロックされることがある。
+  // 可能な範囲で自動開始を試し、ブロック時は最初のユーザー操作で解除する。
   setTimeout(startAudio, 0);
-  ['pointerdown','keydown','touchstart','mousemove'].forEach(ev=>document.addEventListener(ev, startAudio, {once:true, passive:true}));
+  setTimeout(startAudio, 250);
+  ['pointerdown','mousedown','keydown','touchstart','wheel'].forEach(ev=>document.addEventListener(ev, startAudio, {once:true, passive:true}));
   els.debugBtn.onclick = () => { els.debugPanel.classList.toggle('hidden'); startAudio(); };
   els.debugClose.onclick = () => els.debugPanel.classList.add('hidden');
   els.debugAddChests.onclick = () => { state.chests += 50; renderAll(); log('デバッグ：宝箱を50個追加。','good'); };
@@ -135,8 +137,11 @@ function pickEnemy(){
 }
 function spawnEnemy(){
   const e=pickEnemy();
-  const scale=1+state.level*.025;
+  const bossBonus = e.type==='ボス' ? 4 : 0;
+  e.level = Math.max(1, state.level + Math.floor(state.defeated/3) + bossBonus);
+  const scale=1 + e.level*.035 + Math.floor(state.defeated/10)*.03;
   e.maxHp=Math.floor(e.hp*scale); e.atk=Math.floor(e.atk*scale); e.def=Math.floor(e.def*scale);
+  e.xp=Math.floor(e.xp*(1+e.level*.045));
   state.enemy=e; state.enemyHp=e.maxHp;
   els.enemyImg.src=e.img; els.enemyCard.className='card enemy-card enter';
   setTimeout(()=>els.enemyCard.classList.remove('enter'),600);
@@ -264,6 +269,7 @@ function enemyAttack(now){
 function enemyDefeated(){
   const e=state.enemy; state.enemy=null;
   els.enemyCard.classList.add('dead');
+  state.defeated++;
   const gainXp=e.xp;
   state.lastXpGain = gainXp; state.xp += gainXp; if(Math.random()<.33) state.chests++;
   if(Math.random()<.18){ const it=makeRandomItem(); state.inventory.unshift(it); log(`${it.name} を獲得。`,'good'); }
@@ -321,10 +327,19 @@ function startAudio(){
       state.masterGain.connect(state.audio.destination);
       applyVolume();
     }
-    if(state.audio.state==='suspended') state.audio.resume();
-    state.audioUnlocked = true;
-    playBgm();
-  }catch(e){ console.warn(e); }
+    const unlock = () => {
+      state.audioUnlocked = state.audio && state.audio.state === 'running';
+      if(els.audioHint) els.audioHint.classList.toggle('hidden', state.audioUnlocked);
+      if(state.audioUnlocked) playBgm();
+    };
+    if(state.audio.state==='suspended'){
+      const p = state.audio.resume();
+      if(p && typeof p.then==='function') p.then(unlock).catch(()=>{ if(els.audioHint) els.audioHint.classList.remove('hidden'); });
+      else unlock();
+    }else{
+      unlock();
+    }
+  }catch(e){ if(els.audioHint) els.audioHint.classList.remove('hidden'); console.warn(e); }
 }
 function applyVolume(){
   if(state.masterGain) state.masterGain.gain.value = Math.max(0, Math.min(2, state.volume));
@@ -437,7 +452,7 @@ function makeDebugAccessory(slot){
 function renderAll(){ renderBattle(); renderStats(); renderEquip(); renderInventory(); }
 function renderBattle(){
   const mh=maxHp(); els.heroLevel.textContent=`Lv.${state.level}`; els.heroHpFill.style.width=`${Math.max(0,state.hp/mh*100)}%`; els.heroHpText.textContent=`${Math.floor(state.hp)} / ${Math.floor(mh)}`;
-  if(state.enemy){ els.enemyName.textContent=state.enemy.name; els.enemyTag.textContent=state.enemy.type==='ボス'?'BOSS':''; els.enemyHpFill.style.width=`${Math.max(0,state.enemyHp/state.enemy.maxHp*100)}%`; els.enemyHpText.textContent=`${Math.floor(state.enemyHp)} / ${state.enemy.maxHp}`; }
+  if(state.enemy){ els.enemyName.textContent=state.enemy.name; if(els.enemyLevel) els.enemyLevel.textContent=`Lv.${state.enemy.level||1}`; els.enemyTag.textContent=state.enemy.type==='ボス'?'BOSS':''; els.enemyHpFill.style.width=`${Math.max(0,state.enemyHp/state.enemy.maxHp*100)}%`; els.enemyHpText.textContent=`${Math.floor(state.enemyHp)} / ${state.enemy.maxHp}`; }
   els.chests.textContent=state.chests; els.mats.textContent=state.mats;
   if(els.expFill){ els.expFill.style.width=`${Math.max(0,Math.min(100,state.xp/state.xpNext*100))}%`; els.expLabel.textContent=`Lv.${state.level} EXP ${state.xp} / ${state.xpNext}`; els.expGainLabel.textContent=`+${state.lastXpGain}`; }
   if(state.deathDance){ els.deathDanceStatus.textContent = `死線の剣舞 残り${Math.max(0, Math.ceil((state.deathDanceUntil-performance.now())/1000))}秒`; }
