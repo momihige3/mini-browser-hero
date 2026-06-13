@@ -4,3 +4,31 @@
 @keyframes screenShake{0%,100%{transform:translate(0,0)}20%{transform:translate(-4px,2px)}40%{transform:translate(5px,-2px)}60%{transform:translate(-3px,-3px)}80%{transform:translate(3px,2px)}}
 /* v28 layout fixes */
 .skill-row{display:none!important}.brand span,.tiny-note{display:none!important}.dance-status{font-style:normal;font-size:12px;color:#ffb0ff;background:rgba(60,0,70,.72);border:1px solid #ff4dff;border-radius:999px;padding:2px 8px;margin-left:6px;text-shadow:0 0 8px #f0f}.topbar{position:relative;z-index:80}.side-panel.open{display:grid!important;position:absolute;right:10px;top:68px;bottom:10px;width:min(430px,calc(100vw - 20px));z-index:70;background:rgba(0,0,0,.72);padding:8px;border:2px solid #c99b39;box-shadow:0 0 35px #000}.side-panel.open:before{content:"";position:fixed;inset:58px 0 0;background:rgba(0,0,0,.18);z-index:-1}.resources{font-size:14px}.log{scrollbar-color:#9d742a #111;scrollbar-width:thin}.battle-panel{min-width:0}.enemy-zone,.hero-zone{max-width:38vw}.card{max-width:100%;height:min(380px,58vh)}@media(max-width:1180px){.layout{grid-template-columns:1fr}.side-panel{display:none}.battle-panel{min-height:calc(100vh - 78px)}.enemy-zone{left:4%;top:15%;width:250px}.hero-zone{right:4%;top:15%;width:250px}.card{height:min(360px,58vh)}}@media(max-width:760px){.topbar{gap:6px;padding:7px}.brand{font-size:15px}.resources{font-size:12px}.controls button{padding:6px 7px;font-size:12px}.enemy-zone,.hero-zone{width:42vw;top:20%}.enemy-zone{left:2%}.hero-zone{right:2%}.name-line{font-size:14px}.hpbar{height:19px}.card{height:52vh}.float{font-size:24px}.center-banner{font-size:32px}}
+
+/* v29 responsive/menu/EXP/audio/layout refinements */
+.float.damage{color:#ffffff!important}
+.level-effect img{display:none!important}.level-effect{height:120px}.level-effect span{font-size:54px}
+.volume-control{display:flex;align-items:center;gap:6px;color:#ffe8b5;font-size:13px;white-space:nowrap}.volume-control input{width:120px;accent-color:#d69b2d}
+@media (min-width:1181px){
+  .layout{grid-template-columns:minmax(760px,1fr) 560px;gap:12px;padding:12px}
+  .menu-toggle{display:none!important}
+  .battle-panel{min-height:calc(100vh - 82px)}
+  .enemy-zone,.hero-zone{width:clamp(290px,18vw,360px);top:13%}
+  .enemy-zone{left:7%}.hero-zone{right:7%}
+  .card{width:100%;height:clamp(410px,62vh,560px)}
+  .side-panel{grid-template-rows:auto auto minmax(210px,1fr) 210px;gap:12px}
+  .panel{padding:12px}.panel h2{font-size:18px}.inventory{grid-template-columns:repeat(4,minmax(0,1fr));overflow-y:auto;max-height:100%;padding-right:4px}.inventory-panel{display:flex;flex-direction:column}.inventory-actions{grid-template-columns:repeat(2,1fr);flex:0 0 auto}.log{height:160px}
+  .battle-exp-wrap{left:6%;right:6%;bottom:20px}
+}
+@media(max-width:1180px){
+  .side-panel.open{display:grid!important;position:absolute;left:10px;right:10px;top:68px;bottom:10px;width:auto;z-index:70;background:rgba(0,0,0,.82);padding:8px;border:2px solid #c99b39;box-shadow:0 0 35px #000;grid-template-columns:minmax(260px,38%) minmax(320px,1fr);grid-template-rows:auto 1fr;grid-template-areas:'stats inv' 'equip log';gap:8px;overflow:hidden}
+  .side-panel.open .hero-stats{grid-area:stats}.side-panel.open .equip-panel{grid-area:equip}.side-panel.open .inventory-panel{grid-area:inv}.side-panel.open .log-panel{grid-area:log}
+  .side-panel.open .inventory-panel{display:flex;flex-direction:column}.side-panel.open .inventory{overflow-y:auto;grid-template-columns:repeat(4,minmax(0,1fr));padding-right:4px;min-height:0}.side-panel.open .log{height:100%;min-height:0;overflow-y:auto}
+  .side-panel.open .equip-list{grid-template-columns:1fr}.side-panel.open .panel{min-height:0}
+}
+@media(max-width:760px){
+  .side-panel.open{grid-template-columns:1fr;grid-template-rows:auto auto minmax(180px,1fr) minmax(120px,.7fr);grid-template-areas:'stats' 'equip' 'inv' 'log'}
+  .side-panel.open .inventory{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .volume-control input{width:78px}.resources{display:none}
+}
+.item b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.item span{color:#cbb98a}.inventory,.log{scrollbar-color:#9d742a #111;scrollbar-width:thin}.equip small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
