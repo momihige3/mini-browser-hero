@@ -49,10 +49,11 @@ let isResettingUserData = false;
 let saveTimer = null;
 
 function init(){
+  // 初期状態は完全に空にする。
+  // 以前はここで固定装備と倉庫アイテムを作っていたため、
+  // ユーザーデータリセット後にも装備/倉庫が復活していた。
   slots.forEach(slot => state.equip[slot]=null);
-  state.equip['武器'] = makeItem('武器', rarities[1]);
-  state.equip['鎧'] = makeItem('鎧', rarities[0]);
-  for(let i=0;i<10;i++) state.inventory.push(makeRandomItem());
+  state.inventory = [];
   loadGame();
   bind();
   startAudio();
@@ -80,7 +81,7 @@ function saveGame(){
   if(isResettingUserData) return;
   try{
     const data={
-      version:36,
+      version:41,
       level:state.level, xp:state.xp, xpNext:state.xpNext, lastXpGain:state.lastXpGain,
       chests:state.chests, mats:state.mats, defeated:state.defeated,
       hp:Math.max(1, Math.floor(state.hp||1)), base:state.base,
@@ -613,10 +614,22 @@ function showDropToast(it){
 function resetUserData(){
   if(!confirm('ユーザーデータをリセットする？')) return;
   isResettingUserData = true;
+  clearTimeout(saveTimer);
   clearGameStorage();
+  // メモリ上の装備/倉庫も即空にしてから再読み込みする。
+  slots.forEach(slot => state.equip[slot]=null);
+  state.inventory = [];
+  state.level = 1;
+  state.xp = 0;
+  state.xpNext = 80;
+  state.lastXpGain = 0;
+  state.mats = 3;
+  state.defeated = 0;
+  state.hp = maxHp();
   state.log = [];
   if(els.log) els.log.innerHTML='';
-  setTimeout(()=>location.reload(), 50);
+  renderAll();
+  setTimeout(()=>location.replace(location.pathname + '?reset=' + Date.now()), 80);
 }
 function log(msg, cls='', html=false){
   const time=new Date().toLocaleTimeString('ja-JP',{hour12:false});
