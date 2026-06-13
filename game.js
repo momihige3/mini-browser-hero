@@ -45,6 +45,7 @@ const state = {
 };
 
 const SAVE_KEY = 'mini-browser-hero-save-v36';
+let isResettingUserData = false;
 let saveTimer = null;
 
 function init(){
@@ -76,6 +77,7 @@ function serializeEquip(){
   return out;
 }
 function saveGame(){
+  if(isResettingUserData) return;
   try{
     const data={
       version:36,
@@ -114,8 +116,20 @@ function loadGame(){
     console.info('save loaded');
   }catch(e){ console.warn('load failed', e); }
 }
+function clearGameStorage(){
+  try{
+    const keys=[];
+    for(let i=0;i<localStorage.length;i++){
+      const k=localStorage.key(i);
+      if(k && (k === SAVE_KEY || k === 'mini-browser-hero-save' || k.startsWith('mini-browser-hero-save') || k.startsWith('mini-browser-hero'))){
+        keys.push(k);
+      }
+    }
+    keys.forEach(k=>localStorage.removeItem(k));
+  }catch(e){ console.warn('clear storage failed', e); }
+}
 function resetSave(){
-  localStorage.removeItem(SAVE_KEY);
+  clearGameStorage();
 }
 function scheduleSave(){
   clearTimeout(saveTimer);
@@ -581,8 +595,11 @@ function logItemDrop(it){
 }
 function resetUserData(){
   if(!confirm('ユーザーデータをリセットする？')) return;
-  try{ localStorage.removeItem(SAVE_KEY); }catch(e){}
-  location.reload();
+  isResettingUserData = true;
+  clearGameStorage();
+  state.log = [];
+  if(els.log) els.log.innerHTML='';
+  setTimeout(()=>location.reload(), 50);
 }
 function log(msg, cls='', html=false){
   const time=new Date().toLocaleTimeString('ja-JP',{hour12:false});
