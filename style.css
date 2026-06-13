@@ -620,8 +620,10 @@
 }
 @media (pointer:coarse){
   .inventory-action-menu{left:50%!important;right:auto!important;bottom:12px!important;top:auto!important;transform:translateX(-50%)!important;}
-  .tooltip{display:none!important;}
+  body:not(.using-mouse) .tooltip{display:none!important;}
 }
+body.using-mouse .tooltip:not(.hidden){display:block!important;}
+body.using-touch .tooltip{display:none!important;}
 
 /* v47: PC hover info + short-height card fit + compact warehouse header */
 @media (hover:hover) and (pointer:fine){
@@ -775,4 +777,12 @@
     background:#070707!important;
   }
   .enemy-card img{transform:scaleX(-1)!important;}
+}
+
+
+/* v49: タッチ対応PCでもマウス操作なら倉庫オンカーソル情報を表示 */
+body.using-mouse .tooltip:not(.hidden){display:block!important;}
+body.using-touch .tooltip{display:none!important;}
+@media (hover:hover), (pointer:fine){
+  .inventory .item:hover{filter:brightness(1.18)!important;outline:1px solid rgba(255,215,107,.75)!important;}
 }

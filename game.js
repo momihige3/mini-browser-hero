@@ -58,6 +58,16 @@ function isCompactMenuMode(){
 function isTouchDevice(){
   return window.matchMedia('(pointer: coarse)').matches || ('ontouchstart' in window) || (navigator.maxTouchPoints||0) > 0;
 }
+function isMouseLikePointer(e){
+  // PC/マウス操作では、タッチ対応PCでもオンカーソル表示を出す。
+  // touch / pen は誤表示防止で非表示。
+  return !e || !e.pointerType || e.pointerType === 'mouse';
+}
+function setPointerMode(mode){
+  if(!document.body) return;
+  document.body.classList.toggle('using-mouse', mode === 'mouse');
+  document.body.classList.toggle('using-touch', mode === 'touch');
+}
 function isSpPortrait(){
   return window.matchMedia('(max-width: 760px) and (orientation: portrait)').matches;
 }
@@ -671,14 +681,21 @@ function renderInventory(){
     const div=document.createElement('div');
     div.className=`item ${it.rarity}${selectedId===it.id?' selected-inventory':''}`;
     div.innerHTML=`<b>${it.name}</b><span>${it.slot}</span>`;
+    div.onpointerdown=(e)=>{ if(e.pointerType && e.pointerType !== 'mouse'){ setPointerMode('touch'); els.tooltip.classList.add('hidden'); } };
     div.onclick=(e)=>{ e.preventDefault(); e.stopPropagation(); els.tooltip.classList.add('hidden'); showInventoryActionMenu(it, div); };
-    if(!isTouchDevice()){
-      div.onmousemove=(e)=>showTip(e,it);
-      div.onmouseleave=()=>{ if(state.inventoryMenuItemId!==it.id) els.tooltip.classList.add('hidden'); };
-    } else {
-      div.onmousemove=null;
-      div.onmouseleave=null;
-    }
+    // PC/マウス操作: オンカーソルで装備情報を表示
+    // タッチ操作: オンカーソル表示なし
+    div.onpointerenter=(e)=>{
+      if(isMouseLikePointer(e)){ setPointerMode('mouse'); showTip(e,it); }
+      else { setPointerMode('touch'); els.tooltip.classList.add('hidden'); }
+    };
+    div.onpointermove=(e)=>{
+      if(isMouseLikePointer(e)){ setPointerMode('mouse'); showTip(e,it); }
+      else { setPointerMode('touch'); els.tooltip.classList.add('hidden'); }
+    };
+    // 古いブラウザ/通常マウスイベント用の保険
+    div.onmousemove=(e)=>{ setPointerMode('mouse'); showTip(e,it); };
+    div.onmouseleave=()=>{ if(state.inventoryMenuItemId!==it.id) els.tooltip.classList.add('hidden'); };
     els.inventory.appendChild(div);
     if(selectedId===it.id) setTimeout(()=>showInventoryActionMenu(it, div), 0);
   });
