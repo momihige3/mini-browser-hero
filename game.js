@@ -155,11 +155,15 @@ function bind(){
       startAudio();
     };
   }
-  // GitHub Pages/Chromeでは「音あり自動再生」がブロックされることがある。
-  // 可能な範囲で自動開始を試し、ブロック時は最初のユーザー操作で解除する。
-  setTimeout(startAudio, 0);
-  setTimeout(startAudio, 250);
-  ['pointerdown','mousedown','keydown','touchstart','wheel'].forEach(ev=>document.addEventListener(ev, startAudio, {once:true, passive:true}));
+  // iPhone/Safari はユーザー操作の直後でないと音声が開始できない。
+  // 画面タップ・音声ONボタン・各UI操作の全部から解除を試す。
+  if(els.audioHint){
+    els.audioHint.classList.remove('hidden');
+    els.audioHint.onclick = (e) => { e.preventDefault(); startAudio(); };
+  }
+  const audioEvents = ['pointerdown','pointerup','click','touchstart','touchend','mousedown','keydown'];
+  audioEvents.forEach(ev=>document.addEventListener(ev, startAudio, {passive:true}));
+  setTimeout(startAudio, 300);
   els.debugBtn.onclick = () => { els.debugPanel.classList.toggle('hidden'); startAudio(); };
   els.debugClose.onclick = () => els.debugPanel.classList.add('hidden');
   if(els.debugResetData) els.debugResetData.onclick = resetUserData;
@@ -403,28 +407,59 @@ function randomWeaponSkill(rarity){
   ];
   return {...list[Math.floor(Math.random()*list.length)]};
 }
+function primeAudio(){
+  // iOS Safari向け。無音を一瞬だけ流してAudioContextを完全に起こす。
+  try{
+    if(!state.audio || !state.masterGain) return;
+    const ctx = state.audio;
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    g.gain.value = 0.00001;
+    o.frequency.value = 440;
+    o.connect(g);
+    g.connect(state.masterGain);
+    const t = ctx.currentTime || 0;
+    o.start(t);
+    o.stop(t + 0.03);
+  }catch(e){}
+}
 function startAudio(){
   try{
+    const C=window.AudioContext||window.webkitAudioContext;
+    if(!C){
+      if(els.audioHint) els.audioHint.classList.add('hidden');
+      return;
+    }
     if(!state.audio){
-      const C=window.AudioContext||window.webkitAudioContext;
       state.audio=new C();
       state.masterGain=state.audio.createGain();
       state.masterGain.connect(state.audio.destination);
       applyVolume();
     }
     const unlock = () => {
+      primeAudio();
       state.audioUnlocked = state.audio && state.audio.state === 'running';
       if(els.audioHint) els.audioHint.classList.toggle('hidden', state.audioUnlocked);
-      if(state.audioUnlocked) playBgm();
+      if(state.audioUnlocked){
+        playBgm();
+        playSfx('guard');
+      }
     };
     if(state.audio.state==='suspended'){
       const p = state.audio.resume();
-      if(p && typeof p.then==='function') p.then(unlock).catch(()=>{ if(els.audioHint) els.audioHint.classList.remove('hidden'); });
+      if(p && typeof p.then==='function') p.then(unlock).catch(()=>{
+        state.audioUnlocked = false;
+        if(els.audioHint) els.audioHint.classList.remove('hidden');
+      });
       else unlock();
     }else{
       unlock();
     }
-  }catch(e){ if(els.audioHint) els.audioHint.classList.remove('hidden'); console.warn(e); }
+  }catch(e){
+    state.audioUnlocked = false;
+    if(els.audioHint) els.audioHint.classList.remove('hidden');
+    console.warn(e);
+  }
 }
 function applyVolume(){
   if(state.masterGain) state.masterGain.gain.value = Math.max(0, Math.min(2, state.volume));
