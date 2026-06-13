@@ -55,11 +55,18 @@ function isMobileAudioMode(){
 function isCompactMenuMode(){
   return window.matchMedia('(max-width: 1279px), (max-height: 700px)').matches;
 }
+function isTouchDevice(){
+  return window.matchMedia('(pointer: coarse)').matches || ('ontouchstart' in window) || (navigator.maxTouchPoints||0) > 0;
+}
+function isSpPortrait(){
+  return window.matchMedia('(max-width: 760px) and (orientation: portrait)').matches;
+}
 function updateMuteButton(){
   if(!els.muteBtn) return;
   const mobile = isMobileAudioMode();
   els.muteBtn.style.display = mobile ? 'inline-flex' : 'none';
-  els.muteBtn.textContent = state.mobileMuted ? '🔇 ミュート' : '🔊 音ON';
+  els.muteBtn.textContent = state.mobileMuted ? '🔇' : '🔊';
+  els.muteBtn.title = state.mobileMuted ? 'ミュート中' : '音ON';
   els.muteBtn.setAttribute('aria-pressed', state.mobileMuted ? 'true' : 'false');
   if(els.audioHint){
     els.audioHint.classList.add('hidden');
@@ -81,6 +88,8 @@ function setMenuPage(page){
 }
 function syncCompactLayout(){
   updateMuteButton();
+  if(els.equipToggleBtn) els.equipToggleBtn.textContent = isSpPortrait() ? (state.uiOpen ? '×' : '☰') : (state.uiOpen ? '閉じる' : 'メニュー');
+  if(els.debugBtn) els.debugBtn.textContent = isSpPortrait() ? 'D' : 'デバッグ';
   setMenuPage(state.menuPage || 'stats');
   if(!isCompactMenuMode() && window.innerWidth >= 1280){
     state.uiOpen=false;
@@ -183,8 +192,9 @@ function bind(){
   els.equipToggleBtn.onclick = () => {
     state.uiOpen=!state.uiOpen;
     els.sidePanel.classList.toggle('open', state.uiOpen);
-    els.equipToggleBtn.textContent=state.uiOpen?'閉じる':'メニュー';
+    els.equipToggleBtn.textContent = isSpPortrait() ? (state.uiOpen ? '×' : '☰') : (state.uiOpen?'閉じる':'メニュー');
     startAudio();
+    playUiClick();
   };
   if(els.volumeSlider){
     els.volumeSlider.value = Math.round(state.volume*100);
@@ -203,8 +213,6 @@ function bind(){
     els.audioHint.classList.add('hidden');
     els.audioHint.onclick = null;
   }
-  const audioEvents = ['pointerdown','pointerup','click','touchstart','touchend','mousedown','keydown'];
-  audioEvents.forEach(ev=>document.addEventListener(ev, () => { if(!isMobileAudioMode() || !state.mobileMuted) startAudio(); }, {passive:true}));
   document.addEventListener('click', (e) => {
     if(!els.inventory || els.inventory.contains(e.target)) return;
     state.inventoryMenuItemId = null;
@@ -212,22 +220,23 @@ function bind(){
     if(menu) menu.remove();
   });
   setTimeout(()=>{ if(!isMobileAudioMode() || !state.mobileMuted) startAudio(); }, 300);
-  els.debugBtn.onclick = () => { els.debugPanel.classList.toggle('hidden'); startAudio(); };
-  if(els.muteBtn) els.muteBtn.onclick = (e) => { e.preventDefault(); setMobileMuted(!state.mobileMuted); if(!state.mobileMuted) startAudio(); };
-  document.querySelectorAll('.mobile-menu-tabs button').forEach(btn=>btn.onclick=()=>setMenuPage(btn.dataset.menuPage));
-  els.debugClose.onclick = () => els.debugPanel.classList.add('hidden');
-  if(els.debugResetData) els.debugResetData.onclick = resetUserData;
-  els.debugAddChests.onclick = () => { for(let i=0;i<50;i++) state.inventory.unshift(makeRandomItem()); renderAll(); log('デバッグ：装備を50個追加。','good'); scheduleSave(); };
-  els.debugBestSword.onclick = () => { const it=makeDebugSword(); state.inventory.unshift(it); renderAll(); log('デバッグ：最強剣を倉庫に追加。','good'); scheduleSave(); };
-  els.debugBestAccessory.onclick = () => { const a=makeDebugAccessory('リング'); const b=makeDebugAccessory('アミュレット'); state.inventory.unshift(a,b); renderAll(); log('デバッグ：最強アクセを倉庫に追加。','good'); scheduleSave(); };
+  els.debugBtn.onclick = () => { els.debugPanel.classList.toggle('hidden'); startAudio(); playUiClick(); };
+  if(els.muteBtn) els.muteBtn.onclick = (e) => { e.preventDefault(); setMobileMuted(!state.mobileMuted); if(!state.mobileMuted) startAudio(); playUiClick(); };
+  document.querySelectorAll('.mobile-menu-tabs button').forEach(btn=>btn.onclick=()=>{setMenuPage(btn.dataset.menuPage); playUiClick();});
+  els.debugClose.onclick = () => { els.debugPanel.classList.add('hidden'); playUiClick(); };
+  if(els.debugResetData) els.debugResetData.onclick = () => { playUiClick(); resetUserData(); };
+  els.debugAddChests.onclick = () => { playUiClick(); for(let i=0;i<50;i++) state.inventory.unshift(makeRandomItem()); renderAll(); log('デバッグ：装備を50個追加。','good'); scheduleSave(); };
+  els.debugBestSword.onclick = () => { playUiClick(); const it=makeDebugSword(); state.inventory.unshift(it); renderAll(); log('デバッグ：最強剣を倉庫に追加。','good'); scheduleSave(); };
+  els.debugBestAccessory.onclick = () => { playUiClick(); const a=makeDebugAccessory('リング'); const b=makeDebugAccessory('アミュレット'); state.inventory.unshift(a,b); renderAll(); log('デバッグ：最強アクセを倉庫に追加。','good'); scheduleSave(); };
   els.debugKillEnemy.onchange = () => { state.debug.killEnemy = els.debugKillEnemy.checked; log(`デバッグ：敵への攻撃で即死 ${state.debug.killEnemy?'ON':'OFF'}`, state.debug.killEnemy?'danger':''); scheduleSave(); };
   els.debugKillHero.onchange = () => { state.debug.killHero = els.debugKillHero.checked; log(`デバッグ：敵からの攻撃で即死 ${state.debug.killHero?'ON':'OFF'}`, state.debug.killHero?'danger':''); scheduleSave(); };
 
   if(els.openAllBtn) els.openAllBtn.style.display='none';
-  els.bestEquipBtn.onclick = bestEquip;
-  els.sellSelectedBtn.onclick = sellSelectedRarities;
-  els.upgradeBtn.onclick = upgradeSelected;
+  els.bestEquipBtn.onclick = () => { playUiClick(); bestEquip(); };
+  els.sellSelectedBtn.onclick = () => { playUiClick(); sellSelectedRarities(); };
+  els.upgradeBtn.onclick = () => { if(!els.upgradeBtn.disabled) playUiClick(); upgradeSelected(); };
   window.addEventListener('resize', syncMenuByWidth);
+  window.addEventListener('orientationchange', syncCompactLayout);
   syncMenuByWidth();
   setMenuPage(state.menuPage || 'stats');
   updateMuteButton();
@@ -490,7 +499,6 @@ function startAudio(){
       if(els.audioHint) els.audioHint.classList.toggle('hidden', state.audioUnlocked);
       if(state.audioUnlocked){
         playBgm();
-        playSfx('guard');
       }
     };
     if(state.audio.state==='suspended'){
@@ -526,6 +534,10 @@ function playSfx(kind){
   const map={slash:[640,.06,'triangle',.055],fire:[220,.14,'sawtooth',.055],thunder:[90,.09,'square',.04],heavy:[120,.18,'sawtooth',.06],hit:[180,.05,'square',.035],guard:[520,.08,'triangle',.045],win:[880,.12,'sine',.04],level:[660,.2,'triangle',.055],down:[110,.28,'sawtooth',.05],dance:[360,.22,'sawtooth',.06]};
   const a=map[kind]||map.slash; tone(...a);
   if(kind==='slash'||kind==='fire'||kind==='thunder'||kind==='dance') setTimeout(()=>tone(a[0]*1.42,a[1]*.8,a[2],a[3]*.65),55);
+}
+function playUiClick(){
+  if(!state.audioUnlocked || state.mobileMuted) return;
+  tone(520,.045,'triangle',.018);
 }
 function playBgm(){
   if(!state.audio || state.bgmTimer) return;
@@ -659,9 +671,14 @@ function renderInventory(){
     const div=document.createElement('div');
     div.className=`item ${it.rarity}${selectedId===it.id?' selected-inventory':''}`;
     div.innerHTML=`<b>${it.name}</b><span>${it.slot}</span>`;
-    div.onclick=(e)=>{ e.preventDefault(); e.stopPropagation(); showInventoryActionMenu(it, div); };
-    div.onmousemove=(e)=>showTip(e,it);
-    div.onmouseleave=()=>{ if(state.inventoryMenuItemId!==it.id) els.tooltip.classList.add('hidden'); };
+    div.onclick=(e)=>{ e.preventDefault(); e.stopPropagation(); els.tooltip.classList.add('hidden'); showInventoryActionMenu(it, div); };
+    if(!isTouchDevice()){
+      div.onmousemove=(e)=>showTip(e,it);
+      div.onmouseleave=()=>{ if(state.inventoryMenuItemId!==it.id) els.tooltip.classList.add('hidden'); };
+    } else {
+      div.onmousemove=null;
+      div.onmouseleave=null;
+    }
     els.inventory.appendChild(div);
     if(selectedId===it.id) setTimeout(()=>showInventoryActionMenu(it, div), 0);
   });
@@ -684,20 +701,34 @@ function showInventoryActionMenu(it, anchor){
   menu.innerHTML = `<div class="inventory-action-title"><b>${escapeHtml(it.name)}+${it.level}</b><small>${escapeHtml(it.slot)} / ${escapeHtml(it.rarityName||it.rarity)}</small></div><div class="inventory-action-summary">${escapeHtml(itemSummary(it)||'追加能力なし')}${current?`<br>現在: ${escapeHtml(current.name)}+${current.level} / 戦力差: ${diff>=0?'+':''}${diff}`:'<br>現在: 未装備'}</div><div class="inventory-action-buttons"><button type="button" data-action="equip">装備</button><button type="button" data-action="cancel">キャンセル</button></div>`;
   const r = anchor.getBoundingClientRect();
   const width = Math.min(300, window.innerWidth - 16);
-  let left = Math.min(Math.max(8, r.left), window.innerWidth - width - 8);
-  let top = r.bottom + 6;
   menu.style.width = width + 'px';
-  menu.style.left = left + 'px';
-  menu.style.top = top + 'px';
+  if(isTouchDevice()){
+    // タッチ端末ではカーソル位置表示にせず、画面下に固定表示する。
+    menu.style.left = '50%';
+    menu.style.right = 'auto';
+    menu.style.top = 'auto';
+    menu.style.bottom = '12px';
+    menu.style.transform = 'translateX(-50%)';
+  }else{
+    let left = Math.min(Math.max(8, r.left), window.innerWidth - width - 8);
+    let top = r.bottom + 6;
+    menu.style.left = left + 'px';
+    menu.style.right = 'auto';
+    menu.style.top = top + 'px';
+    menu.style.bottom = 'auto';
+    menu.style.transform = 'none';
+  }
   menu.classList.remove('hidden');
-  requestAnimationFrame(()=>{
-    const mr = menu.getBoundingClientRect();
-    if(mr.bottom > window.innerHeight - 8){
-      menu.style.top = Math.max(8, r.top - mr.height - 6) + 'px';
-    }
-  });
-  menu.querySelector('[data-action="equip"]').onclick=(e)=>{ e.stopPropagation(); state.inventoryMenuItemId=null; menu.remove(); els.tooltip.classList.add('hidden'); equipItem(it); };
-  menu.querySelector('[data-action="cancel"]').onclick=(e)=>{ e.stopPropagation(); state.inventoryMenuItemId=null; menu.remove(); els.tooltip.classList.add('hidden'); renderInventory(); };
+  if(!isTouchDevice()){
+    requestAnimationFrame(()=>{
+      const mr = menu.getBoundingClientRect();
+      if(mr.bottom > window.innerHeight - 8){
+        menu.style.top = Math.max(8, r.top - mr.height - 6) + 'px';
+      }
+    });
+  }
+  menu.querySelector('[data-action="equip"]').onclick=(e)=>{ e.stopPropagation(); playUiClick(); state.inventoryMenuItemId=null; menu.remove(); els.tooltip.classList.add('hidden'); equipItem(it); };
+  menu.querySelector('[data-action="cancel"]').onclick=(e)=>{ e.stopPropagation(); playUiClick(); state.inventoryMenuItemId=null; menu.remove(); els.tooltip.classList.add('hidden'); renderInventory(); };
 }
 function itemSummary(it){
   const arr=[];

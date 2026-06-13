@@ -591,3 +591,34 @@
   .hpbar{height:16px!important;}
   .expbar{height:21px!important;bottom:5px!important;}
 }
+
+
+/* v46: SP縦ヘッダー圧縮・ミュート幅固定 */
+@media (max-width:760px) and (orientation:portrait){
+  .controls{gap:5px!important;align-items:center!important;}
+  #equipToggleBtn,
+  #debugBtn,
+  #muteBtn{
+    min-width:42px!important;
+    width:42px!important;
+    max-width:42px!important;
+    padding:0!important;
+    text-align:center!important;
+    white-space:nowrap!important;
+    overflow:hidden!important;
+    line-height:32px!important;
+    font-size:18px!important;
+  }
+  #debugBtn{font-weight:900!important;font-size:16px!important;}
+  #muteBtn{font-size:17px!important;}
+  .brand{max-width:42vw!important;word-break:keep-all!important;overflow-wrap:anywhere!important;}
+  .resources{font-size:12px!important;}
+}
+@media (max-width:760px) and (orientation:portrait) and (max-height:780px){
+  #equipToggleBtn,#debugBtn,#muteBtn{min-width:38px!important;width:38px!important;max-width:38px!important;height:32px!important;line-height:30px!important;font-size:16px!important;}
+  #debugBtn{font-size:15px!important;}
+}
+@media (pointer:coarse){
+  .inventory-action-menu{left:50%!important;right:auto!important;bottom:12px!important;top:auto!important;transform:translateX(-50%)!important;}
+  .tooltip{display:none!important;}
+}
