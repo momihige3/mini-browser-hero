@@ -4,14 +4,13 @@ document.addEventListener('contextmenu', e => e.preventDefault());
 
 const $ = (id) => document.getElementById(id);
 const els = {
-  chests:$('chests'), mats:$('mats'), volumeSlider:$('volumeSlider'),
+  chests:$('chests'), mats:$('mats'), volumeSlider:$('volumeSlider'), expLabel:$('expLabel'), expGainLabel:$('expGainLabel'), expFill:$('expFill'),
   enemyName:$('enemyName'), enemyTag:$('enemyTag'), enemyImg:$('enemyImg'), enemyCard:$('enemyCard'), enemyHpFill:$('enemyHpFill'), enemyHpText:$('enemyHpText'),
   heroCard:$('heroCard'), heroHpFill:$('heroHpFill'), heroHpText:$('heroHpText'), heroLevel:$('heroLevel'), deathDanceStatus:$('deathDanceStatus'),
   enemyEffectLayer:$('enemyEffectLayer'), enemyFloats:$('enemyFloats'), levelEffect:$('levelEffect'), centerBanner:$('centerBanner'), deathAura:$('deathAura'), downOverlay:$('downOverlay'), downCount:$('downCount'),
-  battleXpFill:$('battleXpFill'), battleXpText:$('battleXpText'), lastXpGain:$('lastXpGain'),
   statLv:$('statLv'), statXp:$('statXp'), statXpNext:$('statXpNext'), statXpGain:$('statXpGain'), statAtk:$('statAtk'), statDef:$('statDef'), statFireRes:$('statFireRes'),
   equipList:$('equipList'), upgradeBtn:$('upgradeBtn'), inventory:$('inventory'), tooltip:$('tooltip'), log:$('log'),
-  equipToggleBtn:$('equipToggleBtn'), sidePanel:document.querySelector('.side-panel'), debugChestBtn:$('debugChestBtn'), openOneBtn:$('openOneBtn'), openTenBtn:$('openTenBtn'), bestEquipBtn:$('bestEquipBtn'), sellCommonBtn:$('sellCommonBtn')
+  equipToggleBtn:$('equipToggleBtn'), sidePanel:document.querySelector('.side-panel'), volumeSlider:$('volumeSlider'), debugChestBtn:$('debugChestBtn'), openOneBtn:$('openOneBtn'), openTenBtn:$('openTenBtn'), bestEquipBtn:$('bestEquipBtn'), sellCommonBtn:$('sellCommonBtn')
 };
 
 const ENEMIES = [
@@ -29,20 +28,20 @@ const bosses = ENEMIES.filter(e => e.type === 'ボス');
 
 const slots = ['武器','盾','兜','鎧','腕','足','リング','アミュレット'];
 const rarities = [
-  {id:'normal', name:'ノーマル', mult:1, color:'#ddd'},
-  {id:'rare', name:'レア', mult:1.55, color:'#4fa2ff'},
-  {id:'legendary', name:'レジェンダリー', mult:3.0, color:'#ffad31'},
+  {id:'normal', name:'ノーマル', mult:1, color:'#f2f2f2'},
+  {id:'rare', name:'レア', mult:1.65, color:'#4fa2ff'},
+  {id:'legendary', name:'レジェンダリー', mult:3.2, color:'#ffad31'},
 ];
 const equipNames = {
-  武器:['鉄の剣','雷の剣','炎の剣','黒鋼の剣'], 盾:['守りの盾','竜鱗の盾','炎除けの盾'], 兜:['革の兜','黒鉄の兜','火除けの兜'], 鎧:['旅人の鎧','騎士の鎧','炎耐性の鎧'], 腕:['革の手袋','鋼の腕甲','炎の腕甲'], 足:['革のブーツ','疾風のブーツ','炎の靴'], リング:['銀のリング','生命のリング','火守りのリング'], アミュレット:['勇気の護符','不屈のアミュレット','剣舞の護符']
+  武器:['鉄の剣','雷の剣','炎の剣','黒鋼の剣'], 盾:['守りの盾','竜鱗の盾','炎除けの盾'], 兜:['革の兜','黒鉄の兜','火除けの兜'], 鎧:['旅人の鎧','騎士の鎧','炎耐性の鎧'], 腕:['革の手袋','鋼の腕甲','炎守りの腕甲'], 足:['革のブーツ','疾風のブーツ','竜鱗の靴'], リング:['銀のリング','生命のリング','火守りのリング'], アミュレット:['勇気の護符','不屈のアミュレット','剣舞の護符']
 };
 
 const state = {
-  auto:true, volume:.5, selectedEquip:null, uiOpen:false, lastXpGain:0,
+  auto:true, selectedEquip:null, uiOpen:false, lastXpGain:0, volume:0.5,
   level:1, xp:0, xpNext:80, chests:8, mats:3,
   base:{hp:520, atk:48, def:14}, hp:520, enemy:null, enemyHp:1,
   inventory:[], equip:{}, down:false, downUntil:0, deathDance:false, deathDanceUntil:0, lastHeroAttack:0, lastEnemyAttack:0,
-  log:[], audio:null, bgmTimer:null
+  log:[], audio:null, masterGain:null, bgmGain:null, bgmTimer:null, audioUnlocked:false
 };
 
 function init(){
@@ -51,6 +50,9 @@ function init(){
   state.equip['鎧'] = makeItem('鎧', rarities[0]);
   for(let i=0;i<10;i++) state.inventory.push(makeRandomItem());
   bind();
+  startAudio();
+  state.lastHeroAttack = -999999;
+  state.lastEnemyAttack = performance.now();
   spawnEnemy();
   renderAll();
   log('ゲーム開始。騎士が自動で戦闘を開始。');
@@ -64,39 +66,50 @@ function bind(){
     els.equipToggleBtn.textContent=state.uiOpen?'閉じる':'メニュー';
     startAudio();
   };
-  els.volumeSlider.oninput = () => { state.volume = Number(els.volumeSlider.value)/100; startAudio(); };
-  window.addEventListener('resize', updateMenuLayout);
-  ['pointerdown','pointermove','mousemove','keydown','touchstart','wheel'].forEach(ev => document.addEventListener(ev, startAudio, {once:true, passive:true}));
-  setTimeout(startAudio, 300);
-  setTimeout(startAudio, 1200);
+  els.volumeSlider.value = Math.round(state.volume*100);
+  els.volumeSlider.oninput = () => {
+    state.volume = Number(els.volumeSlider.value)/100;
+    applyVolume();
+    startAudio();
+  };
+  ['pointerdown','keydown','touchstart'].forEach(ev=>document.addEventListener(ev, startAudio, {once:true, passive:true}));
   els.debugChestBtn.onclick = () => {state.chests+=10; renderAll(); log('宝箱を10個追加した。','good')};
   els.openOneBtn.onclick = () => openChests(1);
   els.openTenBtn.onclick = () => openChests(10);
   els.bestEquipBtn.onclick = bestEquip;
-  els.sellCommonBtn.onclick = sellCommon;
+  els.sellCommonBtn.onclick = sellNormal;
   els.upgradeBtn.onclick = upgradeSelected;
-  updateMenuLayout();
+  window.addEventListener('resize', syncMenuByWidth);
+  syncMenuByWidth();
 }
 
-function updateMenuLayout(){
-  const wide = window.innerWidth > 1180;
-  document.body.classList.toggle('wide-ui', wide);
-  if(wide){
+function syncMenuByWidth(){
+  if(window.innerWidth >= 1280){
+    state.uiOpen=false;
     els.sidePanel.classList.remove('open');
     els.equipToggleBtn.textContent='メニュー';
-  }else{
-    els.equipToggleBtn.textContent=state.uiOpen?'閉じる':'メニュー';
   }
 }
 
 function calcStats(){
-  let s={hp:state.base.hp + (state.level-1)*45, atk:state.base.atk + (state.level-1)*8, def:state.base.def + (state.level-1)*4, fireRes:0, fireHeal:0, lifeSteal:0, guard:0, crit:.08, deathDanceRate:.10, fireDmg:0, thunderDmg:0};
+  let s={
+    hp:state.base.hp + (state.level-1)*45,
+    atk:state.base.atk + (state.level-1)*8,
+    def:state.base.def + (state.level-1)*4,
+    fireRes:0, fireDmg:0, fireSkillChance:0, fireDamageHeal:0,
+    thunderDmg:0, thunderSkillChance:0,
+    deathDanceChance:.10, lifeSteal:0, guard:0, crit:.08
+  };
   Object.values(state.equip).filter(Boolean).forEach(it=>{
     s.hp += it.hp||0; s.atk += it.atk||0; s.def += it.def||0;
-    s.fireRes += it.fireRes||0; s.fireHeal += it.fireHeal||0; s.lifeSteal += it.lifeSteal||0; s.guard += it.guard||0; s.crit += it.crit||0;
-    s.deathDanceRate += it.deathDanceRate||0; s.fireDmg += it.fireDmg||0; s.thunderDmg += it.thunderDmg||0;
+    s.fireRes += it.fireRes||0; s.fireDmg += it.fireDmg||0; s.fireSkillChance += it.fireSkillChance||0;
+    s.fireDamageHeal += it.fireDamageHeal||0;
+    s.thunderDmg += it.thunderDmg||0; s.thunderSkillChance += it.thunderSkillChance||0;
+    s.deathDanceChance += it.deathDanceChance||0;
+    s.lifeSteal += it.lifeSteal||0; s.guard += it.guard||0; s.crit += it.crit||0;
   });
-  s.fireRes=Math.min(.75,s.fireRes); s.fireHeal=Math.min(.75,s.fireHeal); s.guard=Math.min(.45,s.guard); s.crit=Math.min(.55,s.crit); s.deathDanceRate=Math.min(1,s.deathDanceRate);
+  s.fireRes=Math.min(.75,s.fireRes); s.fireDamageHeal=Math.min(1,s.fireDamageHeal);
+  s.guard=Math.min(.45,s.guard); s.crit=Math.min(.55,s.crit); s.deathDanceChance=Math.min(1,s.deathDanceChance);
   return s;
 }
 function maxHp(){return calcStats().hp}
@@ -147,7 +160,7 @@ function heroAttack(now){
   for(let i=0;i<hits;i++) setTimeout(()=>applyHeroHit(skill), i*120);
   if(!state.deathDance){
     const extra = getWeaponSkill();
-    if(extra && Math.random() < extra.chance){
+    if(extra && Math.random() < (extra.chance + (extra.id==='fire'?calcStats().fireSkillChance:extra.id==='thunder'?calcStats().thunderSkillChance:0))){
       setTimeout(()=>triggerWeaponSkill(extra), 180);
     }
   }
@@ -181,10 +194,10 @@ function applyHeroHit(skill){
   if(skill==='multi'){mult=.72;element='physical';fx='slash';label='連続攻撃'}
   if(skill==='heavy'){mult=2.25;element='physical';fx='heavy';label='大攻撃'}
   if(skill==='deathdance'){mult=0.95;element='physical';fx='slash';label='死線の剣舞'}
+  if(element==='fire') mult *= (1 + st.fireDmg);
+  if(element==='thunder') mult *= (1 + st.thunderDmg);
   let dmg=Math.max(1, Math.floor((st.atk*mult + rand(0,st.atk*.45)) - state.enemy.def*.45));
   const crit=Math.random()<st.crit;
-  if(element==='fire') dmg=Math.floor(dmg*(1+st.fireDmg));
-  if(element==='thunder') dmg=Math.floor(dmg*(1+st.thunderDmg));
   if(crit) dmg=Math.floor(dmg*1.85);
   let absorbed=false, resisted=false;
   if(element==='fire' && state.enemy.fireAbsorb){ state.enemyHp=Math.min(state.enemy.maxHp, state.enemyHp + dmg); absorbed=true; }
@@ -215,17 +228,17 @@ function enemyAttack(now){
   let name=e.enemySkill && element==='fire' ? e.enemySkill:'攻撃';
   if(Math.random()<st.guard){ showHeroFloat('GUARD','guard'); playSfx('guard'); log(`${e.name} の${name}をGUARD！`,'good'); return; }
   let dmg=Math.max(1, Math.floor(e.atk - st.def*.55 + rand(0,e.atk*.35)));
-  if(element==='fire'){
-    const fireHeal=Math.floor(dmg*st.fireHeal);
-    dmg=Math.floor(dmg*(1-st.fireRes));
-    if(fireHeal>0){ state.hp=Math.min(maxHp(), state.hp+fireHeal); showHeroFloat('炎回復 +'+fireHeal,'heal'); }
-  }
+  if(element==='fire') dmg=Math.floor(dmg*(1-st.fireRes));
   if(state.deathDance){ showHeroFloat('GUARD','guard'); return; }
   if(state.hp - dmg <= 0){
-    if(Math.random()<calcStats().deathDanceRate){ startDeathDance(); return; }
+    if(Math.random()<st.deathDanceChance){ startDeathDance(); return; }
     state.hp=0; renderBattle(); startDown(); return;
   }
   state.hp=Math.max(0,state.hp-dmg);
+  if(element==='fire' && st.fireDamageHeal){
+    const heal=Math.floor(dmg*st.fireDamageHeal);
+    if(heal>0){ state.hp=Math.min(maxHp(), state.hp+heal); showHeroFloat(`+${heal}`,'heal'); log(`炎属性被ダメ回復 +${heal}`,'good'); }
+  }
   els.heroCard.classList.remove('hit'); void els.heroCard.offsetWidth; els.heroCard.classList.add('hit');
   setTimeout(()=>els.heroCard.classList.remove('hit'),220);
   showHeroFloat(dmg, element==='fire'?'fire':'damage'); playSfx('hit');
@@ -245,10 +258,10 @@ function enemyDefeated(){
 function checkLevelUp(){
   while(state.xp>=state.xpNext){ state.xp-=state.xpNext; state.level++; state.xpNext=Math.floor(state.xpNext*1.42+40); state.hp=maxHp(); showLevelUp(); log(`LEVEL UP！ Lv.${state.level}`,'good'); }
 }
-function showLevelUp(){ els.levelEffect.classList.add('hidden'); void els.levelEffect.offsetWidth; els.levelEffect.classList.remove('hidden'); playSfx('level'); setTimeout(()=>els.levelEffect.classList.add('hidden'),1150); }
+function showLevelUp(){ els.levelEffect.classList.remove('hidden'); playSfx('level'); setTimeout(()=>els.levelEffect.classList.add('hidden'),1150); }
 function startDown(){
   state.down=true; state.downUntil=performance.now()+5000; els.heroCard.classList.add('down'); els.downOverlay.classList.remove('hidden');
-  playSfx('down'); log('騎士は倒れた。5秒後に復活。','danger');
+  banner('DOWN...'); playSfx('down'); log('騎士は倒れた。5秒後に復活。','danger');
 }
 function revive(){
   state.down=false; els.heroCard.classList.remove('down'); els.downOverlay.classList.add('hidden'); state.hp=Math.floor(maxHp()*0.5); renderBattle(); banner('復活'); log('騎士はHP50%で復活した。','good');
@@ -274,7 +287,7 @@ function banner(text){ els.centerBanner.textContent=text; els.centerBanner.class
 
 
 function randomWeaponSkill(rarity){
-  const base = rarity.id==='legendary' ? .34 : rarity.id==='rare' ? .22 : .15;
+  const base = rarity.id==='legendary' ? .34 : rarity.id==='rare' ? .22 : .16;
   const list=[
     {id:'fire', name:'炎斬り', chance:base, element:'fire'},
     {id:'thunder', name:'雷撃', chance:base, element:'thunder'},
@@ -284,37 +297,43 @@ function randomWeaponSkill(rarity){
   return {...list[Math.floor(Math.random()*list.length)]};
 }
 function startAudio(){
-  if(state.volume<=0) return;
   try{
-    if(state.audio){ if(state.audio.state==='suspended') state.audio.resume(); playBgm(); return; }
-    const C=window.AudioContext||window.webkitAudioContext;
-    state.audio=new C();
+    if(!state.audio){
+      const C=window.AudioContext||window.webkitAudioContext;
+      state.audio=new C();
+      state.masterGain=state.audio.createGain();
+      state.masterGain.connect(state.audio.destination);
+      applyVolume();
+    }
     if(state.audio.state==='suspended') state.audio.resume();
+    state.audioUnlocked = true;
     playBgm();
   }catch(e){ console.warn(e); }
 }
+function applyVolume(){
+  if(state.masterGain) state.masterGain.gain.value = state.volume;
+}
 function tone(freq=440, dur=.08, type='sine', vol=.05){
-  if(state.volume<=0 || !state.audio) return;
+  if(!state.audio || !state.masterGain) return;
   const ctx=state.audio, o=ctx.createOscillator(), g=ctx.createGain();
   o.type=type; o.frequency.value=freq; g.gain.value=0;
-  o.connect(g); g.connect(ctx.destination);
+  o.connect(g); g.connect(state.masterGain);
   const t=ctx.currentTime;
-  vol *= state.volume;
   g.gain.linearRampToValueAtTime(vol,t+.01); g.gain.exponentialRampToValueAtTime(.0001,t+dur);
   o.start(t); o.stop(t+dur+.02);
 }
 function playSfx(kind){
-  if(state.volume<=0) return;
-  startAudio();
+  if(!state.audioUnlocked) return;
   const map={slash:[640,.06,'triangle',.055],fire:[220,.14,'sawtooth',.055],thunder:[90,.09,'square',.04],heavy:[120,.18,'sawtooth',.06],hit:[180,.05,'square',.035],guard:[520,.08,'triangle',.045],win:[880,.12,'sine',.04],level:[660,.2,'triangle',.055],down:[110,.28,'sawtooth',.05],dance:[360,.22,'sawtooth',.06]};
   const a=map[kind]||map.slash; tone(...a);
   if(kind==='slash'||kind==='fire'||kind==='thunder'||kind==='dance') setTimeout(()=>tone(a[0]*1.42,a[1]*.8,a[2],a[3]*.65),55);
 }
 function playBgm(){
-  if(state.volume<=0 || !state.audio || state.bgmTimer) return;
+  if(!state.audio || state.bgmTimer) return;
   const seq=[196,246.94,293.66,246.94,220,261.63,329.63,293.66]; let i=0;
-  state.bgmTimer=setInterval(()=>{ if(state.volume>0) tone(seq[i++%seq.length],.28,'sine',.018); },360);
+  state.bgmTimer=setInterval(()=>{ tone(seq[i++%seq.length],.28,'sine',.018); },360);
 }
+
 
 function makeRandomItem(){
   const slot=slots[Math.floor(Math.random()*slots.length)];
@@ -325,35 +344,44 @@ function makeItem(slot, rarity){
   const lv=Math.max(1,state?.level||1);
   const name=(equipNames[slot]||[slot])[Math.floor(Math.random()*(equipNames[slot]||[slot]).length)];
   const m=rarity.mult;
-  const it={id:crypto.randomUUID?.()||String(Math.random()), slot, rarity:rarity.id, rarityName:rarity.name, name, level:0, atk:0, def:0, hp:0, fireRes:0, fireHeal:0, crit:0, lifeSteal:0, guard:0, fireDmg:0, thunderDmg:0, deathDanceRate:0};
-  const isFire=name.includes('炎') || name.includes('火');
-  const isThunder=name.includes('雷');
-  const isDance=name.includes('剣舞') || name.includes('不屈');
+  const it={id:crypto.randomUUID?.()||String(Math.random()), slot, rarity:rarity.id, rarityName:rarity.name, name, level:0, atk:0, def:0, hp:0, fireRes:0, fireDmg:0, fireSkillChance:0, fireDamageHeal:0, thunderDmg:0, thunderSkillChance:0, crit:0, lifeSteal:0, guard:0, deathDanceChance:0};
   if(slot==='武器'){
     it.atk=Math.floor((18+lv*4)*m);
     if(Math.random()<.35) it.crit=.03;
     if(Math.random()<.72) it.skill=randomWeaponSkill(rarity);
-    if(isFire){ it.fireDmg += .10; it.fireRes += .03; if(Math.random()<.75) it.skill={id:'fire',name:'炎斬り',chance:.34,element:'fire'}; }
-    if(isThunder){ it.thunderDmg += .10; if(Math.random()<.45) it.skill={id:'thunder',name:'雷撃',chance:.28,element:'thunder'}; }
-    if(isDance){ it.skill={id:'multi',name:'連続攻撃',chance:.34,element:'physical'}; }
   } else if(slot==='リング'||slot==='アミュレット'){
     it.hp=Math.floor((55+lv*12)*m);
     if(Math.random()<.28) it.lifeSteal=.03;
     if(Math.random()<.22) it.guard=.03;
-    if(isFire){ it.fireDmg += .15; it.fireRes += .05; }
-    if(isThunder) it.thunderDmg += .15;
-    if(isDance) it.deathDanceRate += .25;
-    if(rarity.id==='legendary') it.deathDanceRate += .50;
+    if(rarity.id==='legendary') it.deathDanceChance=.50;
   } else {
     it.def=Math.floor((8+lv*3)*m);
     it.hp=Math.floor((25+lv*8)*m);
-    if(isFire || Math.random()<.45) it.fireRes=+((it.fireRes||0)+Math.random()*.08+.02).toFixed(3);
-    if(rarity.id==='legendary' && Math.random()<.35) it.fireHeal=.50;
-    if(isDance) it.guard += .04;
+    if(Math.random()<.5) it.fireRes=+(Math.random()*.08+.02).toFixed(3);
+    if(rarity.id==='legendary' && Math.random()<.45) it.fireDamageHeal=.50;
   }
+  applyNameBonus(it);
   return it;
 }
-function itemPower(it){return (it.atk||0)*3 + (it.def||0)*2 + (it.hp||0)*.25 + (it.fireRes||0)*400 + (it.fireHeal||0)*650 + (it.fireDmg||0)*550 + (it.thunderDmg||0)*500 + (it.deathDanceRate||0)*900 + (it.crit||0)*500 + (it.lifeSteal||0)*600 + (it.guard||0)*500 + it.level*15;}
+
+function applyNameBonus(it){
+  if(it.name.includes('炎') || it.name.includes('火')){
+    if(it.slot==='武器'){ it.fireDmg += .10; it.fireSkillChance += .05; if(it.skill?.id==='fire') it.skill.chance += .05; }
+    else if(it.slot==='リング'||it.slot==='アミュレット'){ it.fireDmg += .15; it.fireSkillChance += .10; }
+    else { it.fireRes += .10; if(Math.random()<.35) it.fireDamageHeal += .20; }
+  }
+  if(it.name.includes('雷')){
+    if(it.slot==='武器'){ it.thunderDmg += .10; it.thunderSkillChance += .05; if(it.skill?.id==='thunder') it.skill.chance += .05; }
+    else if(it.slot==='リング'||it.slot==='アミュレット'){ it.thunderDmg += .15; it.thunderSkillChance += .10; }
+    else { it.thunderDmg += .05; it.thunderSkillChance += .05; }
+  }
+  if(it.name.includes('剣舞') || it.name.includes('不屈')){
+    if(it.slot==='リング'||it.slot==='アミュレット') it.deathDanceChance += .25;
+    else if(it.slot!=='武器') it.guard += .03;
+  }
+}
+
+function itemPower(it){return (it.atk||0)*3 + (it.def||0)*2 + (it.hp||0)*.25 + (it.fireRes||0)*400 + (it.fireDmg||0)*420 + (it.thunderDmg||0)*420 + (it.fireDamageHeal||0)*550 + (it.deathDanceChance||0)*700 + (it.crit||0)*500 + (it.lifeSteal||0)*600 + (it.guard||0)*500 + it.level*15;}
 function equipItem(it){
   const idx=state.inventory.findIndex(x=>x.id===it.id); if(idx>=0) state.inventory.splice(idx,1);
   if(state.equip[it.slot]) state.inventory.unshift(state.equip[it.slot]);
@@ -364,7 +392,7 @@ function bestEquip(){
   [...state.inventory].forEach(it=>{ if(!state.equip[it.slot] || itemPower(it)>itemPower(state.equip[it.slot])){ equipItem(it); changed++; } });
   log(`最強装備を一括装備（${changed}件）。`,'good'); renderAll();
 }
-function sellCommon(){ const before=state.inventory.length; state.inventory=state.inventory.filter(it=>it.rarity!=='normal'); log(`ノーマル装備を${before-state.inventory.length}個売却。`); renderAll(); }
+function sellNormal(){ const before=state.inventory.length; state.inventory=state.inventory.filter(it=>it.rarity!=='normal'); log(`ノーマル装備を${before-state.inventory.length}個売却。`); renderAll(); }
 function openChests(n){
   const count=Math.min(n,state.chests); if(count<=0){log('宝箱がない。','danger');return;}
   for(let i=0;i<count;i++){ state.chests--; if(Math.random()<.55) state.inventory.unshift(makeRandomItem()); else state.mats+=randInt(1,3); }
@@ -381,10 +409,10 @@ function renderBattle(){
   const mh=maxHp(); els.heroLevel.textContent=`Lv.${state.level}`; els.heroHpFill.style.width=`${Math.max(0,state.hp/mh*100)}%`; els.heroHpText.textContent=`${Math.floor(state.hp)} / ${Math.floor(mh)}`;
   if(state.enemy){ els.enemyName.textContent=state.enemy.name; els.enemyTag.textContent=state.enemy.type==='ボス'?'BOSS':''; els.enemyHpFill.style.width=`${Math.max(0,state.enemyHp/state.enemy.maxHp*100)}%`; els.enemyHpText.textContent=`${Math.floor(state.enemyHp)} / ${state.enemy.maxHp}`; }
   els.chests.textContent=state.chests; els.mats.textContent=state.mats;
-  els.battleXpFill.style.width=`${Math.max(0, state.xp/state.xpNext*100)}%`; els.battleXpText.textContent=`${state.xp} / ${state.xpNext}`; els.lastXpGain.textContent=state.lastXpGain?`+${state.lastXpGain}`:'';
-  if(state.deathDance){ els.deathDanceStatus.classList.remove('hidden'); els.deathDanceStatus.textContent = `死線の剣舞 残り${Math.max(0, Math.ceil((state.deathDanceUntil-performance.now())/1000))}秒`; } else { els.deathDanceStatus.classList.add('hidden'); }
+  if(els.expFill){ els.expFill.style.width=`${Math.max(0,Math.min(100,state.xp/state.xpNext*100))}%`; els.expLabel.textContent=`Lv.${state.level} EXP ${state.xp} / ${state.xpNext}`; els.expGainLabel.textContent=`+${state.lastXpGain}`; }
+  if(state.deathDance){ els.deathDanceStatus.textContent = `死線の剣舞 残り${Math.max(0, Math.ceil((state.deathDanceUntil-performance.now())/1000))}秒`; }
 }
-function renderStats(){ const st=calcStats(); els.statLv.textContent=state.level; els.statXp.textContent=`${state.xp} / ${state.xpNext}`; els.statXpNext.textContent=state.xpNext; els.statXpGain.textContent=`+${state.lastXpGain}`; els.statAtk.textContent=Math.floor(st.atk); els.statDef.textContent=Math.floor(st.def); els.statFireRes.textContent=`${Math.round(st.fireRes*100)}%`;  }
+function renderStats(){ const st=calcStats(); els.statLv.textContent=state.level; els.statXp.textContent=`${state.xp} / ${state.xpNext}`; els.statXpNext.textContent=state.xpNext; els.statXpGain.textContent=`+${state.lastXpGain}`; els.statAtk.textContent=Math.floor(st.atk); els.statDef.textContent=Math.floor(st.def); els.statFireRes.textContent=`${Math.round(st.fireRes*100)}%`; }
 function renderEquip(){
   els.equipList.innerHTML='';
   slots.forEach(slot=>{ const it=state.equip[slot]; const div=document.createElement('div'); div.className='equip'+(state.selectedEquip===slot?' selected':''); div.innerHTML=it?`<b>${slot}: ${it.name}+${it.level}</b><small>${itemSummary(it)}</small>`:`<b>${slot}: 未装備</b>`; div.onclick=()=>{state.selectedEquip=slot; renderEquip();}; if(it){ div.onmousemove=(e)=>showTip(e,it); div.onmouseleave=()=>els.tooltip.classList.add('hidden'); } els.equipList.appendChild(div); });
@@ -392,15 +420,27 @@ function renderEquip(){
 }
 function renderInventory(){
   els.inventory.innerHTML='';
-  state.inventory.forEach(it=>{ const div=document.createElement('div'); div.className=`item ${it.rarity}`; div.innerHTML=`<b style="color:${rarities.find(r=>r.id===it.rarity)?.color||'#ddd'}">${it.name}</b><br><span>${it.slot}</span>`; div.onclick=()=>equipItem(it); div.onmousemove=(e)=>showTip(e,it); div.onmouseleave=()=>els.tooltip.classList.add('hidden'); els.inventory.appendChild(div); });
+  state.inventory.forEach(it=>{ const div=document.createElement('div'); div.className=`item ${it.rarity}`; div.innerHTML=`<b>${it.name}</b><br><span>${it.slot}</span>`; div.onclick=()=>equipItem(it); div.onmousemove=(e)=>showTip(e,it); div.onmouseleave=()=>els.tooltip.classList.add('hidden'); els.inventory.appendChild(div); });
 }
 function itemSummary(it){
-  const arr=[]; if(it.atk)arr.push(`攻+${it.atk}`); if(it.def)arr.push(`防+${it.def}`); if(it.hp)arr.push(`HP+${it.hp}`); if(it.fireRes)arr.push(`火軽減${Math.round(it.fireRes*100)}%`); if(it.fireHeal)arr.push(`炎被ダメ回復${Math.round(it.fireHeal*100)}%`); if(it.fireDmg)arr.push(`炎ダメ+${Math.round(it.fireDmg*100)}%`); if(it.thunderDmg)arr.push(`雷ダメ+${Math.round(it.thunderDmg*100)}%`); if(it.deathDanceRate)arr.push(`剣舞率+${Math.round(it.deathDanceRate*100)}%`); if(it.lifeSteal)arr.push(`吸収${Math.round(it.lifeSteal*100)}%`); if(it.guard)arr.push(`GUARD+${Math.round(it.guard*100)}%`); if(it.crit)arr.push(`会心+${Math.round(it.crit*100)}%`); if(it.skill)arr.push(`武器スキル:${it.skill.name} ${Math.round(it.skill.chance*100)}%`); return arr.join(' / ');
+  const arr=[];
+  if(it.atk)arr.push(`攻+${it.atk}`); if(it.def)arr.push(`防+${it.def}`); if(it.hp)arr.push(`HP+${it.hp}`);
+  if(it.fireRes)arr.push(`火軽減${Math.round(it.fireRes*100)}%`);
+  if(it.fireDamageHeal)arr.push(`火被ダメ回復${Math.round(it.fireDamageHeal*100)}%`);
+  if(it.fireDmg)arr.push(`火ダメ+${Math.round(it.fireDmg*100)}%`);
+  if(it.fireSkillChance)arr.push(`炎斬り率+${Math.round(it.fireSkillChance*100)}%`);
+  if(it.thunderDmg)arr.push(`雷ダメ+${Math.round(it.thunderDmg*100)}%`);
+  if(it.thunderSkillChance)arr.push(`雷撃率+${Math.round(it.thunderSkillChance*100)}%`);
+  if(it.deathDanceChance)arr.push(`死線の剣舞率+${Math.round(it.deathDanceChance*100)}%`);
+  if(it.lifeSteal)arr.push(`吸収${Math.round(it.lifeSteal*100)}%`); if(it.guard)arr.push(`GUARD+${Math.round(it.guard*100)}%`); if(it.crit)arr.push(`会心+${Math.round(it.crit*100)}%`);
+  if(it.skill)arr.push(`武器スキル:${it.skill.name} ${Math.round((it.skill.chance + (it.skill.id==='fire'?(it.fireSkillChance||0):it.skill.id==='thunder'?(it.thunderSkillChance||0):0))*100)}%`);
+  return arr.join(' / ');
 }
+
 function showTip(e,it){
-  const current=state.equip[it.slot]; let html=`<b style="color:${rarities.find(r=>r.id===it.rarity)?.color||'#ffd76b'}">${it.name}+${it.level}</b><br>${it.slot} / ${it.rarityName}<br>${itemSummary(it)}<hr>`;
+  const current=state.equip[it.slot]; let html=`<b style="color:#ffd76b">${it.name}+${it.level}</b><br>${it.slot} / ${it.rarityName}<br>${itemSummary(it)}<hr>`;
   html+= current ? `現在: ${current.name}+${current.level}<br>戦力差: ${Math.round(itemPower(it)-itemPower(current))}` : '現在: 未装備';
-  els.tooltip.innerHTML=html; const tw=270, th=160; els.tooltip.style.left=Math.min(e.clientX+14, window.innerWidth-tw)+'px'; els.tooltip.style.top=Math.min(e.clientY+14, window.innerHeight-th)+'px'; els.tooltip.classList.remove('hidden');
+  els.tooltip.innerHTML=html; els.tooltip.style.left=(e.clientX+14)+'px'; els.tooltip.style.top=(e.clientY+14)+'px'; els.tooltip.classList.remove('hidden');
 }
 function log(msg, cls=''){ const time=new Date().toLocaleTimeString('ja-JP',{hour12:false}); state.log.unshift({time,msg,cls}); state.log=state.log.slice(0,80); els.log.innerHTML=state.log.map(l=>`<div class="${l.cls}">[${l.time}] ${l.msg}</div>`).join(''); }
 function rand(a,b){ return Math.random()*(b-a)+a; }
