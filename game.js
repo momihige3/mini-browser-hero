@@ -10,7 +10,7 @@ const els = {
   enemyEffectLayer:$('enemyEffectLayer'), enemyFloats:$('enemyFloats'), levelEffect:$('levelEffect'), centerBanner:$('centerBanner'), audioHint:$('audioHint'), deathAura:$('deathAura'), downOverlay:$('downOverlay'), downCount:$('downCount'),
   statLv:$('statLv'), statXp:$('statXp'), statXpNext:$('statXpNext'), statXpGain:$('statXpGain'), statAtk:$('statAtk'), statDef:$('statDef'), statFireRes:$('statFireRes'),
   equipList:$('equipList'), upgradeBtn:$('upgradeBtn'), inventory:$('inventory'), tooltip:$('tooltip'), log:$('log'),
-  equipToggleBtn:$('equipToggleBtn'), sidePanel:document.querySelector('.side-panel'), volumeSlider:$('volumeSlider'), volumeText:$('volumeText'), debugBtn:$('debugBtn'), debugPanel:$('debugPanel'), debugAddChests:$('debugAddChests'), debugBestSword:$('debugBestSword'), debugBestAccessory:$('debugBestAccessory'), debugKillEnemy:$('debugKillEnemy'), debugKillHero:$('debugKillHero'), debugClose:$('debugClose'), openAllBtn:$('openAllBtn'), bestEquipBtn:$('bestEquipBtn'), sellNormalBtn:$('sellNormalBtn'), sellRareBtn:$('sellRareBtn'), sellAllBtn:$('sellAllBtn')
+  equipToggleBtn:$('equipToggleBtn'), sidePanel:document.querySelector('.side-panel'), volumeSlider:$('volumeSlider'), volumeText:$('volumeText'), debugBtn:$('debugBtn'), debugPanel:$('debugPanel'), debugAddChests:$('debugAddChests'), debugBestSword:$('debugBestSword'), debugBestAccessory:$('debugBestAccessory'), debugKillEnemy:$('debugKillEnemy'), debugKillHero:$('debugKillHero'), debugClose:$('debugClose'), openAllBtn:$('openAllBtn'), bestEquipBtn:$('bestEquipBtn'), sellSelectedBtn:$('sellSelectedBtn'), sellNormalChk:$('sellNormalChk'), sellRareChk:$('sellRareChk'), sellLegendaryChk:$('sellLegendaryChk')
 };
 
 const ENEMIES = [
@@ -155,9 +155,7 @@ function bind(){
 
   els.openAllBtn.onclick = () => openChests(state.chests);
   els.bestEquipBtn.onclick = bestEquip;
-  els.sellNormalBtn.onclick = () => sellByRarity('normal');
-  els.sellRareBtn.onclick = () => sellByRarity('rare');
-  els.sellAllBtn.onclick = sellAll;
+  els.sellSelectedBtn.onclick = sellSelectedRarities;
   els.upgradeBtn.onclick = upgradeSelected;
   window.addEventListener('resize', syncMenuByWidth);
   syncMenuByWidth();
@@ -487,8 +485,19 @@ function bestEquip(){
   [...state.inventory].forEach(it=>{ if(!state.equip[it.slot] || itemPower(it)>itemPower(state.equip[it.slot])){ equipItem(it); changed++; } });
   log(`最強装備を一括装備（${changed}件）。`,'good'); renderAll();
 }
-function sellByRarity(rarity){ const before=state.inventory.length; const label=rarity==='normal'?'ノーマル':rarity==='rare'?'レア':rarity; state.inventory=state.inventory.filter(it=>it.rarity!==rarity); log(`${label}装備を${before-state.inventory.length}個売却。`); renderAll(); scheduleSave(); }
-function sellAll(){ const before=state.inventory.length; state.inventory=[]; log(`倉庫装備を${before}個すべて売却。`); renderAll(); scheduleSave(); }
+function sellSelectedRarities(){
+  const targets=[];
+  if(els.sellNormalChk?.checked) targets.push('normal');
+  if(els.sellRareChk?.checked) targets.push('rare');
+  if(els.sellLegendaryChk?.checked) targets.push('legendary');
+  if(targets.length===0){ log('売却対象のレアリティを選択して。','danger'); return; }
+  const before=state.inventory.length;
+  state.inventory=state.inventory.filter(it=>!targets.includes(it.rarity));
+  const sold=before-state.inventory.length;
+  const label=targets.map(r=>RARITIES[r]?.label||r).join('・');
+  log(`${label}装備を${sold}個売却。`, sold?'good':'');
+  renderAll(); scheduleSave();
+}
 function openChests(n){
   const count=Math.min(n,state.chests); if(count<=0){log('宝箱がない。','danger');return;}
   for(let i=0;i<count;i++){ state.chests--; if(Math.random()<.55) state.inventory.unshift(makeRandomItem()); else state.mats+=randInt(1,3); }

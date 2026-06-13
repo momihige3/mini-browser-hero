@@ -115,3 +115,102 @@
   .inventory{max-height:260px!important;}
   .log{height:160px!important;}
 }
+
+/* v37: バトルログと倉庫が重ならないように完全分離 */
+.side-panel,
+.menu-col,
+.inventory-panel,
+.log-panel{
+  min-height:0!important;
+  min-width:0!important;
+  overflow:hidden!important;
+}
+.menu-right{
+  display:grid!important;
+  grid-template-rows:minmax(0,1fr) 190px!important;
+  gap:10px!important;
+  overflow:hidden!important;
+}
+.inventory-panel{
+  display:flex!important;
+  flex-direction:column!important;
+}
+.inventory{
+  flex:1 1 auto!important;
+  min-height:0!important;
+  max-height:none!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  align-content:start!important;
+  padding-right:6px!important;
+}
+.log-panel{
+  display:flex!important;
+  flex-direction:column!important;
+  height:auto!important;
+}
+.log{
+  flex:1 1 auto!important;
+  height:auto!important;
+  min-height:0!important;
+  max-height:none!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  word-break:break-word!important;
+  overflow-wrap:anywhere!important;
+  padding-right:6px!important;
+}
+.log div{max-width:100%;}
+.inventory-actions{
+  grid-template-columns:1fr 1fr!important;
+  align-items:center;
+}
+.sell-box{
+  grid-column:1 / -1;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+  border:1px solid #513917;
+  background:#100c08;
+  padding:6px;
+  border-radius:5px;
+  min-width:0;
+}
+.sell-box button{padding:6px 12px;}
+.sell-box label{
+  display:inline-flex;
+  align-items:center;
+  gap:3px;
+  font-size:12px;
+  color:#f5ddb0;
+  white-space:nowrap;
+}
+.sell-box input{accent-color:#c99b39;}
+@media (max-width:1279px){
+  .side-panel.open{
+    grid-template-columns:minmax(220px,.9fr) minmax(300px,1.1fr)!important;
+    grid-template-rows:minmax(0,1fr)!important;
+    overflow:hidden!important;
+  }
+  .side-panel.open .menu-right{
+    grid-template-rows:minmax(0,1fr) 180px!important;
+    height:100%!important;
+    min-height:0!important;
+    overflow:hidden!important;
+  }
+  .side-panel.open .inventory-panel,
+  .side-panel.open .log-panel{
+    position:static!important;
+    grid-column:auto!important;
+    grid-row:auto!important;
+    height:auto!important;
+    align-self:stretch!important;
+  }
+  .side-panel.open .inventory{max-height:none!important;}
+  .side-panel.open .log{height:auto!important;}
+}
+@media (max-width:720px){
+  .sell-box{gap:5px;}
+  .sell-box label{font-size:11px;}
+}
