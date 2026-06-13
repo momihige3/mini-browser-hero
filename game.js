@@ -41,7 +41,7 @@ const state = {
   level:1, xp:0, xpNext:80, chests:0, mats:3, defeated:0,
   base:{hp:520, atk:48, def:14}, hp:520, enemy:null, enemyHp:1,
   inventory:[], equip:{}, down:false, downUntil:0, deathDance:false, deathDanceUntil:0, lastHeroAttack:0, lastEnemyAttack:0,
-  log:[], debug:{killEnemy:false, killHero:false}, audio:null, masterGain:null, bgmGain:null, bgmTimer:null, audioUnlocked:false, mobileMuted:false, menuPage:'stats', inventoryMenuItemId:null, enemyRecords:{}
+  log:[], debug:{killEnemy:false, killHero:false}, audio:null, masterGain:null, bgmGain:null, bgmTimer:null, audioUnlocked:false, mobileMuted:true, menuPage:'stats', inventoryMenuItemId:null, enemyRecords:{}, forceFirstEnemy:false
 };
 
 const SAVE_KEY = 'mini-browser-hero-save-v36';
@@ -73,8 +73,7 @@ function isSpPortrait(){
 }
 function updateMuteButton(){
   if(!els.muteBtn) return;
-  const mobile = isMobileAudioMode();
-  els.muteBtn.style.display = mobile ? 'inline-flex' : 'none';
+  els.muteBtn.style.display = 'inline-flex';
   els.muteBtn.textContent = state.mobileMuted ? '🔇' : '🔊';
   els.muteBtn.title = state.mobileMuted ? 'ミュート中' : '音ON';
   els.muteBtn.setAttribute('aria-pressed', state.mobileMuted ? 'true' : 'false');
@@ -114,12 +113,11 @@ function init(){
   slots.forEach(slot => state.equip[slot]=null);
   state.inventory = [];
   loadGame();
-  if(isMobileAudioMode()) state.mobileMuted = true;
   bind();
-  if(!isMobileAudioMode() || !state.mobileMuted) startAudio();
+  if(!state.mobileMuted) startAudio();
   state.lastHeroAttack = -999999;
   state.lastEnemyAttack = performance.now();
-  spawnEnemy();
+  spawnEnemy(isFirstBattleState());
   renderAll();
   log('ゲーム開始。騎士が自動で戦闘を開始。');
   requestAnimationFrame(loop);
@@ -141,7 +139,7 @@ function saveGame(){
   if(isResettingUserData) return;
   try{
     const data={
-      version:42,
+      version:43,
       level:state.level, xp:state.xp, xpNext:state.xpNext, lastXpGain:state.lastXpGain,
       chests:state.chests, mats:state.mats, defeated:state.defeated,
       hp:Math.max(1, Math.floor(state.hp||1)), base:state.base,
@@ -252,7 +250,7 @@ function bind(){
     if(menu && !menu.contains(e.target)) cancelInventoryActionMenu();
   });
   document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape') cancelInventoryActionMenu(); });
-  setTimeout(()=>{ if(!isMobileAudioMode() || !state.mobileMuted) startAudio(); }, 300);
+  setTimeout(()=>{ if(!state.mobileMuted) startAudio(); }, 300);
   els.debugBtn.onclick = () => { els.debugPanel.classList.toggle('hidden'); startAudio(); playUiClick(); };
   if(els.muteBtn) els.muteBtn.onclick = (e) => { e.preventDefault(); setMobileMuted(!state.mobileMuted); if(!state.mobileMuted) startAudio(); playUiClick(); };
   document.querySelectorAll('.mobile-menu-tabs button').forEach(btn=>btn.onclick=()=>{setMenuPage(btn.dataset.menuPage); playUiClick();});
@@ -303,15 +301,25 @@ function calcStats(){
 }
 function maxHp(){return calcStats().hp}
 
+function isFirstBattleState(){
+  // 新規開始・ユーザーリセット直後だけ、最初の敵をスライムLv.1に固定する。
+  // 進行済みデータでは通常抽選に戻す。
+  return state.level === 1 && state.defeated === 0 && state.xp === 0 && !state.enemy;
+}
+function makeFirstEnemy(){
+  const slime = ENEMIES.find(e => e.id === 'slime') || ENEMIES[0];
+  return {...slime, level:1};
+}
+
 function pickEnemy(){
   let r=Math.random(), acc=0;
   for(const b of bosses){ acc += b.bossChance; if(r < acc) return {...b}; }
   return {...normals[Math.floor(Math.random()*normals.length)]};
 }
-function spawnEnemy(){
-  const e=pickEnemy();
+function spawnEnemy(forceFirst=false){
+  const e=forceFirst ? makeFirstEnemy() : pickEnemy();
   const bossBonus = e.type==='ボス' ? 4 : 0;
-  e.level = Math.max(1, state.level + Math.floor(state.defeated/3) + bossBonus);
+  e.level = forceFirst ? 1 : Math.max(1, state.level + Math.floor(state.defeated/3) + bossBonus);
   const scale=1 + e.level*.035 + Math.floor(state.defeated/10)*.03;
   e.maxHp=Math.floor(e.hp*scale); e.atk=Math.floor(e.atk*scale); e.def=Math.floor(e.def*scale);
   e.xp=Math.floor(e.xp*(1+e.level*.045));
@@ -846,6 +854,24 @@ function showDropToast(it){
   state.dropToastTimer = setTimeout(()=>els.dropToast.classList.add('hidden'), 3000);
 }
 
+function resetBattleState(forceFirst=false){
+  // 戦闘中の一時状態を完全に初期化する。
+  // 剣舞・DOWN・ドロップ表示などがリセット後に残らないようにする。
+  state.forceFirstEnemy = true;
+  clearTimeout(state.dropToastTimer);
+  if(els.deathDanceStatus) els.deathDanceStatus.classList.add('hidden');
+  if(els.deathAura) els.deathAura.classList.add('hidden');
+  if(els.downOverlay) els.downOverlay.classList.add('hidden');
+  if(els.dropToast) els.dropToast.classList.add('hidden');
+  if(els.centerBanner) els.centerBanner.classList.add('hidden');
+  if(els.enemyEffectLayer) els.enemyEffectLayer.innerHTML = '';
+  if(els.enemyFloats) els.enemyFloats.innerHTML = '';
+  if(els.enemyCard){
+    els.enemyCard.classList.remove('dead','hit','enter');
+  }
+  spawnEnemy(forceFirst);
+}
+
 function resetUserData(){
   if(!confirm('ユーザーデータをリセットする？')) return;
   isResettingUserData = true;
@@ -866,14 +892,7 @@ function resetUserData(){
   state.defeated = 0;
   state.base = {hp:520, atk:48, def:14};
   state.hp = maxHp();
-  state.enemy = null;
-  state.enemyHp = 1;
-  state.down = false;
-  state.downUntil = 0;
-  state.deathDance = false;
-  state.deathDanceUntil = 0;
-  state.lastHeroAttack = -999999;
-  state.lastEnemyAttack = performance.now();
+  state.forceFirstEnemy = true;
   state.log = [];
   state.debug = {killEnemy:false, killHero:false};
   state.enemyRecords = sanitizeEnemyRecords({});
@@ -882,9 +901,9 @@ function resetUserData(){
   if(els.log) els.log.innerHTML='';
   if(els.tooltip) els.tooltip.classList.add('hidden');
 
-  spawnEnemy();
+  resetBattleState(true);
   renderAll();
-  log('ユーザーデータをリセットしました。');
+  log('ユーザーデータをリセットしました。スライム Lv.1 から再開します。');
 
   // 初期化後の空データを保存。以後の自動保存も再開。
   isResettingUserData = false;

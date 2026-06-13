@@ -899,3 +899,47 @@ body.using-touch .tooltip{display:none!important;}
   .monster-record-list{max-height:180px;}
   .monster-record-row{grid-template-columns:1fr .6fr;font-size:11px;padding:4px;}
 }
+
+/* v53: PC大画面でも倉庫枠を固定して中身だけスクロール */
+@media (min-width:1280px){
+  .layout{
+    height:calc(100vh - 58px)!important;
+    max-height:calc(100vh - 58px)!important;
+    overflow:hidden!important;
+  }
+  .side-panel{
+    height:100%!important;
+    max-height:100%!important;
+    min-height:0!important;
+    overflow:hidden!important;
+  }
+  .menu-col,
+  .menu-right,
+  .inventory-panel,
+  .log-panel{
+    min-height:0!important;
+    max-height:100%!important;
+    overflow:hidden!important;
+  }
+  .menu-right{
+    height:100%!important;
+    grid-template-rows:minmax(0,1fr) minmax(140px, var(--pc-log-h, 190px))!important;
+  }
+  .inventory-panel{
+    display:flex!important;
+    flex-direction:column!important;
+  }
+  .inventory-panel h2,
+  .inventory-panel .inventory-actions{
+    flex:0 0 auto!important;
+  }
+  .inventory{
+    flex:1 1 auto!important;
+    min-height:0!important;
+    height:auto!important;
+    max-height:100%!important;
+    overflow-y:auto!important;
+    overflow-x:hidden!important;
+    align-content:start!important;
+  }
+}
