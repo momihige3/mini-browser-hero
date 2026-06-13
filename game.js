@@ -5,7 +5,7 @@ document.addEventListener('contextmenu', e => e.preventDefault());
 const $ = (id) => document.getElementById(id);
 const els = {
   chests:$('chests'), mats:$('mats'), volumeSlider:$('volumeSlider'), expLabel:$('expLabel'), expGainLabel:$('expGainLabel'), expFill:$('expFill'),
-  enemyName:$('enemyName'), enemyLv:$('enemyLv'), enemyTag:$('enemyTag'), enemyImg:$('enemyImg'), enemyCard:$('enemyCard'), enemyHpFill:$('enemyHpFill'), enemyHpText:$('enemyHpText'),
+  enemyName:$('enemyName'), enemyTag:$('enemyTag'), enemyImg:$('enemyImg'), enemyCard:$('enemyCard'), enemyHpFill:$('enemyHpFill'), enemyHpText:$('enemyHpText'),
   heroCard:$('heroCard'), heroHpFill:$('heroHpFill'), heroHpText:$('heroHpText'), heroLevel:$('heroLevel'), deathDanceStatus:$('deathDanceStatus'),
   enemyEffectLayer:$('enemyEffectLayer'), enemyFloats:$('enemyFloats'), levelEffect:$('levelEffect'), centerBanner:$('centerBanner'), deathAura:$('deathAura'), downOverlay:$('downOverlay'), downCount:$('downCount'),
   statLv:$('statLv'), statXp:$('statXp'), statXpNext:$('statXpNext'), statXpGain:$('statXpGain'), statAtk:$('statAtk'), statDef:$('statDef'), statFireRes:$('statFireRes'),
@@ -136,7 +136,6 @@ function pickEnemy(){
 function spawnEnemy(){
   const e=pickEnemy();
   const scale=1+state.level*.025;
-  e.level = Math.max(1, state.level);
   e.maxHp=Math.floor(e.hp*scale); e.atk=Math.floor(e.atk*scale); e.def=Math.floor(e.def*scale);
   state.enemy=e; state.enemyHp=e.maxHp;
   els.enemyImg.src=e.img; els.enemyCard.className='card enemy-card enter';
@@ -438,7 +437,7 @@ function makeDebugAccessory(slot){
 function renderAll(){ renderBattle(); renderStats(); renderEquip(); renderInventory(); }
 function renderBattle(){
   const mh=maxHp(); els.heroLevel.textContent=`Lv.${state.level}`; els.heroHpFill.style.width=`${Math.max(0,state.hp/mh*100)}%`; els.heroHpText.textContent=`${Math.floor(state.hp)} / ${Math.floor(mh)}`;
-  if(state.enemy){ els.enemyName.textContent=state.enemy.name; if(els.enemyLv) els.enemyLv.textContent=`Lv.${state.enemy.level||state.level}`; els.enemyTag.textContent=state.enemy.type==='ボス'?'BOSS':''; els.enemyHpFill.style.width=`${Math.max(0,state.enemyHp/state.enemy.maxHp*100)}%`; els.enemyHpText.textContent=`${Math.floor(state.enemyHp)} / ${state.enemy.maxHp}`; }
+  if(state.enemy){ els.enemyName.textContent=state.enemy.name; els.enemyTag.textContent=state.enemy.type==='ボス'?'BOSS':''; els.enemyHpFill.style.width=`${Math.max(0,state.enemyHp/state.enemy.maxHp*100)}%`; els.enemyHpText.textContent=`${Math.floor(state.enemyHp)} / ${state.enemy.maxHp}`; }
   els.chests.textContent=state.chests; els.mats.textContent=state.mats;
   if(els.expFill){ els.expFill.style.width=`${Math.max(0,Math.min(100,state.xp/state.xpNext*100))}%`; els.expLabel.textContent=`Lv.${state.level} EXP ${state.xp} / ${state.xpNext}`; els.expGainLabel.textContent=`+${state.lastXpGain}`; }
   if(state.deathDance){ els.deathDanceStatus.textContent = `死線の剣舞 残り${Math.max(0, Math.ceil((state.deathDanceUntil-performance.now())/1000))}秒`; }

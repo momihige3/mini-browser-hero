@@ -13,7 +13,7 @@
       <div class="resources"><b id="chests">0</b> 宝箱 / <b id="mats">0</b> 強化石</div>
       <div class="controls">
         <button id="equipToggleBtn">メニュー</button>
-        <button id="debugChestBtn">宝箱+10</button>
+        <button id="debugBtn">デバッグ</button>
         <label class="volume-control">音量 <input id="volumeSlider" type="range" min="0" max="200" value="100" step="1"><span id="volumeText">100%</span></label>
       </div>
     </header>
@@ -26,7 +26,7 @@
         <div id="centerBanner" class="center-banner hidden"></div>
 
         <div class="enemy-zone">
-          <div class="name-line"><span><span id="enemyName">スライム</span> <em id="enemyLv">Lv.1</em></span><b id="enemyTag"></b></div>
+          <div class="name-line"><span id="enemyName">スライム</span><b id="enemyTag"></b></div>
           <div class="hpbar enemy-hp"><div id="enemyHpFill"></div><span id="enemyHpText"></span></div>
           <div id="enemyCard" class="card enemy-card">
             <img id="enemyImg" src="assets/enemy_slime.jpg" alt="敵" />
@@ -50,45 +50,53 @@
       </section>
 
       <aside class="side-panel">
-        <div class="menu-col menu-left">
-          <div class="panel hero-stats">
-            <h2>ステータス</h2>
-            <div class="stat-grid">
-              <span>Lv</span><b id="statLv">1</b>
-              <span>現在Lv経験値</span><b id="statXp">0 / 80</b>
-              <span>次Lv必要</span><b id="statXpNext">80</b>
-              <span>獲得経験値</span><b id="statXpGain">0</b>
-              <span>攻撃力</span><b id="statAtk">42</b>
-              <span>防御力</span><b id="statDef">12</b>
-              <span>火軽減</span><b id="statFireRes">0%</b>
+        <div class="panel hero-stats">
+          <h2>ステータス</h2>
+          <div class="stat-grid">
+            <span>Lv</span><b id="statLv">1</b>
+            <span>現在Lv経験値</span><b id="statXp">0 / 80</b>
+            <span>次Lv必要</span><b id="statXpNext">80</b>
+            <span>獲得経験値</span><b id="statXpGain">0</b>
+            <span>攻撃力</span><b id="statAtk">42</b>
+            <span>防御力</span><b id="statDef">12</b>
+            <span>火軽減</span><b id="statFireRes">0%</b>
             </div>
-          </div>
-          <div class="panel equip-panel">
-            <h2>現在装備</h2>
-            <div id="equipList" class="equip-list"></div>
-            <button id="upgradeBtn" class="wide">装備を選択して強化</button>
-          </div>
         </div>
-        <div class="menu-col menu-right">
-          <div class="panel inventory-panel">
-            <h2>倉庫</h2>
-            <div class="inventory-actions">
-              <button id="openAllBtn">一括開封</button>
-              <button id="bestEquipBtn">最強装備</button>
-              <button id="sellNormalBtn">ノーマル売却</button>
-              <button id="sellRareBtn">レア売却</button>
-              <button id="sellAllBtn">すべて売却</button>
-            </div>
-            <div id="inventory" class="inventory"></div>
-            <div id="tooltip" class="tooltip hidden"></div>
+
+        <div class="panel equip-panel">
+          <h2>現在装備</h2>
+          <div id="equipList" class="equip-list"></div>
+          <button id="upgradeBtn" class="wide">装備を選択して強化</button>
+        </div>
+
+        <div class="panel inventory-panel">
+          <h2>倉庫</h2>
+          <div class="inventory-actions">
+            <button id="openAllBtn">一括開封</button>
+            <button id="bestEquipBtn">最強装備</button>
+            <button id="sellNormalBtn">ノーマル売却</button>
+            <button id="sellRareBtn">レア売却</button>
+            <button id="sellAllBtn">すべて売却</button>
           </div>
-          <div class="panel log-panel">
-            <h2>バトルログ</h2>
-            <div id="log" class="log"></div>
-          </div>
+          <div id="inventory" class="inventory"></div>
+          <div id="tooltip" class="tooltip hidden"></div>
+        </div>
+
+        <div class="panel log-panel">
+          <h2>バトルログ</h2>
+          <div id="log" class="log"></div>
         </div>
       </aside>
     </main>
+      <div id="debugPanel" class="debug-panel hidden">
+        <div class="debug-head">デバッグ</div>
+        <button id="debugAddChests">宝箱+50</button>
+        <button id="debugBestSword">最強剣を倉庫に付与</button>
+        <button id="debugBestAccessory">最強アクセを倉庫に付与</button>
+        <label><input id="debugKillEnemy" type="checkbox"> 敵への攻撃で即死</label>
+        <label><input id="debugKillHero" type="checkbox"> 敵からの攻撃で即死</label>
+        <button id="debugClose">閉じる</button>
+      </div>
   </div>
   <script src="game.js"></script>
 </body>

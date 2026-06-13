@@ -34,5 +34,3 @@
 .debug-panel{position:fixed;right:18px;top:70px;z-index:120;width:280px;display:grid;gap:8px;padding:12px;border:2px solid #d2a03f;background:linear-gradient(180deg,rgba(35,20,12,.96),rgba(5,4,3,.96));box-shadow:0 0 28px #000, inset 0 0 16px rgba(255,190,65,.12);color:#ffe9b8}
 .debug-panel.hidden{display:none!important}.debug-head{font-weight:900;color:#ffd76b;text-align:center;border-bottom:1px solid #7f5a1d;padding-bottom:6px}.debug-panel button{padding:8px;border:1px solid #9d742a;background:linear-gradient(#49300f,#18100a);color:#ffe9b8;font-weight:900;cursor:pointer}.debug-panel button:hover{filter:brightness(1.2)}.debug-panel label{display:flex;gap:8px;align-items:center;font-size:13px;background:rgba(0,0,0,.28);border:1px solid #533914;padding:7px}.debug-panel input{accent-color:#e3ad39}
 @media(max-width:760px){.debug-panel{left:10px;right:10px;top:64px;width:auto}}
-
-.name-line em{font-style:normal;font-size:14px;color:#d7c08a;text-shadow:0 2px 4px #000;margin-left:4px;}
