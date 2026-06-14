@@ -803,7 +803,11 @@ function playBgm(){
   if(state.bgmMode === 'dance'){
     if(state.normalBgm) state.normalBgm.pause();
     if(state.swordDanceBgm){
-      try{ state.swordDanceBgm.currentTime = 0; }catch(e){}
+      // 剣舞BGM再生中にメニュー/ボタン操作で startAudio() や playBgm() が再実行されても、
+      // currentTime を 0 に戻さない。未再生・停止中の時だけ先頭から再生する。
+      if(state.swordDanceBgm.paused || state.swordDanceBgm.ended){
+        try{ state.swordDanceBgm.currentTime = 0; }catch(e){}
+      }
       safePlayAudio(state.swordDanceBgm);
     }
   }else{
