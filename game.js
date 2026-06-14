@@ -509,10 +509,15 @@ function processStatusDots(now){
       }
       state.enemyHp = Math.max(0, state.enemyHp - dmg);
       showFloat(`出血 ${dmg}${isDarkSwordSaint() && darkAuraStacks() > 0 ? ' 軽減' : ''}`,'damage');
-      if(state.enemyHp <= 0){ state.enemyHp = 0; renderBattle(); setTimeout(enemyDefeated, 120); }
+      if(state.enemyHp <= 0){
+        state.enemyHp = 0;
+        renderBattle();
+        if(tryDarkSwordDanceRevive()) return;
+        setTimeout(enemyDefeated, 120);
+      }
     }
   }else state.enemyStatuses.lastBleedTick = now;
-  if(!state.down && state.heroStatuses.bleeds.length){
+  if(!state.down && !state.deathDance && !state.deathDanceCutin && state.heroStatuses.bleeds.length){
     if(!state.heroStatuses.lastBleedTick) state.heroStatuses.lastBleedTick = now;
     const ticks = Math.floor((now - state.heroStatuses.lastBleedTick)/1000);
     if(ticks > 0){
@@ -523,11 +528,12 @@ function processStatusDots(now){
       if(state.hp <= 0){
         state.hp = 0;
         renderBattle();
+        if(Math.random() < calcStats().deathDanceChance){ startDeathDance(); return; }
         startDown();
       }
     }
   }else state.heroStatuses.lastBleedTick = now;
-  if(!state.down && (state.heroStatuses.darkBleeds||[]).length){
+  if(!state.down && !state.deathDance && !state.deathDanceCutin && (state.heroStatuses.darkBleeds||[]).length){
     if(!state.heroStatuses.lastDarkBleedTick) state.heroStatuses.lastDarkBleedTick = now;
     const ticks = Math.floor((now - state.heroStatuses.lastDarkBleedTick)/15000);
     if(ticks > 0){
@@ -538,6 +544,7 @@ function processStatusDots(now){
       if(state.hp <= 0){
         state.hp = 0;
         renderBattle();
+        if(Math.random() < calcStats().deathDanceChance){ startDeathDance(); return; }
         startDown();
       }
     }
@@ -893,6 +900,7 @@ function elementName(element){
   if(element==='fire') return '火';
   if(element==='thunder') return '雷';
   if(element==='physical') return '物理';
+  if(element==='dark') return '暗黒';
   return '通常';
 }
 function applyHeroHit(skill){
@@ -952,8 +960,8 @@ function enemyAttack(now){
     renderBattle();
     return;
   }
-  let element=e.element==='fire' && Math.random()<.55 ? 'fire':'normal';
-  let name=e.enemySkill && element==='fire' ? e.enemySkill:'攻撃';
+  let element = isDarkSwordSaint() ? 'dark' : (e.element==='fire' && Math.random()<.55 ? 'fire':'normal');
+  let name = element==='dark' ? '暗黒攻撃' : (e.enemySkill && element==='fire' ? e.enemySkill:'攻撃');
   if(Math.random()<st.guard){ showHeroFloat('GUARD','guard'); playSfx('guard'); log(`${e.name} の${name}をGUARD！`,'good'); return; }
   let atk = e.atk * (1 + darkSwordBuffCount() * 0.5);
   let dmg=Math.max(1, Math.floor(atk - st.def*.55*heroDefenseMultiplier() + rand(0,atk*.35)));
@@ -971,11 +979,11 @@ function enemyAttack(now){
   }
   els.heroCard.classList.remove('hit'); void els.heroCard.offsetWidth; els.heroCard.classList.add('hit');
   setTimeout(()=>els.heroCard.classList.remove('hit'),220);
-  showHeroFloat(dmg, element==='fire'?'fire':(isDarkSwordSaint()?'dark':'damage')); playSfx('hit');
+  showHeroFloat(dmg, element==='fire'?'fire':(element==='dark'?'dark':'damage')); playSfx('hit');
   tryApplyEnemyHitDebuffs(element);
   if(isDarkSwordSaint()){
     ensureStatusContainers();
-    if(!state.enemyStatuses.darkTechniqueAwakened && element !== 'fire' && dmg === 1){
+    if(!state.enemyStatuses.darkTechniqueAwakened && element === 'dark' && dmg === 1){
       state.enemyStatuses.darkOneDamageCount = (state.enemyStatuses.darkOneDamageCount || 0) + 1;
       if(state.enemyStatuses.darkOneDamageCount >= 20){
         state.enemyStatuses.darkTechniqueAwakened = true;

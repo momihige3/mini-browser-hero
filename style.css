@@ -1556,3 +1556,13 @@ body.using-touch .tooltip.status-tooltip-modal:not(.hidden),
 }
 
 .float.dark{color:#b45cff!important;text-shadow:0 2px 3px #000,0 0 18px #7b00ff,0 0 8px #d6a0ff!important;}
+
+/* v91: 主人公の剣舞カットイン文字は暗黒系の紫を使わない */
+.death-dance-cutin.hero-cutin .death-dance-cutin-title{
+  color:#fff1a8!important;
+  text-shadow:0 0 10px #ffb52d,0 0 24px #ff6418,0 5px 5px #000!important;
+}
+.death-dance-cutin.hero-cutin .death-dance-cutin-quote{
+  color:#fff!important;
+  text-shadow:0 0 10px #ffcc55,0 0 20px #ff7a18,0 4px 3px #000!important;
+}
