@@ -35,7 +35,7 @@ const DEATH_DANCE_CUTINS = [
 ];
 const DARK_SWORD_SAINT_CUTIN = {quote:'私を超えてみせろ。', img:'assets/cutin_dark_sword_dance.png'};
 const DARK_SWORD_TECHNIQUE_CUTIN = {quote:'', img:'assets/cutin_dark_sword_technique.png'};
-const GAME_VERSION = '95.9';
+const GAME_VERSION = '96';
 const DARK_SWORD_SAINT = {
   id:'dark_sword_saint', name:'暗黒剣聖', type:'裏ボス', img:'assets/enemy_dark_sword_saint.png', element:'dark',
   hp:32000, atk:260, def:95, xp:2600, gold:5000, bossChance:0, enemySkill:'暗黒斬'
@@ -213,6 +213,7 @@ function init(){
   state.inventory = [];
   loadGame();
   ensureStarterEquipment();
+  sanitizeAllEquipmentDeathDanceChance();
   // v57: 音声は保存状態に関係なく、起動・リロード直後は必ずミュートON。
   state.mobileMuted = true;
   state.audioUnlocked = false;
@@ -282,10 +283,32 @@ function loadGame(){
     state.enemyLevelBaseDefeated = Math.max(0, Math.floor(Number(data.enemyLevelBaseDefeated)||0));
     state.hp = Math.min(Number(data.hp)||maxHp(), maxHp());
     if(state.hp<=0) state.hp=Math.floor(maxHp()*0.5);
+    sanitizeAllEquipmentDeathDanceChance();
     state.down=false; state.deathDance=false;
     console.info('save loaded');
   }catch(e){ console.warn('load failed', e); }
 }
+
+function sanitizeAllEquipmentDeathDanceChance(){
+  const fix = (it)=>{
+    if(!it) return it;
+    if(it.name === '師匠のアミュレット'){
+      it.deathDanceChance = 0.10;
+      it.masterRegen = true;
+      it.unsellable = true;
+      return it;
+    }
+    if(it.specialFrame === 'darkholy'){
+      if((it.deathDanceChance||0) > 0.25) it.deathDanceChance = 0.25;
+      return it;
+    }
+    if((it.deathDanceChance||0) > 0.25) it.deathDanceChance = 0.25;
+    return it;
+  };
+  Object.keys(state.equip||{}).forEach(k=>{ state.equip[k]=fix(state.equip[k]); });
+  if(Array.isArray(state.inventory)) state.inventory.forEach(fix);
+}
+
 function clearGameStorage(){
   try{
     const keys=[];
@@ -424,7 +447,7 @@ function calcStats(){
     fireRes:0, fireDmg:0, fireSkillChance:0, fireDamageHeal:0,
     thunderDmg:0, thunderSkillChance:0,
     deathDanceChance:.10, deathDanceDefIgnore:0, heroDarkBleedChance:0, lifeSteal:0, guard:0, crit:.08,
-    darkShield:false, darkAmulet:false, masterRegen:false, deathDanceDurationMul:1
+    darkShield:false, darkAmulet:false, masterRegen:false, masterRegenRate:0, deathDanceDurationMul:1
   };
   let normalDanceBonus = 0;
   let darkDanceBonus = 0;
@@ -440,7 +463,7 @@ function calcStats(){
     s.lifeSteal += it.lifeSteal||0; s.guard += it.guard||0; s.crit += it.crit||0;
     if(it.darkShield) s.darkShield = true;
     if(it.darkAmulet){ s.darkAmulet = true; s.deathDanceDurationMul = Math.max(s.deathDanceDurationMul, 2); }
-    if(it.masterRegen) s.masterRegen = true;
+    if(it.masterRegen){ s.masterRegen = true; s.masterRegenRate = Math.max(s.masterRegenRate, masterAmuletRegenRate()); }
   });
   s.deathDanceChance += Math.min(0.25, normalDanceBonus) + Math.min(0.50, darkDanceBonus);
   if(hasUnyieldingBuff()) s.deathDanceChance += 0.50;
@@ -531,6 +554,10 @@ function addBurn(target){
   renderStatusLists();
   return true;
 }
+function masterAmuletRegenRate(){
+  return Math.min(0.10, 0.03 + Math.max(0, (state.level||1)-1) * 0.001);
+}
+
 function processStatusDots(now){
   ensureStatusContainers(); cleanupStatuses();
   if(state.enemy && state.enemy.bossBuff === 'super_regen'){
@@ -547,7 +574,7 @@ function processStatusDots(now){
     const ticks = Math.floor((now - state.heroStatuses.masterRegenLast)/10000);
     if(ticks > 0){
       state.heroStatuses.masterRegenLast += ticks*10000;
-      const heal = Math.max(1, Math.floor(maxHp() * 0.03 * ticks));
+      const heal = Math.max(1, Math.floor(maxHp() * masterAmuletRegenRate() * ticks));
       if(state.hp > 0 && state.hp < maxHp()){ state.hp = Math.min(maxHp(), state.hp + heal); showHeroFloat(`+${heal}`, 'heal'); }
     }
   }
@@ -839,7 +866,7 @@ function statusTooltipHtml(kind, target){
   if(kind === 'super_regen') return `<b>超再生</b><br>10秒ごとに最大HPの1%を回復する。`;
   if(kind === 'apex') return `<b>種族の頂点</b><br>被ダメージ50%軽減。<br>出血ダメージ50%軽減。`;
   if(kind === 'spirit_king') return `<b>精霊王</b><br>攻撃されると必ず火傷を付与する。`;
-  if(kind === 'master_amulet') return `<b>師匠のアミュレット</b><br>10秒ごとに最大HP3%回復。<br>死線の剣舞発動率+10%。`;
+  if(kind === 'master_amulet') return `<b>師匠のアミュレット</b><br>10秒ごとに最大HP${(masterAmuletRegenRate()*100).toFixed(1)}%回復。<br>レベルに応じて+0.1%ずつ成長し、最大10%。<br>敵撃破時、最大HP25%回復。<br>死線の剣舞発動率+10%。`;
   if(kind === 'dark_shield') return `<b>闇の盾</b><br>毎ターン被ダメージ軽減+1%。最大50%。<br>被ダメージの半分を回復。`;
   if(kind === 'dark_amulet') return `<b>闇のアミュレット</b><br>死線の剣舞発動率+25%。<br>死線の剣舞効果時間2倍。`;
   return '';
@@ -1521,13 +1548,19 @@ function enemyDefeated(){
     const darkPool = [makeDarkHolySword, makeDarkShield, makeDarkAmulet];
     const darkReward = darkPool[Math.floor(Math.random()*darkPool.length)](state.level);
     const rewards = [];
-    for(let i=0;i<2;i++) rewards.push(makeItem(slots[Math.floor(Math.random()*slots.length)], legendary));
+    for(let i=0;i<2;i++) rewards.push(makeItem(slots[Math.floor(Math.random()*slots.length)], legendary, {isBossDrop:true}));
     rewards.push(darkReward); // 闇シリーズは3枠目で通知・ドロップ
     for(let i=rewards.length-1;i>=0;i--) state.inventory.unshift(rewards[i]);
     log('暗黒剣聖討伐報酬：レジェンダリー確定装備×2、3枠目に闇シリーズ装備！','good');
     showDropSequence(rewards);
-  }else if(Math.random()<.38){ const it=makeRandomItem(); state.inventory.unshift(it); logItemDrop(it); showDropToast(it); }
+  }else if(Math.random()<.38){ const it=makeRandomItem(e?.type==='ボス'); state.inventory.unshift(it); logItemDrop(it); showDropToast(it); }
   if(Math.random()<.22){ const m=randInt(1,3); state.mats += m; log(`強化石+${m} を獲得。`,'good'); }
+  if(calcStats().masterRegen && state.hp > 0){
+    const heal = Math.max(1, Math.floor(maxHp() * 0.25));
+    const beforeHp = state.hp;
+    state.hp = Math.min(maxHp(), state.hp + heal);
+    if(state.hp > beforeHp){ showHeroFloat(`+${Math.floor(state.hp-beforeHp)}`, 'heal'); log(`師匠のアミュレット：撃破時HP${Math.floor(state.hp-beforeHp).toLocaleString()}回復。`,'good'); }
+  }
   log(`${e.name} を撃破！ 経験値+${gainXp}`,'good'); playSfx('win');
   checkLevelUp(); renderAll(); scheduleSave();
   setTimeout(spawnEnemy,850);
@@ -2060,7 +2093,7 @@ function makeMasterAmulet(){
   it.deathDanceChance = 0.10;
   it.masterRegen = true;
   it.unsellable = true;
-  it.flavor = '師匠より託された護符。10秒ごとにHP3%回復。死線の剣舞発動率+10%。';
+  it.flavor = '師匠より託された護符。10秒ごとにHP回復（Lvで成長、最大10%）。敵撃破時HP25%回復。死線の剣舞発動率+10%。';
   return it;
 }
 function ensureStarterEquipment(force=false){
@@ -2071,12 +2104,23 @@ function ensureStarterEquipment(force=false){
     else state.inventory.unshift(makeMasterAmulet());
   }
 }
-function makeRandomItem(){
+function rollDeathDanceDropChance(isBossDrop){
+  const r = Math.random();
+  if(isBossDrop){
+    if(r < 0.015) return randInt(20,25) / 100;
+    if(r < 0.10) return randInt(11,19) / 100;
+    if(r < 0.30) return randInt(1,10) / 100;
+    return 0;
+  }
+  if(r < 0.12) return randInt(1,10) / 100;
+  return 0;
+}
+function makeRandomItem(isBossDrop=false){
   const slot=slots[Math.floor(Math.random()*slots.length)];
   const r=Math.random(); const rarity = r<.70?rarities[0]:r<.94?rarities[1]:rarities[2];
-  return makeItem(slot, rarity);
+  return makeItem(slot, rarity, {isBossDrop});
 }
-function makeItem(slot, rarity){
+function makeItem(slot, rarity, opts={}){
   const lv=Math.max(1,state?.level||1);
   const name=(equipNames[slot]||[slot])[Math.floor(Math.random()*(equipNames[slot]||[slot]).length)];
   const m=rarity.mult;
@@ -2089,7 +2133,6 @@ function makeItem(slot, rarity){
     it.hp=Math.floor((55+lv*12)*m);
     if(Math.random()<.28) it.lifeSteal=.03;
     if(Math.random()<.22) it.guard=.03;
-    if(rarity.id==='legendary') it.deathDanceChance=.25;
   } else {
     it.def=Math.floor((8+lv*3)*m);
     it.hp=Math.floor((25+lv*8)*m);
@@ -2097,6 +2140,7 @@ function makeItem(slot, rarity){
     if(rarity.id==='legendary' && Math.random()<.45) it.fireDamageHeal=.50;
   }
   applyNameBonus(it);
+  normalizeGeneratedDeathDanceChance(it, !!opts.isBossDrop);
   return it;
 }
 
@@ -2115,6 +2159,21 @@ function applyNameBonus(it){
     if(it.slot==='リング'||it.slot==='アミュレット') it.deathDanceChance += .25;
     else if(it.slot!=='武器') it.guard += .03;
   }
+}
+
+
+function normalizeGeneratedDeathDanceChance(it, isBossDrop=false){
+  if(!it || !(it.slot==='リング' || it.slot==='アミュレット')) return it;
+  if(it.specialFrame === 'darkholy' || it.name === '師匠のアミュレット') return it;
+  const hadThemeBonus = (it.deathDanceChance||0) > 0;
+  let rolled = rollDeathDanceDropChance(isBossDrop);
+  if(hadThemeBonus && rolled <= 0){
+    rolled = isBossDrop ? randInt(1,19)/100 : randInt(1,10)/100;
+  }
+  if(!isBossDrop && rolled > 0.10) rolled = 0.10;
+  if(isBossDrop && rolled > 0.25) rolled = 0.25;
+  it.deathDanceChance = rolled;
+  return it;
 }
 
 function itemPower(it){return (it.atk||0)*3 + (it.def||0)*2 + (it.hp||0)*.25 + (it.fireRes||0)*400 + (it.fireDmg||0)*420 + (it.thunderDmg||0)*420 + (it.fireDamageHeal||0)*550 + (it.deathDanceChance||0)*700 + (it.deathDanceDefIgnore||0)*800 + (it.crit||0)*500 + (it.lifeSteal||0)*600 + (it.guard||0)*500 + (it.darkShield?2200:0) + (it.darkAmulet?1800:0) + (it.masterRegen?900:0) + it.level*15;}
@@ -2180,7 +2239,7 @@ function makeDebugSword(){
 function makeDebugAccessory(slot){
   const it=makeItem(slot, rarities[2]);
   it.name = slot==='リング' ? '死線のリング' : '死線のアミュレット';
-  it.hp=0; it.def=999; it.guard=.50; it.lifeSteal=.15; it.deathDanceChance=.50; it.deathDanceDefIgnore=.50; it.fireDmg=.35; it.thunderDmg=.35; it.fireSkillChance=.25; it.thunderSkillChance=.25;
+  it.hp=0; it.def=999; it.guard=.50; it.lifeSteal=.15; it.deathDanceChance=.25; it.deathDanceDefIgnore=.50; it.fireDmg=.35; it.thunderDmg=.35; it.fireSkillChance=.25; it.thunderSkillChance=.25;
   return it;
 }
 
@@ -2353,7 +2412,7 @@ function itemSummary(it){
   if(it.heroDarkBleedChance)arr.push(`通常攻撃/剣舞:暗黒出血${Math.round(it.heroDarkBleedChance*100)}%`);
   if(it.darkShield)arr.push('毎ターン被ダメ軽減+1%(最大50%) / 被ダメ50%回復');
   if(it.darkAmulet)arr.push('死線の剣舞効果時間2倍');
-  if(it.masterRegen)arr.push('10秒ごとにHP3%回復');
+  if(it.masterRegen)arr.push(`10秒ごとにHP${(masterAmuletRegenRate()*100).toFixed(1)}%回復(最大10%) / 撃破時HP25%回復`);
   if(it.lifeSteal)arr.push(`吸収${Math.round(it.lifeSteal*100)}%`); if(it.guard)arr.push(`GUARD+${Math.round(it.guard*100)}%`); if(it.crit)arr.push(`会心+${Math.round(it.crit*100)}%`);
   if(it.skill)arr.push(`武器スキル:${it.skill.name} ${Math.round((it.skill.chance + (it.skill.id==='fire'?(it.fireSkillChance||0):it.skill.id==='thunder'?(it.thunderSkillChance||0):0))*100)}%`);
   if(it.flavor)arr.push(it.flavor);
