@@ -61,7 +61,7 @@ const state = {
   level:1, xp:0, xpNext:80, chests:0, mats:3, defeated:0,
   base:{hp:520, atk:48, def:14}, hp:520, enemy:null, enemyHp:1,
   inventory:[], equip:{}, down:false, downUntil:0, deathDance:false, deathDanceUntil:0, deathDanceCutin:false, deathDanceCutinTimer:null, deathDanceSeqTimers:[], lastHeroAttack:0, lastEnemyAttack:0,
-  log:[], debug:{killEnemy:false, killHero:false}, audio:null, masterGain:null, bgmGain:null, bgmTimer:null, bgmMode:'normal', audioUnlocked:false, mobileMuted:true, menuPage:'stats', inventoryMenuItemId:null, enemyRecords:{}, forceFirstEnemy:false
+  log:[], debug:{killEnemy:false, killHero:false}, audio:null, masterGain:null, bgmGain:null, bgmTimer:null, bgmMode:'normal', normalBgm:null, swordDanceBgm:null, audioUnlocked:false, mobileMuted:true, menuPage:'stats', inventoryMenuItemId:null, enemyRecords:{}, forceFirstEnemy:false
 };
 
 const SAVE_KEY = 'mini-browser-hero-save-v36';
@@ -612,13 +612,11 @@ function startDeathDance(){
   banner('死線の剣舞！');
   log('死線の剣舞、発動寸前！','skilllog');
 
-  // 覚醒演出：既存バナー → 心音 → セリフカットイン → シャキィン → 和風ロック爆発
-  queueDeathDanceStep(()=>{ stopBgm(); }, 250);
-  queueDeathDanceStep(()=>showDeathDanceHeartbeat('ドクン…'), 380);
-  queueDeathDanceStep(()=>showDeathDanceHeartbeat('ドクン…'), 900);
-  queueDeathDanceStep(()=>showDeathDanceCutin(), 1350);
-  queueDeathDanceStep(()=>playSfx('cutin'), 2050);
-  state.deathDanceCutinTimer = queueDeathDanceStep(beginDeathDanceAfterCutin, 2250);
+  // 覚醒演出：既存バナー → 通常BGM停止 → セリフカットイン → シャキィン → 剣舞BGM
+  queueDeathDanceStep(()=>{ pauseNormalBgm(); }, 180);
+  queueDeathDanceStep(()=>showDeathDanceCutin(), 350);
+  queueDeathDanceStep(()=>playSfx('cutin'), 1050);
+  state.deathDanceCutinTimer = queueDeathDanceStep(beginDeathDanceAfterCutin, 1250);
 }
 function showDeathDanceCutin(){
   if(!els.deathDanceCutin) return;
@@ -688,41 +686,67 @@ function randomWeaponSkill(rarity){
 function primeAudio(){
   // iOS Safari向け。無音を一瞬だけ流してAudioContextを完全に起こす。
   try{
-    if(!state.audio || !state.masterGain) return;
+    if(!state.audio) return;
     const ctx = state.audio;
     const o = ctx.createOscillator();
     const g = ctx.createGain();
     g.gain.value = 0.00001;
-    o.frequency.value = 440;
-    o.connect(g);
-    g.connect(state.masterGain);
-    const t = ctx.currentTime || 0;
+    o.connect(g); g.connect(state.masterGain || ctx.destination);
+    const t = ctx.currentTime;
     o.start(t);
     o.stop(t + 0.03);
   }catch(e){}
 }
+function ensureBgmAudio(){
+  if(!state.normalBgm){
+    state.normalBgm = new Audio('Petals_on_the_Water.mp3');
+    state.normalBgm.loop = true;
+    state.normalBgm.preload = 'auto';
+  }
+  if(!state.swordDanceBgm){
+    state.swordDanceBgm = new Audio('Steel_At_The_Gate.mp3');
+    state.swordDanceBgm.loop = true;
+    state.swordDanceBgm.preload = 'auto';
+  }
+  updateBgmVolume();
+}
+function updateBgmVolume(){
+  const v = state.mobileMuted ? 0 : Math.max(0, Math.min(2, state.volume)) * 0.05;
+  if(state.normalBgm) state.normalBgm.volume = v;
+  if(state.swordDanceBgm) state.swordDanceBgm.volume = v;
+}
+function safePlayAudio(a){
+  if(!a || state.mobileMuted) return;
+  try{
+    const p = a.play();
+    if(p && typeof p.catch === 'function') p.catch(()=>{});
+  }catch(e){}
+}
+function pauseNormalBgm(){
+  if(state.normalBgm) state.normalBgm.pause();
+}
+function stopAllBgm(){
+  stopBgm();
+  if(state.normalBgm) state.normalBgm.pause();
+  if(state.swordDanceBgm){ state.swordDanceBgm.pause(); state.swordDanceBgm.currentTime = 0; }
+}
 function startAudio(){
   try{
     const C=window.AudioContext||window.webkitAudioContext;
-    if(!C){
-      if(els.audioHint) els.audioHint.classList.add('hidden');
-      return;
-    }
-    if(!state.audio){
+    if(C && !state.audio){
       state.audio=new C();
       state.masterGain=state.audio.createGain();
       state.masterGain.connect(state.audio.destination);
       applyVolume();
     }
+    ensureBgmAudio();
     const unlock = () => {
       primeAudio();
-      state.audioUnlocked = state.audio && state.audio.state === 'running';
-      if(els.audioHint) els.audioHint.classList.toggle('hidden', state.audioUnlocked);
-      if(state.audioUnlocked){
-        playBgm();
-      }
+      state.audioUnlocked = !state.audio || state.audio.state === 'running';
+      if(els.audioHint) els.audioHint.classList.add('hidden');
+      if(state.audioUnlocked && !state.mobileMuted) playBgm();
     };
-    if(state.audio.state==='suspended'){
+    if(state.audio && state.audio.state==='suspended'){
       const p = state.audio.resume();
       if(p && typeof p.then==='function') p.then(unlock).catch(()=>{
         state.audioUnlocked = false;
@@ -740,6 +764,7 @@ function startAudio(){
 }
 function applyVolume(){
   if(state.masterGain) state.masterGain.gain.value = state.mobileMuted ? 0 : Math.max(0, Math.min(2, state.volume));
+  updateBgmVolume();
 }
 function tone(freq=440, dur=.08, type='sine', vol=.05){
   if(!state.audio || !state.masterGain) return;
@@ -751,38 +776,40 @@ function tone(freq=440, dur=.08, type='sine', vol=.05){
   o.start(t); o.stop(t+dur+.02);
 }
 function playSfx(kind){
-  if(!state.audioUnlocked) return;
-  const map={slash:[640,.06,'triangle',.055],fire:[220,.14,'sawtooth',.055],thunder:[90,.09,'square',.04],heavy:[120,.18,'sawtooth',.06],hit:[180,.05,'square',.035],guard:[520,.08,'triangle',.045],win:[880,.12,'sine',.04],level:[660,.2,'triangle',.055],down:[110,.28,'sawtooth',.05],dance:[360,.22,'sawtooth',.06],cutin:[960,.18,'sawtooth',.075],heartbeat:[72,.22,'sine',.075]};
+  if(!state.audioUnlocked || state.mobileMuted) return;
+  const map={slash:[640,.06,'triangle',.055],fire:[220,.14,'sawtooth',.055],thunder:[90,.09,'square',.04],heavy:[120,.18,'sawtooth',.06],hit:[180,.05,'square',.035],guard:[520,.08,'triangle',.045],win:[880,.12,'sine',.04],level:[660,.2,'triangle',.055],down:[110,.28,'sawtooth',.05],dance:[360,.22,'sawtooth',.06],cutin:[960,.18,'sawtooth',.075]};
   const a=map[kind]||map.slash; tone(...a);
   if(kind==='slash'||kind==='fire'||kind==='thunder'||kind==='dance'||kind==='cutin') setTimeout(()=>tone(a[0]*1.42,a[1]*.8,a[2],a[3]*.65),55);
   if(kind==='cutin'){ setTimeout(()=>tone(420,.2,'triangle',.055),130); setTimeout(()=>tone(1280,.12,'sine',.04),210); }
-  if(kind==='heartbeat'){ setTimeout(()=>tone(54,.24,'sine',.055),115); }
 }
 function playUiClick(){
   if(!state.audioUnlocked || state.mobileMuted) return;
   tone(520,.045,'triangle',.018);
 }
 function stopBgm(){
+  // 旧オシレーターBGM用の停止処理。HTMLAudio BGMは止めない。
   if(state.bgmTimer){ clearInterval(state.bgmTimer); state.bgmTimer=null; }
 }
 function setBgmMode(mode){
   state.bgmMode = mode || 'normal';
-  if(state.audioUnlocked && !state.mobileMuted){ stopBgm(); playBgm(); }
+  if(!state.audioUnlocked || state.mobileMuted) return;
+  playBgm();
 }
 function playBgm(){
-  if(!state.audio || state.bgmTimer || state.mobileMuted) return;
-  const normalSeq=[196,246.94,293.66,246.94,220,261.63,329.63,293.66];
-  const danceSeq=[392,466.16,523.25,587.33,523.25,466.16,392,587.33,659.25,698.46,783.99,698.46];
-  let i=0;
-  state.bgmTimer=setInterval(()=>{
-    const dance = state.bgmMode === 'dance';
-    const seq = dance ? danceSeq : normalSeq;
-    tone(seq[i++%seq.length], dance ? .13 : .28, dance ? 'sawtooth' : 'sine', dance ? .032 : .018);
-    if(dance){
-      if(i % 2 === 0) setTimeout(()=>tone(92,.075,'triangle',.03),44);      // 和太鼓っぽい低音
-      if(i % 4 === 0) setTimeout(()=>tone(seq[i%seq.length]*1.5,.08,'square',.018),92); // ロックの刻み
+  if(!state.audioUnlocked || state.mobileMuted) return;
+  ensureBgmAudio();
+  updateBgmVolume();
+  stopBgm();
+  if(state.bgmMode === 'dance'){
+    if(state.normalBgm) state.normalBgm.pause();
+    if(state.swordDanceBgm){
+      try{ state.swordDanceBgm.currentTime = 0; }catch(e){}
+      safePlayAudio(state.swordDanceBgm);
     }
-  }, state.bgmMode === 'dance' ? 128 : 360);
+  }else{
+    if(state.swordDanceBgm){ state.swordDanceBgm.pause(); try{ state.swordDanceBgm.currentTime = 0; }catch(e){} }
+    safePlayAudio(state.normalBgm);
+  }
 }
 
 
@@ -1057,7 +1084,7 @@ function resetBattleState(forceFirst=false){
   clearTimeout(state.dropToastTimer);
   clearDeathDanceSequence();
   state.deathDanceCutin=false; state.deathDance=false; state.down=false;
-  state.bgmMode='normal'; stopBgm(); if(state.audioUnlocked && !state.mobileMuted) playBgm();
+  state.bgmMode='normal'; stopAllBgm(); if(state.audioUnlocked && !state.mobileMuted) playBgm();
   hideDeathDanceCutin();
   if(els.deathDanceStatus) els.deathDanceStatus.classList.add('hidden');
   if(els.deathAura) els.deathAura.classList.add('hidden');
