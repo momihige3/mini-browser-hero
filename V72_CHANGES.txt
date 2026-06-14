@@ -1,0 +1,1 @@
+v72: BGM 5%, normal SE 50%, sworddance combat SE 25%, battle log scrollbar unified with inventory.

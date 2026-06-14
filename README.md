@@ -53,3 +53,10 @@ Mini Browser Hero v59
 - 通常BGM/剣舞BGMの音量を3%に変更。
 - SEは100%方針を維持。
 - モンスター討伐記録とバトルログのスクロールバーを倉庫と同じ見た目に統一。
+
+
+## v72 changes
+- BGM volume changed to 5%.
+- Normal SE volume changed to 50%.
+- Combat SE during sword dance changed to 25%.
+- Battle log scrollbar styling force-aligned with inventory scrollbar.
