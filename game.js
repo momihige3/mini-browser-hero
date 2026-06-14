@@ -458,6 +458,8 @@ function heroAttack(now){
   state.lastHeroAttack=now;
   const skill = state.deathDance ? 'deathdance' : 'slash';
   els.heroCard.classList.remove('attack'); void els.heroCard.offsetWidth; els.heroCard.classList.add('attack');
+  // v70: 攻撃開始時にも短い斬撃SEを鳴らし、自動攻撃でも確実に聞こえるようにする。
+  playSfx(skill==='deathdance'?'dance':'slash');
   setTimeout(()=>els.heroCard.classList.remove('attack'),360);
   const hits = skill==='deathdance' ? 3 : 1;
   for(let i=0;i<hits;i++) setTimeout(()=>applyHeroHit(skill), i*120);
@@ -716,7 +718,7 @@ function ensureBgmAudio(){
   updateBgmVolume();
 }
 function updateBgmVolume(){
-  const v = state.mobileMuted ? 0 : Math.max(0, Math.min(2, state.volume)) * 0.05;
+  const v = state.mobileMuted ? 0 : Math.max(0, Math.min(2, state.volume)) * 0.02;
   if(state.normalBgm) state.normalBgm.volume = v;
   if(state.swordDanceBgm) state.swordDanceBgm.volume = v;
 }
@@ -849,70 +851,73 @@ function noiseBurst(dur=.06, vol=.025, delay=0, filterFreq=1400){
   src.start(t);
 }
 
+const SFX_VOL = 1.0;
+function sv(v){ return Math.max(0, Math.min(1, v * SFX_VOL)); }
+
 function playSfx(kind){
   if(!ensureSfxReady()) return;
-  // v68: 攻撃系SEを聞き取りやすく修正。BGMとは独立したWebAudio SEとして鳴らす。
+  // v70: BGMは2%に下げ、SEは100%方針で明確に鳴らす。
   switch(kind){
     case 'slash':
-      noiseBurst(.055,.032,0,1800);
-      tone(760,.045,'triangle',.060,0);
-      tone(1120,.04,'triangle',.040,.045);
+      noiseBurst(.075, sv(.18), 0, 1700);
+      tone(720,.065,'triangle',sv(.28),0);
+      tone(1180,.055,'triangle',sv(.18),.045);
       break;
     case 'fire':
-      noiseBurst(.12,.030,0,600);
-      tone(180,.16,'sawtooth',.055,0);
-      tone(420,.08,'sawtooth',.035,.055);
+      noiseBurst(.14, sv(.18), 0, 550);
+      tone(170,.18,'sawtooth',sv(.25),0);
+      tone(420,.10,'sawtooth',sv(.16),.055);
       break;
     case 'thunder':
-      noiseBurst(.08,.034,0,2200);
-      tone(95,.08,'square',.045,0);
-      tone(1480,.05,'square',.030,.045);
+      noiseBurst(.09, sv(.20),0,2200);
+      tone(95,.09,'square',sv(.24),0);
+      tone(1480,.06,'square',sv(.18),.045);
       break;
     case 'heavy':
-      noiseBurst(.11,.040,0,900);
-      tone(120,.18,'sawtooth',.065,0);
-      tone(70,.12,'square',.035,.08);
+      noiseBurst(.13, sv(.24),0,850);
+      tone(120,.20,'sawtooth',sv(.30),0);
+      tone(70,.14,'square',sv(.18),.08);
       break;
     case 'hit':
-      noiseBurst(.045,.020,0,700);
-      tone(170,.055,'square',.040,0);
+      noiseBurst(.055,sv(.12),0,700);
+      tone(170,.065,'square',sv(.18),0);
       break;
     case 'guard':
-      tone(520,.07,'triangle',.045,0);
-      tone(390,.06,'triangle',.030,.045);
+      tone(520,.08,'triangle',sv(.22),0);
+      tone(390,.07,'triangle',sv(.16),.045);
       break;
     case 'win':
-      tone(740,.10,'sine',.040,0);
-      tone(980,.12,'sine',.038,.09);
+      tone(740,.11,'sine',sv(.18),0);
+      tone(980,.13,'sine',sv(.16),.09);
       break;
     case 'level':
-      tone(660,.10,'triangle',.050,0);
-      tone(880,.13,'triangle',.045,.09);
-      tone(1320,.16,'sine',.035,.18);
+      tone(660,.11,'triangle',sv(.22),0);
+      tone(880,.14,'triangle',sv(.20),.09);
+      tone(1320,.17,'sine',sv(.16),.18);
       break;
     case 'down':
-      tone(110,.28,'sawtooth',.050,0);
-      tone(80,.22,'sawtooth',.030,.12);
+      tone(110,.28,'sawtooth',sv(.22),0);
+      tone(80,.22,'sawtooth',sv(.16),.12);
       break;
     case 'dance':
-      noiseBurst(.10,.034,0,1600);
-      tone(360,.18,'sawtooth',.055,0);
-      tone(720,.13,'triangle',.040,.08);
+      noiseBurst(.11,sv(.18),0,1600);
+      tone(360,.18,'sawtooth',sv(.26),0);
+      tone(720,.13,'triangle',sv(.18),.08);
       break;
     case 'cutin':
-      noiseBurst(.12,.040,0,2500);
-      tone(960,.16,'sawtooth',.070,0);
-      tone(420,.18,'triangle',.050,.12);
-      tone(1280,.12,'sine',.040,.22);
+      noiseBurst(.12,sv(.26),0,2500);
+      tone(960,.16,'sawtooth',sv(.34),0);
+      tone(420,.18,'triangle',sv(.24),.12);
+      tone(1280,.12,'sine',sv(.20),.22);
       break;
     default:
-      tone(520,.055,'triangle',.030,0);
+      tone(520,.055,'triangle',sv(.14),0);
   }
 }
 
 function playUiClick(){
   if(!ensureSfxReady()) return;
-  tone(520,.045,'triangle',.020);
+  tone(520,.045,'triangle',sv(.12));
 }
 function stopBgm(){
   // 旧オシレーターBGM用の停止処理。HTMLAudio BGMは止めない。

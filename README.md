@@ -39,3 +39,9 @@ Mini Browser Hero v59
 - カットイン表示と同時にシャキィンSEを再生
 - 3秒後にカットイン類を同時に消して剣舞発動
 - BGM再開・バックグラウンド停止仕様は維持
+
+
+## v70 attack SE / volume fix
+- BGM volume changed to 2%.
+- All SE kept loud/clear, especially attack SE.
+- Attack SE also plays immediately when the hero attack animation starts.
