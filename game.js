@@ -35,6 +35,7 @@ const DEATH_DANCE_CUTINS = [
 ];
 const DARK_SWORD_SAINT_CUTIN = {quote:'私を超えてみせろ。', img:'assets/cutin_dark_sword_dance.png'};
 const DARK_SWORD_TECHNIQUE_CUTIN = {quote:'', img:'assets/cutin_dark_sword_technique.png'};
+const GAME_VERSION = '95';
 const DARK_SWORD_SAINT = {
   id:'dark_sword_saint', name:'暗黒剣聖', type:'裏ボス', img:'assets/enemy_dark_sword_saint.png', element:'dark',
   hp:32000, atk:260, def:95, xp:2600, gold:5000, bossChance:0, enemySkill:'暗黒斬'
@@ -352,8 +353,12 @@ function bind(){
   }
   document.addEventListener('click', (e) => {
     const menu = document.getElementById('inventoryActionMenu');
-    if(menu && !menu.contains(e.target)) cancelInventoryActionMenu();
+    if(menu && !menu.contains(e.target) && !e.target.closest?.('.item')) cancelInventoryActionMenu();
   });
+  document.addEventListener('pointerup', (e) => {
+    const menu = document.getElementById('inventoryActionMenu');
+    if(menu && !menu.contains(e.target) && !e.target.closest?.('.item')) cancelInventoryActionMenu();
+  }, {capture:true});
   document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape'){ cancelInventoryActionMenu(); closeLegalModal(); } });
   document.addEventListener('visibilitychange', handlePageVisibility);
   window.addEventListener('pagehide', pauseBgmForPageHidden);
@@ -659,7 +664,7 @@ function activeStatusEntries(target){
   }else if(target === 'enemy'){
     if(isDarkSwordSaint()){
       entries.push(['darkaura', 'enemy']);
-      if(darkSwordBuffCount()) entries.push(['darksword', 'enemy']);
+      entries.push(['darksword', 'enemy']);
       entries.push(['darkdance', 'enemy']);
     }
   }
@@ -793,7 +798,7 @@ function renderStatusLists(){
     if(isDarkSwordSaint()){
       parts.push(makeStatusBadge(`🛡️闇オーラ(${darkAuraStacks()})`, 'darkaura', 'darkaura', 'enemy'));
       const ds = darkSwordBuffCount();
-      if(ds) parts.push(makeStatusBadge(`⚔️暗黒の剣(${ds})`, 'darksword', 'darksword', 'enemy'));
+      parts.push(makeStatusBadge(`⚔️暗黒の剣(${ds})`, 'darksword', 'darksword', 'enemy'));
       parts.push(makeStatusBadge(`🌑暗黒剣舞(${state.enemyStatuses?.darkDanceCount||0})`, 'darkdance', 'darkdance', 'enemy'));
       parts.push(makeStatusBadge(`⚔️暗黒剣技(${state.enemyStatuses?.darkTechniqueAwakened?'覚醒':((state.enemyStatuses?.darkOneDamageCount||0)+'/20')})`, 'darkdance', 'darktechnique', 'enemy'));
     }
@@ -1249,17 +1254,15 @@ function enemyDefeated(){
   if(e && e.id === 'dark_sword_saint'){
     const legendary = rarities.find(r=>r.id==='legendary') || rarities[rarities.length-1];
     const darkSword = makeDarkHolySword(state.level);
-    state.inventory.unshift(darkSword);
-    log('暗黒剣聖討伐報酬：闇の聖剣 ×1、レジェンダリー確定装備 ×3！','good');
-    logItemDrop(darkSword);
-    showDropToast(darkSword);
-    for(let i=0;i<3;i++){
-      const slot = slots[Math.floor(Math.random()*slots.length)];
-      const it = makeItem(slot, legendary);
-      state.inventory.unshift(it);
-      logItemDrop(it);
-      setTimeout(()=>showDropToast(it), 500 + i*450);
-    }
+    const rewards = [];
+    for(let i=0;i<2;i++) rewards.push(makeItem(slots[Math.floor(Math.random()*slots.length)], legendary));
+    rewards.push(darkSword); // 闇の聖剣は3枠目で通知・ドロップ
+    rewards.push(makeItem(slots[Math.floor(Math.random()*slots.length)], legendary));
+    for(let i=rewards.length-1;i>=0;i--) state.inventory.unshift(rewards[i]);
+    log('暗黒剣聖討伐報酬：レジェンダリー確定装備×3、3枠目に闇の聖剣！','good');
+    rewards.forEach((it,i)=>{
+      setTimeout(()=>{ logItemDrop(it); showDropToast(it); renderInventory(); scheduleSave(); }, i*900);
+    });
   }else if(Math.random()<.38){ const it=makeRandomItem(); state.inventory.unshift(it); logItemDrop(it); showDropToast(it); }
   if(Math.random()<.22){ const m=randInt(1,3); state.mats += m; log(`強化石+${m} を獲得。`,'good'); }
   log(`${e.name} を撃破！ 経験値+${gainXp}`,'good'); playSfx('win');
@@ -1815,18 +1818,33 @@ function bestEquip(){
   [...state.inventory].forEach(it=>{ if(!state.equip[it.slot] || itemPower(it)>itemPower(state.equip[it.slot])){ equipItem(it); changed++; } });
   log(`最強装備を一括装備（${changed}件）。`,'good'); renderAll();
 }
+function sellExpValue(it){
+  const basePower = Math.max(1, Math.round(itemPower(it)));
+  const special = ['fireDmg','thunderDmg','fireSkillChance','thunderSkillChance','fireDamageHeal','deathDanceChance','deathDanceDefIgnore','heroDarkBleedChance','lifeSteal','guard','crit'].reduce((sum,k)=>sum + Math.round((it[k]||0)*1000),0);
+  const skillBonus = it.skill ? Math.round((it.skill.chance||0)*900) + (it.skill.id==='multi'?650:300) : 0;
+  const rarityBonus = it.specialFrame==='darkholy' ? 5 : it.rarity==='legendary' ? 3.2 : it.rarity==='rare' ? 1.7 : 1;
+  const enhanceBonus = 1 + (it.level||0) * 0.22;
+  return Math.max(1, Math.floor((basePower + special + skillBonus) * rarityBonus * enhanceBonus * 0.12));
+}
 function sellSelectedRarities(){
   const targets=selectedSellRarities();
   if(targets.length===0){ log('売却対象のレアリティを選択して。','danger'); return; }
 
-  const before=state.inventory.length;
+  const soldItems = state.inventory.filter(it => targets.includes(it.rarity));
   state.inventory = state.inventory.filter(it => !targets.includes(it.rarity));
-  const sold = before - state.inventory.length;
+  const sold = soldItems.length;
+  const gainedXp = soldItems.reduce((sum,it)=>sum + sellExpValue(it), 0);
   const label = targets.map(r => (rarities.find(x => x.id === r)?.name || r)).join('・');
 
-  // v37.1: 売却直後に倉庫表示・ログ・保存を即時反映する。
   if(els.tooltip) els.tooltip.classList.add('hidden');
-  log(`${label}装備を${sold}個売却。`, sold ? 'good' : '');
+  if(sold){
+    state.xp += gainedXp;
+    state.lastXpGain = gainedXp;
+    log(`${label}装備を${sold}個売却し、経験値+${gainedXp.toLocaleString()}に変換。`, 'good');
+    checkLevelUp();
+  }else{
+    log(`${label}装備は倉庫にない。`, '');
+  }
   renderAll();
   scheduleSave();
 }
@@ -1895,7 +1913,10 @@ function renderInventory(){
     div.className=`item ${it.rarity} ${itemFrameClass(it)}${selectedId===it.id?' selected-inventory':''}`;
     div.innerHTML=`<b style="color:${itemNameColor(it)}">${it.name}</b><span>${it.slot}</span>`;
     div.onpointerdown=(e)=>{ if(e.pointerType && e.pointerType !== 'mouse'){ setPointerMode('touch'); els.tooltip.classList.add('hidden'); } };
-    div.onclick=(e)=>{ e.preventDefault(); e.stopPropagation(); els.tooltip.classList.add('hidden'); showInventoryActionMenu(it, div); };
+    const openItemMenu=(e)=>{ if(e){ e.preventDefault(); e.stopPropagation(); } els.tooltip.classList.add('hidden'); showInventoryActionMenu(it, div); };
+    div.onclick=openItemMenu;
+    div.onpointerup=(e)=>{ if(e.pointerType && e.pointerType !== 'mouse') openItemMenu(e); };
+    div.ontouchend=openItemMenu;
     // PC/マウス操作: オンカーソルで装備情報を表示
     // タッチ操作: オンカーソル表示なし
     div.onpointerenter=(e)=>{
@@ -1927,7 +1948,7 @@ function updateSellButtonState(){
   const targets = selectedSellRarities();
   const count = state.inventory.filter(it=>targets.includes(it.rarity)).length;
   els.sellSelectedBtn.disabled = targets.length === 0;
-  els.sellSelectedBtn.textContent = `売却 (${count})`;
+  els.sellSelectedBtn.textContent = `経験値化 (${count})`;
 }
 function cancelInventoryActionMenu(){
   const menu = document.getElementById('inventoryActionMenu');
@@ -2022,7 +2043,8 @@ function showDropToast(it){
   if(!els.dropToast) return;
   const color = itemNameColor(it);
   const rarity = it.rarityName || (rarities.find(r=>r.id===it.rarity)?.name || it.rarity);
-  els.dropToast.innerHTML = `<span style="color:${color}">${escapeHtml(it.name)}</span><small style="color:${color}">${escapeHtml(rarity)}</small>`;
+  const summary = escapeHtml(itemSummary(it) || '追加能力なし');
+  els.dropToast.innerHTML = `<span style="color:${color}">${escapeHtml(it.name)}</span><small style="color:${color}">${escapeHtml(rarity)}</small><em class="drop-performance">${summary}</em>`;
   els.dropToast.className = `drop-toast ${itemFrameClass(it)} ${it.rarity}`;
   clearTimeout(state.dropToastTimer);
   state.dropToastTimer = setTimeout(()=>els.dropToast.classList.add('hidden'), 3000);
