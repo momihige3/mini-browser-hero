@@ -35,7 +35,7 @@ const DEATH_DANCE_CUTINS = [
 ];
 const DARK_SWORD_SAINT_CUTIN = {quote:'私を超えてみせろ。', img:'assets/cutin_dark_sword_dance.png'};
 const DARK_SWORD_TECHNIQUE_CUTIN = {quote:'', img:'assets/cutin_dark_sword_technique.png'};
-const GAME_VERSION = '95.6';
+const GAME_VERSION = '95.7';
 const DARK_SWORD_SAINT = {
   id:'dark_sword_saint', name:'暗黒剣聖', type:'裏ボス', img:'assets/enemy_dark_sword_saint.png', element:'dark',
   hp:32000, atk:260, def:95, xp:2600, gold:5000, bossChance:0, enemySkill:'暗黒斬'
@@ -250,7 +250,7 @@ function saveGame(){
       chests:state.chests, mats:state.mats, defeated:state.defeated,
       hp:Math.max(1, Math.floor(state.hp||1)), base:state.base,
       inventory:state.inventory.map(cleanItem), equip:serializeEquip(), selectedEquip:state.selectedEquip,
-      volume:state.volume, mobileMuted:state.mobileMuted, debug:state.debug, enemyRecords:state.enemyRecords,
+      volume:state.volume, mobileMuted:state.mobileMuted, debug:state.debug, enemyRecords:state.enemyRecords, enemyLevelBase:state.enemyLevelBase, enemyLevelBaseDefeated:state.enemyLevelBaseDefeated,
       savedAt:Date.now()
     };
     localStorage.setItem(SAVE_KEY, JSON.stringify(data));
@@ -278,6 +278,8 @@ function loadGame(){
     // v57: 起動時ミュート固定のため、保存済みミュート状態は読み込まない。
     state.mobileMuted = true;
     state.enemyRecords = sanitizeEnemyRecords(data.enemyRecords || {});
+    state.enemyLevelBase = data.enemyLevelBase == null ? null : Math.max(1, Math.floor(Number(data.enemyLevelBase)||1));
+    state.enemyLevelBaseDefeated = Math.max(0, Math.floor(Number(data.enemyLevelBaseDefeated)||0));
     state.hp = Math.min(Number(data.hp)||maxHp(), maxHp());
     if(state.hp<=0) state.hp=Math.floor(maxHp()*0.5);
     state.down=false; state.deathDance=false;
@@ -701,6 +703,26 @@ function spawnWeakEnemyAfterEscape(){
   renderAll();
   scheduleSave();
 }
+
+function spawnEnemyAfterDefeat(){
+  if(state.defeatCountdownTimer){ clearInterval(state.defeatCountdownTimer); state.defeatCountdownTimer = null; }
+  clearDarkSwordTimers();
+  clearDeathDanceSequence();
+  hideDeathDanceCutin();
+  state.down = false;
+  state.defeatSequence = false;
+  state.deathDance = false;
+  state.deathDanceCutin = false;
+  state.darkSwordCutinActive = false;
+  state.hp = maxHp();
+  if(els.heroCard) els.heroCard.classList.remove('down');
+  if(els.downOverlay) els.downOverlay.classList.add('hidden');
+  if(els.enemyCard) els.enemyCard.classList.remove('defeated-gone');
+  spawnEnemy(false);
+  setBgmMode(isDarkSwordSaint() ? 'dark_sword_saint' : 'normal');
+  renderAll();
+  scheduleSave();
+}
 function fleeBattle(){
   loseExpPercent(0.10);
   log('戦闘から離脱した。経験値を10%失った。','danger');
@@ -726,9 +748,13 @@ function handleHeroDeath(){
   state.deathDanceCutin = false;
   state.darkSwordCutinActive = false;
   state.hp = 0;
+  const defeatedEnemyLevel = Math.max(1, Math.floor(state.enemy?.level || state.enemyLevelBase || state.level || 1));
+  const nextEnemyLevelBase = Math.max(1, Math.floor(defeatedEnemyLevel * 0.9));
+  state.enemyLevelBase = nextEnemyLevelBase;
+  state.enemyLevelBaseDefeated = state.defeated || 0;
   loseExpPercent(0.25);
   state.hp = 0;
-  log('騎士は力尽きた。経験値を25%失った。敵は消滅した。','danger');
+  log(`騎士は力尽きた。経験値を25%失った。敵レベルが${defeatedEnemyLevel}→${nextEnemyLevelBase}に低下した。`,'danger');
   banner('敗北…');
   if(els.heroCard) els.heroCard.classList.add('down');
   if(els.downOverlay){
@@ -755,9 +781,9 @@ function handleHeroDeath(){
       clearInterval(state.defeatCountdownTimer);
       state.defeatCountdownTimer = null;
       if(els.enemyCard) els.enemyCard.classList.remove('defeated-gone');
-      spawnWeakEnemyAfterEscape();
+      spawnEnemyAfterDefeat();
       state.defeatSequence = false;
-      log('弱いザコが現れた。','good');
+      log('敵レベル低下後の戦闘を再開。','good');
     }
   }, 1000);
 }
@@ -1043,8 +1069,16 @@ function pickEnemy(){
 function makeScaledEnemy(base, forceLevel=null){
   const e = {...base};
   const bossBonus = e.type==='ボス' || e.type==='裏ボス' ? 4 : 0;
-  e.level = forceLevel || Math.max(1, state.level + Math.floor(state.defeated/3) + bossBonus);
-  const scale=1 + e.level*.035 + Math.floor(state.defeated/10)*.03;
+  if(forceLevel){
+    e.level = forceLevel;
+  }else if(state.enemyLevelBase != null){
+    const progress = Math.max(0, Math.floor(((state.defeated||0) - (state.enemyLevelBaseDefeated||0)) / 3));
+    e.level = Math.max(1, Math.floor(state.enemyLevelBase) + progress + bossBonus);
+  }else{
+    e.level = Math.max(1, state.level + Math.floor(state.defeated/3) + bossBonus);
+  }
+  const scaledDefeated = state.enemyLevelBase != null ? Math.max(0, (state.defeated||0) - (state.enemyLevelBaseDefeated||0)) : (state.defeated||0);
+  const scale=1 + e.level*.035 + Math.floor(scaledDefeated/10)*.03;
   e.maxHp=Math.floor(e.hp*scale); e.atk=Math.floor(e.atk*scale); e.def=Math.floor(e.def*scale);
   e.xp=Math.floor(e.xp*(1+e.level*.045));
   return e;
