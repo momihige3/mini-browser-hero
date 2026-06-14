@@ -11,7 +11,7 @@ const els = {
   enemyEffectLayer:$('enemyEffectLayer'), enemyFloats:$('enemyFloats'), levelEffect:$('levelEffect'), centerBanner:$('centerBanner'), dropToast:$('dropToast'), audioHint:$('audioHint'), deathAura:$('deathAura'), downOverlay:$('downOverlay'), downCount:$('downCount'),
   statLv:$('statLv'), statXp:$('statXp'), statXpNext:$('statXpNext'), statXpGain:$('statXpGain'), statAtk:$('statAtk'), statDef:$('statDef'), statFireRes:$('statFireRes'), monsterRecords:$('monsterRecords'),
   equipList:$('equipList'), upgradeBtn:$('upgradeBtn'), inventory:$('inventory'), tooltip:$('tooltip'), log:$('log'),
-  equipToggleBtn:$('equipToggleBtn'), sidePanel:document.querySelector('.side-panel'), volumeSlider:$('volumeSlider'), volumeText:$('volumeText'), debugBtn:$('debugBtn'), debugPanel:$('debugPanel'), debugAddChests:$('debugAddChests'), debugResetData:$('debugResetData'), debugBestSword:$('debugBestSword'), debugBestAccessory:$('debugBestAccessory'), debugKillEnemy:$('debugKillEnemy'), debugKillHero:$('debugKillHero'), debugClose:$('debugClose'), openAllBtn:$('openAllBtn'), bestEquipBtn:$('bestEquipBtn'), sellSelectedBtn:$('sellSelectedBtn'), sellNormalChk:$('sellNormalChk'), sellRareChk:$('sellRareChk'), sellLegendaryChk:$('sellLegendaryChk'), creditBtn:$('creditBtn'), termsBtn:$('termsBtn'), privacyBtn:$('privacyBtn'), legalModal:$('legalModal'), legalModalTitle:$('legalModalTitle'), legalModalBody:$('legalModalBody'), legalModalClose:$('legalModalClose')
+  equipToggleBtn:$('equipToggleBtn'), sidePanel:document.querySelector('.side-panel'), volumeSlider:$('volumeSlider'), volumeText:$('volumeText'), debugBtn:$('debugBtn'), debugPanel:$('debugPanel'), debugAddChests:$('debugAddChests'), debugResetData:$('debugResetData'), debugBestSword:$('debugBestSword'), debugBestAccessory:$('debugBestAccessory'), debugKillEnemy:$('debugKillEnemy'), debugKillHero:$('debugKillHero'), debugClose:$('debugClose'), openAllBtn:$('openAllBtn'), bestEquipBtn:$('bestEquipBtn'), sellSelectedBtn:$('sellSelectedBtn'), sellNormalChk:$('sellNormalChk'), sellRareChk:$('sellRareChk'), sellLegendaryChk:$('sellLegendaryChk'), creditBtn:$('creditBtn'), termsBtn:$('termsBtn'), privacyBtn:$('privacyBtn'), legalModal:$('legalModal'), legalModalTitle:$('legalModalTitle'), legalModalBody:$('legalModalBody'), legalModalClose:$('legalModalClose'), deathDanceCutin:$('deathDanceCutin'), deathDanceCutinImg:$('deathDanceCutinImg'), deathDanceCutinQuote:$('deathDanceCutinQuote')
 };
 
 
@@ -24,6 +24,14 @@ const BATTLE_BACKGROUNDS = [
 ];
 let currentBattleBgId = '';
 let battleBgTimer = null;
+
+const DEATH_DANCE_CUTINS = [
+  {quote:'負けるわけにはいかない！', img:'assets/cutin_eye_1.jpg'},
+  {quote:'諦めるには･･････まだ早い！', img:'assets/cutin_eye_2.jpg'},
+  {quote:'最後の悪あがきをくらえ！', img:'assets/cutin_eye_3.jpg'},
+  {quote:'剣の舞、受けてみろ！', img:'assets/cutin_eye_4.jpg'},
+  {quote:'俺は･･････強い！！！', img:'assets/cutin_eye_5.jpg'},
+];
 
 const ENEMIES = [
   {id:'slime', name:'スライム', type:'雑魚', img:'assets/enemy_slime.jpg', element:'normal', hp:1200, atk:28, def:5, xp:22, gold:25, weight:'normal'},
@@ -52,8 +60,8 @@ const state = {
   auto:true, selectedEquip:null, uiOpen:false, lastXpGain:0, volume:1.0,
   level:1, xp:0, xpNext:80, chests:0, mats:3, defeated:0,
   base:{hp:520, atk:48, def:14}, hp:520, enemy:null, enemyHp:1,
-  inventory:[], equip:{}, down:false, downUntil:0, deathDance:false, deathDanceUntil:0, lastHeroAttack:0, lastEnemyAttack:0,
-  log:[], debug:{killEnemy:false, killHero:false}, audio:null, masterGain:null, bgmGain:null, bgmTimer:null, audioUnlocked:false, mobileMuted:true, menuPage:'stats', inventoryMenuItemId:null, enemyRecords:{}, forceFirstEnemy:false
+  inventory:[], equip:{}, down:false, downUntil:0, deathDance:false, deathDanceUntil:0, deathDanceCutin:false, deathDanceCutinTimer:null, deathDanceSeqTimers:[], lastHeroAttack:0, lastEnemyAttack:0,
+  log:[], debug:{killEnemy:false, killHero:false}, audio:null, masterGain:null, bgmGain:null, bgmTimer:null, bgmMode:'normal', audioUnlocked:false, mobileMuted:true, menuPage:'stats', inventoryMenuItemId:null, enemyRecords:{}, forceFirstEnemy:false
 };
 
 const SAVE_KEY = 'mini-browser-hero-save-v36';
@@ -113,6 +121,8 @@ function setMobileMuted(flag){
   state.mobileMuted = !!flag;
   applyVolume();
   updateMuteButton();
+  if(state.mobileMuted) stopBgm();
+  else if(state.audioUnlocked) playBgm();
   scheduleSave();
 }
 function setMenuPage(page){
@@ -418,6 +428,7 @@ function spawnEnemy(forceFirst=false){
 }
 
 function loop(now){
+  if(state.deathDanceCutin){ requestAnimationFrame(loop); return; }
   if(state.deathDance && now > state.deathDanceUntil) endDeathDance();
   if(state.down){
     const left=Math.max(0, Math.ceil((state.downUntil-now)/1000));
@@ -564,11 +575,91 @@ function startDown(){
 function revive(){
   state.down=false; els.heroCard.classList.remove('down'); els.downOverlay.classList.add('hidden'); state.hp=maxHp(); renderBattle(); banner('復活'); log('騎士はHP100%で復活した。','good');
 }
+function clearDeathDanceSequence(){
+  clearTimeout(state.deathDanceCutinTimer);
+  (state.deathDanceSeqTimers||[]).forEach(t=>clearTimeout(t));
+  state.deathDanceSeqTimers=[];
+  const hb=document.getElementById('deathDanceHeartbeat');
+  if(hb) hb.remove();
+}
+function queueDeathDanceStep(fn, delay){
+  const t=setTimeout(fn, delay);
+  state.deathDanceSeqTimers.push(t);
+  return t;
+}
+function showDeathDanceHeartbeat(text='ドクン…'){
+  let hb=document.getElementById('deathDanceHeartbeat');
+  if(!hb){
+    hb=document.createElement('div');
+    hb.id='deathDanceHeartbeat';
+    hb.className='death-dance-heartbeat';
+    document.body.appendChild(hb);
+  }
+  hb.textContent=text;
+  hb.classList.remove('show');
+  void hb.offsetWidth;
+  hb.classList.add('show');
+  playSfx('heartbeat');
+}
 function startDeathDance(){
-  state.deathDance=true; state.deathDanceUntil=performance.now()+10000; state.hp=1; els.heroCard.classList.add('deathdance'); els.deathAura.classList.remove('hidden'); els.deathDanceStatus.classList.remove('hidden'); banner('死線の剣舞！'); playSfx('dance'); log('死線の剣舞発動！ 10秒間無敵で連撃。','skilllog'); renderBattle();
+  if(state.deathDance || state.deathDanceCutin) return;
+  clearDeathDanceSequence();
+  state.hp = 1;
+  state.deathDanceCutin = true;
+  state.lastHeroAttack = performance.now();
+  state.lastEnemyAttack = performance.now();
+  renderBattle();
+  banner('死線の剣舞！');
+  log('死線の剣舞、発動寸前！','skilllog');
+
+  // 覚醒演出：既存バナー → 心音 → セリフカットイン → シャキィン → 和風ロック爆発
+  queueDeathDanceStep(()=>{ stopBgm(); }, 250);
+  queueDeathDanceStep(()=>showDeathDanceHeartbeat('ドクン…'), 380);
+  queueDeathDanceStep(()=>showDeathDanceHeartbeat('ドクン…'), 900);
+  queueDeathDanceStep(()=>showDeathDanceCutin(), 1350);
+  queueDeathDanceStep(()=>playSfx('cutin'), 2050);
+  state.deathDanceCutinTimer = queueDeathDanceStep(beginDeathDanceAfterCutin, 2250);
+}
+function showDeathDanceCutin(){
+  if(!els.deathDanceCutin) return;
+  const data = DEATH_DANCE_CUTINS[Math.floor(Math.random() * DEATH_DANCE_CUTINS.length)];
+  if(els.deathDanceCutinImg) els.deathDanceCutinImg.src = data.img;
+  if(els.deathDanceCutinQuote) els.deathDanceCutinQuote.textContent = data.quote;
+  els.deathDanceCutin.classList.remove('hidden');
+  void els.deathDanceCutin.offsetWidth;
+  els.deathDanceCutin.classList.add('show');
+}
+function hideDeathDanceCutin(){
+  if(!els.deathDanceCutin) return;
+  els.deathDanceCutin.classList.remove('show');
+  els.deathDanceCutin.classList.add('hidden');
+}
+function beginDeathDanceAfterCutin(){
+  state.deathDanceCutin = false;
+  state.deathDanceSeqTimers=[];
+  const hb=document.getElementById('deathDanceHeartbeat'); if(hb) hb.remove();
+  hideDeathDanceCutin();
+  state.deathDance=true;
+  state.deathDanceUntil=performance.now()+10000;
+  state.hp=1;
+  state.lastHeroAttack = performance.now() - 9999;
+  state.lastEnemyAttack = performance.now();
+  els.heroCard.classList.add('deathdance');
+  els.deathAura.classList.remove('hidden');
+  els.deathDanceStatus.classList.remove('hidden');
+  playSfx('dance');
+  setBgmMode('dance');
+  log('死線の剣舞発動！ 10秒間無敵で連撃。','skilllog');
+  renderBattle();
 }
 function endDeathDance(){
-  state.deathDance=false; els.heroCard.classList.remove('deathdance'); els.deathAura.classList.add('hidden'); els.deathDanceStatus.classList.add('hidden'); banner('死線の剣舞 終了'); log('死線の剣舞が終了。','skilllog');
+  state.deathDance=false;
+  els.heroCard.classList.remove('deathdance');
+  els.deathAura.classList.add('hidden');
+  els.deathDanceStatus.classList.add('hidden');
+  setBgmMode('normal');
+  banner('死線の剣舞 終了');
+  log('死線の剣舞が終了。','skilllog');
 }
 
 function showFx(type){
@@ -661,18 +752,37 @@ function tone(freq=440, dur=.08, type='sine', vol=.05){
 }
 function playSfx(kind){
   if(!state.audioUnlocked) return;
-  const map={slash:[640,.06,'triangle',.055],fire:[220,.14,'sawtooth',.055],thunder:[90,.09,'square',.04],heavy:[120,.18,'sawtooth',.06],hit:[180,.05,'square',.035],guard:[520,.08,'triangle',.045],win:[880,.12,'sine',.04],level:[660,.2,'triangle',.055],down:[110,.28,'sawtooth',.05],dance:[360,.22,'sawtooth',.06]};
+  const map={slash:[640,.06,'triangle',.055],fire:[220,.14,'sawtooth',.055],thunder:[90,.09,'square',.04],heavy:[120,.18,'sawtooth',.06],hit:[180,.05,'square',.035],guard:[520,.08,'triangle',.045],win:[880,.12,'sine',.04],level:[660,.2,'triangle',.055],down:[110,.28,'sawtooth',.05],dance:[360,.22,'sawtooth',.06],cutin:[960,.18,'sawtooth',.075],heartbeat:[72,.22,'sine',.075]};
   const a=map[kind]||map.slash; tone(...a);
-  if(kind==='slash'||kind==='fire'||kind==='thunder'||kind==='dance') setTimeout(()=>tone(a[0]*1.42,a[1]*.8,a[2],a[3]*.65),55);
+  if(kind==='slash'||kind==='fire'||kind==='thunder'||kind==='dance'||kind==='cutin') setTimeout(()=>tone(a[0]*1.42,a[1]*.8,a[2],a[3]*.65),55);
+  if(kind==='cutin'){ setTimeout(()=>tone(420,.2,'triangle',.055),130); setTimeout(()=>tone(1280,.12,'sine',.04),210); }
+  if(kind==='heartbeat'){ setTimeout(()=>tone(54,.24,'sine',.055),115); }
 }
 function playUiClick(){
   if(!state.audioUnlocked || state.mobileMuted) return;
   tone(520,.045,'triangle',.018);
 }
+function stopBgm(){
+  if(state.bgmTimer){ clearInterval(state.bgmTimer); state.bgmTimer=null; }
+}
+function setBgmMode(mode){
+  state.bgmMode = mode || 'normal';
+  if(state.audioUnlocked && !state.mobileMuted){ stopBgm(); playBgm(); }
+}
 function playBgm(){
-  if(!state.audio || state.bgmTimer) return;
-  const seq=[196,246.94,293.66,246.94,220,261.63,329.63,293.66]; let i=0;
-  state.bgmTimer=setInterval(()=>{ tone(seq[i++%seq.length],.28,'sine',.018); },360);
+  if(!state.audio || state.bgmTimer || state.mobileMuted) return;
+  const normalSeq=[196,246.94,293.66,246.94,220,261.63,329.63,293.66];
+  const danceSeq=[392,466.16,523.25,587.33,523.25,466.16,392,587.33,659.25,698.46,783.99,698.46];
+  let i=0;
+  state.bgmTimer=setInterval(()=>{
+    const dance = state.bgmMode === 'dance';
+    const seq = dance ? danceSeq : normalSeq;
+    tone(seq[i++%seq.length], dance ? .13 : .28, dance ? 'sawtooth' : 'sine', dance ? .032 : .018);
+    if(dance){
+      if(i % 2 === 0) setTimeout(()=>tone(92,.075,'triangle',.03),44);      // 和太鼓っぽい低音
+      if(i % 4 === 0) setTimeout(()=>tone(seq[i%seq.length]*1.5,.08,'square',.018),92); // ロックの刻み
+    }
+  }, state.bgmMode === 'dance' ? 128 : 360);
 }
 
 
@@ -945,6 +1055,10 @@ function resetBattleState(forceFirst=false){
   // 剣舞・DOWN・ドロップ表示などがリセット後に残らないようにする。
   state.forceFirstEnemy = true;
   clearTimeout(state.dropToastTimer);
+  clearDeathDanceSequence();
+  state.deathDanceCutin=false; state.deathDance=false; state.down=false;
+  state.bgmMode='normal'; stopBgm(); if(state.audioUnlocked && !state.mobileMuted) playBgm();
+  hideDeathDanceCutin();
   if(els.deathDanceStatus) els.deathDanceStatus.classList.add('hidden');
   if(els.deathAura) els.deathAura.classList.add('hidden');
   if(els.downOverlay) els.downOverlay.classList.add('hidden');

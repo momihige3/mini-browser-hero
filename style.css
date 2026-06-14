@@ -990,3 +990,120 @@ body.modal-open{overflow:hidden;}
   .legal-modal-card h2{font-size:17px;}
   .legal-modal-body{font-size:12px;line-height:1.65;}
 }
+
+/* v58: 死線の剣舞カットイン */
+.death-dance-cutin{
+  position:fixed;
+  inset:0;
+  z-index:10000;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  pointer-events:none;
+  background:radial-gradient(circle at 50% 50%, rgba(130,0,220,.16), rgba(0,0,0,.72) 55%, rgba(0,0,0,.88));
+}
+.death-dance-cutin-strip{
+  position:relative;
+  width:min(96vw,1280px);
+  height:clamp(108px,18vh,170px);
+  border-top:2px solid rgba(196,150,255,.9);
+  border-bottom:2px solid rgba(196,150,255,.9);
+  background:linear-gradient(90deg,#050308 0%,#0d0716 44%,#12051c 100%);
+  box-shadow:0 0 34px rgba(136,42,255,.55), inset 0 0 26px rgba(0,0,0,.95);
+  overflow:hidden;
+  transform:skewX(-8deg) translateX(-120%);
+}
+.death-dance-cutin.show .death-dance-cutin-strip{
+  animation:deathCutinSlide .95s cubic-bezier(.18,.9,.18,1) forwards;
+}
+.death-dance-cutin-strip::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(90deg,transparent 0 42%,rgba(0,0,0,.08) 48%,rgba(0,0,0,.72) 62%,rgba(0,0,0,.9) 100%),
+             radial-gradient(circle at 72% 50%, rgba(170,50,255,.28), transparent 42%);
+  pointer-events:none;
+}
+.death-dance-cutin-strip img{
+  position:absolute;
+  left:-24px;
+  top:50%;
+  width:58%;
+  height:120%;
+  object-fit:cover;
+  transform:translateY(-50%) skewX(8deg) scale(1.03);
+  filter:contrast(1.16) saturate(1.08) drop-shadow(0 0 18px rgba(120,40,255,.55));
+}
+.death-dance-cutin-quote{
+  position:absolute;
+  z-index:2;
+  right:4%;
+  top:50%;
+  transform:translateY(-50%) skewX(8deg);
+  max-width:56%;
+  color:#fff;
+  font-size:clamp(25px,4.4vw,58px);
+  font-weight:1000;
+  letter-spacing:.04em;
+  line-height:1.12;
+  text-align:right;
+  text-shadow:0 0 10px #9a45ff,0 0 22px #7d18ff,0 4px 3px #000;
+  white-space:normal;
+}
+.death-dance-cutin-title{
+  margin-top:18px;
+  color:#f4dcff;
+  font-size:clamp(40px,8vw,104px);
+  font-weight:1000;
+  letter-spacing:.16em;
+  text-shadow:0 0 12px #9b33ff,0 0 28px #7212ff,0 5px 5px #000;
+  opacity:0;
+  transform:scale(.72);
+}
+.death-dance-cutin.show .death-dance-cutin-title{
+  animation:deathCutinTitle .55s ease-out .42s forwards;
+}
+@keyframes deathCutinSlide{
+  0%{opacity:0;transform:skewX(-8deg) translateX(-120%)}
+  16%{opacity:1;transform:skewX(-8deg) translateX(3%)}
+  76%{opacity:1;transform:skewX(-8deg) translateX(0)}
+  100%{opacity:0;transform:skewX(-8deg) translateX(120%)}
+}
+@keyframes deathCutinTitle{
+  0%{opacity:0;transform:scale(.72)}
+  25%{opacity:1;transform:scale(1.14)}
+  100%{opacity:1;transform:scale(1)}
+}
+@media(max-width:760px){
+  .death-dance-cutin-strip{width:100vw;height:110px;border-left:0;border-right:0;}
+  .death-dance-cutin-strip img{width:62%;left:-58px;}
+  .death-dance-cutin-quote{right:3%;max-width:58%;font-size:clamp(20px,6vw,32px);}
+  .death-dance-cutin-title{font-size:clamp(34px,12vw,58px);}
+}
+
+/* v59: 死線の剣舞 心音演出 */
+.death-dance-heartbeat{
+  position:fixed;
+  inset:0;
+  z-index:9999;
+  display:grid;
+  place-items:center;
+  pointer-events:none;
+  color:#ff2a4f;
+  font-size:clamp(42px,9vw,116px);
+  font-weight:1000;
+  letter-spacing:.08em;
+  text-shadow:0 0 14px #ff0033,0 0 34px #6b0015,0 5px 6px #000;
+  background:radial-gradient(circle at 50% 50%,rgba(160,0,24,.16),rgba(0,0,0,.62) 52%,rgba(0,0,0,.78));
+  opacity:0;
+}
+.death-dance-heartbeat.show{
+  animation:deathHeartbeat .5s ease-out forwards;
+}
+@keyframes deathHeartbeat{
+  0%{opacity:0;transform:scale(.86);filter:brightness(.8)}
+  18%{opacity:1;transform:scale(1.08);filter:brightness(1.45)}
+  42%{opacity:.92;transform:scale(.98);filter:brightness(1)}
+  100%{opacity:0;transform:scale(1.18);filter:brightness(.8)}
+}
