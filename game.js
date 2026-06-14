@@ -617,11 +617,10 @@ function startDeathDance(){
   banner('死線の剣舞！', 1000);
   log('死線の剣舞、発動寸前！','skilllog');
 
-  // 覚醒演出：バナー開始と同時に剣舞BGMへ切替 → 1秒後に目線＋セリフ3秒 → シャキィン → 剣舞
+  // v67: バナー開始と同時に剣舞BGMへ切替。1秒後にカットイン＋セリフ＋剣舞ロゴを3秒表示し、表示開始と同時にシャキィンSE。
   queueDeathDanceStep(()=>{ setBgmMode('dance'); }, 0);
   queueDeathDanceStep(()=>showDeathDanceCutin(), 1000);
-  queueDeathDanceStep(()=>playSfx('cutin'), 4000);
-  state.deathDanceCutinTimer = queueDeathDanceStep(beginDeathDanceAfterCutin, 4300);
+  state.deathDanceCutinTimer = queueDeathDanceStep(beginDeathDanceAfterCutin, 4000);
 }
 function showDeathDanceCutin(){
   if(!els.deathDanceCutin) return;
@@ -631,6 +630,7 @@ function showDeathDanceCutin(){
   els.deathDanceCutin.classList.remove('hidden');
   void els.deathDanceCutin.offsetWidth;
   els.deathDanceCutin.classList.add('show');
+  playSfx('cutin');
 }
 function hideDeathDanceCutin(){
   if(!els.deathDanceCutin) return;

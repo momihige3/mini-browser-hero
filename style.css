@@ -1015,7 +1015,7 @@ body.modal-open{overflow:hidden;}
   transform:skewX(-8deg) translateX(-120%);
 }
 .death-dance-cutin.show .death-dance-cutin-strip{
-  animation:deathCutinSlide .95s cubic-bezier(.18,.9,.18,1) forwards;
+  animation:deathCutinSlide .45s cubic-bezier(.18,.9,.18,1) forwards;
 }
 .death-dance-cutin-strip::after{
   content:"";
@@ -1062,13 +1062,12 @@ body.modal-open{overflow:hidden;}
   transform:scale(.72);
 }
 .death-dance-cutin.show .death-dance-cutin-title{
-  animation:deathCutinTitle .55s ease-out .42s forwards;
+  animation:deathCutinTitle .45s ease-out .15s forwards;
 }
 @keyframes deathCutinSlide{
   0%{opacity:0;transform:skewX(-8deg) translateX(-120%)}
-  16%{opacity:1;transform:skewX(-8deg) translateX(3%)}
-  76%{opacity:1;transform:skewX(-8deg) translateX(0)}
-  100%{opacity:0;transform:skewX(-8deg) translateX(120%)}
+  70%{opacity:1;transform:skewX(-8deg) translateX(3%)}
+  100%{opacity:1;transform:skewX(-8deg) translateX(0)}
 }
 @keyframes deathCutinTitle{
   0%{opacity:0;transform:scale(.72)}
