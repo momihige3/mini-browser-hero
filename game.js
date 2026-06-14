@@ -411,6 +411,7 @@ function calcStats(){
     s.deathDanceDefIgnore += it.deathDanceDefIgnore||0;
     s.lifeSteal += it.lifeSteal||0; s.guard += it.guard||0; s.crit += it.crit||0;
   });
+  if(hasUnyieldingBuff()) s.deathDanceChance += 0.50;
   s.fireRes=Math.min(.75,s.fireRes); s.fireDamageHeal=Math.min(1,s.fireDamageHeal);
   s.guard=Math.min(.45,s.guard); s.crit=Math.min(.55,s.crit); s.deathDanceChance=Math.min(1,s.deathDanceChance); s.deathDanceDefIgnore=Math.min(.9,s.deathDanceDefIgnore);
   return s;
@@ -423,6 +424,7 @@ function makeEmptyEnemyStatuses(t=0){
   return {bleeds:[], burnUntil:0, lastBleedTick:t, darkAuraStacks:0, darkAuraLastTick:t, darkSwordBuffs:[], darkDanceCount:0, darkRevivingUntil:0, darkReviveStart:0};
 }
 function isDarkSwordSaint(e=state.enemy){ return !!e && e.id === 'dark_sword_saint'; }
+function hasUnyieldingBuff(){ return isDarkSwordSaint() && !state.down; }
 function isDarkSwordSaintReviving(){ ensureStatusContainers(); return isDarkSwordSaint() && (state.enemyStatuses.darkRevivingUntil || 0) > performance.now(); }
 function darkSwordBuffCount(){ ensureStatusContainers(); cleanupStatuses(); return state.enemyStatuses.darkSwordBuffs.length; }
 function darkSwordBuffSeconds(){ ensureStatusContainers(); cleanupStatuses(); const n=nowMs(); return Math.max(0, ...state.enemyStatuses.darkSwordBuffs.map(t=>Math.ceil((t-n)/1000)), 0); }
@@ -533,8 +535,9 @@ function tryApplyHeroHitDebuffs(element, absorbed){
   }
 }
 function tryApplyEnemyHitDebuffs(element){
-  if(element !== 'fire' && Math.random() < 0.10){
-    if(addBleed('hero')) log('騎士は出血した。','danger');
+  const bleedRate = isDarkSwordSaint() ? 0.50 : 0.10;
+  if(element !== 'fire' && Math.random() < bleedRate){
+    if(addBleed('hero')) log(`${state.enemy?.name || '敵'}の攻撃で騎士は出血した。`,'danger');
   }
   if(element !== 'fire') return;
   if(Math.random() >= 0.20) return;
@@ -547,6 +550,7 @@ function statusTooltipHtml(kind, target){
   if(kind === 'bleed') return `<b>出血</b><br>現在：${bleedCount(target)}スタック<br>1スタックごとに10秒継続。<br>1秒ごとに最大HPの1%ダメージ。<br>最大20スタック。`;
   if(kind === 'burn') return `<b>火傷</b><br>残り：${burnSeconds(target)}秒<br>防御力25%低下。<br>火耐性10%以上で無効化。`;
   if(kind === 'deathdance') return `<b>死線の剣舞</b><br>残り：${Math.max(0, Math.ceil((state.deathDanceUntil-nowMs())/1000))}秒<br>無敵状態で高速連撃。<br>`;
+  if(kind === 'unyielding') return `<b>不屈</b><br>暗黒剣聖と対峙中のみ発動。<br>死線の剣舞発動率+50%。<br>現在の剣舞発動率：${Math.round(calcStats().deathDanceChance*100)}%。`;
   if(kind === 'darkaura') return `<b>闇オーラ</b><br>現在：${darkAuraStacks()}スタック<br>1スタックごとに被ダメージ10%軽減。<br>闇オーラ中は出血ダメージ90%軽減。<br>最大10スタック。10秒ごとに1減少。<br>暗黒剣舞発動時に10へ回復。`;
   if(kind === 'darksword') return `<b>暗黒の剣</b><br>現在：${darkSwordBuffCount()}スタック<br>攻撃力+50% / スタック。<br>効果時間：60秒。スタック可能。<br>最長残り：${darkSwordBuffSeconds()}秒。`;
   if(kind === 'darkdance') return `<b>暗黒剣舞</b><br>発動済み：${state.enemyStatuses?.darkDanceCount||0}回 / 10回<br>次回発動率：${darkDanceChanceForNext()}%<br>発動時：カットイン後に5秒無敵、HPをゆっくり100%まで回復、闇オーラ10、暗黒の剣+1。<br>連続攻撃はガード無効、防御力50%無視。`;
@@ -624,6 +628,7 @@ function renderStatusLists(){
     const bc = bleedCount('hero');
     if(bc) parts.push(makeStatusBadge(`🩸出血(${bc})`, 'bleed', 'bleed', 'hero'));
     if(hasBurn('hero')) parts.push(makeStatusBadge('🔥火傷', 'burn', 'burn', 'hero'));
+    if(hasUnyieldingBuff()) parts.push(makeStatusBadge('🛡️不屈', 'unyielding', 'unyielding', 'hero'));
     if(state.deathDance) parts.push(makeStatusBadge('⚔️剣舞', 'dance', 'deathdance', 'hero'));
     els.heroStatusList.innerHTML = parts.join('');
   }
@@ -895,11 +900,13 @@ function finishDarkSwordDanceRevive(){
   renderBattle();
   renderStatusLists();
   log(`闇オーラ10、暗黒の剣+1。暗黒剣舞はガード無効・防御力50%無視！`, 'danger');
-  darkSwordDanceCombo();
+  setTimeout(()=>darkSwordDanceCombo(), 120);
 }
 function darkSwordDanceCombo(){
-  if(!isDarkSwordSaint() || state.down) return;
+  if(!isDarkSwordSaint()) return;
   const hitCount = 5;
+  log('暗黒剣舞の連続攻撃！', 'danger');
+  state.lastEnemyAttack = performance.now();
   for(let i=0;i<hitCount;i++){
     setTimeout(()=>applyDarkSwordDanceHit(i+1, hitCount), i*170);
   }
@@ -907,18 +914,29 @@ function darkSwordDanceCombo(){
 function applyDarkSwordDanceHit(i, total){
   if(!isDarkSwordSaint() || state.down) return;
   const e = state.enemy, st = calcStats();
-  // 暗黒剣舞はガード無効・防御力50%無視。主人公が剣舞中でも被弾する。
+  // 暗黒剣舞はガード無効・防御力50%無視。主人公の剣舞発動判定は通常通り行う。
   const atk = e.atk * (1 + darkSwordBuffCount() * 0.5);
   const effectiveDef = st.def * 0.50;
-  let dmg = Math.max(1, Math.floor((atk*0.62 + rand(0, atk*0.18)) - effectiveDef*0.55*heroDefenseMultiplier()));
-  if(state.debug.killHero){ dmg = Math.max(dmg, state.hp + 999999); }
+  let dmg = Math.max(1, Math.floor((atk*0.42 + rand(0, atk*0.12)) - effectiveDef*0.55*heroDefenseMultiplier()));
+  // 1ヒット即死を防ぎ、連続攻撃として受ける形にする。デバッグ即死だけは維持。
+  if(!state.debug.killHero){
+    dmg = Math.min(dmg, Math.max(1, Math.floor(maxHp() * 0.35)));
+  }else{
+    dmg = Math.max(dmg, state.hp + 999999);
+  }
   els.enemyCard.classList.remove('attack'); void els.enemyCard.offsetWidth; els.enemyCard.classList.add('attack');
   setTimeout(()=>els.enemyCard.classList.remove('attack'),220);
   if(state.hp - dmg <= 0){
-    state.hp = 0;
-    renderBattle();
     showHeroFloat(`暗黒剣舞 ${dmg}`,'damage');
     playSfx('hit');
+    // 暗黒剣舞でも主人公側の剣舞発動チャンスを許可。双方の剣舞が被って発動できる。
+    if(!state.debug.killHero && Math.random() < st.deathDanceChance){
+      startDeathDance();
+      renderBattle();
+      return;
+    }
+    state.hp = 0;
+    renderBattle();
     startDown();
     return;
   }

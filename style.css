@@ -1409,3 +1409,39 @@ body.modal-open{overflow:hidden;}
   .death-dance-cutin-strip img{left:0!important;width:48%!important;height:90%!important;object-fit:contain!important;}
   .death-dance-cutin-quote{right:3%!important;max-width:50%!important;font-size:clamp(18px,5.4vw,34px)!important;}
 }
+
+/* v84: タッチ/狭幅でもバフ・デバフ説明を必ず下部中央に表示 */
+body.using-touch .tooltip.status-tooltip-bottom:not(.hidden),
+body.using-touch .tooltip.status-tooltip-modal:not(.hidden),
+.tooltip.status-tooltip-bottom:not(.hidden),
+.tooltip.status-tooltip-modal:not(.hidden){
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
+}
+.tooltip.status-tooltip-bottom{
+  position:fixed!important;
+  left:50%!important;
+  right:auto!important;
+  top:auto!important;
+  bottom:calc(72px + env(safe-area-inset-bottom, 0px))!important;
+  transform:translateX(-50%)!important;
+  width:min(420px,calc(100vw - 24px))!important;
+  max-height:min(34vh,240px)!important;
+  overflow:auto!important;
+  z-index:99999!important;
+  background:rgba(5,5,8,.98)!important;
+  border:2px solid #ffd76b!important;
+  border-radius:10px!important;
+  box-shadow:0 0 0 1px #000,0 0 36px #000!important;
+  color:#ffeec7!important;
+  pointer-events:auto!important;
+}
+@media(max-width:760px),(orientation:portrait) and (max-height:840px){
+  .tooltip.status-tooltip-bottom{
+    bottom:calc(54px + env(safe-area-inset-bottom, 0px))!important;
+    width:calc(100vw - 18px)!important;
+    max-height:30vh!important;
+    font-size:12px!important;
+  }
+}
