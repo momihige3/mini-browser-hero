@@ -11,9 +11,10 @@
     <!-- End Cloudflare Web Analytics -->
 </head>
 <body>
+  <div id="fixedBuildVersion" class="fixed-build-version">ver.95.4</div>
   <div id="game">
     <header class="topbar">
-      <div class="brand">ミニブラウザヒーロー <span class="build-version">ver.95.3</span></div>
+      <div class="brand">ミニブラウザヒーロー <span class="build-version">ver.95.4</span></div>
       <div class="resources"><b id="mats">0</b> 強化石</div>
       <div class="controls">
         <button id="equipToggleBtn">メニュー</button>
@@ -128,7 +129,7 @@
         <button id="debugDarkSwordSaint">暗黒剣聖を強制召喚</button>
         <label><input id="debugKillEnemy" type="checkbox"> 敵への攻撃で即死</label>
         <label><input id="debugKillHero" type="checkbox"> 敵からの攻撃で即死</label>
-        <div class="debug-version">Build: ver.95.3.1</div>
+        <div class="debug-version">Build: ver.95.4.1</div>
         <button id="debugClose">閉じる</button>
       </div>
   </div>
@@ -151,15 +152,14 @@
     <div class="death-dance-cutin-title">死線の剣舞</div>
   </div>
 
-
-  <div id="fleeModal" class="flee-modal hidden" role="dialog" aria-modal="true">
+  <div id="fleeModal" class="flee-modal hidden" role="dialog" aria-modal="true" aria-labelledby="fleeModalTitle">
     <div class="flee-modal-backdrop"></div>
     <div class="flee-modal-card">
-      <h2>戦闘から離脱しますか？</h2>
-      <p>経験値を10％失います。<br>0以下になる場合はレベルダウンします。</p>
+      <h2 id="fleeModalTitle">戦闘から離脱しますか？</h2>
+      <p>経験値を10％失います。<br>経験値が足りない場合はレベルダウンします。</p>
       <div class="flee-modal-actions">
-        <button id="fleeOkBtn" type="button">はい</button>
         <button id="fleeCancelBtn" type="button">いいえ</button>
+        <button id="fleeOkBtn" type="button">はい</button>
       </div>
     </div>
   </div>

@@ -35,7 +35,7 @@ const DEATH_DANCE_CUTINS = [
 ];
 const DARK_SWORD_SAINT_CUTIN = {quote:'私を超えてみせろ。', img:'assets/cutin_dark_sword_dance.png'};
 const DARK_SWORD_TECHNIQUE_CUTIN = {quote:'', img:'assets/cutin_dark_sword_technique.png'};
-const GAME_VERSION = '95.3';
+const GAME_VERSION = '95.4';
 const DARK_SWORD_SAINT = {
   id:'dark_sword_saint', name:'暗黒剣聖', type:'裏ボス', img:'assets/enemy_dark_sword_saint.png', element:'dark',
   hp:32000, atk:260, def:95, xp:2600, gold:5000, bossChance:0, enemySkill:'暗黒斬'
@@ -661,6 +661,7 @@ function spawnWeakEnemyAfterEscape(){
   clearDeathDanceSequence();
   hideDeathDanceCutin();
   state.down = false;
+  state.defeatSequence = false;
   state.deathDance = false;
   state.deathDanceCutin = false;
   state.darkSwordCutinActive = false;
@@ -694,10 +695,44 @@ function closeFleeModal(){
   if(modal) modal.classList.add('hidden');
 }
 function handleHeroDeath(){
+  if(state.defeatSequence) return;
+  state.defeatSequence = true;
+  clearDarkSwordTimers();
+  clearDeathDanceSequence();
+  hideDeathDanceCutin();
+  state.deathDance = false;
+  state.deathDanceCutin = false;
+  state.darkSwordCutinActive = false;
+  state.hp = 0;
   loseExpPercent(0.25);
-  log('騎士は力尽きた。経験値を25%失った。敵は弱いザコに切り替わった。','danger');
-  banner('力尽きた…');
-  spawnWeakEnemyAfterEscape();
+  state.hp = 0;
+  log('騎士は力尽きた。経験値を25%失った。敵は消滅した。','danger');
+  banner('敗北…');
+  if(els.heroCard) els.heroCard.classList.add('down');
+  if(els.downOverlay){
+    els.downOverlay.classList.remove('hidden');
+    const dt = els.downOverlay.querySelector('.down-text');
+    if(dt) dt.textContent = 'DOWN...';
+    if(els.downCount) els.downCount.textContent = '敗北';
+  }
+  if(els.enemyCard){
+    els.enemyCard.classList.remove('hit','attack','enter');
+    els.enemyCard.classList.add('defeated-gone');
+  }
+  if(els.enemyHpFill) els.enemyHpFill.style.width='0%';
+  if(els.enemyHpText) els.enemyHpText.textContent='消滅';
+  renderStatusLists();
+  scheduleSave();
+  setTimeout(()=>{
+    if(els.enemyCard) els.enemyCard.classList.remove('defeated-gone');
+    if(els.downOverlay){
+      const dt = els.downOverlay.querySelector('.down-text');
+      if(dt) dt.textContent = 'DOWN...';
+    }
+    spawnWeakEnemyAfterEscape();
+    state.defeatSequence = false;
+    log('弱いザコが現れた。','good');
+  }, 1800);
 }
 
 function enemyDefenseMultiplierFor(element){
@@ -1025,6 +1060,7 @@ function spawnEnemy(forceFirst=false){
 }
 
 function loop(now){
+  if(state.defeatSequence){ requestAnimationFrame(loop); return; }
   if(state.deathDanceCutin && !state.darkSwordCutinActive){ requestAnimationFrame(loop); return; }
   if(state.deathDance && now > state.deathDanceUntil) endDeathDance();
   processStatusDots(now);

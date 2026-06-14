@@ -1673,3 +1673,6 @@ body.using-touch .tooltip.status-tooltip-modal:not(.hidden),
 .brand .build-version{position:absolute!important;right:0!important;bottom:-10px!important;display:block!important;font-size:12px!important;margin-left:0!important;opacity:.72!important;}
 .fixed-build-version{display:none!important;visibility:hidden!important;opacity:0!important;}
 @media(max-width:760px){.brand .build-version{font-size:10px!important;bottom:-8px!important;}}
+
+.enemy-card.defeated-gone{opacity:0!important;transform:scale(.88)!important;filter:grayscale(1) brightness(.25)!important;pointer-events:none!important;transition:opacity .45s ease, transform .45s ease, filter .45s ease;}
+@media(max-width:760px){.flee-btn{bottom:8px!important;min-width:150px!important;min-height:44px!important;font-size:13px!important;}}
