@@ -1566,3 +1566,7 @@ body.using-touch .tooltip.status-tooltip-modal:not(.hidden),
   color:#fff!important;
   text-shadow:0 0 10px #ffcc55,0 0 20px #ff7a18,0 4px 3px #000!important;
 }
+.item.darkholy,.equip.darkholy{border-color:#b86cff!important;box-shadow:0 0 14px rgba(184,108,255,.45),inset 0 0 14px rgba(120,40,190,.28)!important;background:linear-gradient(135deg,rgba(46,16,68,.82),rgba(16,10,24,.95))!important;}
+.item.darkholy b,.equip.darkholy b{color:#d9b6ff!important;text-shadow:0 0 8px rgba(184,108,255,.75)!important;}
+.drop-toast.darkholy{border-color:#b86cff!important;box-shadow:0 0 34px rgba(184,108,255,.6),inset 0 0 18px rgba(184,108,255,.2)!important;}
+.log-item.darkholy,.log-rarity.darkholy{color:#b86cff!important;}
