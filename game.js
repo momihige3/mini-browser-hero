@@ -788,6 +788,30 @@ function applyVolume(){
   if(state.masterGain) state.masterGain.gain.value = state.mobileMuted ? 0 : Math.max(0, Math.min(2, state.volume));
   updateBgmVolume();
 }
+
+function ensureSfxReady(){
+  if(state.mobileMuted) return false;
+  try{
+    const C = window.AudioContext || window.webkitAudioContext;
+    if(C && !state.audio){
+      state.audio = new C();
+      state.masterGain = state.audio.createGain();
+      state.masterGain.connect(state.audio.destination);
+      applyVolume();
+    }
+    if(state.audio && state.audio.state === 'suspended'){
+      const p = state.audio.resume();
+      if(p && typeof p.then === 'function'){
+        p.then(()=>{ state.audioUnlocked = true; }).catch(()=>{});
+      }
+    }
+    if(!state.audio || state.audio.state === 'running') state.audioUnlocked = true;
+    return !!state.audio && !!state.masterGain && !state.mobileMuted;
+  }catch(e){
+    return false;
+  }
+}
+
 function tone(freq=440, dur=.08, type='sine', vol=.05, delay=0){
   if(!state.audio || !state.masterGain || state.mobileMuted) return;
   const ctx=state.audio;
@@ -826,7 +850,7 @@ function noiseBurst(dur=.06, vol=.025, delay=0, filterFreq=1400){
 }
 
 function playSfx(kind){
-  if(!state.audioUnlocked || state.mobileMuted) return;
+  if(!ensureSfxReady()) return;
   // v68: 攻撃系SEを聞き取りやすく修正。BGMとは独立したWebAudio SEとして鳴らす。
   switch(kind){
     case 'slash':
@@ -887,7 +911,7 @@ function playSfx(kind){
 }
 
 function playUiClick(){
-  if(!state.audioUnlocked || state.mobileMuted) return;
+  if(!ensureSfxReady()) return;
   tone(520,.045,'triangle',.020);
 }
 function stopBgm(){
