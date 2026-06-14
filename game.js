@@ -614,14 +614,14 @@ function startDeathDance(){
   state.lastHeroAttack = performance.now();
   state.lastEnemyAttack = performance.now();
   renderBattle();
-  banner('死線の剣舞！', 3000);
+  banner('死線の剣舞！', 1000);
   log('死線の剣舞、発動寸前！','skilllog');
 
-  // 覚醒演出：既存バナー → 通常BGM停止 → セリフカットイン → シャキィン → 剣舞BGM
-  queueDeathDanceStep(()=>{ pauseNormalBgm(); }, 180);
-  queueDeathDanceStep(()=>showDeathDanceCutin(), 3000);
-  queueDeathDanceStep(()=>playSfx('cutin'), 6000);
-  state.deathDanceCutinTimer = queueDeathDanceStep(beginDeathDanceAfterCutin, 6300);
+  // 覚醒演出：バナー開始と同時に剣舞BGMへ切替 → 1秒後に目線＋セリフ3秒 → シャキィン → 剣舞
+  queueDeathDanceStep(()=>{ setBgmMode('dance'); }, 0);
+  queueDeathDanceStep(()=>showDeathDanceCutin(), 1000);
+  queueDeathDanceStep(()=>playSfx('cutin'), 4000);
+  state.deathDanceCutinTimer = queueDeathDanceStep(beginDeathDanceAfterCutin, 4300);
 }
 function showDeathDanceCutin(){
   if(!els.deathDanceCutin) return;
