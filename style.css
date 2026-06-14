@@ -1554,3 +1554,5 @@ body.using-touch .tooltip.status-tooltip-modal:not(.hidden),
 @media(pointer:coarse), (max-width:1180px){
   .status-detail-panel{bottom:calc(62px + env(safe-area-inset-bottom,0px))!important;}
 }
+
+.float.dark{color:#b45cff!important;text-shadow:0 2px 3px #000,0 0 18px #7b00ff,0 0 8px #d6a0ff!important;}
