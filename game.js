@@ -542,7 +542,7 @@ function statusTooltipHtml(kind, target){
   if(kind === 'deathdance') return `<b>死線の剣舞</b><br>残り：${Math.max(0, Math.ceil((state.deathDanceUntil-nowMs())/1000))}秒<br>無敵状態で高速連撃。<br>`;
   if(kind === 'darkaura') return `<b>闇オーラ</b><br>現在：${darkAuraStacks()}スタック<br>1スタックごとに被ダメージ10%軽減。<br>闇オーラ中は出血ダメージ90%軽減。<br>最大10スタック。10秒ごとに1減少。<br>暗黒剣舞発動時に10へ回復。`;
   if(kind === 'darksword') return `<b>暗黒の剣</b><br>現在：${darkSwordBuffCount()}スタック<br>攻撃力+50% / スタック。<br>効果時間：60秒。スタック可能。<br>最長残り：${darkSwordBuffSeconds()}秒。`;
-  if(kind === 'darkdance') return `<b>暗黒剣舞</b><br>発動済み：${state.enemyStatuses?.darkDanceCount||0}回 / 10回<br>次回発動率：${darkDanceChanceForNext()}%<br>発動時：5秒無敵、HPをゆっくり100%まで回復、闇オーラ10、暗黒の剣+1。<br>連続攻撃はガード無効。`;
+  if(kind === 'darkdance') return `<b>暗黒剣舞</b><br>発動済み：${state.enemyStatuses?.darkDanceCount||0}回 / 10回<br>次回発動率：${darkDanceChanceForNext()}%<br>発動時：カットイン後に5秒無敵、HPをゆっくり100%まで回復、闇オーラ10、暗黒の剣+1。<br>連続攻撃はガード無効、防御力50%無視。`;
   return '';
 }
 function showStatusTooltip(e, kind, target){
@@ -553,15 +553,15 @@ function showStatusTooltip(e, kind, target){
   els.tooltip.classList.remove('hidden');
   const isSmallPortrait = window.matchMedia('(orientation: portrait) and (max-height: 780px)').matches || window.innerWidth <= 520;
   if(isSmallPortrait){
-    els.tooltip.classList.add('status-tooltip-modal');
+    els.tooltip.classList.add('status-tooltip-modal','status-tooltip-bottom');
     els.tooltip.style.left = '50%';
-    els.tooltip.style.top = '50%';
+    els.tooltip.style.top = 'auto';
     els.tooltip.style.right = 'auto';
-    els.tooltip.style.bottom = 'auto';
-    els.tooltip.style.transform = 'translate(-50%, -50%)';
+    els.tooltip.style.bottom = 'calc(72px + env(safe-area-inset-bottom, 0px))';
+    els.tooltip.style.transform = 'translateX(-50%)';
     return;
   }
-  els.tooltip.classList.remove('status-tooltip-modal');
+  els.tooltip.classList.remove('status-tooltip-modal','status-tooltip-bottom');
   els.tooltip.style.transform = 'none';
   els.tooltip.style.right = 'auto';
   els.tooltip.style.bottom = 'auto';
@@ -580,7 +580,7 @@ function showStatusTooltip(e, kind, target){
   els.tooltip.style.left = x + 'px';
   els.tooltip.style.top = y + 'px';
 }
-function hideStatusTooltip(){ if(els.tooltip){ els.tooltip.classList.add('hidden'); els.tooltip.classList.remove('status-tooltip-modal'); } }
+function hideStatusTooltip(){ if(els.tooltip){ els.tooltip.classList.add('hidden'); els.tooltip.classList.remove('status-tooltip-modal','status-tooltip-bottom'); } }
 function makeStatusBadge(label, cls, kind, target){
   return `<button type="button" class="status-badge ${cls}" data-status-kind="${kind}" data-status-target="${target}" aria-label="${label} の効果を見る">${label}<span class="status-q">?</span></button>`;
 }
@@ -826,8 +826,8 @@ function tryDarkSwordDanceRevive(){
 
   const t = performance.now();
   state.enemyStatuses.darkDanceCount = count + 1;
-  state.enemyStatuses.darkReviveStart = t;
-  state.enemyStatuses.darkRevivingUntil = t + 5000;
+  state.enemyStatuses.darkReviveStart = 0;
+  state.enemyStatuses.darkRevivingUntil = t + 9000;
   state.enemyHp = 0;
   state.deathDanceCutin = true;
   state.lastHeroAttack = t;
@@ -836,26 +836,36 @@ function tryDarkSwordDanceRevive(){
   if(state.darkSwordReviveTimer) clearInterval(state.darkSwordReviveTimer);
   renderBattle();
   banner('暗黒剣舞！', 1200);
-  log(`暗黒剣舞発動！ 5秒間無敵化し、HPを回復する！（${state.enemyStatuses.darkDanceCount}回目）`, 'danger');
+  log(`暗黒剣舞発動！ カットイン後に5秒間無敵化し、HPを回復する！（${state.enemyStatuses.darkDanceCount}回目）`, 'danger');
   showDarkSwordDanceCutin();
 
-  state.darkSwordReviveTimer = setInterval(()=>{
+  state.darkSwordReviveTimer = setTimeout(()=>{
     if(!isDarkSwordSaint()){
-      clearInterval(state.darkSwordReviveTimer);
       state.darkSwordReviveTimer = null;
       return;
     }
-    const now = performance.now();
-    const start = state.enemyStatuses.darkReviveStart || now;
-    const p = Math.max(0, Math.min(1, (now - start) / 5000));
-    state.enemyHp = Math.max(1, Math.floor(state.enemy.maxHp * p));
-    renderBattle();
-    if(p >= 1){
-      clearInterval(state.darkSwordReviveTimer);
-      state.darkSwordReviveTimer = null;
-      finishDarkSwordDanceRevive();
-    }
-  }, 50);
+    hideDeathDanceCutin();
+    const recoveryStart = performance.now();
+    state.enemyStatuses.darkReviveStart = recoveryStart;
+    state.enemyStatuses.darkRevivingUntil = recoveryStart + 5000;
+    state.darkSwordReviveTimer = setInterval(()=>{
+      if(!isDarkSwordSaint()){
+        clearInterval(state.darkSwordReviveTimer);
+        state.darkSwordReviveTimer = null;
+        return;
+      }
+      const now = performance.now();
+      const start = state.enemyStatuses.darkReviveStart || now;
+      const p = Math.max(0, Math.min(1, (now - start) / 5000));
+      state.enemyHp = Math.max(1, Math.floor(state.enemy.maxHp * p));
+      renderBattle();
+      if(p >= 1){
+        clearInterval(state.darkSwordReviveTimer);
+        state.darkSwordReviveTimer = null;
+        finishDarkSwordDanceRevive();
+      }
+    }, 50);
+  }, 4000);
   return true;
 }
 function finishDarkSwordDanceRevive(){
@@ -871,7 +881,7 @@ function finishDarkSwordDanceRevive(){
   hideDeathDanceCutin();
   renderBattle();
   renderStatusLists();
-  log(`闇オーラ10、暗黒の剣+1。暗黒剣舞はガードを無効化する！`, 'danger');
+  log(`闇オーラ10、暗黒の剣+1。暗黒剣舞はガード無効・防御力50%無視！`, 'danger');
   darkSwordDanceCombo();
 }
 function darkSwordDanceCombo(){
@@ -884,9 +894,10 @@ function darkSwordDanceCombo(){
 function applyDarkSwordDanceHit(i, total){
   if(!isDarkSwordSaint() || state.down) return;
   const e = state.enemy, st = calcStats();
-  // 暗黒剣舞はガード無効。主人公が剣舞中でも被弾する。
+  // 暗黒剣舞はガード無効・防御力50%無視。主人公が剣舞中でも被弾する。
   const atk = e.atk * (1 + darkSwordBuffCount() * 0.5);
-  let dmg = Math.max(1, Math.floor((atk*0.62 + rand(0, atk*0.18)) - st.def*0.30*heroDefenseMultiplier()));
+  const effectiveDef = st.def * 0.50;
+  let dmg = Math.max(1, Math.floor((atk*0.62 + rand(0, atk*0.18)) - effectiveDef*0.55*heroDefenseMultiplier()));
   if(state.debug.killHero){ dmg = Math.max(dmg, state.hp + 999999); }
   els.enemyCard.classList.remove('attack'); void els.enemyCard.offsetWidth; els.enemyCard.classList.add('attack');
   setTimeout(()=>els.enemyCard.classList.remove('attack'),220);
@@ -1120,7 +1131,7 @@ function updateBgmVolume(){
   if(state.normalBgm) state.normalBgm.volume = v;
   if(state.swordDanceBgm) state.swordDanceBgm.volume = v;
   if(state.darkSwordSaintBgm) state.darkSwordSaintBgm.volume = v;
-  if(state.darkSwordSaintVoice) state.darkSwordSaintVoice.volume = state.mobileMuted ? 0 : Math.max(0, Math.min(2, state.volume)) * 0.50;
+  if(state.darkSwordSaintVoice) state.darkSwordSaintVoice.volume = state.mobileMuted ? 0 : Math.max(0, Math.min(2, state.volume)) * 0.25;
 }
 function safePlayAudio(a){
   if(!a || state.mobileMuted) return;
