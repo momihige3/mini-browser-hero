@@ -35,7 +35,7 @@ const DEATH_DANCE_CUTINS = [
 ];
 const DARK_SWORD_SAINT_CUTIN = {quote:'私を超えてみせろ。', img:'assets/cutin_dark_sword_dance.png'};
 const DARK_SWORD_TECHNIQUE_CUTIN = {quote:'', img:'assets/cutin_dark_sword_technique.png'};
-const GAME_VERSION = '95.7';
+const GAME_VERSION = '95.8';
 const DARK_SWORD_SAINT = {
   id:'dark_sword_saint', name:'暗黒剣聖', type:'裏ボス', img:'assets/enemy_dark_sword_saint.png', element:'dark',
   hp:32000, atk:260, def:95, xp:2600, gold:5000, bossChance:0, enemySkill:'暗黒斬'
@@ -748,6 +748,9 @@ function handleHeroDeath(){
   state.deathDanceCutin = false;
   state.darkSwordCutinActive = false;
   state.hp = 0;
+  // 敗北確定時はバフ・デバフを全解除する。
+  resetTransientStatuses();
+  state.hp = 0;
   const defeatedEnemyLevel = Math.max(1, Math.floor(state.enemy?.level || state.enemyLevelBase || state.level || 1));
   const nextEnemyLevelBase = Math.max(1, Math.floor(defeatedEnemyLevel * 0.9));
   state.enemyLevelBase = nextEnemyLevelBase;
@@ -1079,7 +1082,7 @@ function makeScaledEnemy(base, forceLevel=null){
   }
   const scaledDefeated = state.enemyLevelBase != null ? Math.max(0, (state.defeated||0) - (state.enemyLevelBaseDefeated||0)) : (state.defeated||0);
   const scale=1 + e.level*.035 + Math.floor(scaledDefeated/10)*.03;
-  e.maxHp=Math.floor(e.hp*scale); e.atk=Math.floor(e.atk*scale); e.def=Math.floor(e.def*scale);
+  e.maxHp=Math.max(1, Math.floor(e.hp * scale * 0.1)); e.atk=Math.floor(e.atk*scale); e.def=Math.floor(e.def*scale);
   e.xp=Math.floor(e.xp*(1+e.level*.045));
   return e;
 }
