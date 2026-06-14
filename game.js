@@ -423,7 +423,7 @@ function maxHp(){return calcStats().hp}
 function nowMs(){ return performance.now(); }
 
 function makeEmptyEnemyStatuses(t=0){
-  return {bleeds:[], burnUntil:0, lastBleedTick:t, darkAuraStacks:0, darkAuraLastTick:t, darkSwordBuffs:[], darkDanceCount:0, darkRevivingUntil:0, darkReviveStart:0, darkOneDamageCount:0};
+  return {bleeds:[], burnUntil:0, lastBleedTick:t, darkAuraStacks:0, darkAuraLastTick:t, darkSwordBuffs:[], darkDanceCount:0, darkRevivingUntil:0, darkReviveStart:0, darkOneDamageCount:0, darkTechniqueAwakened:false};
 }
 function isDarkSwordSaint(e=state.enemy){ return !!e && e.id === 'dark_sword_saint'; }
 function hasUnyieldingBuff(){ return isDarkSwordSaint() && !state.down; }
@@ -583,8 +583,8 @@ function statusTooltipHtml(kind, target){
   if(kind === 'unyielding') return `<b>不屈</b><br>暗黒剣聖と対峙中のみ発動。<br>死線の剣舞発動率+50%。<br>現在の剣舞発動率：${Math.round(calcStats().deathDanceChance*100)}%。`;
   if(kind === 'darkaura') return `<b>闇オーラ</b><br>現在：${darkAuraStacks()}スタック<br>1スタックごとに被ダメージ10%軽減。<br>闇オーラ中は出血ダメージ90%軽減。<br>最大10スタック。10秒ごとに1減少。<br>暗黒剣舞発動時に10へ回復。`;
   if(kind === 'darksword') return `<b>暗黒の剣</b><br>現在：${darkSwordBuffCount()}スタック<br>攻撃力+50% / スタック。<br>効果時間：60秒。スタック可能。<br>最長残り：${darkSwordBuffSeconds()}秒。`;
-  if(kind === 'darktechnique') return `<b>暗黒剣技</b><br>暗黒剣聖の通常攻撃が1ダメージ20回連続した時に発動。<br>暗黒剣舞の回数にはカウントしない。<br>HP回復・闇オーラ回復・暗黒の剣付与はなし。<br>攻撃速度10倍、ガード無効、防御力50%無視。<br>攻撃ごとに出血50%、暗黒出血50%。<br>現在の1ダメージ連続：${state.enemyStatuses?.darkOneDamageCount||0} / 20。`;
-  if(kind === 'darkdance') return `<b>暗黒剣舞</b><br>発動済み：${state.enemyStatuses?.darkDanceCount||0}回 / 10回<br>次回発動率：${darkDanceChanceForNext()}%<br>暗黒剣舞回数：${state.enemyStatuses?.darkDanceCount||0} / 10<br>HP0時に発動判定。カットイン後に5秒無敵、HPをゆっくり100%まで回復、闇オーラ10、暗黒の剣+1。<br>連続攻撃は攻撃速度10倍、ガード無効、防御力50%無視。<br>攻撃ごとに出血50%、暗黒出血50%。`;
+  if(kind === 'darktechnique') return `<b>暗黒剣技</b><br>暗黒剣聖の通常攻撃で1ダメージが20回発生すると覚醒。<br>覚醒後は通常攻撃が暗黒剣技に置き換わる。<br>暗黒剣舞の回数にはカウントしない。<br>HP回復・闇オーラ回復・暗黒の剣付与はなし。<br>攻撃速度10倍、ガード無効、防御力50%無視。<br>出血・暗黒出血は付与しない。<br>現在：${state.enemyStatuses?.darkTechniqueAwakened?'覚醒中':((state.enemyStatuses?.darkOneDamageCount||0)+' / 20')}。`;
+  if(kind === 'darkdance') return `<b>暗黒剣舞</b><br>発動済み：${state.enemyStatuses?.darkDanceCount||0}回 / 10回<br>次回発動率：${darkDanceChanceForNext()}%<br>暗黒剣舞回数：${state.enemyStatuses?.darkDanceCount||0} / 10<br>HP0時に発動判定。カットイン後に5秒無敵、HPをゆっくり100%まで回復、闇オーラ10、暗黒の剣+1。<br>連続攻撃は10秒間、攻撃速度10倍、ガード無効、防御力50%無視。<br>攻撃ごとに出血50%、暗黒出血50%。`;
   return '';
 }
 
@@ -759,7 +759,7 @@ function renderStatusLists(){
       const ds = darkSwordBuffCount();
       if(ds) parts.push(makeStatusBadge(`⚔️暗黒の剣(${ds})`, 'darksword', 'darksword', 'enemy'));
       parts.push(makeStatusBadge(`🌑暗黒剣舞(${state.enemyStatuses?.darkDanceCount||0})`, 'darkdance', 'darkdance', 'enemy'));
-      parts.push(makeStatusBadge(`⚔️暗黒剣技(${state.enemyStatuses?.darkOneDamageCount||0}/20)`, 'darkdance', 'darktechnique', 'enemy'));
+      parts.push(makeStatusBadge(`⚔️暗黒剣技(${state.enemyStatuses?.darkTechniqueAwakened?'覚醒':((state.enemyStatuses?.darkOneDamageCount||0)+'/20')})`, 'darkdance', 'darktechnique', 'enemy'));
     }
     els.enemyStatusList.innerHTML = parts.join('');
   }
@@ -808,6 +808,8 @@ function setEnemy(e){
     state.enemyStatuses.darkAuraLastTick = performance.now();
     state.enemyStatuses.darkSwordBuffs = [];
     state.enemyStatuses.darkDanceCount = 0;
+    state.enemyStatuses.darkOneDamageCount = 0;
+    state.enemyStatuses.darkTechniqueAwakened = false;
     setBgmMode('dark_sword_saint');
   }else{
     setBgmMode('normal');
@@ -945,9 +947,14 @@ function applyHeroHit(skill){
 function enemyAttack(now){
   state.lastEnemyAttack=now;
   const e=state.enemy, st=calcStats();
+  if(isDarkSwordSaint() && state.enemyStatuses?.darkTechniqueAwakened){
+    startDarkSwordTechnique(false);
+    renderBattle();
+    return;
+  }
   let element=e.element==='fire' && Math.random()<.55 ? 'fire':'normal';
   let name=e.enemySkill && element==='fire' ? e.enemySkill:'攻撃';
-  if(Math.random()<st.guard){ if(isDarkSwordSaint()) state.enemyStatuses.darkOneDamageCount = 0; showHeroFloat('GUARD','guard'); playSfx('guard'); log(`${e.name} の${name}をGUARD！`,'good'); return; }
+  if(Math.random()<st.guard){ showHeroFloat('GUARD','guard'); playSfx('guard'); log(`${e.name} の${name}をGUARD！`,'good'); return; }
   let atk = e.atk * (1 + darkSwordBuffCount() * 0.5);
   let dmg=Math.max(1, Math.floor(atk - st.def*.55*heroDefenseMultiplier() + rand(0,atk*.35)));
   if(state.debug.killHero){ dmg = Math.max(dmg, state.hp + 999999); }
@@ -968,15 +975,14 @@ function enemyAttack(now){
   tryApplyEnemyHitDebuffs(element);
   if(isDarkSwordSaint()){
     ensureStatusContainers();
-    if(element !== 'fire' && dmg === 1){
+    if(!state.enemyStatuses.darkTechniqueAwakened && element !== 'fire' && dmg === 1){
       state.enemyStatuses.darkOneDamageCount = (state.enemyStatuses.darkOneDamageCount || 0) + 1;
       if(state.enemyStatuses.darkOneDamageCount >= 20){
-        state.enemyStatuses.darkOneDamageCount = 0;
-        log('1ダメージが20回続いた。暗黒剣聖が暗黒剣技を繰り出す！','danger');
-        setTimeout(()=>startDarkSwordTechnique(), 80);
+        state.enemyStatuses.darkTechniqueAwakened = true;
+        state.enemyStatuses.darkOneDamageCount = 20;
+        log('1ダメージを20回見切った。暗黒剣聖が暗黒剣技へ覚醒！','danger');
+        setTimeout(()=>startDarkSwordTechnique(true), 80);
       }
-    }else{
-      state.enemyStatuses.darkOneDamageCount = 0;
     }
   }
   log(`${e.name} の${name}！ ${dmg}ダメージ`, element==='fire'?'danger':'');
@@ -1060,28 +1066,33 @@ function finishDarkSwordDanceRevive(){
   setTimeout(()=>darkSwordDanceCombo(), 120);
 }
 
-function startDarkSwordTechnique(){
+function startDarkSwordTechnique(showCutin=true){
   if(!isDarkSwordSaint()) return;
-  state.darkSwordCutinActive = true;
-  state.deathDanceCutin = true;
-  renderBattle();
-  banner('暗黒剣技！', 1000);
-  log('暗黒剣技発動！ 1ダメージを重ねた者への制裁。', 'danger');
-  showDarkSwordTechniqueCutin();
-  setTimeout(()=>{
-    if(!isDarkSwordSaint()) return;
-    hideDeathDanceCutin();
-    state.deathDanceCutin = false;
-    state.darkSwordCutinActive = false;
+  state.lastEnemyAttack = performance.now();
+  if(showCutin){
+    state.darkSwordCutinActive = true;
+    state.deathDanceCutin = true;
+    renderBattle();
+    banner('暗黒剣技！', 1000);
+    log('暗黒剣技覚醒！ 以後、通常攻撃が暗黒剣技に変化する。', 'danger');
+    showDarkSwordTechniqueCutin();
+    setTimeout(()=>{
+      if(!isDarkSwordSaint()) return;
+      hideDeathDanceCutin();
+      state.deathDanceCutin = false;
+      state.darkSwordCutinActive = false;
+      darkSwordDanceCombo('punish');
+    }, 2200);
+  }else{
+    log('暗黒剣聖が暗黒剣技を放つ！', 'danger');
     darkSwordDanceCombo('punish');
-  }, 2200);
+  }
 }
 function darkSwordDanceCombo(mode='finish'){
   if(!isDarkSwordSaint()) return;
-  const hitCount = mode === 'recovering' ? 8 : (mode === 'punish' ? 5 : 5);
-  const baseInterval = mode === 'recovering' ? 520 : 170;
-  const interval = Math.max(12, Math.floor(baseInterval / 10));
-  log(mode === 'recovering' ? '暗黒剣舞の超高速連続攻撃が回復中に始まった！' : (mode === 'punish' ? '暗黒剣聖が暗黒剣技を放った！' : '暗黒剣舞の超高速追撃連続攻撃！'), 'danger');
+  const interval = 50; // 10倍速相当の超高速ヒット間隔
+  const hitCount = mode === 'punish' ? 8 : Math.max(1, Math.floor(10000 / interval));
+  log(mode === 'recovering' ? '暗黒剣舞の10秒連続攻撃が回復中に始まった！' : (mode === 'punish' ? '暗黒剣聖が暗黒剣技を放った！' : '暗黒剣舞の10秒追撃連続攻撃！'), 'danger');
   state.lastEnemyAttack = performance.now();
   for(let i=0;i<hitCount;i++){
     setTimeout(()=>applyDarkSwordDanceHit(i+1, hitCount, mode), i*interval);
@@ -1102,8 +1113,8 @@ function applyDarkSwordDanceHit(i, total, mode='finish'){
   }
   els.enemyCard.classList.remove('attack'); void els.enemyCard.offsetWidth; els.enemyCard.classList.add('attack');
   setTimeout(()=>els.enemyCard.classList.remove('attack'),220);
-  if(Math.random() < 0.50){ if(addBleed('hero')) log('暗黒剣舞で騎士は出血した。','danger'); }
-  if(Math.random() < 0.50){ if(addDarkBleed()) log('暗黒剣舞で騎士に暗黒出血が刻まれた。','danger'); }
+  if(mode !== 'punish' && Math.random() < 0.50){ if(addBleed('hero')) log('暗黒剣舞で騎士は出血した。','danger'); }
+  if(mode !== 'punish' && Math.random() < 0.50){ if(addDarkBleed()) log('暗黒剣舞で騎士に暗黒出血が刻まれた。','danger'); }
   if(state.hp - dmg <= 0){
     showHeroFloat(`${mode==='punish'?'暗黒剣技':'暗黒剣舞'} ${dmg}`,'damage');
     playSfx('hit');
