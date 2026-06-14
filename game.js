@@ -61,7 +61,7 @@ const state = {
   level:1, xp:0, xpNext:80, chests:0, mats:3, defeated:0,
   base:{hp:520, atk:48, def:14}, hp:520, enemy:null, enemyHp:1,
   inventory:[], equip:{}, down:false, downUntil:0, deathDance:false, deathDanceUntil:0, deathDanceCutin:false, deathDanceCutinTimer:null, deathDanceSeqTimers:[], lastHeroAttack:0, lastEnemyAttack:0,
-  log:[], debug:{killEnemy:false, killHero:false}, audio:null, masterGain:null, bgmGain:null, bgmTimer:null, bgmMode:'normal', normalBgm:null, swordDanceBgm:null, audioUnlocked:false, mobileMuted:true, menuPage:'stats', inventoryMenuItemId:null, enemyRecords:{}, forceFirstEnemy:false
+  log:[], debug:{killEnemy:false, killHero:false}, audio:null, masterGain:null, bgmGain:null, bgmTimer:null, bgmMode:'normal', normalBgm:null, swordDanceBgm:null, audioUnlocked:false, mobileMuted:true, menuPage:'stats', inventoryMenuItemId:null, enemyRecords:{}, forceFirstEnemy:false, bgmPausedByVisibility:false
 };
 
 const SAVE_KEY = 'mini-browser-hero-save-v36';
@@ -341,6 +341,11 @@ function bind(){
     if(menu && !menu.contains(e.target)) cancelInventoryActionMenu();
   });
   document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape'){ cancelInventoryActionMenu(); closeLegalModal(); } });
+  document.addEventListener('visibilitychange', handlePageVisibility);
+  window.addEventListener('pagehide', pauseBgmForPageHidden);
+  window.addEventListener('pageshow', resumeBgmForPageVisible);
+  window.addEventListener('blur', pauseBgmForPageHidden);
+  window.addEventListener('focus', resumeBgmForPageVisible);
   setTimeout(()=>{ if(!state.mobileMuted) startAudio(); }, 300);
   els.debugBtn.onclick = () => { els.debugPanel.classList.toggle('hidden'); startAudio(); playUiClick(); };
   if(els.muteBtn) els.muteBtn.onclick = (e) => { e.preventDefault(); setMobileMuted(!state.mobileMuted); if(!state.mobileMuted) startAudio(); playUiClick(); };
@@ -609,14 +614,14 @@ function startDeathDance(){
   state.lastHeroAttack = performance.now();
   state.lastEnemyAttack = performance.now();
   renderBattle();
-  banner('死線の剣舞！');
+  banner('死線の剣舞！', 3000);
   log('死線の剣舞、発動寸前！','skilllog');
 
   // 覚醒演出：既存バナー → 通常BGM停止 → セリフカットイン → シャキィン → 剣舞BGM
   queueDeathDanceStep(()=>{ pauseNormalBgm(); }, 180);
-  queueDeathDanceStep(()=>showDeathDanceCutin(), 350);
-  queueDeathDanceStep(()=>playSfx('cutin'), 1050);
-  state.deathDanceCutinTimer = queueDeathDanceStep(beginDeathDanceAfterCutin, 1250);
+  queueDeathDanceStep(()=>showDeathDanceCutin(), 3000);
+  queueDeathDanceStep(()=>playSfx('cutin'), 6000);
+  state.deathDanceCutinTimer = queueDeathDanceStep(beginDeathDanceAfterCutin, 6300);
 }
 function showDeathDanceCutin(){
   if(!els.deathDanceCutin) return;
@@ -670,7 +675,7 @@ function showHeroFloat(text, cls='damage'){
   const layer=els.heroCard.querySelector('.float-layer') || (()=>{const l=document.createElement('div'); l.className='float-layer'; els.heroCard.appendChild(l); return l;})();
   const div=document.createElement('div'); div.className=`float ${cls}`; div.textContent=text; layer.appendChild(div); setTimeout(()=>div.remove(),950);
 }
-function banner(text){ els.centerBanner.textContent=text; els.centerBanner.classList.remove('hidden'); setTimeout(()=>els.centerBanner.classList.add('hidden'),950); }
+function banner(text, duration=950){ els.centerBanner.textContent=text; els.centerBanner.classList.remove('hidden'); setTimeout(()=>els.centerBanner.classList.add('hidden'),duration); }
 
 
 function randomWeaponSkill(rarity){
@@ -729,6 +734,23 @@ function stopAllBgm(){
   stopBgm();
   if(state.normalBgm) state.normalBgm.pause();
   if(state.swordDanceBgm){ state.swordDanceBgm.pause(); state.swordDanceBgm.currentTime = 0; }
+}
+
+function pauseBgmForPageHidden(){
+  ensureBgmAudio();
+  state.bgmPausedByVisibility = true;
+  if(state.normalBgm) state.normalBgm.pause();
+  if(state.swordDanceBgm) state.swordDanceBgm.pause();
+}
+function resumeBgmForPageVisible(){
+  if(!state.bgmPausedByVisibility) return;
+  state.bgmPausedByVisibility = false;
+  if(!state.audioUnlocked || state.mobileMuted) return;
+  playBgm();
+}
+function handlePageVisibility(){
+  if(document.hidden) pauseBgmForPageHidden();
+  else resumeBgmForPageVisible();
 }
 function startAudio(){
   try{
@@ -805,7 +827,7 @@ function playBgm(){
     if(state.swordDanceBgm){
       // 剣舞BGM再生中にメニュー/ボタン操作で startAudio() や playBgm() が再実行されても、
       // currentTime を 0 に戻さない。未再生・停止中の時だけ先頭から再生する。
-      if(state.swordDanceBgm.paused || state.swordDanceBgm.ended){
+      if(state.swordDanceBgm.ended || (state.swordDanceBgm.paused && (!state.swordDanceBgm.currentTime || state.swordDanceBgm.currentTime <= 0.05))){
         try{ state.swordDanceBgm.currentTime = 0; }catch(e){}
       }
       safePlayAudio(state.swordDanceBgm);
