@@ -2099,7 +2099,93 @@ function log(msg, cls='', html=false){
 function rand(a,b){ return Math.random()*(b-a)+a; }
 function randInt(a,b){ return Math.floor(rand(a,b+1)); }
 
+
+/* v94: iPhone / iOS pointer operation stabilization */
+function v94SafeStop(e){
+  if(!e) return;
+  try{ e.preventDefault(); }catch(_){ }
+  try{ e.stopPropagation(); }catch(_){ }
+}
+function v94BindTap(el, handler){
+  if(!el || el.__v94TapBound) return;
+  el.__v94TapBound = true;
+  el.onclick = null;
+  let last = 0;
+  const run = (e) => {
+    const now = performance.now ? performance.now() : Date.now();
+    if(now - last < 550){ v94SafeStop(e); return; }
+    last = now;
+    v94SafeStop(e);
+    try{ startAudio && startAudio(); }catch(_){ }
+    handler(e);
+  };
+  el.addEventListener('pointerup', run, {passive:false});
+  el.addEventListener('touchend', run, {passive:false});
+  el.addEventListener('click', run, {passive:false});
+}
+function v94CloseAllTransientPanels(){
+  try{ hideStatusTooltip && hideStatusTooltip(); }catch(_){ }
+  try{ hideStatusDetailPanel && hideStatusDetailPanel(); }catch(_){ }
+  try{ closeStatusCardPopup && closeStatusCardPopup(); }catch(_){ }
+  try{ cancelInventoryActionMenu && cancelInventoryActionMenu(); }catch(_){ }
+  const cutins = document.querySelectorAll('.death-dance-cutin,.death-dance-heartbeat');
+  cutins.forEach(el=>{ el.style.pointerEvents='none'; });
+}
+function v94InstallTouchControls(){
+  const byId = (id)=>document.getElementById(id);
+  v94BindTap(byId('equipToggleBtn'), () => {
+    v94CloseAllTransientPanels();
+    state.uiOpen = !state.uiOpen;
+    els.sidePanel.classList.toggle('open', state.uiOpen);
+    els.equipToggleBtn.textContent = isSpPortrait() ? (state.uiOpen ? '×' : '☰') : (state.uiOpen ? '閉じる' : 'メニュー');
+    playUiClick();
+  });
+  v94BindTap(byId('debugBtn'), () => {
+    v94CloseAllTransientPanels();
+    els.debugPanel.classList.toggle('hidden');
+    playUiClick();
+  });
+  v94BindTap(byId('muteBtn'), () => {
+    setMobileMuted(!state.mobileMuted);
+    if(!state.mobileMuted) startAudio();
+    playUiClick();
+  });
+  v94BindTap(byId('debugClose'), () => { els.debugPanel.classList.add('hidden'); playUiClick(); });
+  v94BindTap(byId('debugResetData'), () => { playUiClick(); resetUserData(); });
+  v94BindTap(byId('debugAddChests'), () => { playUiClick(); for(let i=0;i<50;i++) state.inventory.unshift(makeRandomItem()); renderAll(); log('デバッグ：装備を50個追加。','good'); scheduleSave(); });
+  v94BindTap(byId('debugBestSword'), () => { playUiClick(); const it=makeDebugSword(); state.inventory.unshift(it); renderAll(); log('デバッグ：最強剣を倉庫に追加。','good'); scheduleSave(); });
+  v94BindTap(byId('debugBestAccessory'), () => { playUiClick(); const a=makeDebugAccessory('リング'); const b=makeDebugAccessory('アミュレット'); state.inventory.unshift(a,b); renderAll(); log('デバッグ：最強アクセを倉庫に追加。','good'); scheduleSave(); });
+  v94BindTap(byId('debugDarkSwordSaint'), () => { playUiClick(); forceSpawnDarkSwordSaint(); });
+  document.querySelectorAll('.mobile-menu-tabs button').forEach(btn=>{
+    v94BindTap(btn, () => { setMenuPage(btn.dataset.menuPage); playUiClick(); });
+  });
+  document.querySelectorAll('#creditBtn,#termsBtn,#privacyBtn,#legalModalClose').forEach(btn=>{
+    const id = btn.id;
+    v94BindTap(btn, () => {
+      playUiClick();
+      if(id==='creditBtn') openLegalModal('credit');
+      else if(id==='termsBtn') openLegalModal('terms');
+      else if(id==='privacyBtn') openLegalModal('privacy');
+      else if(id==='legalModalClose') closeLegalModal();
+    });
+  });
+  // iPhoneで透明要素がタップを奪わないよう、閉じているパネルを明示的に無効化。
+  ['debugPanel','sidePanel'].forEach(id=>{
+    const el = byId(id);
+    if(!el) return;
+    if(id==='debugPanel' && el.classList.contains('hidden')) el.style.pointerEvents='none';
+    if(id==='sidePanel' && !el.classList.contains('open')) el.style.pointerEvents='none';
+  });
+  const mo = new MutationObserver(()=>{
+    if(els.debugPanel) els.debugPanel.style.pointerEvents = els.debugPanel.classList.contains('hidden') ? 'none' : 'auto';
+    if(els.sidePanel) els.sidePanel.style.pointerEvents = els.sidePanel.classList.contains('open') ? 'auto' : 'none';
+  });
+  if(els.debugPanel) mo.observe(els.debugPanel,{attributes:true,attributeFilter:['class']});
+  if(els.sidePanel) mo.observe(els.sidePanel,{attributes:true,attributeFilter:['class']});
+}
+
 init();
+setTimeout(v94InstallTouchControls, 0);
 
 
 window.addEventListener("load",()=>{ state.mobileMuted = true; updateMuteButton(); applyVolume(); stopAllAudioForMute(); });

@@ -1570,3 +1570,36 @@ body.using-touch .tooltip.status-tooltip-modal:not(.hidden),
 .item.darkholy b,.equip.darkholy b{color:#d9b6ff!important;text-shadow:0 0 8px rgba(184,108,255,.75)!important;}
 .drop-toast.darkholy{border-color:#b86cff!important;box-shadow:0 0 34px rgba(184,108,255,.6),inset 0 0 18px rgba(184,108,255,.2)!important;}
 .log-item.darkholy,.log-rarity.darkholy{color:#b86cff!important;}
+
+/* v94: iPhone tap stability fix */
+.topbar{
+  position:relative!important;
+  z-index:30000!important;
+  pointer-events:auto!important;
+  -webkit-transform:translateZ(0);
+  transform:translateZ(0);
+}
+.controls,.controls button,#equipToggleBtn,#debugBtn,#muteBtn,.debug-panel,.debug-panel button,.mobile-menu-tabs button{
+  pointer-events:auto!important;
+  touch-action:manipulation!important;
+  -webkit-tap-highlight-color:rgba(255,215,107,.25)!important;
+}
+.controls button,#equipToggleBtn,#debugBtn,#muteBtn,.debug-panel button,.mobile-menu-tabs button{
+  min-width:48px!important;
+  min-height:44px!important;
+  position:relative!important;
+  z-index:30001!important;
+}
+.side-panel.open{z-index:20000!important;pointer-events:auto!important;}
+.debug-panel{z-index:31000!important;pointer-events:auto!important;}
+.debug-panel.hidden,.side-panel:not(.open),.legal-modal.hidden,#statusCardPopup.hidden,#statusDetailPanel.hidden{
+  pointer-events:none!important;
+}
+.death-dance-cutin,.death-dance-heartbeat,.level-effect,.center-banner,.drop-toast,.battle-vignette,.battle-bg{
+  pointer-events:none!important;
+}
+@media (max-width:760px), (pointer:coarse){
+  .controls{gap:6px!important;align-items:center!important;pointer-events:auto!important;}
+  #equipToggleBtn,#debugBtn,#muteBtn{padding:8px 10px!important;font-size:13px!important;}
+  .debug-panel{left:8px!important;right:8px!important;top:calc(var(--mbh-topbar-h, 58px) + 8px)!important;bottom:auto!important;max-height:calc(100dvh - var(--mbh-topbar-h, 58px) - 16px)!important;overflow:auto!important;}
+}
