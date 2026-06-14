@@ -35,7 +35,7 @@ const DEATH_DANCE_CUTINS = [
 ];
 const DARK_SWORD_SAINT_CUTIN = {quote:'私を超えてみせろ。', img:'assets/cutin_dark_sword_dance.png'};
 const DARK_SWORD_TECHNIQUE_CUTIN = {quote:'', img:'assets/cutin_dark_sword_technique.png'};
-const GAME_VERSION = '95.1';
+const GAME_VERSION = '95.2';
 const DARK_SWORD_SAINT = {
   id:'dark_sword_saint', name:'暗黒剣聖', type:'裏ボス', img:'assets/enemy_dark_sword_saint.png', element:'dark',
   hp:32000, atk:260, def:95, xp:2600, gold:5000, bossChance:0, enemySkill:'暗黒斬'
@@ -1912,6 +1912,7 @@ function renderInventory(){
   state.inventory.forEach(it=>{
     const div=document.createElement('div');
     div.className=`item ${it.rarity} ${itemFrameClass(it)}${selectedId===it.id?' selected-inventory':''}`;
+    div.dataset.itemId = String(it.id);
     div.innerHTML=`<b style="color:${itemNameColor(it)}">${it.name}</b><span>${it.slot}</span>`;
     div.onpointerdown=(e)=>{ if(e.pointerType && e.pointerType !== 'mouse'){ setPointerMode('touch'); els.tooltip.classList.add('hidden'); } };
     const openItemMenu=(e)=>{ if(e){ e.preventDefault(); e.stopPropagation(); } els.tooltip.classList.add('hidden'); showInventoryActionMenu(it, div); };
@@ -2237,7 +2238,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 
 /* v95.1: visible build badge + inventory/menu touch fix */
 function v951EnsureVersionBadge(){
-  const text = 'ver.' + (typeof GAME_VERSION !== 'undefined' ? GAME_VERSION : '95.1');
+  const text = 'ver.' + (typeof GAME_VERSION !== 'undefined' ? GAME_VERSION : '95.2');
   document.querySelectorAll('.build-version,.debug-version').forEach(el=>{
     if(el.classList.contains('debug-version')) el.textContent = 'Build: ' + text;
     else el.textContent = text;
@@ -2276,3 +2277,115 @@ function v951FinalFixes(){
 }
 setTimeout(v951FinalFixes, 50);
 window.addEventListener('resize', v951FinalFixes);
+
+
+/* v95.2: small-screen item menu, modal z-index, always-visible version badge */
+function v952EnsureVersionBadge(){
+  const text = 'ver.95.2';
+  let header = document.querySelector('.brand .build-version');
+  const brand = document.querySelector('.brand');
+  if(brand && !header){
+    header = document.createElement('span');
+    header.className = 'build-version';
+    brand.appendChild(header);
+  }
+  if(header) header.textContent = text;
+  document.querySelectorAll('.debug-version').forEach(el=>el.textContent='Build: '+text);
+  let fixed = document.getElementById('fixedBuildVersion');
+  if(!fixed){
+    fixed = document.createElement('div');
+    fixed.id = 'fixedBuildVersion';
+    fixed.className = 'fixed-build-version';
+    document.body.appendChild(fixed);
+  }
+  fixed.textContent = text;
+  fixed.style.display = 'block';
+  fixed.style.visibility = 'visible';
+  fixed.style.opacity = '0.88';
+}
+function v952OpenInventoryItemFromElement(itemEl, ev){
+  if(!itemEl) return false;
+  const id = itemEl.dataset ? itemEl.dataset.itemId : '';
+  let it = id ? state.inventory.find(x=>String(x.id)===String(id)) : null;
+  if(!it && els.inventory){
+    const idx = Array.prototype.indexOf.call(els.inventory.children, itemEl);
+    it = state.inventory[idx];
+  }
+  if(!it) return false;
+  if(ev){ ev.preventDefault(); ev.stopPropagation(); }
+  els.tooltip?.classList.add('hidden');
+  showInventoryActionMenu(it, itemEl);
+  return true;
+}
+function v952OpenEquipSlotFromElement(equipEl, ev){
+  if(!equipEl) return false;
+  const idx = Array.prototype.indexOf.call(els.equipList.children, equipEl);
+  const slot = slots[idx];
+  if(!slot) return false;
+  state.selectedEquip = slot;
+  renderEquip();
+  const it = state.equip[slot];
+  if(!it) return true;
+  if(ev){ ev.preventDefault(); ev.stopPropagation(); }
+  // 装備中アイテムは「強化」選択用のメニューとして表示する。
+  let menu = document.getElementById('inventoryActionMenu');
+  if(!menu){
+    menu = document.createElement('div');
+    menu.id = 'inventoryActionMenu';
+    menu.className = 'inventory-action-menu';
+    document.body.appendChild(menu);
+  }
+  menu.innerHTML = `<div class="inventory-action-title"><b>${escapeHtml(it.name)}+${it.level}</b><small>${escapeHtml(slot)} / ${escapeHtml(it.rarityName||it.rarity)}</small></div><div class="inventory-action-summary">${escapeHtml(itemSummary(it)||'追加能力なし')}<br>現在装備中</div><div class="inventory-action-buttons"><button type="button" data-action="upgrade">強化選択</button><button type="button" data-action="cancel">閉じる</button></div>`;
+  const width = Math.min(320, window.innerWidth - 16);
+  menu.style.width = width + 'px';
+  if(isTouchDevice() || window.innerWidth <= 900){
+    menu.style.left='50%'; menu.style.right='auto'; menu.style.top='auto'; menu.style.bottom='12px'; menu.style.transform='translateX(-50%)';
+  }else{
+    const r = equipEl.getBoundingClientRect();
+    menu.style.left = Math.min(Math.max(8,r.left), window.innerWidth-width-8)+'px';
+    menu.style.top = (r.bottom+6)+'px'; menu.style.right='auto'; menu.style.bottom='auto'; menu.style.transform='none';
+  }
+  menu.classList.remove('hidden');
+  const bind=(sel,fn)=>{ const b=menu.querySelector(sel); if(!b) return; const run=(e)=>{ if(e){e.preventDefault();e.stopPropagation();} playUiClick(); fn();}; b.onclick=run; b.onpointerup=run; b.ontouchend=run; };
+  bind('[data-action="upgrade"]',()=>{ state.selectedEquip=slot; cancelInventoryActionMenu(); renderEquip(); });
+  bind('[data-action="cancel"]',()=>{ cancelInventoryActionMenu(); });
+  menu.onclick=(e)=>e.stopPropagation(); menu.onpointerup=(e)=>e.stopPropagation(); menu.ontouchend=(e)=>e.stopPropagation();
+  return true;
+}
+function v952InstallDelegatedMenus(){
+  if(window.__v952DelegatedMenus) return;
+  window.__v952DelegatedMenus = true;
+  const handler = (e)=>{
+    const target = e.target;
+    if(!target || !target.closest) return;
+    const actionMenu = target.closest('#inventoryActionMenu');
+    if(actionMenu) return;
+    const inv = target.closest('#inventory .item');
+    if(inv){ v952OpenInventoryItemFromElement(inv,e); return; }
+    const eq = target.closest('#equipList .equip');
+    if(eq){ v952OpenEquipSlotFromElement(eq,e); return; }
+  };
+  ['pointerup','click','touchend'].forEach(type=>{
+    document.addEventListener(type, handler, {capture:true, passive:false});
+  });
+}
+function v952PatchLegalModal(){
+  const openOrig = window.openLegalModal || openLegalModal;
+  window.openLegalModal = function(kind){
+    try{ if(els.sidePanel && (isSpPortrait() || window.innerWidth <= 900)){ state.uiOpen=false; els.sidePanel.classList.remove('open'); } }catch(_){ }
+    openOrig(kind);
+    if(els.legalModal){
+      els.legalModal.classList.remove('hidden');
+      els.legalModal.style.zIndex = '30000';
+      els.legalModal.style.pointerEvents = 'auto';
+    }
+  };
+}
+function v952FinalFixes(){
+  v952EnsureVersionBadge();
+  v952InstallDelegatedMenus();
+  if(!window.__v952LegalPatched){ window.__v952LegalPatched=true; v952PatchLegalModal(); }
+}
+setTimeout(v952FinalFixes, 80);
+window.addEventListener('load', v952FinalFixes);
+window.addEventListener('resize', v952FinalFixes);
