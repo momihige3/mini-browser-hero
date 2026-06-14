@@ -35,7 +35,7 @@ const DEATH_DANCE_CUTINS = [
 ];
 const DARK_SWORD_SAINT_CUTIN = {quote:'私を超えてみせろ。', img:'assets/cutin_dark_sword_dance.png'};
 const DARK_SWORD_TECHNIQUE_CUTIN = {quote:'', img:'assets/cutin_dark_sword_technique.png'};
-const GAME_VERSION = '95.4';
+const GAME_VERSION = '95.6';
 const DARK_SWORD_SAINT = {
   id:'dark_sword_saint', name:'暗黒剣聖', type:'裏ボス', img:'assets/enemy_dark_sword_saint.png', element:'dark',
   hp:32000, atk:260, def:95, xp:2600, gold:5000, bossChance:0, enemySkill:'暗黒斬'
@@ -598,7 +598,7 @@ function processStatusDots(now){
       if(state.hp <= 0){
         state.hp = 0;
         renderBattle();
-        if(Math.random() < calcStats().deathDanceChance){ startDeathDance(); return; }
+        if(tryHeroDeathDance()) return;
         startDown();
       }
     }
@@ -614,7 +614,7 @@ function processStatusDots(now){
       if(state.hp <= 0){
         state.hp = 0;
         renderBattle();
-        if(Math.random() < calcStats().deathDanceChance){ startDeathDance(); return; }
+        if(tryHeroDeathDance()) return;
         startDown();
       }
     }
@@ -656,7 +656,27 @@ function totalCurrentExp(){
   }
   return Math.max(1,total);
 }
+function formatExpDelta(value){
+  const n = Math.floor(Number(value)||0);
+  if(n > 0) return `+${n}`;
+  if(n < 0) return `${n}`;
+  return '0';
+}
+
+function tryHeroDeathDance(){
+  // DOWN/敗北処理と死線の剣舞が同時に走ると、HP0のまま攻撃と敗北がループするため排他制御する。
+  if(state.defeatSequence || state.down) return false;
+  // すでに剣舞中/剣舞カットイン中なら死亡処理へ進ませない。
+  if(state.deathDance || (state.deathDanceCutin && !state.darkSwordCutinActive)) return true;
+  const chance = calcStats().deathDanceChance;
+  if(Math.random() < chance){
+    startDeathDance();
+    return true;
+  }
+  return false;
+}
 function spawnWeakEnemyAfterEscape(){
+  if(state.defeatCountdownTimer){ clearInterval(state.defeatCountdownTimer); state.defeatCountdownTimer = null; }
   clearDarkSwordTimers();
   clearDeathDanceSequence();
   hideDeathDanceCutin();
@@ -665,6 +685,7 @@ function spawnWeakEnemyAfterEscape(){
   state.deathDance = false;
   state.deathDanceCutin = false;
   state.darkSwordCutinActive = false;
+  state.hp = maxHp();
   const base = normals[Math.floor(Math.random()*normals.length)] || ENEMIES[0];
   const lv = Math.max(1, Math.floor(state.level * 0.5));
   const e = makeScaledEnemy(base, lv);
@@ -695,8 +716,9 @@ function closeFleeModal(){
   if(modal) modal.classList.add('hidden');
 }
 function handleHeroDeath(){
-  if(state.defeatSequence) return;
+  if(state.defeatSequence || state.down || state.deathDance || (state.deathDanceCutin && !state.darkSwordCutinActive)) return;
   state.defeatSequence = true;
+  if(state.defeatCountdownTimer){ clearInterval(state.defeatCountdownTimer); state.defeatCountdownTimer = null; }
   clearDarkSwordTimers();
   clearDeathDanceSequence();
   hideDeathDanceCutin();
@@ -713,7 +735,7 @@ function handleHeroDeath(){
     els.downOverlay.classList.remove('hidden');
     const dt = els.downOverlay.querySelector('.down-text');
     if(dt) dt.textContent = 'DOWN...';
-    if(els.downCount) els.downCount.textContent = '敗北';
+    if(els.downCount) els.downCount.textContent = '5';
   }
   if(els.enemyCard){
     els.enemyCard.classList.remove('hit','attack','enter');
@@ -722,17 +744,22 @@ function handleHeroDeath(){
   if(els.enemyHpFill) els.enemyHpFill.style.width='0%';
   if(els.enemyHpText) els.enemyHpText.textContent='消滅';
   renderStatusLists();
+  renderBattle();
   scheduleSave();
-  setTimeout(()=>{
-    if(els.enemyCard) els.enemyCard.classList.remove('defeated-gone');
-    if(els.downOverlay){
-      const dt = els.downOverlay.querySelector('.down-text');
-      if(dt) dt.textContent = 'DOWN...';
+
+  let count = 5;
+  state.defeatCountdownTimer = setInterval(()=>{
+    count -= 1;
+    if(els.downCount) els.downCount.textContent = String(Math.max(0,count));
+    if(count <= 0){
+      clearInterval(state.defeatCountdownTimer);
+      state.defeatCountdownTimer = null;
+      if(els.enemyCard) els.enemyCard.classList.remove('defeated-gone');
+      spawnWeakEnemyAfterEscape();
+      state.defeatSequence = false;
+      log('弱いザコが現れた。','good');
     }
-    spawnWeakEnemyAfterEscape();
-    state.defeatSequence = false;
-    log('弱いザコが現れた。','good');
-  }, 1800);
+  }, 1000);
 }
 
 function enemyDefenseMultiplierFor(element){
@@ -1150,7 +1177,7 @@ function applyHeroHit(skill){
       const ref = Math.max(1, Math.floor(dmg * 0.10));
       state.hp = Math.max(0, state.hp - ref);
       showHeroFloat(`反射 ${ref}`, 'acid');
-      if(state.hp <= 0){ if(Math.random() < calcStats().deathDanceChance) startDeathDance(); else handleHeroDeath(); return; }
+      if(state.hp <= 0){ if(tryHeroDeathDance()) return; handleHeroDeath(); return; }
     }
     if(state.enemy?.bossBuff === 'spirit_king'){ addBurn('hero'); log('精霊王の炎が騎士に火傷を刻んだ。','danger'); }
   }
@@ -1195,7 +1222,7 @@ function enemyAttack(now){
   dmg = applyDarkShieldToDamage(dmg);
   // 暗黒剣舞はガード無効。主人公の剣舞中でも防御扱いにしない。
   if(state.hp - dmg <= 0){
-    if(Math.random()<st.deathDanceChance){ startDeathDance(); return; }
+    if(tryHeroDeathDance()) return;
     state.hp=0; renderBattle(); handleHeroDeath(); return;
   }
   state.hp=Math.max(0,state.hp-dmg);
@@ -1382,8 +1409,7 @@ function applyDarkSwordDanceHit(i, total, mode='finish'){
     showHeroFloat(`${mode==='punish'?'暗黒剣技':'暗黒剣舞'} ${dmg}`,'dark');
     playSfx('hit');
     // 暗黒剣舞でも主人公側の剣舞発動チャンスを許可。双方の剣舞が被って発動できる。
-    if(!state.debug.killHero && Math.random() < st.deathDanceChance){
-      startDeathDance();
+    if(!state.debug.killHero && tryHeroDeathDance()){
       renderBattle();
       return;
     }
@@ -1498,7 +1524,8 @@ function showDeathDanceHeartbeat(text='ドクン…'){
   // v68: ドクンドクン削除に合わせて心音SEは鳴らさない。
 }
 function startDeathDance(){
-  if(state.deathDance || (state.deathDanceCutin && !state.darkSwordCutinActive)) return;
+  if(state.defeatSequence || state.down) return false;
+  if(state.deathDance || (state.deathDanceCutin && !state.darkSwordCutinActive)) return true;
   clearDeathDanceSequence();
   state.hp = 1;
   state.deathDanceCutin = true;
@@ -1512,6 +1539,7 @@ function startDeathDance(){
   queueDeathDanceStep(()=>{ setBgmMode('dance'); }, 0);
   queueDeathDanceStep(()=>showDeathDanceCutin(), 1000);
   state.deathDanceCutinTimer = queueDeathDanceStep(beginDeathDanceAfterCutin, 4000);
+  return true;
 }
 function showDeathDanceCutin(){
   if(!els.deathDanceCutin) return;
@@ -1533,6 +1561,7 @@ function hideDeathDanceCutin(){
   if(!state.darkSwordCutinActive){ els.deathDanceCutin.classList.remove('dark-cutin'); }
 }
 function beginDeathDanceAfterCutin(){
+  if(state.defeatSequence || state.down){ clearDeathDanceSequence(); hideDeathDanceCutin(); return; }
   state.deathDanceCutin = false;
   state.deathDanceSeqTimers=[];
   const hb=document.getElementById('deathDanceHeartbeat'); if(hb) hb.remove();
@@ -2114,11 +2143,11 @@ function renderBattle(){
   const mh=maxHp(); els.heroLevel.textContent=`Lv.${state.level}`; els.heroHpFill.style.width=`${Math.max(0,state.hp/mh*100)}%`; els.heroHpText.textContent=`${Math.floor(state.hp)} / ${Math.floor(mh)}`;
   if(state.enemy){ els.enemyName.textContent=state.enemy.name; if(els.enemyLevel) els.enemyLevel.textContent=`Lv.${state.enemy.level||1}`; els.enemyTag.textContent=state.enemy.type==='ボス'?'BOSS':''; els.enemyHpFill.style.width=`${Math.max(0,state.enemyHp/state.enemy.maxHp*100)}%`; els.enemyHpText.textContent=`${Math.floor(state.enemyHp)} / ${state.enemy.maxHp}`; }
   if(els.chests) els.chests.textContent=state.chests; els.mats.textContent=state.mats;
-  if(els.expFill){ els.expFill.style.width=`${Math.max(0,Math.min(100,state.xp/state.xpNext*100))}%`; els.expLabel.textContent=`Lv.${state.level} EXP ${state.xp} / ${state.xpNext}`; els.expGainLabel.textContent=`+${state.lastXpGain}`; }
+  if(els.expFill){ els.expFill.style.width=`${Math.max(0,Math.min(100,state.xp/state.xpNext*100))}%`; els.expLabel.textContent=`Lv.${state.level} EXP ${state.xp} / ${state.xpNext}`; els.expGainLabel.textContent=formatExpDelta(state.lastXpGain); }
   if(state.deathDance){ els.deathDanceStatus.textContent = `死線の剣舞 残り${Math.max(0, Math.ceil((state.deathDanceUntil-performance.now())/1000))}秒`; }
   renderStatusLists();
 }
-function renderStats(){ const st=calcStats(); els.statLv.textContent=state.level; els.statXp.textContent=`${state.xp} / ${state.xpNext}`; els.statXpNext.textContent=state.xpNext; els.statXpGain.textContent=`+${state.lastXpGain}`; els.statAtk.textContent=Math.floor(st.atk); els.statDef.textContent=Math.floor(st.def); els.statFireRes.textContent=`${Math.round(st.fireRes*100)}%`; renderMonsterRecords(); }
+function renderStats(){ const st=calcStats(); els.statLv.textContent=state.level; els.statXp.textContent=`${state.xp} / ${state.xpNext}`; els.statXpNext.textContent=state.xpNext; els.statXpGain.textContent=formatExpDelta(state.lastXpGain); els.statAtk.textContent=Math.floor(st.atk); els.statDef.textContent=Math.floor(st.def); els.statFireRes.textContent=`${Math.round(st.fireRes*100)}%`; renderMonsterRecords(); }
 function renderMonsterRecords(){
   if(!els.monsterRecords) return;
   if(!state.enemyRecords) state.enemyRecords = {};
