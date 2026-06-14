@@ -1542,3 +1542,15 @@ body.using-touch .tooltip.status-tooltip-modal:not(.hidden),
   .death-dance-cutin.dark-cutin .death-dance-cutin-strip{height:clamp(210px,38vh,340px)!important;width:100vw!important;}
   .death-dance-cutin.dark-cutin .death-dance-cutin-strip img{left:0!important;width:48%!important;height:90%!important;object-fit:contain!important;}
 }
+
+
+/* v86: スマホは？アイコンを使わず、キャラタップで状態一覧を開く */
+.status-q{display:none!important;}
+.status-badge{padding-right:8px!important;}
+.card.enemy-card,.card.hero-card{cursor:pointer;touch-action:manipulation;}
+.status-detail-item{border-top:1px solid rgba(255,215,107,.25);padding:8px 0;}
+.status-detail-item:first-child{border-top:0;padding-top:0;}
+.status-empty{color:#d8c9a4;padding:8px 0;}
+@media(pointer:coarse), (max-width:1180px){
+  .status-detail-panel{bottom:calc(62px + env(safe-area-inset-bottom,0px))!important;}
+}
