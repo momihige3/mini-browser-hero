@@ -67,7 +67,7 @@ const state = {
   level:1, xp:0, xpNext:80, chests:0, mats:3, defeated:0,
   base:{hp:520, atk:48, def:14}, hp:520, enemy:null, enemyHp:1,
   inventory:[], equip:{}, down:false, downUntil:0, deathDance:false, deathDanceUntil:0, deathDanceCutin:false, deathDanceCutinTimer:null, deathDanceSeqTimers:[], lastHeroAttack:0, lastEnemyAttack:0,
-  log:[], debug:{killEnemy:false, killHero:false}, audio:null, masterGain:null, bgmGain:null, bgmTimer:null, bgmMode:'normal', normalBgm:null, swordDanceBgm:null, darkSwordSaintBgm:null, audioUnlocked:false, mobileMuted:true, menuPage:'stats', inventoryMenuItemId:null, enemyRecords:{}, forceFirstEnemy:false, bgmPausedByVisibility:false, heroStatuses:null, enemyStatuses:null
+  log:[], debug:{killEnemy:false, killHero:false}, audio:null, masterGain:null, bgmGain:null, bgmTimer:null, bgmMode:'normal', normalBgm:null, swordDanceBgm:null, darkSwordSaintBgm:null, darkSwordSaintVoice:null, darkSwordReviveTimer:null, audioUnlocked:false, mobileMuted:true, menuPage:'stats', inventoryMenuItemId:null, enemyRecords:{}, forceFirstEnemy:false, bgmPausedByVisibility:false, heroStatuses:null, enemyStatuses:null
 };
 
 const SAVE_KEY = 'mini-browser-hero-save-v36';
@@ -413,9 +413,10 @@ function maxHp(){return calcStats().hp}
 function nowMs(){ return performance.now(); }
 
 function makeEmptyEnemyStatuses(t=0){
-  return {bleeds:[], burnUntil:0, lastBleedTick:t, darkAuraStacks:0, darkAuraLastTick:t, darkSwordBuffs:[], darkDanceCount:0};
+  return {bleeds:[], burnUntil:0, lastBleedTick:t, darkAuraStacks:0, darkAuraLastTick:t, darkSwordBuffs:[], darkDanceCount:0, darkRevivingUntil:0, darkReviveStart:0};
 }
 function isDarkSwordSaint(e=state.enemy){ return !!e && e.id === 'dark_sword_saint'; }
+function isDarkSwordSaintReviving(){ ensureStatusContainers(); return isDarkSwordSaint() && (state.enemyStatuses.darkRevivingUntil || 0) > performance.now(); }
 function darkSwordBuffCount(){ ensureStatusContainers(); cleanupStatuses(); return state.enemyStatuses.darkSwordBuffs.length; }
 function darkSwordBuffSeconds(){ ensureStatusContainers(); cleanupStatuses(); const n=nowMs(); return Math.max(0, ...state.enemyStatuses.darkSwordBuffs.map(t=>Math.ceil((t-n)/1000)), 0); }
 function darkAuraStacks(){ ensureStatusContainers(); return state.enemyStatuses.darkAuraStacks || 0; }
@@ -473,6 +474,7 @@ function addBurn(target){
 }
 function processStatusDots(now){
   ensureStatusContainers(); cleanupStatuses();
+  if(isDarkSwordSaintReviving()){ renderStatusLists(); return; }
   if(state.enemy && state.enemyStatuses.bleeds.length){
     if(!state.enemyStatuses.lastBleedTick) state.enemyStatuses.lastBleedTick = now;
     const ticks = Math.floor((now - state.enemyStatuses.lastBleedTick)/1000);
@@ -540,7 +542,7 @@ function statusTooltipHtml(kind, target){
   if(kind === 'deathdance') return `<b>死線の剣舞</b><br>残り：${Math.max(0, Math.ceil((state.deathDanceUntil-nowMs())/1000))}秒<br>無敵状態で高速連撃。<br>`;
   if(kind === 'darkaura') return `<b>闇オーラ</b><br>現在：${darkAuraStacks()}スタック<br>1スタックごとに被ダメージ10%軽減。<br>闇オーラ中は出血ダメージ90%軽減。<br>最大10スタック。10秒ごとに1減少。<br>暗黒剣舞発動時に10へ回復。`;
   if(kind === 'darksword') return `<b>暗黒の剣</b><br>現在：${darkSwordBuffCount()}スタック<br>攻撃力+50% / スタック。<br>効果時間：60秒。スタック可能。<br>最長残り：${darkSwordBuffSeconds()}秒。`;
-  if(kind === 'darkdance') return `<b>暗黒剣舞</b><br>発動済み：${state.enemyStatuses?.darkDanceCount||0}回 / 10回<br>次回発動率：${darkDanceChanceForNext()}%<br>発動時：闇オーラ10、暗黒の剣+1、HP全回復。`;
+  if(kind === 'darkdance') return `<b>暗黒剣舞</b><br>発動済み：${state.enemyStatuses?.darkDanceCount||0}回 / 10回<br>次回発動率：${darkDanceChanceForNext()}%<br>発動時：5秒無敵、HPをゆっくり100%まで回復、闇オーラ10、暗黒の剣+1。<br>連続攻撃はガード無効。`;
   return '';
 }
 function showStatusTooltip(e, kind, target){
@@ -737,6 +739,7 @@ function elementName(element){
 }
 function applyHeroHit(skill){
   if(!state.enemy) return;
+  if(isDarkSwordSaintReviving()){ showFloat('無効','guard'); renderBattle(); return; }
   const st=calcStats(); let mult=1, element='physical', fx='slash', label='斬撃';
   // 属性仕様：通常斬撃/連続攻撃/大攻撃は物理。炎斬りは火、雷撃は雷。
   if(skill==='fire'){mult=1.45;element='fire';fx='fire';label='炎斬り'}
@@ -793,7 +796,7 @@ function enemyAttack(now){
   let dmg=Math.max(1, Math.floor(atk - st.def*.55*heroDefenseMultiplier() + rand(0,atk*.35)));
   if(state.debug.killHero){ dmg = Math.max(dmg, state.hp + 999999); }
   if(element==='fire') dmg=Math.floor(dmg*(1-st.fireRes));
-  if(state.deathDance){ showHeroFloat('GUARD','guard'); return; }
+  // 暗黒剣舞はガード無効。主人公の剣舞中でも防御扱いにしない。
   if(state.hp - dmg <= 0){
     if(Math.random()<st.deathDanceChance){ startDeathDance(); return; }
     state.hp=0; renderBattle(); startDown(); return;
@@ -820,21 +823,56 @@ function tryDarkSwordDanceRevive(){
     log(`暗黒剣舞は不発。暗黒剣聖を超えた！`, 'good');
     return false;
   }
+
+  const t = performance.now();
   state.enemyStatuses.darkDanceCount = count + 1;
+  state.enemyStatuses.darkReviveStart = t;
+  state.enemyStatuses.darkRevivingUntil = t + 5000;
+  state.enemyHp = 0;
+  state.deathDanceCutin = true;
+  state.lastHeroAttack = t;
+  state.lastEnemyAttack = t;
+
+  if(state.darkSwordReviveTimer) clearInterval(state.darkSwordReviveTimer);
+  renderBattle();
+  banner('暗黒剣舞！', 1200);
+  log(`暗黒剣舞発動！ 5秒間無敵化し、HPを回復する！（${state.enemyStatuses.darkDanceCount}回目）`, 'danger');
+  showDarkSwordDanceCutin();
+
+  state.darkSwordReviveTimer = setInterval(()=>{
+    if(!isDarkSwordSaint()){
+      clearInterval(state.darkSwordReviveTimer);
+      state.darkSwordReviveTimer = null;
+      return;
+    }
+    const now = performance.now();
+    const start = state.enemyStatuses.darkReviveStart || now;
+    const p = Math.max(0, Math.min(1, (now - start) / 5000));
+    state.enemyHp = Math.max(1, Math.floor(state.enemy.maxHp * p));
+    renderBattle();
+    if(p >= 1){
+      clearInterval(state.darkSwordReviveTimer);
+      state.darkSwordReviveTimer = null;
+      finishDarkSwordDanceRevive();
+    }
+  }, 50);
+  return true;
+}
+function finishDarkSwordDanceRevive(){
+  if(!isDarkSwordSaint()) return;
+  ensureStatusContainers();
+  state.enemyHp = state.enemy.maxHp;
+  state.enemyStatuses.darkRevivingUntil = 0;
+  state.enemyStatuses.darkReviveStart = 0;
   state.enemyStatuses.darkAuraStacks = 10;
   state.enemyStatuses.darkAuraLastTick = performance.now();
   state.enemyStatuses.darkSwordBuffs.push(performance.now() + 60000);
-  state.enemyHp = state.enemy.maxHp;
-  state.deathDanceCutin = true;
-  state.lastHeroAttack = performance.now();
-  state.lastEnemyAttack = performance.now();
+  state.deathDanceCutin = false;
+  hideDeathDanceCutin();
   renderBattle();
-  banner('暗黒剣舞！', 1200);
-  log(`暗黒剣舞発動！ 闇オーラ10、暗黒の剣+1（${state.enemyStatuses.darkDanceCount}回目）`, 'danger');
-  showDarkSwordDanceCutin();
-  setTimeout(()=>{ darkSwordDanceCombo(); }, 900);
-  setTimeout(()=>{ hideDeathDanceCutin(); state.deathDanceCutin = false; renderBattle(); }, 2600);
-  return true;
+  renderStatusLists();
+  log(`闇オーラ10、暗黒の剣+1。暗黒剣舞はガードを無効化する！`, 'danger');
+  darkSwordDanceCombo();
 }
 function darkSwordDanceCombo(){
   if(!isDarkSwordSaint() || state.down) return;
@@ -846,7 +884,7 @@ function darkSwordDanceCombo(){
 function applyDarkSwordDanceHit(i, total){
   if(!isDarkSwordSaint() || state.down) return;
   const e = state.enemy, st = calcStats();
-  if(state.deathDance){ showHeroFloat('GUARD','guard'); return; }
+  // 暗黒剣舞はガード無効。主人公が剣舞中でも被弾する。
   const atk = e.atk * (1 + darkSwordBuffCount() * 0.5);
   let dmg = Math.max(1, Math.floor((atk*0.62 + rand(0, atk*0.18)) - st.def*0.30*heroDefenseMultiplier()));
   if(state.debug.killHero){ dmg = Math.max(dmg, state.hp + 999999); }
@@ -863,7 +901,10 @@ function applyDarkSwordDanceHit(i, total){
   state.hp = Math.max(0, state.hp - dmg);
   showHeroFloat(`暗黒剣舞 ${dmg}`,'damage');
   playSfx(i % 2 ? 'slash' : 'hit');
-  if(i === total) tryApplyEnemyHitDebuffs('normal');
+  if(i === total){
+    tryApplyEnemyHitDebuffs('normal');
+    if(isDarkSwordSaint() && state.enemyHp > 0 && !state.down) setBgmMode('dark_sword_saint');
+  }
   renderBattle();
 }
 function showDarkSwordDanceCutin(){
@@ -874,10 +915,15 @@ function showDarkSwordDanceCutin(){
   void els.deathDanceCutin.offsetWidth;
   els.deathDanceCutin.classList.add('show');
   playSfx('cutin');
+  playDarkSwordSaintVoice();
 }
 function enemyDefeated(){
   const e=state.enemy;
-  if(e && e.id === 'dark_sword_saint') setBgmMode('normal');
+  if(e && e.id === 'dark_sword_saint'){
+    if(state.darkSwordReviveTimer){ clearInterval(state.darkSwordReviveTimer); state.darkSwordReviveTimer=null; }
+    if(state.enemyStatuses){ state.enemyStatuses.darkRevivingUntil=0; state.enemyStatuses.darkReviveStart=0; }
+    setBgmMode('normal');
+  }
   state.enemy=null;
   els.enemyCard.classList.add('dead');
   state.defeated++;
@@ -984,7 +1030,7 @@ function endDeathDance(){
   els.deathAura.classList.add('hidden');
   els.deathDanceStatus.classList.add('hidden');
   renderStatusLists();
-  setBgmMode('normal');
+  setBgmMode(isDarkSwordSaint() && state.enemyHp > 0 ? 'dark_sword_saint' : 'normal');
   banner('死線の剣舞 終了');
   log('死線の剣舞が終了。','skilllog');
 }
@@ -1062,6 +1108,11 @@ function ensureBgmAudio(){
     state.darkSwordSaintBgm.loop = true;
     state.darkSwordSaintBgm.preload = 'auto';
   }
+  if(!state.darkSwordSaintVoice){
+    state.darkSwordSaintVoice = new Audio('DarkKnigtVoice.mp3');
+    state.darkSwordSaintVoice.loop = false;
+    state.darkSwordSaintVoice.preload = 'auto';
+  }
   updateBgmVolume();
 }
 function updateBgmVolume(){
@@ -1069,6 +1120,7 @@ function updateBgmVolume(){
   if(state.normalBgm) state.normalBgm.volume = v;
   if(state.swordDanceBgm) state.swordDanceBgm.volume = v;
   if(state.darkSwordSaintBgm) state.darkSwordSaintBgm.volume = v;
+  if(state.darkSwordSaintVoice) state.darkSwordSaintVoice.volume = state.mobileMuted ? 0 : Math.max(0, Math.min(2, state.volume)) * 0.50;
 }
 function safePlayAudio(a){
   if(!a || state.mobileMuted) return;
@@ -1076,6 +1128,14 @@ function safePlayAudio(a){
     const p = a.play();
     if(p && typeof p.catch === 'function') p.catch(()=>{});
   }catch(e){}
+}
+function playDarkSwordSaintVoice(){
+  if(!state.audioUnlocked || state.mobileMuted) return;
+  ensureBgmAudio();
+  updateBgmVolume();
+  if(!state.darkSwordSaintVoice) return;
+  try{ state.darkSwordSaintVoice.pause(); state.darkSwordSaintVoice.currentTime = 0; }catch(e){}
+  safePlayAudio(state.darkSwordSaintVoice);
 }
 function pauseNormalBgm(){
   if(state.normalBgm) state.normalBgm.pause();
@@ -1085,6 +1145,7 @@ function stopAllBgm(){
   if(state.normalBgm) state.normalBgm.pause();
   if(state.swordDanceBgm){ state.swordDanceBgm.pause(); state.swordDanceBgm.currentTime = 0; }
   if(state.darkSwordSaintBgm){ state.darkSwordSaintBgm.pause(); state.darkSwordSaintBgm.currentTime = 0; }
+  if(state.darkSwordSaintVoice){ state.darkSwordSaintVoice.pause(); state.darkSwordSaintVoice.currentTime = 0; }
 }
 
 function pauseBgmForPageHidden(){
@@ -1093,6 +1154,7 @@ function pauseBgmForPageHidden(){
   if(state.normalBgm) state.normalBgm.pause();
   if(state.swordDanceBgm) state.swordDanceBgm.pause();
   if(state.darkSwordSaintBgm) state.darkSwordSaintBgm.pause();
+  if(state.darkSwordSaintVoice) state.darkSwordSaintVoice.pause();
 }
 function resumeBgmForPageVisible(){
   if(!state.bgmPausedByVisibility) return;
@@ -1315,6 +1377,7 @@ function playBgm(){
   }else{
     if(state.swordDanceBgm){ state.swordDanceBgm.pause(); try{ state.swordDanceBgm.currentTime = 0; }catch(e){} }
     if(state.darkSwordSaintBgm){ state.darkSwordSaintBgm.pause(); try{ state.darkSwordSaintBgm.currentTime = 0; }catch(e){} }
+  if(state.darkSwordSaintVoice){ state.darkSwordSaintVoice.pause(); try{ state.darkSwordSaintVoice.currentTime = 0; }catch(e){} }
     safePlayAudio(state.normalBgm);
   }
 }
