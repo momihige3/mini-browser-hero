@@ -545,25 +545,54 @@ function statusTooltipHtml(kind, target){
 }
 function showStatusTooltip(e, kind, target){
   if(!els.tooltip) return;
-  els.tooltip.innerHTML = statusTooltipHtml(kind, target);
-  const x = (e.clientX || (e.touches && e.touches[0]?.clientX) || window.innerWidth/2) + 12;
-  const y = (e.clientY || (e.touches && e.touches[0]?.clientY) || window.innerHeight/2) + 12;
-  els.tooltip.style.left = Math.min(x, window.innerWidth - 260) + 'px';
-  els.tooltip.style.top = Math.min(y, window.innerHeight - 150) + 'px';
+  const html = statusTooltipHtml(kind, target);
+  if(!html) return;
+  els.tooltip.innerHTML = html;
   els.tooltip.classList.remove('hidden');
+  const isSmallPortrait = window.matchMedia('(orientation: portrait) and (max-height: 780px)').matches || window.innerWidth <= 520;
+  if(isSmallPortrait){
+    els.tooltip.classList.add('status-tooltip-modal');
+    els.tooltip.style.left = '50%';
+    els.tooltip.style.top = '50%';
+    els.tooltip.style.right = 'auto';
+    els.tooltip.style.bottom = 'auto';
+    els.tooltip.style.transform = 'translate(-50%, -50%)';
+    return;
+  }
+  els.tooltip.classList.remove('status-tooltip-modal');
+  els.tooltip.style.transform = 'none';
+  els.tooltip.style.right = 'auto';
+  els.tooltip.style.bottom = 'auto';
+
+  const touch = e.touches && e.touches[0] ? e.touches[0] : null;
+  const baseX = (typeof e.clientX === 'number' && e.clientX) ? e.clientX : (touch ? touch.clientX : window.innerWidth/2);
+  const baseY = (typeof e.clientY === 'number' && e.clientY) ? e.clientY : (touch ? touch.clientY : window.innerHeight/2);
+  const pad = 10;
+  const rect = els.tooltip.getBoundingClientRect();
+  let x = baseX + 14;
+  let y = baseY + 14;
+  if(x + rect.width + pad > window.innerWidth) x = baseX - rect.width - 14;
+  if(y + rect.height + pad > window.innerHeight) y = baseY - rect.height - 14;
+  x = Math.max(pad, Math.min(x, window.innerWidth - rect.width - pad));
+  y = Math.max(pad, Math.min(y, window.innerHeight - rect.height - pad));
+  els.tooltip.style.left = x + 'px';
+  els.tooltip.style.top = y + 'px';
 }
-function hideStatusTooltip(){ if(els.tooltip) els.tooltip.classList.add('hidden'); }
+function hideStatusTooltip(){ if(els.tooltip){ els.tooltip.classList.add('hidden'); els.tooltip.classList.remove('status-tooltip-modal'); } }
 function makeStatusBadge(label, cls, kind, target){
-  return `<button type="button" class="status-badge ${cls}" data-status-kind="${kind}" data-status-target="${target}">${label}</button>`;
+  return `<button type="button" class="status-badge ${cls}" data-status-kind="${kind}" data-status-target="${target}" aria-label="${label} の効果を見る">${label}<span class="status-q">?</span></button>`;
 }
 function bindStatusBadgeEvents(){
   document.querySelectorAll('.status-badge').forEach(btn=>{
     btn.onmouseenter = (e)=>showStatusTooltip(e, btn.dataset.statusKind, btn.dataset.statusTarget);
     btn.onmousemove = (e)=>showStatusTooltip(e, btn.dataset.statusKind, btn.dataset.statusTarget);
     btn.onmouseleave = hideStatusTooltip;
+    btn.ontouchstart = (e)=>{ e.stopPropagation(); showStatusTooltip(e, btn.dataset.statusKind, btn.dataset.statusTarget); };
     btn.onclick = (e)=>{ e.stopPropagation(); showStatusTooltip(e, btn.dataset.statusKind, btn.dataset.statusTarget); };
   });
 }
+document.addEventListener('click', (e)=>{ if(!e.target.closest || !e.target.closest('.status-badge,.tooltip')) hideStatusTooltip(); });
+document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape') hideStatusTooltip(); });
 function renderStatusLists(){
   ensureStatusContainers(); cleanupStatuses();
   if(els.enemyStatusList){

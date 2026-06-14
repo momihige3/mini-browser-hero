@@ -1210,3 +1210,72 @@ body.modal-open{overflow:hidden;}
 }
 
 @media (orientation: portrait){ .character,.enemy-character,.battle-character{margin-top:40px!important;} }
+
+/* v78: 縦画面UI・ツールチップ・カットイン表示修正 */
+.tooltip{
+  position:fixed!important;
+  z-index:20000!important;
+  max-width:min(320px,calc(100vw - 20px))!important;
+  max-height:calc(100vh - 20px)!important;
+  overflow:auto!important;
+  background:rgba(5,5,8,.98)!important;
+  border:1px solid #ffd76b!important;
+  border-radius:8px!important;
+  padding:10px 12px!important;
+  line-height:1.55!important;
+  box-shadow:0 0 0 1px #000,0 0 32px #000!important;
+  pointer-events:auto!important;
+}
+.tooltip.status-tooltip-modal{
+  width:min(340px,calc(100vw - 24px))!important;
+  text-align:left!important;
+}
+.status-badge{position:relative!important;padding-right:18px!important;}
+.status-q{
+  position:absolute;right:5px;top:50%;transform:translateY(-50%);
+  display:inline-grid;place-items:center;width:12px;height:12px;border-radius:50%;
+  font-size:9px;line-height:1;color:#111;background:#ffe89a;border:1px solid rgba(0,0,0,.45);
+}
+@media (orientation:portrait){
+  .battle-panel{overflow:hidden!important;}
+  .enemy-zone,.hero-zone{
+    top:clamp(126px,22vh,190px)!important;
+    z-index:4!important;
+  }
+  .name-line,.hpbar,.status-list{position:relative!important;z-index:8!important;}
+  .card{margin-top:14px!important;}
+}
+@media (orientation:portrait) and (min-height:850px){
+  .enemy-zone,.hero-zone{top:clamp(150px,24vh,230px)!important;}
+  .card{margin-top:18px!important;}
+}
+@media (orientation:portrait) and (max-width:760px){
+  .enemy-zone,.hero-zone{top:clamp(118px,21vh,170px)!important;}
+  .card{height:min(43vh,430px)!important;margin-top:12px!important;}
+  .status-list{margin-top:5px!important;}
+}
+@media (orientation:portrait) and (max-height:780px){
+  .enemy-zone,.hero-zone{top:112px!important;}
+  .card{height:38vh!important;margin-top:10px!important;}
+  .tooltip{font-size:12px!important;}
+}
+.death-dance-cutin-strip{
+  height:clamp(190px,34vh,360px)!important;
+  overflow:hidden!important;
+}
+.death-dance-cutin-strip img{
+  top:50%!important;
+  left:clamp(8px,3vw,42px)!important;
+  width:min(52%,620px)!important;
+  height:92%!important;
+  object-fit:contain!important;
+  object-position:center!important;
+  transform:translateY(-50%) skewX(8deg)!important;
+}
+.death-dance-cutin-quote{max-width:52%!important;}
+@media(max-width:760px){
+  .death-dance-cutin-strip{height:clamp(210px,38vh,340px)!important;width:100vw!important;}
+  .death-dance-cutin-strip img{left:0!important;width:48%!important;height:90%!important;}
+  .death-dance-cutin-quote{right:3%!important;max-width:50%!important;font-size:clamp(18px,5.4vw,34px)!important;}
+  .death-dance-cutin-title{font-size:clamp(30px,10vw,58px)!important;margin-top:12px!important;}
+}
