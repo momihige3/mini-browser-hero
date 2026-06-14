@@ -45,3 +45,11 @@ Mini Browser Hero v59
 - BGM volume changed to 2%.
 - All SE kept loud/clear, especially attack SE.
 - Attack SE also plays immediately when the hero attack animation starts.
+
+
+## v71
+- iPhone/Safari向けにSEのAudioContext解除処理を強化。
+- ミュート解除時にSE経路も初期化し、自動攻撃SEが鳴りやすいよう修正。
+- 通常BGM/剣舞BGMの音量を3%に変更。
+- SEは100%方針を維持。
+- モンスター討伐記録とバトルログのスクロールバーを倉庫と同じ見た目に統一。

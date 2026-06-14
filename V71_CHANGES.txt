@@ -1,0 +1,5 @@
+v71 changes
+- iPhone/Safari SE unlock strengthened.
+- BGM volume changed to 3%.
+- SE remains 100%.
+- Monster records and battle log scrollbar style matched to inventory.

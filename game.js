@@ -704,6 +704,26 @@ function primeAudio(){
     o.stop(t + 0.03);
   }catch(e){}
 }
+function unlockSfxForIOS(){
+  // iPhone/Safari対策：ミュート解除のユーザー操作中にSE経路も起こす。
+  // ここで一度だけ極小音量の短い音を流しておくと、自動攻撃SEが後続で鳴りやすい。
+  if(state.mobileMuted || !state.audio || !state.masterGain) return;
+  try{
+    const ctx = state.audio;
+    if(ctx.state !== 'running') return;
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = 'triangle';
+    o.frequency.value = 880;
+    g.gain.value = 0.00001;
+    o.connect(g);
+    g.connect(state.masterGain);
+    const t = ctx.currentTime;
+    o.start(t);
+    o.stop(t + 0.04);
+    state.audioUnlocked = true;
+  }catch(e){}
+}
 function ensureBgmAudio(){
   if(!state.normalBgm){
     state.normalBgm = new Audio('Petals_on_the_Water.mp3');
@@ -718,7 +738,7 @@ function ensureBgmAudio(){
   updateBgmVolume();
 }
 function updateBgmVolume(){
-  const v = state.mobileMuted ? 0 : Math.max(0, Math.min(2, state.volume)) * 0.02;
+  const v = state.mobileMuted ? 0 : Math.max(0, Math.min(2, state.volume)) * 0.03;
   if(state.normalBgm) state.normalBgm.volume = v;
   if(state.swordDanceBgm) state.swordDanceBgm.volume = v;
 }
@@ -767,6 +787,7 @@ function startAudio(){
     const unlock = () => {
       primeAudio();
       state.audioUnlocked = !state.audio || state.audio.state === 'running';
+      if(state.audioUnlocked) unlockSfxForIOS();
       if(els.audioHint) els.audioHint.classList.add('hidden');
       if(state.audioUnlocked && !state.mobileMuted) playBgm();
     };
@@ -804,11 +825,14 @@ function ensureSfxReady(){
     if(state.audio && state.audio.state === 'suspended'){
       const p = state.audio.resume();
       if(p && typeof p.then === 'function'){
-        p.then(()=>{ state.audioUnlocked = true; }).catch(()=>{});
+        p.then(()=>{ state.audioUnlocked = true; unlockSfxForIOS(); }).catch(()=>{});
       }
     }
-    if(!state.audio || state.audio.state === 'running') state.audioUnlocked = true;
-    return !!state.audio && !!state.masterGain && !state.mobileMuted;
+    if(!state.audio || state.audio.state === 'running'){
+      state.audioUnlocked = true;
+      unlockSfxForIOS();
+    }
+    return !!state.audio && !!state.masterGain && state.audio.state === 'running' && !state.mobileMuted;
   }catch(e){
     return false;
   }
@@ -856,7 +880,7 @@ function sv(v){ return Math.max(0, Math.min(1, v * SFX_VOL)); }
 
 function playSfx(kind){
   if(!ensureSfxReady()) return;
-  // v70: BGMは2%に下げ、SEは100%方針で明確に鳴らす。
+  // v71: BGMは3%、SEは100%方針で明確に鳴らす。
   switch(kind){
     case 'slash':
       noiseBurst(.075, sv(.18), 0, 1700);

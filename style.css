@@ -1106,3 +1106,31 @@ body.modal-open{overflow:hidden;}
   42%{opacity:.92;transform:scale(.98);filter:brightness(1)}
   100%{opacity:0;transform:scale(1.18);filter:brightness(.8)}
 }
+
+
+/* v71: モンスター討伐記録/バトルログのスクロールバーを倉庫に統一 */
+.inventory,
+.log,
+.monster-record-list{
+  scrollbar-color:#9d742a #111!important;
+  scrollbar-width:thin!important;
+}
+.inventory::-webkit-scrollbar,
+.log::-webkit-scrollbar,
+.monster-record-list::-webkit-scrollbar{
+  width:8px!important;
+  height:8px!important;
+}
+.inventory::-webkit-scrollbar-thumb,
+.log::-webkit-scrollbar-thumb,
+.monster-record-list::-webkit-scrollbar-thumb{
+  background:#8b6628!important;
+  border-radius:8px!important;
+  border:1px solid rgba(255,220,140,.18)!important;
+}
+.inventory::-webkit-scrollbar-track,
+.log::-webkit-scrollbar-track,
+.monster-record-list::-webkit-scrollbar-track{
+  background:#120b06!important;
+  border-radius:8px!important;
+}
