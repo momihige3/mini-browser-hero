@@ -556,6 +556,39 @@ function statusTooltipHtml(kind, target){
   if(kind === 'darkdance') return `<b>暗黒剣舞</b><br>発動済み：${state.enemyStatuses?.darkDanceCount||0}回 / 10回<br>次回発動率：${darkDanceChanceForNext()}%<br>発動時：カットイン後に5秒無敵、HPをゆっくり100%まで回復、闇オーラ10、暗黒の剣+1。<br>連続攻撃はガード無効、防御力50%無視。`;
   return '';
 }
+
+function ensureStatusDetailPanel(){
+  let panel = document.getElementById('statusDetailPanel');
+  if(panel) return panel;
+  panel = document.createElement('div');
+  panel.id = 'statusDetailPanel';
+  panel.className = 'status-detail-panel hidden';
+  panel.innerHTML = `<button type="button" class="status-detail-close" aria-label="閉じる">×</button><div class="status-detail-title">状態詳細</div><div class="status-detail-body"></div>`;
+  document.body.appendChild(panel);
+  const close = panel.querySelector('.status-detail-close');
+  if(close) close.addEventListener('click', (e)=>{ e.preventDefault(); e.stopPropagation(); hideStatusDetailPanel(); });
+  return panel;
+}
+function showStatusDetailPanel(kind, target){
+  const html = statusTooltipHtml(kind, target);
+  if(!html) return;
+  const panel = ensureStatusDetailPanel();
+  const title = panel.querySelector('.status-detail-title');
+  const body = panel.querySelector('.status-detail-body');
+  if(title) title.textContent = target === 'enemy' ? '敵の状態詳細' : '主人公の状態詳細';
+  if(body) body.innerHTML = html;
+  panel.dataset.statusKind = kind || '';
+  panel.dataset.statusTarget = target || '';
+  panel.classList.remove('hidden');
+}
+function hideStatusDetailPanel(){
+  const panel = document.getElementById('statusDetailPanel');
+  if(panel) panel.classList.add('hidden');
+}
+function isNarrowBattleTooltipMode(){
+  return window.innerWidth <= 1180 || window.matchMedia('(orientation: portrait)').matches || window.matchMedia('(pointer: coarse)').matches;
+}
+
 function showStatusTooltip(e, kind, target, forceBottom=false){
   if(!els.tooltip) return;
   const html = statusTooltipHtml(kind, target);
@@ -563,15 +596,10 @@ function showStatusTooltip(e, kind, target, forceBottom=false){
   els.tooltip.innerHTML = html;
   els.tooltip.classList.remove('hidden');
   const eventType = e?.type || '';
-  const isClickLike = forceBottom || eventType === 'click' || eventType === 'touchstart';
-  const isSmallPortrait = window.matchMedia('(orientation: portrait) and (max-height: 840px)').matches || window.innerWidth <= 760;
-  if(isClickLike || isSmallPortrait){
-    els.tooltip.classList.add('status-tooltip-modal','status-tooltip-bottom');
-    els.tooltip.style.left = '50%';
-    els.tooltip.style.top = 'auto';
-    els.tooltip.style.right = 'auto';
-    els.tooltip.style.bottom = 'calc(72px + env(safe-area-inset-bottom, 0px))';
-    els.tooltip.style.transform = 'translateX(-50%)';
+  const isClickLike = forceBottom || eventType === 'click' || eventType === 'touchstart' || eventType === 'pointerdown';
+  if(isClickLike || isNarrowBattleTooltipMode()){
+    if(els.tooltip) els.tooltip.classList.add('hidden');
+    showStatusDetailPanel(kind, target);
     return;
   }
   els.tooltip.classList.remove('status-tooltip-modal','status-tooltip-bottom');
@@ -599,15 +627,43 @@ function makeStatusBadge(label, cls, kind, target){
 }
 function bindStatusBadgeEvents(){
   document.querySelectorAll('.status-badge').forEach(btn=>{
-    btn.onmouseenter = (e)=>showStatusTooltip(e, btn.dataset.statusKind, btn.dataset.statusTarget);
-    btn.onmousemove = (e)=>showStatusTooltip(e, btn.dataset.statusKind, btn.dataset.statusTarget);
+    btn.onpointerdown = (e)=>{
+      if(e.pointerType && e.pointerType !== 'mouse') setPointerMode('touch');
+      if(isNarrowBattleTooltipMode() || (e.pointerType && e.pointerType !== 'mouse')){
+        e.preventDefault(); e.stopPropagation();
+        showStatusDetailPanel(btn.dataset.statusKind, btn.dataset.statusTarget);
+      }
+    };
+    btn.onclick = (e)=>{
+      e.preventDefault(); e.stopPropagation();
+      showStatusDetailPanel(btn.dataset.statusKind, btn.dataset.statusTarget);
+    };
+    btn.onmouseenter = (e)=>{ if(!isNarrowBattleTooltipMode()) showStatusTooltip(e, btn.dataset.statusKind, btn.dataset.statusTarget); };
+    btn.onmousemove = (e)=>{ if(!isNarrowBattleTooltipMode()) showStatusTooltip(e, btn.dataset.statusKind, btn.dataset.statusTarget); };
     btn.onmouseleave = hideStatusTooltip;
-    btn.ontouchstart = (e)=>{ e.preventDefault(); e.stopPropagation(); showStatusTooltip(e, btn.dataset.statusKind, btn.dataset.statusTarget, true); };
-    btn.onclick = (e)=>{ e.preventDefault(); e.stopPropagation(); showStatusTooltip(e, btn.dataset.statusKind, btn.dataset.statusTarget, true); };
+    btn.ontouchstart = (e)=>{ e.preventDefault(); e.stopPropagation(); setPointerMode('touch'); showStatusDetailPanel(btn.dataset.statusKind, btn.dataset.statusTarget); };
   });
 }
-document.addEventListener('click', (e)=>{ if(!e.target.closest || !e.target.closest('.status-badge,.tooltip')) hideStatusTooltip(); });
-document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape') hideStatusTooltip(); });
+document.addEventListener('click', (e)=>{ if(!e.target.closest) return; if(!e.target.closest('.status-badge,.tooltip,#statusDetailPanel')){ hideStatusTooltip(); hideStatusDetailPanel(); } });
+document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape'){ hideStatusTooltip(); hideStatusDetailPanel(); } });
+
+document.addEventListener('pointerdown', (e)=>{
+  const btn = e.target?.closest ? e.target.closest('.status-badge') : null;
+  if(!btn) return;
+  if(e.pointerType && e.pointerType !== 'mouse') setPointerMode('touch');
+  if(isNarrowBattleTooltipMode() || (e.pointerType && e.pointerType !== 'mouse')){
+    e.preventDefault(); e.stopPropagation();
+    showStatusDetailPanel(btn.dataset.statusKind, btn.dataset.statusTarget);
+  }
+}, true);
+document.addEventListener('touchstart', (e)=>{
+  const btn = e.target?.closest ? e.target.closest('.status-badge') : null;
+  if(!btn) return;
+  setPointerMode('touch');
+  e.preventDefault(); e.stopPropagation();
+  showStatusDetailPanel(btn.dataset.statusKind, btn.dataset.statusTarget);
+}, {capture:true, passive:false});
+
 function renderStatusLists(){
   ensureStatusContainers(); cleanupStatuses();
   if(els.enemyStatusList){
@@ -862,6 +918,8 @@ function tryDarkSwordDanceRevive(){
     hideDeathDanceCutin();
     state.deathDanceCutin = false;
     state.darkSwordCutinActive = false;
+    // カットインが消えた直後から、回復待ち時間中にも暗黒剣舞の連続攻撃を開始する。
+    darkSwordDanceCombo('recovering');
     const recoveryStart = performance.now();
     state.enemyStatuses.darkReviveStart = recoveryStart;
     state.enemyStatuses.darkRevivingUntil = recoveryStart + 5000;
@@ -902,13 +960,14 @@ function finishDarkSwordDanceRevive(){
   log(`闇オーラ10、暗黒の剣+1。暗黒剣舞はガード無効・防御力50%無視！`, 'danger');
   setTimeout(()=>darkSwordDanceCombo(), 120);
 }
-function darkSwordDanceCombo(){
+function darkSwordDanceCombo(mode='finish'){
   if(!isDarkSwordSaint()) return;
-  const hitCount = 5;
-  log('暗黒剣舞の連続攻撃！', 'danger');
+  const hitCount = mode === 'recovering' ? 8 : 5;
+  const interval = mode === 'recovering' ? 520 : 170;
+  log(mode === 'recovering' ? '暗黒剣舞の連続攻撃が回復中に始まった！' : '暗黒剣舞の追撃連続攻撃！', 'danger');
   state.lastEnemyAttack = performance.now();
   for(let i=0;i<hitCount;i++){
-    setTimeout(()=>applyDarkSwordDanceHit(i+1, hitCount), i*170);
+    setTimeout(()=>applyDarkSwordDanceHit(i+1, hitCount), i*interval);
   }
 }
 function applyDarkSwordDanceHit(i, total){
@@ -951,6 +1010,8 @@ function applyDarkSwordDanceHit(i, total){
 }
 function showDarkSwordDanceCutin(){
   if(!els.deathDanceCutin) return;
+  els.deathDanceCutin.classList.remove('hero-cutin');
+  els.deathDanceCutin.classList.add('dark-cutin');
   if(els.deathDanceCutinImg) els.deathDanceCutinImg.src = DARK_SWORD_SAINT_CUTIN.img;
   if(els.deathDanceCutinQuote) els.deathDanceCutinQuote.textContent = DARK_SWORD_SAINT_CUTIN.quote;
   els.deathDanceCutin.classList.remove('hidden');
@@ -1035,6 +1096,8 @@ function startDeathDance(){
 }
 function showDeathDanceCutin(){
   if(!els.deathDanceCutin) return;
+  els.deathDanceCutin.classList.remove('dark-cutin');
+  els.deathDanceCutin.classList.add('hero-cutin');
   const data = DEATH_DANCE_CUTINS[Math.floor(Math.random() * DEATH_DANCE_CUTINS.length)];
   if(els.deathDanceCutinImg) els.deathDanceCutinImg.src = data.img;
   if(els.deathDanceCutinQuote) els.deathDanceCutinQuote.textContent = data.quote;
@@ -1047,6 +1110,7 @@ function hideDeathDanceCutin(){
   if(!els.deathDanceCutin) return;
   els.deathDanceCutin.classList.remove('show');
   els.deathDanceCutin.classList.add('hidden');
+  if(!state.darkSwordCutinActive){ els.deathDanceCutin.classList.remove('dark-cutin'); }
 }
 function beginDeathDanceAfterCutin(){
   state.deathDanceCutin = false;

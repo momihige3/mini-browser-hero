@@ -1445,3 +1445,100 @@ body.using-touch .tooltip.status-tooltip-modal:not(.hidden),
     font-size:12px!important;
   }
 }
+
+/* v85: 狭いPC幅・スマホでも必ず出るバフ/デバフ詳細パネル */
+.status-detail-panel{
+  position:fixed!important;
+  left:50%!important;
+  bottom:calc(18px + env(safe-area-inset-bottom, 0px))!important;
+  transform:translateX(-50%)!important;
+  width:min(460px,calc(100vw - 18px))!important;
+  max-height:min(34vh,250px)!important;
+  overflow:auto!important;
+  z-index:2147483647!important;
+  padding:10px 42px 10px 12px!important;
+  border:2px solid #ffd76b!important;
+  border-radius:12px!important;
+  background:rgba(5,5,8,.98)!important;
+  color:#ffeec7!important;
+  box-shadow:0 0 0 1px #000,0 0 36px #000,0 -8px 28px rgba(0,0,0,.55)!important;
+  font-size:13px!important;
+  line-height:1.55!important;
+  pointer-events:auto!important;
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
+}
+.status-detail-panel.hidden{display:none!important;}
+.status-detail-title{
+  font-weight:900!important;
+  color:#ffd76b!important;
+  margin-bottom:4px!important;
+  text-shadow:0 1px 2px #000!important;
+}
+.status-detail-body b{color:#fff3bd!important;font-size:15px!important;}
+.status-detail-close{
+  position:absolute!important;
+  right:8px!important;
+  top:7px!important;
+  width:28px!important;
+  height:28px!important;
+  padding:0!important;
+  display:grid!important;
+  place-items:center!important;
+  border-radius:50%!important;
+  z-index:1!important;
+}
+@media(max-width:1180px){
+  .status-detail-panel{
+    bottom:calc(54px + env(safe-area-inset-bottom, 0px))!important;
+    width:calc(100vw - 18px)!important;
+    max-height:30vh!important;
+    font-size:12px!important;
+  }
+}
+@media(max-height:620px){
+  .status-detail-panel{
+    bottom:calc(42px + env(safe-area-inset-bottom, 0px))!important;
+    max-height:38vh!important;
+  }
+}
+
+/* v85.1: 主人公の剣舞カットインだけ以前の迫力表示へ戻す */
+.death-dance-cutin.hero-cutin .death-dance-cutin-strip{
+  height:clamp(108px,18vh,170px)!important;
+  width:min(96vw,1280px)!important;
+  overflow:hidden!important;
+}
+.death-dance-cutin.hero-cutin .death-dance-cutin-strip img{
+  left:-24px!important;
+  top:50%!important;
+  width:58%!important;
+  height:120%!important;
+  object-fit:cover!important;
+  object-position:center!important;
+  transform:translateY(-50%) skewX(8deg) scale(1.03)!important;
+}
+@media(max-width:760px){
+  .death-dance-cutin.hero-cutin .death-dance-cutin-strip{width:100vw!important;height:110px!important;}
+  .death-dance-cutin.hero-cutin .death-dance-cutin-strip img{width:62%!important;left:-58px!important;height:120%!important;object-fit:cover!important;}
+}
+/* 暗黒剣聖は全体表示維持 */
+.death-dance-cutin.dark-cutin .death-dance-cutin-strip{
+  height:clamp(190px,34vh,360px)!important;
+  width:100vw!important;
+  overflow:hidden!important;
+}
+.death-dance-cutin.dark-cutin .death-dance-cutin-strip img{
+  top:50%!important;
+  left:clamp(8px,3vw,42px)!important;
+  width:min(52%,620px)!important;
+  height:92%!important;
+  object-fit:contain!important;
+  object-position:center!important;
+  transform:translateY(-50%) skewX(8deg)!important;
+}
+@media(max-width:760px){
+  .death-dance-cutin.dark-cutin .death-dance-cutin-strip{height:clamp(210px,38vh,340px)!important;width:100vw!important;}
+  .death-dance-cutin.dark-cutin .death-dance-cutin-strip img{left:0!important;width:48%!important;height:90%!important;object-fit:contain!important;}
+}
