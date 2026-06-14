@@ -35,7 +35,7 @@ const DEATH_DANCE_CUTINS = [
 ];
 const DARK_SWORD_SAINT_CUTIN = {quote:'私を超えてみせろ。', img:'assets/cutin_dark_sword_dance.png'};
 const DARK_SWORD_TECHNIQUE_CUTIN = {quote:'', img:'assets/cutin_dark_sword_technique.png'};
-const GAME_VERSION = '95.8';
+const GAME_VERSION = '95.9';
 const DARK_SWORD_SAINT = {
   id:'dark_sword_saint', name:'暗黒剣聖', type:'裏ボス', img:'assets/enemy_dark_sword_saint.png', element:'dark',
   hp:32000, atk:260, def:95, xp:2600, gold:5000, bossChance:0, enemySkill:'暗黒斬'
@@ -1210,7 +1210,17 @@ function applyHeroHit(skill){
       dmg = Math.floor(dmg * (1 - auraReduce));
     }
     state.enemyHp=Math.max(0, state.enemyHp - dmg);
-    if(state.enemy?.bossBuff === 'acid_body' && dmg > 0){
+    // v95.9: スライムキング（酸ボディ）はHP0到達時点で即撃破確定。
+    // 剣舞などの多段ヒット中でも、倒した後に反射が続かないようにする。
+    if(state.enemy?.bossBuff === 'acid_body' && state.enemyHp <= 0){
+      state.enemyHp = 0;
+      state.enemy.dead = true;
+      state.enemy.defeated = true;
+      renderBattle();
+      enemyDefeated();
+      return;
+    }
+    if(state.enemy?.bossBuff === 'acid_body' && dmg > 0 && !state.enemy.dead && !state.enemy.defeated){
       const ref = Math.max(1, Math.floor(dmg * 0.10));
       state.hp = Math.max(0, state.hp - ref);
       showHeroFloat(`反射 ${ref}`, 'acid');
@@ -2705,3 +2715,42 @@ function v952FinalFixes(){
 setTimeout(v952FinalFixes, 80);
 window.addEventListener('load', v952FinalFixes);
 window.addEventListener('resize', v952FinalFixes);
+
+
+/* v95.9: debug reset double-confirm prevention + final version badge */
+(function(){
+  const BUILD_TEXT = 'ver.95.9';
+  function forceBuildBadge(){
+    document.querySelectorAll('.build-version,.fixed-build-version').forEach(el=>{ el.textContent = BUILD_TEXT; });
+    document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent = 'Build: ' + BUILD_TEXT; });
+    let fixed = document.getElementById('fixedBuildVersion');
+    if(fixed){ fixed.textContent = BUILD_TEXT; }
+  }
+  function bindResetOnce(){
+    const oldBtn = document.getElementById('debugResetData');
+    if(!oldBtn || oldBtn.__v959ResetBound) return;
+    const btn = oldBtn.cloneNode(true);
+    btn.__v959ResetBound = true;
+    oldBtn.parentNode.replaceChild(btn, oldBtn);
+    let busy = false;
+    let last = 0;
+    const run = (e)=>{
+      try{ e.preventDefault(); e.stopPropagation(); }catch(_){ }
+      const now = performance.now ? performance.now() : Date.now();
+      if(busy || now - last < 700) return;
+      busy = true;
+      last = now;
+      try{ playUiClick && playUiClick(); }catch(_){ }
+      try{ resetUserData(); }finally{ setTimeout(()=>{ busy=false; }, 900); }
+    };
+    btn.addEventListener('pointerup', run, {passive:false});
+    btn.addEventListener('touchend', run, {passive:false});
+    btn.addEventListener('click', run, {passive:false});
+  }
+  function install(){ forceBuildBadge(); bindResetOnce(); }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', install);
+  else install();
+  window.addEventListener('load', install);
+  setTimeout(install, 250);
+  setTimeout(install, 1000);
+})();
