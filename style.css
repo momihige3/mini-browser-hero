@@ -1331,3 +1331,81 @@ body.modal-open{overflow:hidden;}
   .death-dance-cutin-strip img{left:0!important;width:50vw!important;height:100%!important;object-fit:contain!important;}
   .death-dance-cutin-quote{right:3%!important;max-width:48%!important;font-size:clamp(18px,5.2vw,34px)!important;}
 }
+
+/* v81: PC大画面HP/EXP表示の最終固定、倉庫は装備強化の下まで、バフ説明は下部中央 */
+.hpbar{
+  display:block!important;
+  position:relative!important;
+  z-index:80!important;
+  width:100%!important;
+  min-height:22px!important;
+  height:22px!important;
+  margin:4px 0 8px!important;
+  overflow:hidden!important;
+  background:rgba(0,0,0,.78)!important;
+  border:1px solid #c99b39!important;
+  box-shadow:0 0 0 1px #000,0 0 10px #000!important;
+}
+.hpbar > div{display:block!important;height:100%!important;min-width:2px!important;position:absolute!important;left:0!important;top:0!important;z-index:1!important;}
+.hpbar span{position:absolute!important;inset:0!important;z-index:3!important;display:flex!important;align-items:center!important;justify-content:center!important;white-space:nowrap!important;text-shadow:0 2px 3px #000!important;line-height:1!important;}
+.name-line,.status-list{z-index:82!important;position:relative!important;}
+.expbar,.battle-expbar{display:block!important;position:absolute!important;left:18px!important;right:18px!important;bottom:14px!important;z-index:90!important;min-height:28px!important;visibility:visible!important;opacity:1!important;}
+.enemy-zone,.hero-zone{z-index:20!important;overflow:visible!important;}
+.card{z-index:1!important;flex:0 0 auto!important;}
+@media(min-width:1280px){
+  .layout{grid-template-columns:minmax(820px,1fr) minmax(520px,620px)!important;}
+  .battle-panel{overflow:hidden!important;}
+  .enemy-zone,.hero-zone{top:clamp(118px,13vh,190px)!important;width:clamp(250px,17vw,330px)!important;}
+  .enemy-zone{left:clamp(55px,7vw,145px)!important;}
+  .hero-zone{right:clamp(55px,7vw,145px)!important;}
+  .card{margin-top:clamp(26px,3vh,48px)!important;height:clamp(330px,48vh,510px)!important;}
+  .side-panel{grid-template-columns:1fr!important;grid-template-rows:auto minmax(0,1fr)!important;overflow:hidden!important;}
+  .menu-left{grid-template-rows:auto auto!important;overflow:visible!important;}
+  .menu-right{grid-template-rows:minmax(0,1fr) 150px!important;min-height:0!important;overflow:hidden!important;}
+  .inventory-panel{min-height:0!important;max-height:none!important;overflow:hidden!important;}
+  .inventory{min-height:0!important;max-height:none!important;overflow-y:auto!important;}
+}
+@media(min-width:1600px){
+  .enemy-zone,.hero-zone{top:clamp(125px,13vh,205px)!important;}
+  .card{margin-top:clamp(30px,3.4vh,54px)!important;}
+}
+.tooltip.status-tooltip-bottom{
+  position:fixed!important;
+  left:50%!important;
+  right:auto!important;
+  top:auto!important;
+  bottom:calc(78px + env(safe-area-inset-bottom, 0px))!important;
+  transform:translateX(-50%)!important;
+  width:min(420px,calc(100vw - 24px))!important;
+  max-height:min(34vh,240px)!important;
+  overflow:auto!important;
+  z-index:30000!important;
+  background:rgba(5,5,8,.98)!important;
+  border:2px solid #ffd76b!important;
+  box-shadow:0 0 0 1px #000,0 0 34px #000!important;
+  pointer-events:auto!important;
+}
+@media(orientation:portrait) and (max-height:840px){
+  .tooltip.status-tooltip-bottom{bottom:calc(58px + env(safe-area-inset-bottom, 0px))!important;max-height:30vh!important;font-size:12px!important;}
+}
+/* 暗黒剣舞カットインの画像表示は前の横長カットイン寄せに戻す */
+.death-dance-cutin-strip{
+  height:clamp(190px,34vh,360px)!important;
+  width:100vw!important;
+  overflow:hidden!important;
+}
+.death-dance-cutin-strip img{
+  top:50%!important;
+  left:clamp(8px,3vw,42px)!important;
+  width:min(52%,620px)!important;
+  height:92%!important;
+  object-fit:contain!important;
+  object-position:center!important;
+  transform:translateY(-50%) skewX(8deg)!important;
+}
+.death-dance-cutin-quote{right:4%!important;max-width:52%!important;}
+@media(max-width:760px){
+  .death-dance-cutin-strip{height:clamp(210px,38vh,340px)!important;width:100vw!important;overflow:hidden!important;}
+  .death-dance-cutin-strip img{left:0!important;width:48%!important;height:90%!important;object-fit:contain!important;}
+  .death-dance-cutin-quote{right:3%!important;max-width:50%!important;font-size:clamp(18px,5.4vw,34px)!important;}
+}

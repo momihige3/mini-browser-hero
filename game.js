@@ -67,7 +67,7 @@ const state = {
   level:1, xp:0, xpNext:80, chests:0, mats:3, defeated:0,
   base:{hp:520, atk:48, def:14}, hp:520, enemy:null, enemyHp:1,
   inventory:[], equip:{}, down:false, downUntil:0, deathDance:false, deathDanceUntil:0, deathDanceCutin:false, deathDanceCutinTimer:null, deathDanceSeqTimers:[], lastHeroAttack:0, lastEnemyAttack:0,
-  log:[], debug:{killEnemy:false, killHero:false}, audio:null, masterGain:null, bgmGain:null, bgmTimer:null, bgmMode:'normal', normalBgm:null, swordDanceBgm:null, darkSwordSaintBgm:null, darkSwordSaintVoice:null, darkSwordReviveTimer:null, audioUnlocked:false, mobileMuted:true, menuPage:'stats', inventoryMenuItemId:null, enemyRecords:{}, forceFirstEnemy:false, bgmPausedByVisibility:false, heroStatuses:null, enemyStatuses:null
+  log:[], debug:{killEnemy:false, killHero:false}, audio:null, masterGain:null, bgmGain:null, bgmTimer:null, bgmMode:'normal', normalBgm:null, swordDanceBgm:null, darkSwordSaintBgm:null, darkSwordSaintVoice:null, darkSwordReviveTimer:null, darkSwordCutinActive:false, audioUnlocked:false, mobileMuted:true, menuPage:'stats', inventoryMenuItemId:null, enemyRecords:{}, forceFirstEnemy:false, bgmPausedByVisibility:false, heroStatuses:null, enemyStatuses:null
 };
 
 const SAVE_KEY = 'mini-browser-hero-save-v36';
@@ -100,6 +100,9 @@ function isCompactMenuMode(){
 function isTouchDevice(){
   return window.matchMedia('(pointer: coarse)').matches || ('ontouchstart' in window) || (navigator.maxTouchPoints||0) > 0;
 }
+function isIOSDevice(){
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && (navigator.maxTouchPoints||0) > 1);
+}
 function isMouseLikePointer(e){
   // PC/マウス操作では、タッチ対応PCでもオンカーソル表示を出す。
   // touch / pen は誤表示防止で非表示。
@@ -127,8 +130,12 @@ function setMobileMuted(flag){
   state.mobileMuted = !!flag;
   applyVolume();
   updateMuteButton();
-  if(state.mobileMuted) stopBgm();
-  else if(state.audioUnlocked) playBgm();
+  if(state.mobileMuted){
+    stopAllAudioForMute();
+  }else{
+    startAudio();
+    if(state.audioUnlocked) playBgm();
+  }
   scheduleSave();
 }
 function setMenuPage(page){
@@ -545,14 +552,16 @@ function statusTooltipHtml(kind, target){
   if(kind === 'darkdance') return `<b>暗黒剣舞</b><br>発動済み：${state.enemyStatuses?.darkDanceCount||0}回 / 10回<br>次回発動率：${darkDanceChanceForNext()}%<br>発動時：カットイン後に5秒無敵、HPをゆっくり100%まで回復、闇オーラ10、暗黒の剣+1。<br>連続攻撃はガード無効、防御力50%無視。`;
   return '';
 }
-function showStatusTooltip(e, kind, target){
+function showStatusTooltip(e, kind, target, forceBottom=false){
   if(!els.tooltip) return;
   const html = statusTooltipHtml(kind, target);
   if(!html) return;
   els.tooltip.innerHTML = html;
   els.tooltip.classList.remove('hidden');
-  const isSmallPortrait = window.matchMedia('(orientation: portrait) and (max-height: 780px)').matches || window.innerWidth <= 520;
-  if(isSmallPortrait){
+  const eventType = e?.type || '';
+  const isClickLike = forceBottom || eventType === 'click' || eventType === 'touchstart';
+  const isSmallPortrait = window.matchMedia('(orientation: portrait) and (max-height: 840px)').matches || window.innerWidth <= 760;
+  if(isClickLike || isSmallPortrait){
     els.tooltip.classList.add('status-tooltip-modal','status-tooltip-bottom');
     els.tooltip.style.left = '50%';
     els.tooltip.style.top = 'auto';
@@ -589,8 +598,8 @@ function bindStatusBadgeEvents(){
     btn.onmouseenter = (e)=>showStatusTooltip(e, btn.dataset.statusKind, btn.dataset.statusTarget);
     btn.onmousemove = (e)=>showStatusTooltip(e, btn.dataset.statusKind, btn.dataset.statusTarget);
     btn.onmouseleave = hideStatusTooltip;
-    btn.ontouchstart = (e)=>{ e.stopPropagation(); showStatusTooltip(e, btn.dataset.statusKind, btn.dataset.statusTarget); };
-    btn.onclick = (e)=>{ e.stopPropagation(); showStatusTooltip(e, btn.dataset.statusKind, btn.dataset.statusTarget); };
+    btn.ontouchstart = (e)=>{ e.preventDefault(); e.stopPropagation(); showStatusTooltip(e, btn.dataset.statusKind, btn.dataset.statusTarget, true); };
+    btn.onclick = (e)=>{ e.preventDefault(); e.stopPropagation(); showStatusTooltip(e, btn.dataset.statusKind, btn.dataset.statusTarget, true); };
   });
 }
 document.addEventListener('click', (e)=>{ if(!e.target.closest || !e.target.closest('.status-badge,.tooltip')) hideStatusTooltip(); });
@@ -679,7 +688,7 @@ function spawnEnemy(forceFirst=false){
 }
 
 function loop(now){
-  if(state.deathDanceCutin){ requestAnimationFrame(loop); return; }
+  if(state.deathDanceCutin && !state.darkSwordCutinActive){ requestAnimationFrame(loop); return; }
   if(state.deathDance && now > state.deathDanceUntil) endDeathDance();
   processStatusDots(now);
   if(state.down){
@@ -691,7 +700,7 @@ function loop(now){
   if(state.enemy){
     const interval = state.deathDance ? 360 : 1150;
     if(now - state.lastHeroAttack > interval){ heroAttack(now); }
-    if(!state.deathDance && now - state.lastEnemyAttack > enemyInterval()){ enemyAttack(now); }
+    if(now - state.lastEnemyAttack > enemyInterval()){ enemyAttack(now); }
   }
   if(state.deathDance){
     const target=maxHp()*0.5;
@@ -830,8 +839,9 @@ function tryDarkSwordDanceRevive(){
   state.enemyStatuses.darkRevivingUntil = t + 9000;
   state.enemyHp = 0;
   state.deathDanceCutin = true;
-  state.lastHeroAttack = t;
-  state.lastEnemyAttack = t;
+  state.darkSwordCutinActive = true;
+  state.lastHeroAttack = t - 9999;
+  state.lastEnemyAttack = t - 9999;
 
   if(state.darkSwordReviveTimer) clearInterval(state.darkSwordReviveTimer);
   renderBattle();
@@ -845,6 +855,8 @@ function tryDarkSwordDanceRevive(){
       return;
     }
     hideDeathDanceCutin();
+    state.deathDanceCutin = false;
+    state.darkSwordCutinActive = false;
     const recoveryStart = performance.now();
     state.enemyStatuses.darkReviveStart = recoveryStart;
     state.enemyStatuses.darkRevivingUntil = recoveryStart + 5000;
@@ -878,6 +890,7 @@ function finishDarkSwordDanceRevive(){
   state.enemyStatuses.darkAuraLastTick = performance.now();
   state.enemyStatuses.darkSwordBuffs.push(performance.now() + 60000);
   state.deathDanceCutin = false;
+  state.darkSwordCutinActive = false;
   hideDeathDanceCutin();
   renderBattle();
   renderStatusLists();
@@ -933,6 +946,7 @@ function enemyDefeated(){
   if(e && e.id === 'dark_sword_saint'){
     if(state.darkSwordReviveTimer){ clearInterval(state.darkSwordReviveTimer); state.darkSwordReviveTimer=null; }
     if(state.enemyStatuses){ state.enemyStatuses.darkRevivingUntil=0; state.enemyStatuses.darkReviveStart=0; }
+    state.darkSwordCutinActive=false;
     setBgmMode('normal');
   }
   state.enemy=null;
@@ -986,7 +1000,7 @@ function showDeathDanceHeartbeat(text='ドクン…'){
   // v68: ドクンドクン削除に合わせて心音SEは鳴らさない。
 }
 function startDeathDance(){
-  if(state.deathDance || state.deathDanceCutin) return;
+  if(state.deathDance || (state.deathDanceCutin && !state.darkSwordCutinActive)) return;
   clearDeathDanceSequence();
   state.hp = 1;
   state.deathDanceCutin = true;
@@ -1159,6 +1173,25 @@ function stopAllBgm(){
   if(state.darkSwordSaintVoice){ state.darkSwordSaintVoice.pause(); state.darkSwordSaintVoice.currentTime = 0; }
 }
 
+function stopHtmlAudio(a, reset=false){
+  if(!a) return;
+  try{ a.pause(); }catch(e){}
+  if(reset){ try{ a.currentTime = 0; }catch(e){} }
+}
+function stopAllAudioForMute(){
+  // iOS Safari対策：音量0だけでは鳴り続けることがあるため、再生自体を止める。
+  stopBgm();
+  ensureBgmAudio();
+  stopHtmlAudio(state.normalBgm, false);
+  stopHtmlAudio(state.swordDanceBgm, true);
+  stopHtmlAudio(state.darkSwordSaintBgm, false);
+  stopHtmlAudio(state.darkSwordSaintVoice, true);
+  if(state.masterGain) state.masterGain.gain.value = 0;
+  if(state.audio && state.audio.state === 'running'){
+    try{ state.audio.suspend(); }catch(e){}
+  }
+}
+
 function pauseBgmForPageHidden(){
   ensureBgmAudio();
   state.bgmPausedByVisibility = true;
@@ -1175,7 +1208,10 @@ function resumeBgmForPageVisible(){
 }
 function handlePageVisibility(){
   if(document.hidden) pauseBgmForPageHidden();
-  else resumeBgmForPageVisible();
+  else {
+    if(state.mobileMuted) stopAllAudioForMute();
+    else resumeBgmForPageVisible();
+  }
 }
 function startAudio(){
   try{
@@ -1669,7 +1705,7 @@ function resetBattleState(forceFirst=false){
   clearTimeout(state.dropToastTimer);
   clearDeathDanceSequence();
   resetTransientStatuses();
-  state.deathDanceCutin=false; state.deathDance=false; state.down=false;
+  state.deathDanceCutin=false; state.darkSwordCutinActive=false; state.deathDance=false; state.down=false;
   state.bgmMode='normal'; stopAllBgm(); if(state.audioUnlocked && !state.mobileMuted) playBgm();
   hideDeathDanceCutin();
   if(els.deathDanceStatus) els.deathDanceStatus.classList.add('hidden');
@@ -1736,4 +1772,6 @@ function randInt(a,b){ return Math.floor(rand(a,b+1)); }
 init();
 
 
-window.addEventListener("load",()=>{ state.mobileMuted = true; updateMuteButton(); applyVolume(); });
+window.addEventListener("load",()=>{ state.mobileMuted = true; updateMuteButton(); applyVolume(); stopAllAudioForMute(); });
+window.addEventListener("pageshow",()=>{ if(state.mobileMuted) stopAllAudioForMute(); });
+window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(); });
