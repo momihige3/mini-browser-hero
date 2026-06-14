@@ -1,13 +1,14 @@
 'use strict';
 
 document.addEventListener('contextmenu', e => e.preventDefault());
+document.addEventListener('click', e => { if(!e.target.closest?.('.status-badge')) hideStatusTooltip(); });
 
 const $ = (id) => document.getElementById(id);
 const els = {
   battleBg:document.querySelector('.battle-bg'),
   chests:$('chests'), mats:$('mats'), volumeSlider:$('volumeSlider'), muteBtn:$('muteBtn'), expLabel:$('expLabel'), expGainLabel:$('expGainLabel'), expFill:$('expFill'),
   enemyName:$('enemyName'), enemyLevel:$('enemyLevel'), enemyTag:$('enemyTag'), enemyImg:$('enemyImg'), enemyCard:$('enemyCard'), enemyHpFill:$('enemyHpFill'), enemyHpText:$('enemyHpText'),
-  heroCard:$('heroCard'), heroHpFill:$('heroHpFill'), heroHpText:$('heroHpText'), heroLevel:$('heroLevel'), deathDanceStatus:$('deathDanceStatus'),
+  heroCard:$('heroCard'), heroHpFill:$('heroHpFill'), heroHpText:$('heroHpText'), heroLevel:$('heroLevel'), deathDanceStatus:$('deathDanceStatus'), heroStatusList:$('heroStatusList'), enemyStatusList:$('enemyStatusList'),
   enemyEffectLayer:$('enemyEffectLayer'), enemyFloats:$('enemyFloats'), levelEffect:$('levelEffect'), centerBanner:$('centerBanner'), dropToast:$('dropToast'), audioHint:$('audioHint'), deathAura:$('deathAura'), downOverlay:$('downOverlay'), downCount:$('downCount'),
   statLv:$('statLv'), statXp:$('statXp'), statXpNext:$('statXpNext'), statXpGain:$('statXpGain'), statAtk:$('statAtk'), statDef:$('statDef'), statFireRes:$('statFireRes'), monsterRecords:$('monsterRecords'),
   equipList:$('equipList'), upgradeBtn:$('upgradeBtn'), inventory:$('inventory'), tooltip:$('tooltip'), log:$('log'),
@@ -61,7 +62,7 @@ const state = {
   level:1, xp:0, xpNext:80, chests:0, mats:3, defeated:0,
   base:{hp:520, atk:48, def:14}, hp:520, enemy:null, enemyHp:1,
   inventory:[], equip:{}, down:false, downUntil:0, deathDance:false, deathDanceUntil:0, deathDanceCutin:false, deathDanceCutinTimer:null, deathDanceSeqTimers:[], lastHeroAttack:0, lastEnemyAttack:0,
-  log:[], debug:{killEnemy:false, killHero:false}, audio:null, masterGain:null, bgmGain:null, bgmTimer:null, bgmMode:'normal', normalBgm:null, swordDanceBgm:null, audioUnlocked:false, mobileMuted:true, menuPage:'stats', inventoryMenuItemId:null, enemyRecords:{}, forceFirstEnemy:false, bgmPausedByVisibility:false
+  log:[], debug:{killEnemy:false, killHero:false}, audio:null, masterGain:null, bgmGain:null, bgmTimer:null, bgmMode:'normal', normalBgm:null, swordDanceBgm:null, audioUnlocked:false, mobileMuted:true, menuPage:'stats', inventoryMenuItemId:null, enemyRecords:{}, forceFirstEnemy:false, bgmPausedByVisibility:false, heroStatuses:null, enemyStatuses:null
 };
 
 const SAVE_KEY = 'mini-browser-hero-save-v36';
@@ -386,7 +387,7 @@ function calcStats(){
     def:state.base.def + (state.level-1)*4,
     fireRes:0, fireDmg:0, fireSkillChance:0, fireDamageHeal:0,
     thunderDmg:0, thunderSkillChance:0,
-    deathDanceChance:.10, lifeSteal:0, guard:0, crit:.08
+    deathDanceChance:.10, deathDanceDefIgnore:0, lifeSteal:0, guard:0, crit:.08
   };
   Object.values(state.equip).filter(Boolean).forEach(it=>{
     s.hp += it.hp||0; s.atk += it.atk||0; s.def += it.def||0;
@@ -394,13 +395,159 @@ function calcStats(){
     s.fireDamageHeal += it.fireDamageHeal||0;
     s.thunderDmg += it.thunderDmg||0; s.thunderSkillChance += it.thunderSkillChance||0;
     s.deathDanceChance += it.deathDanceChance||0;
+    s.deathDanceDefIgnore += it.deathDanceDefIgnore||0;
     s.lifeSteal += it.lifeSteal||0; s.guard += it.guard||0; s.crit += it.crit||0;
   });
   s.fireRes=Math.min(.75,s.fireRes); s.fireDamageHeal=Math.min(1,s.fireDamageHeal);
-  s.guard=Math.min(.45,s.guard); s.crit=Math.min(.55,s.crit); s.deathDanceChance=Math.min(1,s.deathDanceChance);
+  s.guard=Math.min(.45,s.guard); s.crit=Math.min(.55,s.crit); s.deathDanceChance=Math.min(1,s.deathDanceChance); s.deathDanceDefIgnore=Math.min(.9,s.deathDanceDefIgnore);
   return s;
 }
 function maxHp(){return calcStats().hp}
+
+function nowMs(){ return performance.now(); }
+function ensureStatusContainers(){
+  if(!state.heroStatuses) state.heroStatuses = {bleeds:[], burnUntil:0, lastBleedTick:0};
+  if(!state.enemyStatuses) state.enemyStatuses = {bleeds:[], burnUntil:0, lastBleedTick:0};
+}
+function resetTransientStatuses(){
+  state.heroStatuses = {bleeds:[], burnUntil:0, lastBleedTick:0};
+  state.enemyStatuses = {bleeds:[], burnUntil:0, lastBleedTick:0};
+  hideStatusTooltip();
+  renderStatusLists();
+}
+function cleanupStatuses(){
+  ensureStatusContainers();
+  const n = nowMs();
+  state.heroStatuses.bleeds = state.heroStatuses.bleeds.filter(t=>t>n);
+  state.enemyStatuses.bleeds = state.enemyStatuses.bleeds.filter(t=>t>n);
+  if(state.heroStatuses.burnUntil && state.heroStatuses.burnUntil <= n) state.heroStatuses.burnUntil = 0;
+  if(state.enemyStatuses.burnUntil && state.enemyStatuses.burnUntil <= n) state.enemyStatuses.burnUntil = 0;
+}
+function hasBurn(target){ ensureStatusContainers(); cleanupStatuses(); return !!(target==='hero' ? state.heroStatuses.burnUntil : state.enemyStatuses.burnUntil); }
+function burnSeconds(target){ ensureStatusContainers(); cleanupStatuses(); const until = target==='hero' ? state.heroStatuses.burnUntil : state.enemyStatuses.burnUntil; return Math.max(0, Math.ceil((until-nowMs())/1000)); }
+function bleedCount(target){ ensureStatusContainers(); cleanupStatuses(); return (target==='hero' ? state.heroStatuses.bleeds : state.enemyStatuses.bleeds).length; }
+function addBleed(target){
+  ensureStatusContainers(); cleanupStatuses();
+  const box = target==='hero' ? state.heroStatuses : state.enemyStatuses;
+  if(box.bleeds.length >= 20) return false;
+  box.bleeds.push(nowMs() + 10000);
+  renderStatusLists();
+  return true;
+}
+function addBurn(target){
+  ensureStatusContainers(); cleanupStatuses();
+  const until = nowMs() + 10000;
+  if(target==='hero') state.heroStatuses.burnUntil = until;
+  else state.enemyStatuses.burnUntil = until;
+  renderStatusLists();
+  return true;
+}
+function processStatusDots(now){
+  ensureStatusContainers(); cleanupStatuses();
+  if(state.enemy && state.enemyStatuses.bleeds.length){
+    if(!state.enemyStatuses.lastBleedTick) state.enemyStatuses.lastBleedTick = now;
+    const ticks = Math.floor((now - state.enemyStatuses.lastBleedTick)/1000);
+    if(ticks > 0){
+      state.enemyStatuses.lastBleedTick += ticks*1000;
+      const dmg = Math.max(1, Math.floor(state.enemy.maxHp * 0.01 * state.enemyStatuses.bleeds.length * ticks));
+      state.enemyHp = Math.max(0, state.enemyHp - dmg);
+      showFloat(`出血 ${dmg}`,'damage');
+      if(state.enemyHp <= 0){ state.enemyHp = 0; renderBattle(); setTimeout(enemyDefeated, 120); }
+    }
+  }else state.enemyStatuses.lastBleedTick = now;
+  if(!state.down && state.heroStatuses.bleeds.length){
+    if(!state.heroStatuses.lastBleedTick) state.heroStatuses.lastBleedTick = now;
+    const ticks = Math.floor((now - state.heroStatuses.lastBleedTick)/1000);
+    if(ticks > 0){
+      state.heroStatuses.lastBleedTick += ticks*1000;
+      const dmg = Math.max(1, Math.floor(maxHp() * 0.01 * state.heroStatuses.bleeds.length * ticks));
+      state.hp = Math.max(0, state.hp - dmg);
+      showHeroFloat(`出血 ${dmg}`,'damage');
+      if(state.hp <= 0){
+        state.hp = 0;
+        if(Math.random()<calcStats().deathDanceChance){ startDeathDance(); }
+        else startDown();
+      }
+    }
+  }else state.heroStatuses.lastBleedTick = now;
+  renderStatusLists();
+}
+function enemyDefenseMultiplierFor(element){
+  let m = 1;
+  if(hasBurn('enemy')) m *= 0.75;
+  if(element === 'thunder') m *= 0.75;
+  if(state.deathDance) m *= (1 - (calcStats().deathDanceDefIgnore || 0));
+  return Math.max(0, m);
+}
+function heroDefenseMultiplier(){ return hasBurn('hero') ? 0.75 : 1; }
+function tryApplyHeroHitDebuffs(element, absorbed){
+  if(absorbed || !state.enemy) return;
+  if(element === 'physical' && Math.random() < 0.10){
+    if(addBleed('enemy')) log(`${state.enemy.name} に出血を付与。`, 'skilllog');
+  }
+  if(element === 'fire' && Math.random() < 0.20){
+    const fireRes = state.enemy.fireResist || 0;
+    if(fireRes >= 0.10){ log(`${state.enemy.name} は火耐性で火傷を無効化。`, 'skilllog'); }
+    else if(addBurn('enemy')) log(`${state.enemy.name} に火傷を付与。`, 'skilllog');
+  }
+}
+function tryApplyEnemyHitDebuffs(element){
+  if(element !== 'fire' && Math.random() < 0.10){
+    if(addBleed('hero')) log('騎士は出血した。','danger');
+  }
+  if(element !== 'fire') return;
+  if(Math.random() >= 0.20) return;
+  const st = calcStats();
+  if((st.fireRes||0) >= 0.10){ log('騎士は火耐性で火傷を無効化。','good'); return; }
+  addBurn('hero');
+  log('騎士は火傷を負った。','danger');
+}
+function statusTooltipHtml(kind, target){
+  if(kind === 'bleed') return `<b>出血</b><br>現在：${bleedCount(target)}スタック<br>1スタックごとに10秒継続。<br>1秒ごとに最大HPの1%ダメージ。<br>最大20スタック。`;
+  if(kind === 'burn') return `<b>火傷</b><br>残り：${burnSeconds(target)}秒<br>防御力25%低下。<br>火耐性10%以上で無効化。`;
+  if(kind === 'deathdance') return `<b>死線の剣舞</b><br>残り：${Math.max(0, Math.ceil((state.deathDanceUntil-nowMs())/1000))}秒<br>無敵状態で高速連撃。<br>デバッグアクセ装備時、防御を最大${Math.round((calcStats().deathDanceDefIgnore||0)*100)}%無視。`;
+  return '';
+}
+function showStatusTooltip(e, kind, target){
+  if(!els.tooltip) return;
+  els.tooltip.innerHTML = statusTooltipHtml(kind, target);
+  const x = (e.clientX || (e.touches && e.touches[0]?.clientX) || window.innerWidth/2) + 12;
+  const y = (e.clientY || (e.touches && e.touches[0]?.clientY) || window.innerHeight/2) + 12;
+  els.tooltip.style.left = Math.min(x, window.innerWidth - 260) + 'px';
+  els.tooltip.style.top = Math.min(y, window.innerHeight - 150) + 'px';
+  els.tooltip.classList.remove('hidden');
+}
+function hideStatusTooltip(){ if(els.tooltip) els.tooltip.classList.add('hidden'); }
+function makeStatusBadge(label, cls, kind, target){
+  return `<button type="button" class="status-badge ${cls}" data-status-kind="${kind}" data-status-target="${target}">${label}</button>`;
+}
+function bindStatusBadgeEvents(){
+  document.querySelectorAll('.status-badge').forEach(btn=>{
+    btn.onmouseenter = (e)=>showStatusTooltip(e, btn.dataset.statusKind, btn.dataset.statusTarget);
+    btn.onmousemove = (e)=>showStatusTooltip(e, btn.dataset.statusKind, btn.dataset.statusTarget);
+    btn.onmouseleave = hideStatusTooltip;
+    btn.onclick = (e)=>{ e.stopPropagation(); showStatusTooltip(e, btn.dataset.statusKind, btn.dataset.statusTarget); };
+  });
+}
+function renderStatusLists(){
+  ensureStatusContainers(); cleanupStatuses();
+  if(els.enemyStatusList){
+    const parts=[];
+    const bc = bleedCount('enemy');
+    if(bc) parts.push(makeStatusBadge(`🩸出血(${bc})`, 'bleed', 'bleed', 'enemy'));
+    if(hasBurn('enemy')) parts.push(makeStatusBadge('🔥火傷', 'burn', 'burn', 'enemy'));
+    els.enemyStatusList.innerHTML = parts.join('');
+  }
+  if(els.heroStatusList){
+    const parts=[];
+    const bc = bleedCount('hero');
+    if(bc) parts.push(makeStatusBadge(`🩸出血(${bc})`, 'bleed', 'bleed', 'hero'));
+    if(hasBurn('hero')) parts.push(makeStatusBadge('🔥火傷', 'burn', 'burn', 'hero'));
+    if(state.deathDance) parts.push(makeStatusBadge('⚔️剣舞', 'dance', 'deathdance', 'hero'));
+    els.heroStatusList.innerHTML = parts.join('');
+  }
+  bindStatusBadgeEvents();
+}
 
 function isFirstBattleState(){
   // 新規開始・ユーザーリセット直後だけ、最初の敵をスライムLv.1に固定する。
@@ -424,7 +571,7 @@ function spawnEnemy(forceFirst=false){
   const scale=1 + e.level*.035 + Math.floor(state.defeated/10)*.03;
   e.maxHp=Math.floor(e.hp*scale); e.atk=Math.floor(e.atk*scale); e.def=Math.floor(e.def*scale);
   e.xp=Math.floor(e.xp*(1+e.level*.045));
-  state.enemy=e; state.enemyHp=e.maxHp;
+  state.enemy=e; state.enemyHp=e.maxHp; state.enemyStatuses = {bleeds:[], burnUntil:0, lastBleedTick:performance.now()};
   markEnemySeen(e);
   els.enemyImg.src=e.img; els.enemyCard.className='card enemy-card enter';
   setTimeout(()=>els.enemyCard.classList.remove('enter'),600);
@@ -435,6 +582,7 @@ function spawnEnemy(forceFirst=false){
 function loop(now){
   if(state.deathDanceCutin){ requestAnimationFrame(loop); return; }
   if(state.deathDance && now > state.deathDanceUntil) endDeathDance();
+  processStatusDots(now);
   if(state.down){
     const left=Math.max(0, Math.ceil((state.downUntil-now)/1000));
     els.downCount.textContent=left;
@@ -501,7 +649,7 @@ function applyHeroHit(skill){
   if(skill==='deathdance'){mult=0.95;element='physical';fx='slash';label='死線の剣舞'}
   if(element==='fire') mult *= (1 + st.fireDmg);
   if(element==='thunder') mult *= (1 + st.thunderDmg);
-  let dmg=Math.max(1, Math.floor((st.atk*mult + rand(0,st.atk*.45)) - state.enemy.def*.45));
+  let dmg=Math.max(1, Math.floor((st.atk*mult + rand(0,st.atk*.45)) - state.enemy.def*.45*enemyDefenseMultiplierFor(element)));
   const crit=Math.random()<st.crit;
   if(crit) dmg=Math.floor(dmg*1.85);
   if(state.debug.killEnemy){ dmg = state.enemyHp; }
@@ -520,6 +668,7 @@ function applyHeroHit(skill){
     els.enemyCard.classList.remove('hit'); void els.enemyCard.offsetWidth; els.enemyCard.classList.add('hit');
     setTimeout(()=>els.enemyCard.classList.remove('hit'),220);
   }
+  tryApplyHeroHitDebuffs(element, absorbed);
   if(!absorbed && (skill==='fire'||skill==='thunder'||skill==='heavy'||skill==='deathdance')) log(`${label}（${elementName(element)}）！ ${dmg}ダメージ`, 'skilllog');
   if(st.lifeSteal && !absorbed){
     const heal=Math.floor(dmg*st.lifeSteal); if(heal>0){state.hp=Math.min(maxHp(),state.hp+heal); showHeroFloat(`+${heal}`,'heal')}
@@ -538,7 +687,7 @@ function enemyAttack(now){
   let element=e.element==='fire' && Math.random()<.55 ? 'fire':'normal';
   let name=e.enemySkill && element==='fire' ? e.enemySkill:'攻撃';
   if(Math.random()<st.guard){ showHeroFloat('GUARD','guard'); playSfx('guard'); log(`${e.name} の${name}をGUARD！`,'good'); return; }
-  let dmg=Math.max(1, Math.floor(e.atk - st.def*.55 + rand(0,e.atk*.35)));
+  let dmg=Math.max(1, Math.floor(e.atk - st.def*.55*heroDefenseMultiplier() + rand(0,e.atk*.35)));
   if(state.debug.killHero){ dmg = Math.max(dmg, state.hp + 999999); }
   if(element==='fire') dmg=Math.floor(dmg*(1-st.fireRes));
   if(state.deathDance){ showHeroFloat('GUARD','guard'); return; }
@@ -554,6 +703,7 @@ function enemyAttack(now){
   els.heroCard.classList.remove('hit'); void els.heroCard.offsetWidth; els.heroCard.classList.add('hit');
   setTimeout(()=>els.heroCard.classList.remove('hit'),220);
   showHeroFloat(dmg, element==='fire'?'fire':'damage'); playSfx('hit');
+  tryApplyEnemyHitDebuffs(element);
   log(`${e.name} の${name}！ ${dmg}ダメージ`, element==='fire'?'danger':'');
   renderBattle();
 }
@@ -652,6 +802,7 @@ function beginDeathDanceAfterCutin(){
   els.heroCard.classList.add('deathdance');
   els.deathAura.classList.remove('hidden');
   els.deathDanceStatus.classList.remove('hidden');
+  renderStatusLists();
   playSfx('dance');
   setBgmMode('dance');
   log('死線の剣舞発動！ 10秒間無敵で連撃。','skilllog');
@@ -662,6 +813,7 @@ function endDeathDance(){
   els.heroCard.classList.remove('deathdance');
   els.deathAura.classList.add('hidden');
   els.deathDanceStatus.classList.add('hidden');
+  renderStatusLists();
   setBgmMode('normal');
   banner('死線の剣舞 終了');
   log('死線の剣舞が終了。','skilllog');
@@ -876,16 +1028,16 @@ function noiseBurst(dur=.06, vol=.025, delay=0, filterFreq=1400){
 }
 
 const SFX_VOL = 0.5;
-const SFX_DANCE_COMBAT_VOL = 0.25;
+const SFX_COMBAT_VOL = 0.25;
 function sv(v, kind){
   const combatKinds = new Set(['slash','fire','thunder','heavy','hit','guard','dance']);
-  const rate = (state.deathDance && combatKinds.has(kind)) ? SFX_DANCE_COMBAT_VOL : SFX_VOL;
+  const rate = combatKinds.has(kind) ? SFX_COMBAT_VOL : SFX_VOL;
   return Math.max(0, Math.min(1, v * rate));
 }
 
 function playSfx(kind){
   if(!ensureSfxReady()) return;
-  // v72: BGMは5%、通常SEは50%。剣舞中の戦闘SEだけ25%。
+  // v73: BGMは5%。戦闘SEは常時25%、UI/演出SEは50%。
   switch(kind){
     case 'slash':
       noiseBurst(.075, sv(.18, kind), 0, 1700);
@@ -1025,7 +1177,7 @@ function applyNameBonus(it){
   }
 }
 
-function itemPower(it){return (it.atk||0)*3 + (it.def||0)*2 + (it.hp||0)*.25 + (it.fireRes||0)*400 + (it.fireDmg||0)*420 + (it.thunderDmg||0)*420 + (it.fireDamageHeal||0)*550 + (it.deathDanceChance||0)*700 + (it.crit||0)*500 + (it.lifeSteal||0)*600 + (it.guard||0)*500 + it.level*15;}
+function itemPower(it){return (it.atk||0)*3 + (it.def||0)*2 + (it.hp||0)*.25 + (it.fireRes||0)*400 + (it.fireDmg||0)*420 + (it.thunderDmg||0)*420 + (it.fireDamageHeal||0)*550 + (it.deathDanceChance||0)*700 + (it.deathDanceDefIgnore||0)*800 + (it.crit||0)*500 + (it.lifeSteal||0)*600 + (it.guard||0)*500 + it.level*15;}
 function equipItem(it){
   state.inventoryMenuItemId = null;
   const actionMenu=document.getElementById('inventoryActionMenu'); if(actionMenu) actionMenu.remove();
@@ -1073,7 +1225,7 @@ function makeDebugSword(){
 function makeDebugAccessory(slot){
   const it=makeItem(slot, rarities[2]);
   it.name = slot==='リング' ? '死線のリング' : '死線のアミュレット';
-  it.hp=9999; it.def=999; it.guard=.50; it.lifeSteal=.15; it.deathDanceChance=.50; it.fireDmg=.35; it.thunderDmg=.35; it.fireSkillChance=.25; it.thunderSkillChance=.25;
+  it.hp=0; it.def=999; it.guard=.50; it.lifeSteal=.15; it.deathDanceChance=.50; it.deathDanceDefIgnore=.50; it.fireDmg=.35; it.thunderDmg=.35; it.fireSkillChance=.25; it.thunderSkillChance=.25;
   return it;
 }
 
@@ -1084,6 +1236,7 @@ function renderBattle(){
   if(els.chests) els.chests.textContent=state.chests; els.mats.textContent=state.mats;
   if(els.expFill){ els.expFill.style.width=`${Math.max(0,Math.min(100,state.xp/state.xpNext*100))}%`; els.expLabel.textContent=`Lv.${state.level} EXP ${state.xp} / ${state.xpNext}`; els.expGainLabel.textContent=`+${state.lastXpGain}`; }
   if(state.deathDance){ els.deathDanceStatus.textContent = `死線の剣舞 残り${Math.max(0, Math.ceil((state.deathDanceUntil-performance.now())/1000))}秒`; }
+  renderStatusLists();
 }
 function renderStats(){ const st=calcStats(); els.statLv.textContent=state.level; els.statXp.textContent=`${state.xp} / ${state.xpNext}`; els.statXpNext.textContent=state.xpNext; els.statXpGain.textContent=`+${state.lastXpGain}`; els.statAtk.textContent=Math.floor(st.atk); els.statDef.textContent=Math.floor(st.def); els.statFireRes.textContent=`${Math.round(st.fireRes*100)}%`; renderMonsterRecords(); }
 function renderMonsterRecords(){
@@ -1213,7 +1366,10 @@ function itemSummary(it){
   if(it.fireSkillChance)arr.push(`炎斬り率+${Math.round(it.fireSkillChance*100)}%`);
   if(it.thunderDmg)arr.push(`雷ダメ+${Math.round(it.thunderDmg*100)}%`);
   if(it.thunderSkillChance)arr.push(`雷撃率+${Math.round(it.thunderSkillChance*100)}%`);
+  if(it.skill?.id==='thunder')arr.push('雷撃:防御25%無視');
+  if(it.skill?.id==='fire')arr.push('炎斬り:火傷20%');
   if(it.deathDanceChance)arr.push(`死線の剣舞率+${Math.round(it.deathDanceChance*100)}%`);
+  if(it.deathDanceDefIgnore)arr.push(`剣舞時防御無視${Math.round(it.deathDanceDefIgnore*100)}%`);
   if(it.lifeSteal)arr.push(`吸収${Math.round(it.lifeSteal*100)}%`); if(it.guard)arr.push(`GUARD+${Math.round(it.guard*100)}%`); if(it.crit)arr.push(`会心+${Math.round(it.crit*100)}%`);
   if(it.skill)arr.push(`武器スキル:${it.skill.name} ${Math.round((it.skill.chance + (it.skill.id==='fire'?(it.fireSkillChance||0):it.skill.id==='thunder'?(it.thunderSkillChance||0):0))*100)}%`);
   return arr.join(' / ');
@@ -1249,6 +1405,7 @@ function resetBattleState(forceFirst=false){
   state.forceFirstEnemy = true;
   clearTimeout(state.dropToastTimer);
   clearDeathDanceSequence();
+  resetTransientStatuses();
   state.deathDanceCutin=false; state.deathDance=false; state.down=false;
   state.bgmMode='normal'; stopAllBgm(); if(state.audioUnlocked && !state.mobileMuted) playBgm();
   hideDeathDanceCutin();
@@ -1289,6 +1446,7 @@ function resetUserData(){
   state.log = [];
   state.debug = {killEnemy:false, killHero:false};
   state.enemyRecords = sanitizeEnemyRecords({});
+  resetTransientStatuses();
   if(els.debugKillEnemy) els.debugKillEnemy.checked = false;
   if(els.debugKillHero) els.debugKillHero.checked = false;
   if(els.log) els.log.innerHTML='';
