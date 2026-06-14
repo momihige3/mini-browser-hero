@@ -604,7 +604,7 @@ function showDeathDanceHeartbeat(text='ドクン…'){
   hb.classList.remove('show');
   void hb.offsetWidth;
   hb.classList.add('show');
-  playSfx('heartbeat');
+  // v68: ドクンドクン削除に合わせて心音SEは鳴らさない。
 }
 function startDeathDance(){
   if(state.deathDance || state.deathDanceCutin) return;
@@ -788,25 +788,107 @@ function applyVolume(){
   if(state.masterGain) state.masterGain.gain.value = state.mobileMuted ? 0 : Math.max(0, Math.min(2, state.volume));
   updateBgmVolume();
 }
-function tone(freq=440, dur=.08, type='sine', vol=.05){
-  if(!state.audio || !state.masterGain) return;
-  const ctx=state.audio, o=ctx.createOscillator(), g=ctx.createGain();
+function tone(freq=440, dur=.08, type='sine', vol=.05, delay=0){
+  if(!state.audio || !state.masterGain || state.mobileMuted) return;
+  const ctx=state.audio;
+  if(ctx.state === 'suspended'){
+    try{ ctx.resume(); }catch(e){}
+  }
+  const o=ctx.createOscillator(), g=ctx.createGain();
   o.type=type; o.frequency.value=freq; g.gain.value=0;
   o.connect(g); g.connect(state.masterGain);
-  const t=ctx.currentTime;
-  g.gain.linearRampToValueAtTime(vol,t+.01); g.gain.exponentialRampToValueAtTime(.0001,t+dur);
-  o.start(t); o.stop(t+dur+.02);
+  const t=ctx.currentTime + Math.max(0, delay);
+  g.gain.setValueAtTime(0.0001,t);
+  g.gain.linearRampToValueAtTime(vol,t+.008);
+  g.gain.exponentialRampToValueAtTime(.0001,t+Math.max(.025,dur));
+  o.start(t); o.stop(t+dur+.03);
 }
+
+function noiseBurst(dur=.06, vol=.025, delay=0, filterFreq=1400){
+  if(!state.audio || !state.masterGain || state.mobileMuted) return;
+  const ctx=state.audio;
+  if(ctx.state === 'suspended'){
+    try{ ctx.resume(); }catch(e){}
+  }
+  const len=Math.max(1, Math.floor(ctx.sampleRate*dur));
+  const buffer=ctx.createBuffer(1,len,ctx.sampleRate);
+  const data=buffer.getChannelData(0);
+  for(let i=0;i<len;i++) data[i]=(Math.random()*2-1)*(1-i/len);
+  const src=ctx.createBufferSource();
+  const filter=ctx.createBiquadFilter();
+  const g=ctx.createGain();
+  filter.type='highpass'; filter.frequency.value=filterFreq;
+  g.gain.value=vol;
+  src.buffer=buffer;
+  src.connect(filter); filter.connect(g); g.connect(state.masterGain);
+  const t=ctx.currentTime + Math.max(0, delay);
+  src.start(t);
+}
+
 function playSfx(kind){
   if(!state.audioUnlocked || state.mobileMuted) return;
-  const map={slash:[640,.06,'triangle',.055],fire:[220,.14,'sawtooth',.055],thunder:[90,.09,'square',.04],heavy:[120,.18,'sawtooth',.06],hit:[180,.05,'square',.035],guard:[520,.08,'triangle',.045],win:[880,.12,'sine',.04],level:[660,.2,'triangle',.055],down:[110,.28,'sawtooth',.05],dance:[360,.22,'sawtooth',.06],cutin:[960,.18,'sawtooth',.075]};
-  const a=map[kind]||map.slash; tone(...a);
-  if(kind==='slash'||kind==='fire'||kind==='thunder'||kind==='dance'||kind==='cutin') setTimeout(()=>tone(a[0]*1.42,a[1]*.8,a[2],a[3]*.65),55);
-  if(kind==='cutin'){ setTimeout(()=>tone(420,.2,'triangle',.055),130); setTimeout(()=>tone(1280,.12,'sine',.04),210); }
+  // v68: 攻撃系SEを聞き取りやすく修正。BGMとは独立したWebAudio SEとして鳴らす。
+  switch(kind){
+    case 'slash':
+      noiseBurst(.055,.032,0,1800);
+      tone(760,.045,'triangle',.060,0);
+      tone(1120,.04,'triangle',.040,.045);
+      break;
+    case 'fire':
+      noiseBurst(.12,.030,0,600);
+      tone(180,.16,'sawtooth',.055,0);
+      tone(420,.08,'sawtooth',.035,.055);
+      break;
+    case 'thunder':
+      noiseBurst(.08,.034,0,2200);
+      tone(95,.08,'square',.045,0);
+      tone(1480,.05,'square',.030,.045);
+      break;
+    case 'heavy':
+      noiseBurst(.11,.040,0,900);
+      tone(120,.18,'sawtooth',.065,0);
+      tone(70,.12,'square',.035,.08);
+      break;
+    case 'hit':
+      noiseBurst(.045,.020,0,700);
+      tone(170,.055,'square',.040,0);
+      break;
+    case 'guard':
+      tone(520,.07,'triangle',.045,0);
+      tone(390,.06,'triangle',.030,.045);
+      break;
+    case 'win':
+      tone(740,.10,'sine',.040,0);
+      tone(980,.12,'sine',.038,.09);
+      break;
+    case 'level':
+      tone(660,.10,'triangle',.050,0);
+      tone(880,.13,'triangle',.045,.09);
+      tone(1320,.16,'sine',.035,.18);
+      break;
+    case 'down':
+      tone(110,.28,'sawtooth',.050,0);
+      tone(80,.22,'sawtooth',.030,.12);
+      break;
+    case 'dance':
+      noiseBurst(.10,.034,0,1600);
+      tone(360,.18,'sawtooth',.055,0);
+      tone(720,.13,'triangle',.040,.08);
+      break;
+    case 'cutin':
+      noiseBurst(.12,.040,0,2500);
+      tone(960,.16,'sawtooth',.070,0);
+      tone(420,.18,'triangle',.050,.12);
+      tone(1280,.12,'sine',.040,.22);
+      break;
+    default:
+      tone(520,.055,'triangle',.030,0);
+  }
 }
+
 function playUiClick(){
   if(!state.audioUnlocked || state.mobileMuted) return;
-  tone(520,.045,'triangle',.018);
+  tone(520,.045,'triangle',.020);
 }
 function stopBgm(){
   // 旧オシレーターBGM用の停止処理。HTMLAudio BGMは止めない。
