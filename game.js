@@ -35,7 +35,7 @@ const DEATH_DANCE_CUTINS = [
 ];
 const DARK_SWORD_SAINT_CUTIN = {quote:'私を超えてみせろ。', img:'assets/cutin_dark_sword_dance.png'};
 const DARK_SWORD_TECHNIQUE_CUTIN = {quote:'', img:'assets/cutin_dark_sword_technique.png'};
-const GAME_VERSION = '95';
+const GAME_VERSION = '95.1';
 const DARK_SWORD_SAINT = {
   id:'dark_sword_saint', name:'暗黒剣聖', type:'裏ボス', img:'assets/enemy_dark_sword_saint.png', element:'dark',
   hp:32000, atk:260, def:95, xp:2600, gold:5000, bossChance:0, enemySkill:'暗黒斬'
@@ -666,6 +666,7 @@ function activeStatusEntries(target){
       entries.push(['darkaura', 'enemy']);
       entries.push(['darksword', 'enemy']);
       entries.push(['darkdance', 'enemy']);
+      entries.push(['darktechnique', 'enemy']);
     }
   }
   return entries;
@@ -2001,9 +2002,27 @@ function showInventoryActionMenu(it, anchor){
       }
     });
   }
-  menu.querySelector('[data-action="equip"]').onclick=(e)=>{ e.stopPropagation(); playUiClick(); cancelInventoryActionMenu(); equipItem(it); };
-  menu.querySelector('[data-action="cancel"]').onclick=(e)=>{ e.stopPropagation(); playUiClick(); cancelInventoryActionMenu(); renderInventory(); };
+  const bindMenuAction = (selector, fn) => {
+    const btn = menu.querySelector(selector);
+    if(!btn) return;
+    let last = 0;
+    const run = (e) => {
+      if(e){ e.preventDefault(); e.stopPropagation(); }
+      const n = performance.now ? performance.now() : Date.now();
+      if(n - last < 350) return;
+      last = n;
+      playUiClick();
+      fn();
+    };
+    btn.onclick = run;
+    btn.onpointerup = run;
+    btn.ontouchend = run;
+  };
+  bindMenuAction('[data-action="equip"]', ()=>{ cancelInventoryActionMenu(); equipItem(it); });
+  bindMenuAction('[data-action="cancel"]', ()=>{ cancelInventoryActionMenu(); renderInventory(); });
   menu.onclick=(e)=>e.stopPropagation();
+  menu.onpointerup=(e)=>e.stopPropagation();
+  menu.ontouchend=(e)=>e.stopPropagation();
 }
 function itemSummary(it){
   const arr=[];
@@ -2191,17 +2210,18 @@ function v94InstallTouchControls(){
       else if(id==='legalModalClose') closeLegalModal();
     });
   });
-  // iPhoneで透明要素がタップを奪わないよう、閉じているパネルを明示的に無効化。
-  ['debugPanel','sidePanel'].forEach(id=>{
-    const el = byId(id);
-    if(!el) return;
-    if(id==='debugPanel' && el.classList.contains('hidden')) el.style.pointerEvents='none';
-    if(id==='sidePanel' && !el.classList.contains('open')) el.style.pointerEvents='none';
-  });
-  const mo = new MutationObserver(()=>{
+  // iPhoneで透明要素がタップを奪わないようにする。
+  // ただしPC/大画面ではsidePanelは常時表示なので pointer-events を消さない。
+  const syncPanelPointerEvents = () => {
     if(els.debugPanel) els.debugPanel.style.pointerEvents = els.debugPanel.classList.contains('hidden') ? 'none' : 'auto';
-    if(els.sidePanel) els.sidePanel.style.pointerEvents = els.sidePanel.classList.contains('open') ? 'auto' : 'none';
-  });
+    if(els.sidePanel){
+      const overlayMenuMode = isSpPortrait() || window.innerWidth <= 900;
+      els.sidePanel.style.pointerEvents = (!overlayMenuMode || els.sidePanel.classList.contains('open')) ? 'auto' : 'none';
+    }
+  };
+  syncPanelPointerEvents();
+  window.addEventListener('resize', syncPanelPointerEvents);
+  const mo = new MutationObserver(syncPanelPointerEvents);
   if(els.debugPanel) mo.observe(els.debugPanel,{attributes:true,attributeFilter:['class']});
   if(els.sidePanel) mo.observe(els.sidePanel,{attributes:true,attributeFilter:['class']});
 }
@@ -2213,3 +2233,46 @@ setTimeout(v94InstallTouchControls, 0);
 window.addEventListener("load",()=>{ state.mobileMuted = true; updateMuteButton(); applyVolume(); stopAllAudioForMute(); });
 window.addEventListener("pageshow",()=>{ if(state.mobileMuted) stopAllAudioForMute(); });
 window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(); });
+
+
+/* v95.1: visible build badge + inventory/menu touch fix */
+function v951EnsureVersionBadge(){
+  const text = 'ver.' + (typeof GAME_VERSION !== 'undefined' ? GAME_VERSION : '95.1');
+  document.querySelectorAll('.build-version,.debug-version').forEach(el=>{
+    if(el.classList.contains('debug-version')) el.textContent = 'Build: ' + text;
+    else el.textContent = text;
+  });
+  let fixed = document.getElementById('fixedBuildVersion');
+  if(!fixed){
+    fixed = document.createElement('div');
+    fixed.id = 'fixedBuildVersion';
+    fixed.className = 'fixed-build-version';
+    document.body.appendChild(fixed);
+  }
+  fixed.textContent = text;
+}
+function v951InstallInventoryDelegation(){
+  if(window.__v951InventoryDelegation) return;
+  window.__v951InventoryDelegation = true;
+  const openFromEvent = (e) => {
+    const item = e.target?.closest ? e.target.closest('#inventory .item') : null;
+    if(!item) return;
+    const idx = Array.prototype.indexOf.call(els.inventory.children, item);
+    const it = state.inventory[idx];
+    if(!it) return;
+    e.preventDefault();
+    e.stopPropagation();
+    els.tooltip?.classList.add('hidden');
+    showInventoryActionMenu(it, item);
+  };
+  ['click','pointerup','touchend'].forEach(type=>{
+    els.inventory?.addEventListener(type, openFromEvent, {capture:true, passive:false});
+  });
+}
+function v951FinalFixes(){
+  v951EnsureVersionBadge();
+  v951InstallInventoryDelegation();
+  if(els.sidePanel) els.sidePanel.style.pointerEvents = (isSpPortrait() || window.innerWidth <= 900) && !els.sidePanel.classList.contains('open') ? 'none' : 'auto';
+}
+setTimeout(v951FinalFixes, 50);
+window.addEventListener('resize', v951FinalFixes);
