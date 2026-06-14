@@ -35,7 +35,7 @@ const DEATH_DANCE_CUTINS = [
 ];
 const DARK_SWORD_SAINT_CUTIN = {quote:'私を超えてみせろ。', img:'assets/cutin_dark_sword_dance.png'};
 const DARK_SWORD_TECHNIQUE_CUTIN = {quote:'', img:'assets/cutin_dark_sword_technique.png'};
-const GAME_VERSION = '95.2';
+const GAME_VERSION = '95.3';
 const DARK_SWORD_SAINT = {
   id:'dark_sword_saint', name:'暗黒剣聖', type:'裏ボス', img:'assets/enemy_dark_sword_saint.png', element:'dark',
   hp:32000, atk:260, def:95, xp:2600, gold:5000, bossChance:0, enemySkill:'暗黒斬'
@@ -46,10 +46,10 @@ const ENEMIES = [
   {id:'goblin', name:'ゴブリン', type:'雑魚', img:'assets/enemy_goblin.jpg', element:'normal', hp:980, atk:42, def:8, xp:26, gold:32, weight:'normal'},
   {id:'lizard', name:'リザード', type:'雑魚', img:'assets/enemy_lizard.jpg', element:'normal', hp:1450, atk:38, def:18, xp:32, gold:42, weight:'normal'},
   {id:'fire_spirit', name:'火の精霊', type:'雑魚', img:'assets/enemy_fire_spirit.jpg', element:'fire', hp:1100, atk:55, def:10, xp:38, gold:55, weight:'normal', fireAbsorb:true, enemySkill:'フレイム'},
-  {id:'slime_king', name:'スライムキング', type:'ボス', img:'assets/enemy_slime_king.jpg', element:'normal', hp:5600, atk:75, def:30, xp:150, gold:220, bossChance:0.06},
-  {id:'orc', name:'オーク', type:'ボス', img:'assets/enemy_orc.jpg', element:'normal', hp:7400, atk:115, def:35, xp:230, gold:360, bossChance:0.03},
-  {id:'dragon', name:'ドラゴン', type:'ボス', img:'assets/enemy_dragon.jpg', element:'fire', hp:11800, atk:155, def:45, xp:480, gold:900, bossChance:0.005, fireResist:.5, enemySkill:'炎のブレス'},
-  {id:'fire_king', name:'火の精霊王', type:'ボス', img:'assets/enemy_fire_king.jpg', element:'fire', hp:14500, atk:180, def:50, xp:620, gold:1200, bossChance:0.005, fireAbsorb:true, enemySkill:'フレイムテンペスト'},
+  {id:'slime_king', name:'スライムキング', type:'ボス', img:'assets/enemy_slime_king.jpg', element:'normal', hp:5600, atk:75, def:30, xp:150, gold:220, bossChance:0.06, bossBuff:'acid_body'},
+  {id:'orc', name:'オーク', type:'ボス', img:'assets/enemy_orc.jpg', element:'normal', hp:7400, atk:115, def:35, xp:230, gold:360, bossChance:0.03, bossBuff:'super_regen'},
+  {id:'dragon', name:'ドラゴン', type:'ボス', img:'assets/enemy_dragon.jpg', element:'fire', hp:11800, atk:155, def:45, xp:480, gold:900, bossChance:0.005, fireResist:.5, enemySkill:'炎のブレス', bossBuff:'apex'},
+  {id:'fire_king', name:'火の精霊王', type:'ボス', img:'assets/enemy_fire_king.jpg', element:'fire', hp:14500, atk:180, def:50, xp:620, gold:1200, bossChance:0.005, fireAbsorb:true, enemySkill:'フレイムテンペスト', bossBuff:'spirit_king'},
 ];
 const normals = ENEMIES.filter(e => e.weight === 'normal');
 const bosses = ENEMIES.filter(e => e.type === 'ボス');
@@ -69,7 +69,7 @@ const state = {
   level:1, xp:0, xpNext:80, chests:0, mats:3, defeated:0,
   base:{hp:520, atk:48, def:14}, hp:520, enemy:null, enemyHp:1,
   inventory:[], equip:{}, down:false, downUntil:0, deathDance:false, deathDanceUntil:0, deathDanceBattleCount:0, deathDanceCutin:false, deathDanceCutinTimer:null, deathDanceSeqTimers:[], lastHeroAttack:0, lastEnemyAttack:0,
-  log:[], debug:{killEnemy:false, killHero:false}, audio:null, masterGain:null, bgmGain:null, bgmTimer:null, bgmMode:'normal', normalBgm:null, swordDanceBgm:null, darkSwordSaintBgm:null, darkSwordSaintVoice:null, darkSwordReviveTimer:null, darkSwordComboTimers:[], darkSwordCutinActive:false, audioUnlocked:false, mobileMuted:true, menuPage:'stats', inventoryMenuItemId:null, enemyRecords:{}, forceFirstEnemy:false, bgmPausedByVisibility:false, heroStatuses:null, enemyStatuses:null
+  log:[], debug:{killEnemy:false, killHero:false}, audio:null, masterGain:null, bgmGain:null, bgmTimer:null, bgmMode:'normal', normalBgm:null, swordDanceBgm:null, darkSwordSaintBgm:null, darkSwordSaintVoice:null, darkSwordReviveTimer:null, darkSwordComboTimers:[], darkSwordCutinActive:false, audioUnlocked:false, mobileMuted:true, menuPage:'stats', inventoryMenuItemId:null, enemyRecords:{}, forceFirstEnemy:false, bgmPausedByVisibility:false, heroStatuses:null, enemyStatuses:null, darkShieldStacks:0, dropToastTimer:null, dropToastQueueTimers:[]
 };
 
 const SAVE_KEY = 'mini-browser-hero-save-v36';
@@ -212,6 +212,7 @@ function init(){
   slots.forEach(slot => state.equip[slot]=null);
   state.inventory = [];
   loadGame();
+  ensureStarterEquipment();
   // v57: 音声は保存状態に関係なく、起動・リロード直後は必ずミュートON。
   state.mobileMuted = true;
   state.audioUnlocked = false;
@@ -394,6 +395,19 @@ function bind(){
   syncMenuByWidth();
   setMenuPage(state.menuPage || 'stats');
   updateMuteButton();
+  installVersionLabel();
+  const fleeBtn=document.getElementById('fleeBtn'); if(fleeBtn) v94BindTap(fleeBtn, ()=>{ playUiClick(); confirmFlee(); });
+  const fleeCancel=document.getElementById('fleeCancelBtn'); if(fleeCancel) v94BindTap(fleeCancel, ()=>{ playUiClick(); closeFleeModal(); });
+  const fleeOk=document.getElementById('fleeOkBtn'); if(fleeOk) v94BindTap(fleeOk, ()=>{ playUiClick(); closeFleeModal(); fleeBattle(); });
+}
+
+function installVersionLabel(){
+  const fixed=document.getElementById('fixedBuildVersion'); if(fixed) fixed.remove();
+  const brand=document.querySelector('.brand'); if(!brand) return;
+  let v=brand.querySelector('.build-version');
+  if(!v){ v=document.createElement('span'); v.className='build-version'; brand.appendChild(v); }
+  v.textContent = `ver.${GAME_VERSION}`;
+  const dbg=document.querySelector('.debug-version'); if(dbg) dbg.textContent = `Build: ver.${GAME_VERSION}`;
 }
 
 function syncMenuByWidth(){
@@ -407,18 +421,26 @@ function calcStats(){
     def:state.base.def + (state.level-1)*4,
     fireRes:0, fireDmg:0, fireSkillChance:0, fireDamageHeal:0,
     thunderDmg:0, thunderSkillChance:0,
-    deathDanceChance:.10, deathDanceDefIgnore:0, heroDarkBleedChance:0, lifeSteal:0, guard:0, crit:.08
+    deathDanceChance:.10, deathDanceDefIgnore:0, heroDarkBleedChance:0, lifeSteal:0, guard:0, crit:.08,
+    darkShield:false, darkAmulet:false, masterRegen:false, deathDanceDurationMul:1
   };
+  let normalDanceBonus = 0;
+  let darkDanceBonus = 0;
   Object.values(state.equip).filter(Boolean).forEach(it=>{
     s.hp += it.hp||0; s.atk += it.atk||0; s.def += it.def||0;
     s.fireRes += it.fireRes||0; s.fireDmg += it.fireDmg||0; s.fireSkillChance += it.fireSkillChance||0;
     s.fireDamageHeal += it.fireDamageHeal||0;
     s.thunderDmg += it.thunderDmg||0; s.thunderSkillChance += it.thunderSkillChance||0;
-    s.deathDanceChance += it.deathDanceChance||0;
+    const dd = it.deathDanceChance||0;
+    if(dd){ if(it.specialFrame === 'darkholy') darkDanceBonus += dd; else normalDanceBonus += dd; }
     s.deathDanceDefIgnore += it.deathDanceDefIgnore||0;
     s.heroDarkBleedChance += it.heroDarkBleedChance||0;
     s.lifeSteal += it.lifeSteal||0; s.guard += it.guard||0; s.crit += it.crit||0;
+    if(it.darkShield) s.darkShield = true;
+    if(it.darkAmulet){ s.darkAmulet = true; s.deathDanceDurationMul = Math.max(s.deathDanceDurationMul, 2); }
+    if(it.masterRegen) s.masterRegen = true;
   });
+  s.deathDanceChance += Math.min(0.25, normalDanceBonus) + Math.min(0.50, darkDanceBonus);
   if(hasUnyieldingBuff()) s.deathDanceChance += 0.50;
   s.fireRes=Math.min(.75,s.fireRes); s.fireDamageHeal=Math.min(1,s.fireDamageHeal);
   s.guard=Math.min(.45,s.guard); s.crit=Math.min(.55,s.crit); s.deathDanceChance=Math.min(1,s.deathDanceChance); s.deathDanceDefIgnore=Math.min(.9,s.deathDanceDefIgnore);
@@ -429,7 +451,7 @@ function maxHp(){return calcStats().hp}
 function nowMs(){ return performance.now(); }
 
 function makeEmptyEnemyStatuses(t=0){
-  return {bleeds:[], darkBleeds:[], burnUntil:0, lastBleedTick:t, lastDarkBleedTick:t, darkAuraStacks:0, darkAuraLastTick:t, darkSwordBuffs:[], darkDanceCount:0, darkRevivingUntil:0, darkReviveStart:0, darkOneDamageCount:0, darkTechniqueAwakened:false};
+  return {bleeds:[], darkBleeds:[], burnUntil:0, lastBleedTick:t, lastDarkBleedTick:t, darkAuraStacks:0, darkAuraLastTick:t, darkSwordBuffs:[], darkDanceCount:0, darkRevivingUntil:0, darkReviveStart:0, darkOneDamageCount:0, darkTechniqueAwakened:false, bossRegenLast:t};
 }
 function isDarkSwordSaint(e=state.enemy){ return !!e && e.id === 'dark_sword_saint'; }
 function hasUnyieldingBuff(){ return isDarkSwordSaint() && !state.down; }
@@ -455,6 +477,7 @@ function resetTransientStatuses(){
   state.heroStatuses = {bleeds:[], darkBleeds:[], burnUntil:0, lastBleedTick:0, lastDarkBleedTick:0};
   state.enemyStatuses = makeEmptyEnemyStatuses();
   state.deathDanceBattleCount = 0;
+  state.darkShieldStacks = 0;
   hideStatusTooltip();
   renderStatusLists();
 }
@@ -508,6 +531,24 @@ function addBurn(target){
 }
 function processStatusDots(now){
   ensureStatusContainers(); cleanupStatuses();
+  if(state.enemy && state.enemy.bossBuff === 'super_regen'){
+    if(!state.enemyStatuses.bossRegenLast) state.enemyStatuses.bossRegenLast = now;
+    const ticks = Math.floor((now - state.enemyStatuses.bossRegenLast)/10000);
+    if(ticks > 0){
+      state.enemyStatuses.bossRegenLast += ticks*10000;
+      const heal = Math.max(1, Math.floor(state.enemy.maxHp * 0.01 * ticks));
+      if(state.enemyHp > 0 && state.enemyHp < state.enemy.maxHp){ state.enemyHp = Math.min(state.enemy.maxHp, state.enemyHp + heal); showFloat(`+${heal}`, 'heal'); }
+    }
+  }
+  if(!state.down && !state.deathDanceCutin && calcStats().masterRegen){
+    if(!state.heroStatuses.masterRegenLast) state.heroStatuses.masterRegenLast = now;
+    const ticks = Math.floor((now - state.heroStatuses.masterRegenLast)/10000);
+    if(ticks > 0){
+      state.heroStatuses.masterRegenLast += ticks*10000;
+      const heal = Math.max(1, Math.floor(maxHp() * 0.03 * ticks));
+      if(state.hp > 0 && state.hp < maxHp()){ state.hp = Math.min(maxHp(), state.hp + heal); showHeroFloat(`+${heal}`, 'heal'); }
+    }
+  }
   if(isDarkSwordSaintReviving()){ renderStatusLists(); return; }
   if(state.enemy && state.enemyStatuses.bleeds.length){
     if(!state.enemyStatuses.lastBleedTick) state.enemyStatuses.lastBleedTick = now;
@@ -515,6 +556,7 @@ function processStatusDots(now){
     if(ticks > 0){
       state.enemyStatuses.lastBleedTick += ticks*1000;
       let dmg = Math.max(1, Math.floor(state.enemy.maxHp * 0.01 * state.enemyStatuses.bleeds.length * ticks));
+      if(state.enemy?.bossBuff === 'apex') dmg = Math.max(1, Math.floor(dmg * 0.5));
       if(isDarkSwordSaint() && darkAuraStacks() > 0){
         dmg = Math.max(1, Math.floor(dmg * 0.10));
       }
@@ -579,6 +621,85 @@ function processStatusDots(now){
   }else state.heroStatuses.lastDarkBleedTick = now;
   renderStatusLists();
 }
+
+function applyDarkShieldToDamage(dmg){
+  const st = calcStats();
+  if(!st.darkShield || dmg <= 0) return Math.max(0, Math.floor(dmg));
+  state.darkShieldStacks = Math.min(50, (state.darkShieldStacks||0) + 1);
+  const reduced = Math.max(1, Math.floor(dmg * (1 - state.darkShieldStacks/100)));
+  const heal = Math.max(1, Math.floor(reduced * 0.5));
+  state.hp = Math.min(maxHp(), state.hp + heal);
+  showHeroFloat(`闇盾 +${heal}`, 'heal');
+  return reduced;
+}
+function loseExpPercent(percent){
+  let loss = Math.max(1, Math.floor(totalCurrentExp() * percent));
+  state.lastXpGain = -loss;
+  while(loss > 0){
+    if(state.xp >= loss){ state.xp -= loss; loss = 0; }
+    else{
+      loss -= state.xp;
+      if(state.level <= 1){ state.xp = 0; loss = 0; break; }
+      state.level--;
+      state.xpNext = Math.max(80, Math.floor((state.xpNext - 40) / 1.42));
+      state.xp = state.xpNext;
+    }
+  }
+  state.hp = Math.min(state.hp, maxHp());
+}
+function totalCurrentExp(){
+  let total = Math.max(0, state.xp||0);
+  let need = 80;
+  for(let lv=1; lv<state.level; lv++){
+    total += need;
+    need = Math.floor(need*1.42+40);
+  }
+  return Math.max(1,total);
+}
+function spawnWeakEnemyAfterEscape(){
+  clearDarkSwordTimers();
+  clearDeathDanceSequence();
+  hideDeathDanceCutin();
+  state.down = false;
+  state.deathDance = false;
+  state.deathDanceCutin = false;
+  state.darkSwordCutinActive = false;
+  const base = normals[Math.floor(Math.random()*normals.length)] || ENEMIES[0];
+  const lv = Math.max(1, Math.floor(state.level * 0.5));
+  const e = makeScaledEnemy(base, lv);
+  state.enemy = e;
+  state.enemyHp = e.maxHp;
+  state.enemyStatuses = makeEmptyEnemyStatuses(performance.now());
+  state.heroStatuses = {bleeds:[], darkBleeds:[], burnUntil:0, lastBleedTick:performance.now(), lastDarkBleedTick:performance.now(), masterRegenLast:performance.now()};
+  state.lastHeroAttack = performance.now() - 9999;
+  state.lastEnemyAttack = performance.now();
+  if(els.heroCard) els.heroCard.classList.remove('down');
+  if(els.downOverlay) els.downOverlay.classList.add('hidden');
+  setBgmMode('normal');
+  renderAll();
+  scheduleSave();
+}
+function fleeBattle(){
+  loseExpPercent(0.10);
+  log('戦闘から離脱した。経験値を10%失った。','danger');
+  banner('戦闘離脱');
+  spawnWeakEnemyAfterEscape();
+}
+function confirmFlee(){
+  const modal = document.getElementById('fleeModal');
+  if(modal) modal.classList.remove('hidden');
+}
+function closeFleeModal(){
+  const modal = document.getElementById('fleeModal');
+  if(modal) modal.classList.add('hidden');
+}
+function handleHeroDeath(){
+  loseExpPercent(0.25);
+  log('騎士は力尽きた。経験値を25%失った。敵は弱いザコに切り替わった。','danger');
+  banner('力尽きた…');
+  spawnWeakEnemyAfterEscape();
+}
+
 function enemyDefenseMultiplierFor(element){
   let m = 1;
   if(hasBurn('enemy')) m *= 0.75;
@@ -617,12 +738,19 @@ function statusTooltipHtml(kind, target){
   if(kind === 'bleed') return `<b>出血</b><br>現在：${bleedCount(target)}スタック<br>1スタックごとに10秒継続。<br>1秒ごとに最大HPの1%ダメージ。<br>最大20スタック。`;
   if(kind === 'darkbleed') return `<b>暗黒出血</b><br>現在：${darkBleedCount(target||'hero')}スタック<br>暗黒剣舞の攻撃ごとに50%で付与。<br>15秒ごとに最大HPの1%ダメージ。<br>最大100スタック。効果時間60秒。`; 
   if(kind === 'burn') return `<b>火傷</b><br>残り：${burnSeconds(target)}秒<br>防御力25%低下。<br>火耐性10%以上で無効化。`;
-  if(kind === 'deathdance') return `<b>死線の剣舞</b><br>残り：${Math.max(0, Math.ceil((state.deathDanceUntil-nowMs())/1000))}秒<br>無敵状態で高速連撃。<br>この戦闘での発動回数：${state.deathDanceBattleCount||0}回<br>現在威力：${Math.pow(2, state.deathDanceBattleCount||0)}倍`; 
+  if(kind === 'deathdance') return `<b>死線の剣舞</b><br>残り：${Math.max(0, Math.ceil((state.deathDanceUntil-nowMs())/1000))}秒<br>極限状態で連続攻撃を放つ。<br>この戦闘での発動回数：${state.deathDanceBattleCount||0}回<br>現在威力：${Math.pow(2, state.deathDanceBattleCount||0)}倍`; 
   if(kind === 'unyielding') return `<b>不屈</b><br>暗黒剣聖と対峙中のみ発動。<br>死線の剣舞発動率+50%。<br>現在の剣舞発動率：${Math.round(calcStats().deathDanceChance*100)}%。`;
   if(kind === 'darkaura') return `<b>闇オーラ</b><br>現在：${darkAuraStacks()}スタック<br>1スタックごとに被ダメージ10%軽減。<br>闇オーラ中は出血ダメージ90%軽減。<br>最大10スタック。10秒ごとに1減少。<br>暗黒剣舞発動時に10へ回復。`;
   if(kind === 'darksword') return `<b>暗黒の剣</b><br>現在：${darkSwordBuffCount()}スタック<br>攻撃力+50% / スタック。<br>効果時間：60秒。スタック可能。<br>最長残り：${darkSwordBuffSeconds()}秒。`;
   if(kind === 'darktechnique') return `<b>暗黒剣技</b><br>暗黒剣聖の通常攻撃で1ダメージが20回発生すると覚醒。<br>覚醒後は通常攻撃が暗黒剣技に置き換わる。<br>暗黒剣舞の回数にはカウントしない。<br>HP回復・闇オーラ回復・暗黒の剣付与はなし。<br>攻撃速度3倍、ガード無効、防御力50%無視。<br>攻撃ごとに出血50%、暗黒出血50%。<br>現在：${state.enemyStatuses?.darkTechniqueAwakened?'覚醒中':((state.enemyStatuses?.darkOneDamageCount||0)+' / 20')}。`;
   if(kind === 'darkdance') return `<b>暗黒剣舞</b><br>発動済み：${state.enemyStatuses?.darkDanceCount||0}回 / 10回<br>次回発動率：${darkDanceChanceForNext()}%<br>暗黒剣舞回数：${state.enemyStatuses?.darkDanceCount||0} / 10<br>HP0時に発動判定。カットイン後に5秒無敵、HPをゆっくり100%まで回復、闇オーラ10、暗黒の剣+1。<br>連続攻撃は10秒間、攻撃速度3倍、ガード無効、防御力50%無視。<br>攻撃ごとに出血50%、暗黒出血50%。`;
+  if(kind === 'acid_body') return `<b>酸ボディ</b><br>受けた直接ダメージの10%を跳ね返す。`;
+  if(kind === 'super_regen') return `<b>超再生</b><br>10秒ごとに最大HPの1%を回復する。`;
+  if(kind === 'apex') return `<b>種族の頂点</b><br>被ダメージ50%軽減。<br>出血ダメージ50%軽減。`;
+  if(kind === 'spirit_king') return `<b>精霊王</b><br>攻撃されると必ず火傷を付与する。`;
+  if(kind === 'master_amulet') return `<b>師匠のアミュレット</b><br>10秒ごとに最大HP3%回復。<br>死線の剣舞発動率+10%。`;
+  if(kind === 'dark_shield') return `<b>闇の盾</b><br>毎ターン被ダメージ軽減+1%。最大50%。<br>被ダメージの半分を回復。`;
+  if(kind === 'dark_amulet') return `<b>闇のアミュレット</b><br>死線の剣舞発動率+25%。<br>死線の剣舞効果時間2倍。`;
   return '';
 }
 
@@ -654,6 +782,14 @@ function showStatusDetailPanel(kind, target){
 function activeStatusEntries(target){
   ensureStatusContainers(); cleanupStatuses();
   const entries = [];
+  if(target === 'hero'){
+    const st=calcStats();
+    if(st.masterRegen) entries.push(['master_amulet', 'hero']);
+    if(st.darkShield) entries.push(['dark_shield', 'hero']);
+    if(st.darkAmulet) entries.push(['dark_amulet', 'hero']);
+  }else if(target === 'enemy'){
+    if(state.enemy?.bossBuff) entries.push([state.enemy.bossBuff, 'enemy']);
+  }
   if(bleedCount(target)) entries.push(['bleed', target]);
   if(target === 'hero' && darkBleedCount('hero')) entries.push(['darkbleed', 'hero']);
   if(target === 'enemy' && darkBleedCount('enemy')) entries.push(['darkbleed', 'enemy']);
@@ -791,6 +927,10 @@ function renderStatusLists(){
   ensureStatusContainers(); cleanupStatuses();
   if(els.enemyStatusList){
     const parts=[];
+    if(state.enemy?.bossBuff){
+      const names={acid_body:'🧪酸ボディ', super_regen:'💚超再生', apex:'👑種族の頂点', spirit_king:'🔥精霊王'};
+      parts.push(makeStatusBadge(names[state.enemy.bossBuff]||'ボス特性', 'bossbuff', state.enemy.bossBuff, 'enemy'));
+    }
     const bc = bleedCount('enemy');
     if(bc) parts.push(makeStatusBadge(`🩸出血(${bc})`, 'bleed', 'bleed', 'enemy'));
     const edbc = darkBleedCount('enemy');
@@ -807,6 +947,10 @@ function renderStatusLists(){
   }
   if(els.heroStatusList){
     const parts=[];
+    const st=calcStats();
+    if(st.masterRegen) parts.push(makeStatusBadge('📿師匠のアミュレット', 'buff', 'master_amulet', 'hero'));
+    if(st.darkShield) parts.push(makeStatusBadge(`🛡闇の盾(${state.darkShieldStacks||0}%)`, 'buff', 'dark_shield', 'hero'));
+    if(st.darkAmulet) parts.push(makeStatusBadge('📿闇のアミュレット', 'buff', 'dark_amulet', 'hero'));
     const bc = bleedCount('hero');
     if(bc) parts.push(makeStatusBadge(`🩸出血(${bc})`, 'bleed', 'bleed', 'hero'));
     const dbc = darkBleedCount('hero');
@@ -845,6 +989,7 @@ function makeScaledEnemy(base, forceLevel=null){
 }
 function setEnemy(e){
   state.deathDanceBattleCount = 0;
+  state.darkShieldStacks = 0;
   state.enemy=e; state.enemyHp=e.maxHp; state.enemyStatuses = makeEmptyEnemyStatuses(performance.now());
   if(isDarkSwordSaint(e)){
     state.enemyStatuses.darkAuraStacks = 10;
@@ -959,11 +1104,19 @@ function applyHeroHit(skill){
   if(element==='fire' && state.enemy.fireAbsorb){ state.enemyHp=Math.min(state.enemy.maxHp, state.enemyHp + dmg); absorbed=true; }
   else {
     if(element==='fire' && state.enemy.fireResist){dmg=Math.floor(dmg*(1-state.enemy.fireResist)); resisted=true;}
+    if(state.enemy?.bossBuff === 'apex') dmg = Math.max(1, Math.floor(dmg * 0.5));
     if(isDarkSwordSaint()){
       const auraReduce = Math.min(1, darkAuraStacks() * 0.10);
       dmg = Math.floor(dmg * (1 - auraReduce));
     }
     state.enemyHp=Math.max(0, state.enemyHp - dmg);
+    if(state.enemy?.bossBuff === 'acid_body' && dmg > 0){
+      const ref = Math.max(1, Math.floor(dmg * 0.10));
+      state.hp = Math.max(0, state.hp - ref);
+      showHeroFloat(`反射 ${ref}`, 'acid');
+      if(state.hp <= 0){ if(Math.random() < calcStats().deathDanceChance) startDeathDance(); else handleHeroDeath(); return; }
+    }
+    if(state.enemy?.bossBuff === 'spirit_king'){ addBurn('hero'); log('精霊王の炎が騎士に火傷を刻んだ。','danger'); }
   }
   showFx(fx); playSfx(skill==='fire'?'fire':skill==='thunder'?'thunder':skill==='heavy'?'heavy':'slash');
   // 炎斬り/雷撃は色違い斬撃1個だけ表示する。追加爆発・雷柱は出さない。
@@ -1003,10 +1156,11 @@ function enemyAttack(now){
   let dmg=Math.max(1, Math.floor(atk - st.def*.55*heroDefenseMultiplier() + rand(0,atk*.35)));
   if(state.debug.killHero){ dmg = Math.max(dmg, state.hp + 999999); }
   if(element==='fire') dmg=Math.floor(dmg*(1-st.fireRes));
+  dmg = applyDarkShieldToDamage(dmg);
   // 暗黒剣舞はガード無効。主人公の剣舞中でも防御扱いにしない。
   if(state.hp - dmg <= 0){
     if(Math.random()<st.deathDanceChance){ startDeathDance(); return; }
-    state.hp=0; renderBattle(); startDown(); return;
+    state.hp=0; renderBattle(); handleHeroDeath(); return;
   }
   state.hp=Math.max(0,state.hp-dmg);
   if(element==='fire' && st.fireDamageHeal){
@@ -1183,6 +1337,7 @@ function applyDarkSwordDanceHit(i, total, mode='finish'){
   }else{
     dmg = Math.max(dmg, state.hp + 999999);
   }
+  dmg = applyDarkShieldToDamage(dmg);
   els.enemyCard.classList.remove('attack'); void els.enemyCard.offsetWidth; els.enemyCard.classList.add('attack');
   setTimeout(()=>els.enemyCard.classList.remove('attack'),220);
   if(Math.random() < 0.50){ if(addBleed('hero')) log(`${mode==='punish'?'暗黒剣技':'暗黒剣舞'}で騎士は出血した。`,'danger'); }
@@ -1198,7 +1353,7 @@ function applyDarkSwordDanceHit(i, total, mode='finish'){
     }
     state.hp = 0;
     renderBattle();
-    startDown();
+    handleHeroDeath();
     return;
   }
   state.hp = Math.max(0, state.hp - dmg);
@@ -1254,16 +1409,14 @@ function enemyDefeated(){
   state.lastXpGain = gainXp; state.xp += gainXp;
   if(e && e.id === 'dark_sword_saint'){
     const legendary = rarities.find(r=>r.id==='legendary') || rarities[rarities.length-1];
-    const darkSword = makeDarkHolySword(state.level);
+    const darkPool = [makeDarkHolySword, makeDarkShield, makeDarkAmulet];
+    const darkReward = darkPool[Math.floor(Math.random()*darkPool.length)](state.level);
     const rewards = [];
     for(let i=0;i<2;i++) rewards.push(makeItem(slots[Math.floor(Math.random()*slots.length)], legendary));
-    rewards.push(darkSword); // 闇の聖剣は3枠目で通知・ドロップ
-    rewards.push(makeItem(slots[Math.floor(Math.random()*slots.length)], legendary));
+    rewards.push(darkReward); // 闇シリーズは3枠目で通知・ドロップ
     for(let i=rewards.length-1;i>=0;i--) state.inventory.unshift(rewards[i]);
-    log('暗黒剣聖討伐報酬：レジェンダリー確定装備×3、3枠目に闇の聖剣！','good');
-    rewards.forEach((it,i)=>{
-      setTimeout(()=>{ logItemDrop(it); showDropToast(it); renderInventory(); scheduleSave(); }, i*900);
-    });
+    log('暗黒剣聖討伐報酬：レジェンダリー確定装備×2、3枠目に闇シリーズ装備！','good');
+    showDropSequence(rewards);
   }else if(Math.random()<.38){ const it=makeRandomItem(); state.inventory.unshift(it); logItemDrop(it); showDropToast(it); }
   if(Math.random()<.22){ const m=randInt(1,3); state.mats += m; log(`強化石+${m} を獲得。`,'good'); }
   log(`${e.name} を撃破！ 経験値+${gainXp}`,'good'); playSfx('win');
@@ -1275,11 +1428,12 @@ function checkLevelUp(){
 }
 function showLevelUp(){ els.levelEffect.classList.remove('hidden'); playSfx('level'); setTimeout(()=>els.levelEffect.classList.add('hidden'),1150); }
 function startDown(){
-  state.down=true; state.downUntil=performance.now()+5000; els.heroCard.classList.add('down'); els.downOverlay.classList.remove('hidden');
-  banner('DOWN...'); playSfx('down'); log('騎士は倒れた。5秒後に復活。','danger');
+  handleHeroDeath();
 }
 function revive(){
-  state.down=false; els.heroCard.classList.remove('down'); els.downOverlay.classList.add('hidden'); state.hp=maxHp(); renderBattle(); banner('復活'); log('騎士はHP100%で復活した。','good');
+  state.down=false;
+  if(els.heroCard) els.heroCard.classList.remove('down');
+  if(els.downOverlay) els.downOverlay.classList.add('hidden');
 }
 function clearDeathDanceSequence(){
   clearTimeout(state.deathDanceCutinTimer);
@@ -1349,7 +1503,7 @@ function beginDeathDanceAfterCutin(){
   hideDeathDanceCutin();
   state.deathDance=true;
   state.deathDanceBattleCount = (state.deathDanceBattleCount || 0) + 1;
-  state.deathDanceUntil=performance.now()+10000;
+  state.deathDanceUntil=performance.now()+Math.floor(10000 * (calcStats().deathDanceDurationMul || 1));
   state.hp=1;
   state.lastHeroAttack = performance.now() - 9999;
   state.lastEnemyAttack = performance.now();
@@ -1359,7 +1513,7 @@ function beginDeathDanceAfterCutin(){
   renderStatusLists();
   playSfx('dance');
   setBgmMode('dance');
-  log(`死線の剣舞発動！ 10秒間無敵で連撃。今回の戦闘中${state.deathDanceBattleCount}回目、威力${Math.pow(2,state.deathDanceBattleCount)}倍。`,'skilllog');
+  log(`死線の剣舞発動！ 極限状態で連続攻撃。今回の戦闘中${state.deathDanceBattleCount}回目、威力${Math.pow(2,state.deathDanceBattleCount)}倍。`,'skilllog');
   renderBattle();
 }
 function endDeathDance(){
@@ -1760,6 +1914,51 @@ function makeDarkHolySword(levelOverride){
   return it;
 }
 
+function makeDarkShield(levelOverride){
+  const lv = Math.max(1, Math.floor(levelOverride || state.level || 1));
+  const legendary = rarities.find(r=>r.id==='legendary') || {id:'legendary', name:'レジェンダリー', mult:3.2};
+  const it = makeItem('盾', legendary);
+  it.name = '闇の盾';
+  it.rarity = 'legendary'; it.rarityName = 'レジェンダリー'; it.specialFrame = 'darkholy';
+  it.def = Math.floor((18 + lv * 5) * legendary.mult);
+  it.hp = Math.floor((70 + lv * 14) * legendary.mult);
+  it.darkShield = true;
+  it.flavor = '毎ターン被ダメージ軽減+1%（最大50%）。受けたダメージの半分を回復。';
+  return it;
+}
+function makeDarkAmulet(levelOverride){
+  const lv = Math.max(1, Math.floor(levelOverride || state.level || 1));
+  const legendary = rarities.find(r=>r.id==='legendary') || {id:'legendary', name:'レジェンダリー', mult:3.2};
+  const it = makeItem('アミュレット', legendary);
+  it.name = '闇のアミュレット';
+  it.rarity = 'legendary'; it.rarityName = 'レジェンダリー'; it.specialFrame = 'darkholy';
+  it.hp = Math.floor((90 + lv * 16) * legendary.mult);
+  it.deathDanceChance = 0.25;
+  it.darkAmulet = true;
+  it.flavor = '死線の剣舞発動率+25%。死線の剣舞効果時間2倍。';
+  return it;
+}
+function makeMasterAmulet(){
+  const legendary = rarities.find(r=>r.id==='legendary') || {id:'legendary', name:'レジェンダリー', mult:3.2};
+  const it = makeItem('アミュレット', legendary);
+  it.id = 'master_amulet_fixed';
+  it.name = '師匠のアミュレット';
+  it.rarity = 'legendary'; it.rarityName = 'レジェンダリー';
+  it.hp = 120;
+  it.deathDanceChance = 0.10;
+  it.masterRegen = true;
+  it.unsellable = true;
+  it.flavor = '師匠より託された護符。10秒ごとにHP3%回復。死線の剣舞発動率+10%。';
+  return it;
+}
+function ensureStarterEquipment(force=false){
+  const hasMaster = Object.values(state.equip||{}).some(it=>it && it.name==='師匠のアミュレット') || (state.inventory||[]).some(it=>it && it.name==='師匠のアミュレット');
+  if(force || !hasMaster){
+    if(!state.equip) state.equip = {};
+    if(!state.equip['アミュレット']) state.equip['アミュレット'] = makeMasterAmulet();
+    else state.inventory.unshift(makeMasterAmulet());
+  }
+}
 function makeRandomItem(){
   const slot=slots[Math.floor(Math.random()*slots.length)];
   const r=Math.random(); const rarity = r<.70?rarities[0]:r<.94?rarities[1]:rarities[2];
@@ -1778,7 +1977,7 @@ function makeItem(slot, rarity){
     it.hp=Math.floor((55+lv*12)*m);
     if(Math.random()<.28) it.lifeSteal=.03;
     if(Math.random()<.22) it.guard=.03;
-    if(rarity.id==='legendary') it.deathDanceChance=.50;
+    if(rarity.id==='legendary') it.deathDanceChance=.25;
   } else {
     it.def=Math.floor((8+lv*3)*m);
     it.hp=Math.floor((25+lv*8)*m);
@@ -1806,7 +2005,7 @@ function applyNameBonus(it){
   }
 }
 
-function itemPower(it){return (it.atk||0)*3 + (it.def||0)*2 + (it.hp||0)*.25 + (it.fireRes||0)*400 + (it.fireDmg||0)*420 + (it.thunderDmg||0)*420 + (it.fireDamageHeal||0)*550 + (it.deathDanceChance||0)*700 + (it.deathDanceDefIgnore||0)*800 + (it.crit||0)*500 + (it.lifeSteal||0)*600 + (it.guard||0)*500 + it.level*15;}
+function itemPower(it){return (it.atk||0)*3 + (it.def||0)*2 + (it.hp||0)*.25 + (it.fireRes||0)*400 + (it.fireDmg||0)*420 + (it.thunderDmg||0)*420 + (it.fireDamageHeal||0)*550 + (it.deathDanceChance||0)*700 + (it.deathDanceDefIgnore||0)*800 + (it.crit||0)*500 + (it.lifeSteal||0)*600 + (it.guard||0)*500 + (it.darkShield?2200:0) + (it.darkAmulet?1800:0) + (it.masterRegen?900:0) + it.level*15;}
 function equipItem(it){
   state.inventoryMenuItemId = null;
   const actionMenu=document.getElementById('inventoryActionMenu'); if(actionMenu) actionMenu.remove();
@@ -1831,8 +2030,8 @@ function sellSelectedRarities(){
   const targets=selectedSellRarities();
   if(targets.length===0){ log('売却対象のレアリティを選択して。','danger'); return; }
 
-  const soldItems = state.inventory.filter(it => targets.includes(it.rarity));
-  state.inventory = state.inventory.filter(it => !targets.includes(it.rarity));
+  const soldItems = state.inventory.filter(it => targets.includes(it.rarity) && !it.unsellable);
+  state.inventory = state.inventory.filter(it => !(targets.includes(it.rarity) && !it.unsellable));
   const sold = soldItems.length;
   const gainedXp = soldItems.reduce((sum,it)=>sum + sellExpValue(it), 0);
   const label = targets.map(r => (rarities.find(x => x.id === r)?.name || r)).join('・');
@@ -1875,6 +2074,7 @@ function makeDebugAccessory(slot){
 
 function renderAll(){ renderBattle(); renderStats(); renderEquip(); renderInventory(); }
 function renderBattle(){
+  installVersionLabel();
   const mh=maxHp(); els.heroLevel.textContent=`Lv.${state.level}`; els.heroHpFill.style.width=`${Math.max(0,state.hp/mh*100)}%`; els.heroHpText.textContent=`${Math.floor(state.hp)} / ${Math.floor(mh)}`;
   if(state.enemy){ els.enemyName.textContent=state.enemy.name; if(els.enemyLevel) els.enemyLevel.textContent=`Lv.${state.enemy.level||1}`; els.enemyTag.textContent=state.enemy.type==='ボス'?'BOSS':''; els.enemyHpFill.style.width=`${Math.max(0,state.enemyHp/state.enemy.maxHp*100)}%`; els.enemyHpText.textContent=`${Math.floor(state.enemyHp)} / ${state.enemy.maxHp}`; }
   if(els.chests) els.chests.textContent=state.chests; els.mats.textContent=state.mats;
@@ -1948,7 +2148,7 @@ function selectedSellRarities(){
 function updateSellButtonState(){
   if(!els.sellSelectedBtn) return;
   const targets = selectedSellRarities();
-  const count = state.inventory.filter(it=>targets.includes(it.rarity)).length;
+  const count = state.inventory.filter(it=>targets.includes(it.rarity) && !it.unsellable).length;
   els.sellSelectedBtn.disabled = targets.length === 0;
   els.sellSelectedBtn.textContent = `経験値化 (${count})`;
 }
@@ -2039,6 +2239,9 @@ function itemSummary(it){
   if(it.deathDanceChance)arr.push(`死線の剣舞率+${Math.round(it.deathDanceChance*100)}%`);
   if(it.deathDanceDefIgnore)arr.push(`剣舞時防御無視${Math.round(it.deathDanceDefIgnore*100)}%`);
   if(it.heroDarkBleedChance)arr.push(`通常攻撃/剣舞:暗黒出血${Math.round(it.heroDarkBleedChance*100)}%`);
+  if(it.darkShield)arr.push('毎ターン被ダメ軽減+1%(最大50%) / 被ダメ50%回復');
+  if(it.darkAmulet)arr.push('死線の剣舞効果時間2倍');
+  if(it.masterRegen)arr.push('10秒ごとにHP3%回復');
   if(it.lifeSteal)arr.push(`吸収${Math.round(it.lifeSteal*100)}%`); if(it.guard)arr.push(`GUARD+${Math.round(it.guard*100)}%`); if(it.crit)arr.push(`会心+${Math.round(it.crit*100)}%`);
   if(it.skill)arr.push(`武器スキル:${it.skill.name} ${Math.round((it.skill.chance + (it.skill.id==='fire'?(it.fireSkillChance||0):it.skill.id==='thunder'?(it.thunderSkillChance||0):0))*100)}%`);
   if(it.flavor)arr.push(it.flavor);
@@ -2057,6 +2260,15 @@ function logItemDrop(it){
   const color = itemNameColor(it);
   const rarity = it.rarityName || (rarities.find(r=>r.id===it.rarity)?.name || it.rarity);
   log(`装備ドロップ：<span class="log-item ${itemFrameClass(it)} ${it.rarity}" style="color:${color}">${escapeHtml(it.name)}</span> <span class="log-rarity ${itemFrameClass(it)} ${it.rarity}" style="color:${color}">${escapeHtml(rarity)}</span>`, 'good', true);
+}
+
+function showDropSequence(items){
+  if(state.dropToastQueueTimers){ state.dropToastQueueTimers.forEach(t=>clearTimeout(t)); }
+  state.dropToastQueueTimers = [];
+  (items||[]).forEach((it,i)=>{
+    const t=setTimeout(()=>{ logItemDrop(it); showDropToast(it); renderInventory(); scheduleSave(); }, i*3000);
+    state.dropToastQueueTimers.push(t);
+  });
 }
 
 function showDropToast(it){
@@ -2117,6 +2329,7 @@ function resetUserData(){
   state.log = [];
   state.debug = {killEnemy:false, killHero:false};
   state.enemyRecords = sanitizeEnemyRecords({});
+  ensureStarterEquipment(true);
   resetTransientStatuses();
   if(els.debugKillEnemy) els.debugKillEnemy.checked = false;
   if(els.debugKillHero) els.debugKillHero.checked = false;
@@ -2281,7 +2494,7 @@ window.addEventListener('resize', v951FinalFixes);
 
 /* v95.2: small-screen item menu, modal z-index, always-visible version badge */
 function v952EnsureVersionBadge(){
-  const text = 'ver.95.2';
+  const text = 'ver.' + (typeof GAME_VERSION !== 'undefined' ? GAME_VERSION : '95.3');
   let header = document.querySelector('.brand .build-version');
   const brand = document.querySelector('.brand');
   if(brand && !header){
@@ -2299,9 +2512,9 @@ function v952EnsureVersionBadge(){
     document.body.appendChild(fixed);
   }
   fixed.textContent = text;
-  fixed.style.display = 'block';
-  fixed.style.visibility = 'visible';
-  fixed.style.opacity = '0.88';
+  fixed.style.display = 'none';
+  fixed.style.visibility = 'hidden';
+  fixed.style.opacity = '0';
 }
 function v952OpenInventoryItemFromElement(itemEl, ev){
   if(!itemEl) return false;
@@ -2382,6 +2595,7 @@ function v952PatchLegalModal(){
   };
 }
 function v952FinalFixes(){
+  installVersionLabel();
   v952EnsureVersionBadge();
   v952InstallDelegatedMenus();
   if(!window.__v952LegalPatched){ window.__v952LegalPatched=true; v952PatchLegalModal(); }
