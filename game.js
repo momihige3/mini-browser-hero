@@ -67,7 +67,7 @@ const state = {
   level:1, xp:0, xpNext:80, chests:0, mats:3, defeated:0,
   base:{hp:520, atk:48, def:14}, hp:520, enemy:null, enemyHp:1,
   inventory:[], equip:{}, down:false, downUntil:0, deathDance:false, deathDanceUntil:0, deathDanceCutin:false, deathDanceCutinTimer:null, deathDanceSeqTimers:[], lastHeroAttack:0, lastEnemyAttack:0,
-  log:[], debug:{killEnemy:false, killHero:false}, audio:null, masterGain:null, bgmGain:null, bgmTimer:null, bgmMode:'normal', normalBgm:null, swordDanceBgm:null, audioUnlocked:false, mobileMuted:true, menuPage:'stats', inventoryMenuItemId:null, enemyRecords:{}, forceFirstEnemy:false, bgmPausedByVisibility:false, heroStatuses:null, enemyStatuses:null
+  log:[], debug:{killEnemy:false, killHero:false}, audio:null, masterGain:null, bgmGain:null, bgmTimer:null, bgmMode:'normal', normalBgm:null, swordDanceBgm:null, darkSwordSaintBgm:null, audioUnlocked:false, mobileMuted:true, menuPage:'stats', inventoryMenuItemId:null, enemyRecords:{}, forceFirstEnemy:false, bgmPausedByVisibility:false, heroStatuses:null, enemyStatuses:null
 };
 
 const SAVE_KEY = 'mini-browser-hero-save-v36';
@@ -478,9 +478,12 @@ function processStatusDots(now){
     const ticks = Math.floor((now - state.enemyStatuses.lastBleedTick)/1000);
     if(ticks > 0){
       state.enemyStatuses.lastBleedTick += ticks*1000;
-      const dmg = Math.max(1, Math.floor(state.enemy.maxHp * 0.01 * state.enemyStatuses.bleeds.length * ticks));
+      let dmg = Math.max(1, Math.floor(state.enemy.maxHp * 0.01 * state.enemyStatuses.bleeds.length * ticks));
+      if(isDarkSwordSaint() && darkAuraStacks() > 0){
+        dmg = Math.max(1, Math.floor(dmg * 0.10));
+      }
       state.enemyHp = Math.max(0, state.enemyHp - dmg);
-      showFloat(`出血 ${dmg}`,'damage');
+      showFloat(`出血 ${dmg}${isDarkSwordSaint() && darkAuraStacks() > 0 ? ' 軽減' : ''}`,'damage');
       if(state.enemyHp <= 0){ state.enemyHp = 0; renderBattle(); if(!tryDarkSwordDanceRevive()) setTimeout(enemyDefeated, 120); }
     }
   }else state.enemyStatuses.lastBleedTick = now;
@@ -535,7 +538,7 @@ function statusTooltipHtml(kind, target){
   if(kind === 'bleed') return `<b>出血</b><br>現在：${bleedCount(target)}スタック<br>1スタックごとに10秒継続。<br>1秒ごとに最大HPの1%ダメージ。<br>最大20スタック。`;
   if(kind === 'burn') return `<b>火傷</b><br>残り：${burnSeconds(target)}秒<br>防御力25%低下。<br>火耐性10%以上で無効化。`;
   if(kind === 'deathdance') return `<b>死線の剣舞</b><br>残り：${Math.max(0, Math.ceil((state.deathDanceUntil-nowMs())/1000))}秒<br>無敵状態で高速連撃。<br>`;
-  if(kind === 'darkaura') return `<b>闇オーラ</b><br>現在：${darkAuraStacks()}スタック<br>1スタックごとに被ダメージ10%軽減。<br>最大10スタック。10秒ごとに1減少。<br>暗黒剣舞発動時に10へ回復。`;
+  if(kind === 'darkaura') return `<b>闇オーラ</b><br>現在：${darkAuraStacks()}スタック<br>1スタックごとに被ダメージ10%軽減。<br>闇オーラ中は出血ダメージ90%軽減。<br>最大10スタック。10秒ごとに1減少。<br>暗黒剣舞発動時に10へ回復。`;
   if(kind === 'darksword') return `<b>暗黒の剣</b><br>現在：${darkSwordBuffCount()}スタック<br>攻撃力+50% / スタック。<br>効果時間：60秒。スタック可能。<br>最長残り：${darkSwordBuffSeconds()}秒。`;
   if(kind === 'darkdance') return `<b>暗黒剣舞</b><br>発動済み：${state.enemyStatuses?.darkDanceCount||0}回 / 10回<br>次回発動率：${darkDanceChanceForNext()}%<br>発動時：闇オーラ10、暗黒の剣+1、HP全回復。`;
   return '';
@@ -618,6 +621,9 @@ function setEnemy(e){
     state.enemyStatuses.darkAuraLastTick = performance.now();
     state.enemyStatuses.darkSwordBuffs = [];
     state.enemyStatuses.darkDanceCount = 0;
+    setBgmMode('dark_sword_saint');
+  }else{
+    setBgmMode('normal');
   }
   markEnemySeen(e);
   els.enemyImg.src=e.img; els.enemyCard.className='card enemy-card enter';
@@ -797,8 +803,39 @@ function tryDarkSwordDanceRevive(){
   banner('暗黒剣舞！', 1200);
   log(`暗黒剣舞発動！ 闇オーラ10、暗黒の剣+1（${state.enemyStatuses.darkDanceCount}回目）`, 'danger');
   showDarkSwordDanceCutin();
+  setTimeout(()=>{ darkSwordDanceCombo(); }, 900);
   setTimeout(()=>{ hideDeathDanceCutin(); state.deathDanceCutin = false; renderBattle(); }, 2600);
   return true;
+}
+function darkSwordDanceCombo(){
+  if(!isDarkSwordSaint() || state.down) return;
+  const hitCount = 5;
+  for(let i=0;i<hitCount;i++){
+    setTimeout(()=>applyDarkSwordDanceHit(i+1, hitCount), i*170);
+  }
+}
+function applyDarkSwordDanceHit(i, total){
+  if(!isDarkSwordSaint() || state.down) return;
+  const e = state.enemy, st = calcStats();
+  if(state.deathDance){ showHeroFloat('GUARD','guard'); return; }
+  const atk = e.atk * (1 + darkSwordBuffCount() * 0.5);
+  let dmg = Math.max(1, Math.floor((atk*0.62 + rand(0, atk*0.18)) - st.def*0.30*heroDefenseMultiplier()));
+  if(state.debug.killHero){ dmg = Math.max(dmg, state.hp + 999999); }
+  els.enemyCard.classList.remove('attack'); void els.enemyCard.offsetWidth; els.enemyCard.classList.add('attack');
+  setTimeout(()=>els.enemyCard.classList.remove('attack'),220);
+  if(state.hp - dmg <= 0){
+    state.hp = 0;
+    renderBattle();
+    showHeroFloat(`暗黒剣舞 ${dmg}`,'damage');
+    playSfx('hit');
+    startDown();
+    return;
+  }
+  state.hp = Math.max(0, state.hp - dmg);
+  showHeroFloat(`暗黒剣舞 ${dmg}`,'damage');
+  playSfx(i % 2 ? 'slash' : 'hit');
+  if(i === total) tryApplyEnemyHitDebuffs('normal');
+  renderBattle();
 }
 function showDarkSwordDanceCutin(){
   if(!els.deathDanceCutin) return;
@@ -810,7 +847,9 @@ function showDarkSwordDanceCutin(){
   playSfx('cutin');
 }
 function enemyDefeated(){
-  const e=state.enemy; state.enemy=null;
+  const e=state.enemy;
+  if(e && e.id === 'dark_sword_saint') setBgmMode('normal');
+  state.enemy=null;
   els.enemyCard.classList.add('dead');
   state.defeated++;
   markEnemyDefeated(e);
@@ -989,12 +1028,18 @@ function ensureBgmAudio(){
     state.swordDanceBgm.loop = true;
     state.swordDanceBgm.preload = 'auto';
   }
+  if(!state.darkSwordSaintBgm){
+    state.darkSwordSaintBgm = new Audio('March_of_the_Iron_Saint.mp3');
+    state.darkSwordSaintBgm.loop = true;
+    state.darkSwordSaintBgm.preload = 'auto';
+  }
   updateBgmVolume();
 }
 function updateBgmVolume(){
   const v = state.mobileMuted ? 0 : Math.max(0, Math.min(2, state.volume)) * 0.05;
   if(state.normalBgm) state.normalBgm.volume = v;
   if(state.swordDanceBgm) state.swordDanceBgm.volume = v;
+  if(state.darkSwordSaintBgm) state.darkSwordSaintBgm.volume = v;
 }
 function safePlayAudio(a){
   if(!a || state.mobileMuted) return;
@@ -1010,6 +1055,7 @@ function stopAllBgm(){
   stopBgm();
   if(state.normalBgm) state.normalBgm.pause();
   if(state.swordDanceBgm){ state.swordDanceBgm.pause(); state.swordDanceBgm.currentTime = 0; }
+  if(state.darkSwordSaintBgm){ state.darkSwordSaintBgm.pause(); state.darkSwordSaintBgm.currentTime = 0; }
 }
 
 function pauseBgmForPageHidden(){
@@ -1017,6 +1063,7 @@ function pauseBgmForPageHidden(){
   state.bgmPausedByVisibility = true;
   if(state.normalBgm) state.normalBgm.pause();
   if(state.swordDanceBgm) state.swordDanceBgm.pause();
+  if(state.darkSwordSaintBgm) state.darkSwordSaintBgm.pause();
 }
 function resumeBgmForPageVisible(){
   if(!state.bgmPausedByVisibility) return;
@@ -1218,6 +1265,7 @@ function playBgm(){
   stopBgm();
   if(state.bgmMode === 'dance'){
     if(state.normalBgm) state.normalBgm.pause();
+    if(state.darkSwordSaintBgm) state.darkSwordSaintBgm.pause();
     if(state.swordDanceBgm){
       // 剣舞BGM再生中にメニュー/ボタン操作で startAudio() や playBgm() が再実行されても、
       // currentTime を 0 に戻さない。未再生・停止中の時だけ先頭から再生する。
@@ -1226,8 +1274,18 @@ function playBgm(){
       }
       safePlayAudio(state.swordDanceBgm);
     }
+  }else if(state.bgmMode === 'dark_sword_saint'){
+    if(state.normalBgm) state.normalBgm.pause();
+    if(state.swordDanceBgm){ state.swordDanceBgm.pause(); try{ state.swordDanceBgm.currentTime = 0; }catch(e){} }
+    if(state.darkSwordSaintBgm){
+      if(state.darkSwordSaintBgm.ended || (state.darkSwordSaintBgm.paused && (!state.darkSwordSaintBgm.currentTime || state.darkSwordSaintBgm.currentTime <= 0.05))){
+        try{ state.darkSwordSaintBgm.currentTime = 0; }catch(e){}
+      }
+      safePlayAudio(state.darkSwordSaintBgm);
+    }
   }else{
     if(state.swordDanceBgm){ state.swordDanceBgm.pause(); try{ state.swordDanceBgm.currentTime = 0; }catch(e){} }
+    if(state.darkSwordSaintBgm){ state.darkSwordSaintBgm.pause(); try{ state.darkSwordSaintBgm.currentTime = 0; }catch(e){} }
     safePlayAudio(state.normalBgm);
   }
 }
