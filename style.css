@@ -2099,3 +2099,22 @@ body.mbh-menu-overlay-open .battle-panel .flee-btn{
   .inventory-filter-bar button,
   .log-filter-bar button{font-size:11px!important;padding:6px 8px!important;}
 }
+
+/* ver99.24 dark saint drop slot label */
+.drop-slot-label{display:block;font-weight:900;margin-bottom:3px;color:#d9b3ff;text-shadow:0 0 8px rgba(180,100,255,.75);}
+.log-slot{font-weight:900;color:#d9b3ff;margin-right:4px;}
+
+/* ver.99.25: multiple drop notifications stack without overlap */
+.drop-toast-stacked{
+  top:var(--drop-y,18px)!important;
+  animation:dropToastStackIn 3.15s ease forwards!important;
+}
+@keyframes dropToastStackIn{
+  0%{opacity:0;transform:translate(-50%,-12px) scale(.92)}
+  9%{opacity:1;transform:translate(-50%,0) scale(1.03)}
+  84%{opacity:1;transform:translate(-50%,0) scale(1)}
+  100%{opacity:0;transform:translate(-50%,-8px) scale(.96)}
+}
+@media (max-width:720px){
+  .drop-toast-stacked{max-width:calc(100vw - 20px)!important;min-width:min(260px,calc(100vw - 20px))!important;}
+}

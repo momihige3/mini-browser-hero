@@ -1625,19 +1625,21 @@ function enemyDefeated(){
     const legendary = rarities.find(r=>r.id==='legendary') || rarities[rarities.length-1];
     const darkPool = [makeDarkHolySword, makeDarkShield, makeDarkAmulet, makeDarkArmor, makeDarkGauntlets, makeDarkHelm, makeDarkBoots];
     const makeDarkReward = () => darkPool[Math.floor(Math.random()*darkPool.length)](state.level);
-    const rewards = [];
-    // 1〜2枠目：レジェンダリー確定。低確率で闇装備も混ざる。
-    for(let i=0;i<2;i++){
-      if(Math.random() < 0.18){
-        rewards.push(makeDarkReward());
-      }else{
-        rewards.push(makeItem(slots[Math.floor(Math.random()*slots.length)], legendary, {isBossDrop:true}));
-      }
-    }
-    // 3枠目：必ず闇シリーズ。通知順も3番目として表示する。
-    rewards.push(makeDarkReward());
+    const makeLegendReward = () => makeItem(slots[Math.floor(Math.random()*slots.length)], legendary, {isBossDrop:true});
+
+    // ver99.25: 報酬枠を明示的に固定する。
+    // rewards[0] = 1枠目、rewards[1] = 2枠目、rewards[2] = 3枠目。
+    // 3枠目は必ず闇装備。1〜2枠目は確率で闇装備になってもよい。
+    const rewards = [
+      Math.random() < 0.18 ? makeDarkReward() : makeLegendReward(),
+      Math.random() < 0.18 ? makeDarkReward() : makeLegendReward(),
+      makeDarkReward()
+    ];
+    rewards.forEach((it, idx)=>{ it.dropSlotNo = idx + 1; it.darkSaintReward = true; });
+
+    // 倉庫の上から「1枠目、2枠目、3枠目」の順で見えるように積む。
     for(let i=rewards.length-1;i>=0;i--) state.inventory.unshift(rewards[i]);
-    log('暗黒剣聖討伐報酬：1〜2枠目はレジェンダリー確定、3枠目は闇シリーズ確定！','good');
+    log(`暗黒剣聖討伐報酬：1枠目=${rewards[0].name} / 2枠目=${rewards[1].name} / 3枠目=${rewards[2].name}（闇装備確定）`,'good');
     showDropSequence(rewards);
   }else if(Math.random()<.38){ const it=makeRandomItem(e?.type==='ボス'); state.inventory.unshift(it); logItemDrop(it); showDropToast(it); }
   if(Math.random()<.22){ const m=randInt(1,3); state.mats += m; log(`強化石+${m} を獲得。`,'good'); }
@@ -2521,27 +2523,42 @@ function rarityColor(r){ return r==='darkholy' ? '#b86cff' : r==='legendary' ? '
 function logItemDrop(it){
   const color = itemNameColor(it);
   const rarity = it.rarityName || (rarities.find(r=>r.id===it.rarity)?.name || it.rarity);
-  log(`装備ドロップ：<span class="log-item ${itemFrameClass(it)} ${it.rarity}" style="color:${color}">${escapeHtml(it.name)}</span> <span class="log-rarity ${itemFrameClass(it)} ${it.rarity}" style="color:${color}">${escapeHtml(rarity)}</span>`, 'good', true);
+  const slotLabel = it && it.darkSaintReward ? `<span class="log-slot">${it.dropSlotNo}枠目${it.dropSlotNo===3?'確定':''}：</span>` : '';
+  log(`装備ドロップ：${slotLabel}<span class="log-item ${itemFrameClass(it)} ${it.rarity}" style="color:${color}">${escapeHtml(it.name)}</span> <span class="log-rarity ${itemFrameClass(it)} ${it.rarity}" style="color:${color}">${escapeHtml(rarity)}</span>`, 'good', true);
 }
 
 function showDropSequence(items){
   if(state.dropToastQueueTimers){ state.dropToastQueueTimers.forEach(t=>clearTimeout(t)); }
   state.dropToastQueueTimers = [];
-  (items||[]).forEach((it,i)=>{
-    const t=setTimeout(()=>{ logItemDrop(it); showDropToast(it); renderInventory(); scheduleSave(); }, i*3000);
+  const list = (items||[]).filter(Boolean);
+  list.forEach((it,i)=>{
+    const t=setTimeout(()=>{
+      logItemDrop(it);
+      showDropToast(it, i);
+      renderInventory();
+      scheduleSave();
+    }, i*140);
     state.dropToastQueueTimers.push(t);
   });
 }
 
-function showDropToast(it){
+function showDropToast(it, stackIndex=0){
   if(!els.dropToast) return;
   const color = itemNameColor(it);
   const rarity = it.rarityName || (rarities.find(r=>r.id===it.rarity)?.name || it.rarity);
   const summary = escapeHtml(itemSummary(it) || '追加能力なし');
-  els.dropToast.innerHTML = `<span style="color:${color}">${escapeHtml(it.name)}</span><small style="color:${color}">${escapeHtml(rarity)}</small><em class="drop-performance">${summary}</em>`;
-  els.dropToast.className = `drop-toast ${itemFrameClass(it)} ${it.rarity}`;
-  clearTimeout(state.dropToastTimer);
-  state.dropToastTimer = setTimeout(()=>els.dropToast.classList.add('hidden'), 3000);
+  const slotLabel = it && it.darkSaintReward ? `<strong class="drop-slot-label">${it.dropSlotNo}枠目${it.dropSlotNo===3?'・闇装備確定':''}</strong>` : '';
+  const toast = els.dropToast.cloneNode(false);
+  toast.removeAttribute('id');
+  toast.innerHTML = `${slotLabel}<span style="color:${color}">${escapeHtml(it.name)}</span><small style="color:${color}">${escapeHtml(rarity)}</small><em class="drop-performance">${summary}</em>`;
+  toast.className = `drop-toast drop-toast-stacked ${itemFrameClass(it)} ${it.rarity}`;
+  toast.style.setProperty('--drop-y', `${18 + Math.min(stackIndex, 5) * 82}px`);
+  toast.style.zIndex = String(30 + stackIndex);
+  els.dropToast.parentElement.appendChild(toast);
+
+  els.dropToast.classList.add('hidden');
+  const timer = setTimeout(()=>{ toast.remove(); }, 3200);
+  state.dropToastQueueTimers.push(timer);
 }
 
 function resetBattleState(forceFirst=false){
@@ -2722,7 +2739,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* ver99.15 clean stabilization patch: single source, no stacked UI injection */
 (function(){
   'use strict';
-  const BUILD = '99.23';
+  const BUILD = '99.25';
   const byId = (id)=>document.getElementById(id);
   function safe(fn){ try{ return fn && fn(); }catch(e){ console.warn('[ver99.15]', e); return null; } }
 
@@ -3017,9 +3034,9 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* ver.99.18: audio restore - use lexical state/audio functions, not window fallback */
 (function(){
   'use strict';
-  const BUILD='99.23';
+  const BUILD='99.25';
   const $=(id)=>document.getElementById(id);
-  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.23]', e); } }
+  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.25]', e); } }
   function setVersion(){
     window.GAME_VERSION=BUILD; window.BUILD_VERSION=BUILD;
     document.documentElement.setAttribute('data-build-version', BUILD);
@@ -3119,7 +3136,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   window.addEventListener('resize', ()=>safe(()=>applyMenu(typeof state !== 'undefined' ? !!state.uiOpen : false)));
 
 
-  /* ver.99.23: mute icon sync fix
+  /* ver.99.25: mute icon sync fix
      bindOneTap() clones top buttons, so els.muteBtn can point to a removed old node.
      Always sync els.muteBtn to the current DOM button before updating the icon. */
   const __mbhOriginalUpdateMuteButton = updateMuteButton;
@@ -3146,12 +3163,12 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 
 
 
-  /* ver.99.23: UI-only patch
+  /* ver.99.25: UI-only patch
      - hide EXP/flee behind overlay menu
      - revive inventory filters
      - keep inventory/log inside viewport with unified scrollbars
   */
-  function mbh9920Safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.23]', e); } }
+  function mbh9920Safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.25]', e); } }
   function mbh9920IsOverlay(){
     return matchMedia('(max-width: 1279px), (max-height: 700px), (pointer: coarse)').matches;
   }
@@ -3254,21 +3271,21 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   setTimeout(()=>mbh9920Safe(()=>{ mbh9920EnsureInventoryFilter(); renderInventory(); }), 300);
 
   // Ensure latest visible build number is single and clear.
-  document.documentElement.setAttribute('data-build-version','99.23');
-  document.querySelectorAll('.build-version').forEach(el=>{ el.textContent='ver.99.23'; });
-  document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent='Build: ver.99.23'; });
+  document.documentElement.setAttribute('data-build-version','99.25');
+  document.querySelectorAll('.build-version').forEach(el=>{ el.textContent='ver.99.25'; });
+  document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent='Build: ver.99.25'; });
 
   // PCでは非アクティブ時もBGMを止めない。スマホだけ従来どおり停止。
   window.__mbhPcKeepBgm = true;
 })();
 
 
-/* ver.99.23: inventory filter and log viewport final fix */
+/* ver.99.25: inventory filter and log viewport final fix */
 (function(){
   'use strict';
-  const BUILD='99.23';
+  const BUILD='99.25';
   const $=(id)=>document.getElementById(id);
-  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.23]', e); } }
+  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.25]', e); } }
   function setVersion(){
     window.GAME_VERSION=BUILD; window.BUILD_VERSION=BUILD;
     document.documentElement.setAttribute('data-build-version', BUILD);
