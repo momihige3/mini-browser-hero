@@ -1855,6 +1855,7 @@ function stopAllAudioForMute(){
 }
 
 function pauseBgmForPageHidden(){
+  if(!isTouchDevice || !isTouchDevice()) return;
   ensureBgmAudio();
   state.bgmPausedByVisibility = true;
   if(state.normalBgm) state.normalBgm.pause();
@@ -1869,7 +1870,7 @@ function resumeBgmForPageVisible(){
   playBgm();
 }
 function handlePageVisibility(){
-  if(document.hidden) pauseBgmForPageHidden();
+  if(document.hidden){ if(isTouchDevice && isTouchDevice()) pauseBgmForPageHidden(); }
   else {
     if(state.mobileMuted) stopAllAudioForMute();
     else resumeBgmForPageVisible();
@@ -2973,12 +2974,12 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   window.addEventListener('load', boot, {once:true});
 })();
 
-/* ver.99.17: top controls recovery - menu/debug/mute single tap on PC/mobile */
+/* ver.99.18: audio restore - use lexical state/audio functions, not window fallback */
 (function(){
   'use strict';
-  const BUILD='99.17';
+  const BUILD='99.18';
   const $=(id)=>document.getElementById(id);
-  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.17]', e); } }
+  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.18]', e); } }
   function setVersion(){
     window.GAME_VERSION=BUILD; window.BUILD_VERSION=BUILD;
     document.documentElement.setAttribute('data-build-version', BUILD);
@@ -3024,13 +3025,13 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
       side.classList.toggle('open', !!open);
       side.style.display = open ? '' : 'none';
       side.style.pointerEvents = open ? 'auto' : 'none';
-      if(window.state) window.state.uiOpen=!!open;
+      if(typeof state !== 'undefined') state.uiOpen=!!open;
       if(btn) btn.textContent=open?'閉じる':'メニュー';
     }else{
       side.style.display='';
       side.classList.add('open');
       side.style.pointerEvents='auto';
-      if(window.state) window.state.uiOpen=true;
+      if(typeof state !== 'undefined') state.uiOpen=true;
       if(btn) btn.textContent='メニュー';
     }
   }
@@ -3038,26 +3039,30 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
     const side=document.querySelector('.side-panel');
     const open = !(side && side.classList.contains('open') && isOverlay());
     applyMenu(open);
-    safe(()=>window.startAudio && window.startAudio());
-    safe(()=>window.playUiClick && window.playUiClick());
+    safe(()=>{ if(typeof startAudio==='function') startAudio(); });
+    safe(()=>{ if(typeof playUiClick==='function') playUiClick(); });
   }
   function toggleDebug(){
     let panel=$('debugPanel');
     if(!panel) return;
     panel.classList.toggle('hidden');
     panel.style.pointerEvents='auto';
-    safe(()=>window.startAudio && window.startAudio());
-    safe(()=>window.playUiClick && window.playUiClick());
+    safe(()=>{ if(typeof startAudio==='function') startAudio(); });
+    safe(()=>{ if(typeof playUiClick==='function') playUiClick(); });
   }
   function toggleMute(){
     safe(()=>{
-      if(window.setMobileMuted && window.state){ window.setMobileMuted(!window.state.mobileMuted); }
-      else {
-        window.__mbhMuted=!window.__mbhMuted;
-        const b=$('muteBtn'); if(b) b.textContent=window.__mbhMuted?'🔇':'🔊';
+      // top-level state / setMobileMuted are lexical globals in this same script.
+      // window.state is undefined, so the old fallback only changed the icon and left the game muted.
+      if(typeof state !== 'undefined' && typeof setMobileMuted === 'function'){
+        setMobileMuted(!state.mobileMuted);
+        if(!state.mobileMuted && typeof startAudio === 'function') startAudio();
+      }else{
+        const b=$('muteBtn');
+        const pressed = b && b.getAttribute('aria-pressed') === 'true';
+        if(b){ b.setAttribute('aria-pressed', pressed ? 'false' : 'true'); b.textContent = pressed ? '🔊' : '🔇'; }
       }
-      if(window.state && !window.state.mobileMuted && window.startAudio) window.startAudio();
-      if(window.playUiClick) window.playUiClick();
+      if(typeof playUiClick === 'function') playUiClick();
     });
   }
   function bindTopControls(){
@@ -3066,10 +3071,12 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
     bindOneTap($('debugBtn'), toggleDebug);
     bindOneTap($('muteBtn'), toggleMute);
     bindOneTap($('debugClose'), ()=>{ const p=$('debugPanel'); if(p) p.classList.add('hidden'); });
-    applyMenu(window.state ? !!window.state.uiOpen : false);
+    applyMenu(typeof state !== 'undefined' ? !!state.uiOpen : false);
   }
   function boot(){ setTimeout(bindTopControls, 80); setTimeout(bindTopControls, 600); }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', boot, {once:true}); else boot();
   window.addEventListener('load', boot, {once:true});
-  window.addEventListener('resize', ()=>safe(()=>applyMenu(window.state ? !!window.state.uiOpen : false)));
+  window.addEventListener('resize', ()=>safe(()=>applyMenu(typeof state !== 'undefined' ? !!state.uiOpen : false)));
+  // PCでは非アクティブ時もBGMを止めない。スマホだけ従来どおり停止。
+  window.__mbhPcKeepBgm = true;
 })();
