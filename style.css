@@ -1840,7 +1840,7 @@ body.using-touch .tooltip.status-tooltip-modal:not(.hidden),
 }
 
 
-/* ver.99.1 layout stability */
+/* ver.99.2 layout stability */
 :root{--mbh-topbar-h:66px;}
 .topbar{height:66px!important;min-height:66px!important;overflow:visible!important;align-items:center!important;padding:8px 12px!important;position:relative;z-index:90;}
 .layout{height:calc(100dvh - 66px)!important;min-height:0!important;overflow:hidden!important;}

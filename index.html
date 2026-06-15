@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja">
+<html lang="ja" data-build-version="99.3" data-build-date="2026-06-15">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -16,10 +16,10 @@
   <link rel="preload" as="image" href="assets/cutin_dark_sword_technique.png">
 </head>
 <body>
-  <div id="fixedBuildVersion" class="fixed-build-version">ver.99.2</div>
+  <div id="fixedBuildVersion" class="fixed-build-version">ver.99.3</div>
   <div id="game">
     <header class="topbar">
-      <div class="brand">ミニブラウザヒーロー <span class="build-version">ver.99.2</span></div>
+      <div class="brand">ミニブラウザヒーロー <span class="build-version">ver.99.3</span></div>
       <div class="resources"><b id="mats">0</b> 強化石</div>
       <div class="controls">
         <button id="equipToggleBtn">メニュー</button>
@@ -140,7 +140,7 @@
         <button id="debugStopDarkDance">暗黒剣舞タイマー停止</button>
         <label><input id="debugKillEnemy" type="checkbox"> 敵への攻撃で即死</label>
         <label><input id="debugKillHero" type="checkbox"> 敵からの攻撃で即死</label>
-        <div class="debug-version">Build: ver.99.2</div>
+        <div class="debug-version">Build: ver.99.3</div>
         <button id="debugClose">閉じる</button>
       </div>
   </div>
@@ -175,7 +175,17 @@
     </div>
   </div>
 
-  <script src="game.js"></script>
+  <script>
+    (function(){
+      var build = document.documentElement.dataset.buildVersion || '99.3';
+      window.MINI_BROWSER_HERO_LATEST_VERSION = build;
+      window.MINI_BROWSER_HERO_BUILD_VERSION = build;
+      var s = document.createElement('script');
+      s.src = 'game.js?v=' + encodeURIComponent(build);
+      s.defer = false;
+      document.body.appendChild(s);
+    })();
+  </script>
 
 
 

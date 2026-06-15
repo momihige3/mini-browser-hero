@@ -35,7 +35,9 @@ const DEATH_DANCE_CUTINS = [
 ];
 const DARK_SWORD_SAINT_CUTIN = {quote:'私を超えてみせろ。', img:'assets/cutin_dark_sword_dance.png'};
 const DARK_SWORD_TECHNIQUE_CUTIN = {quote:'', img:'assets/cutin_dark_sword_technique.png'};
-const GAME_VERSION = '99.1';
+const GAME_VERSION = (window.MINI_BROWSER_HERO_LATEST_VERSION || window.MINI_BROWSER_HERO_BUILD_VERSION || document.documentElement.dataset.buildVersion || '99.3');
+window.GAME_VERSION = GAME_VERSION;
+window.MINI_BROWSER_HERO_LATEST_VERSION = GAME_VERSION;
 const DARK_SWORD_SAINT = {
   id:'dark_sword_saint', name:'暗黒剣聖', type:'裏ボス', img:'assets/enemy_dark_sword_saint.png', element:'dark',
   hp:32000, atk:260, def:95, xp:2600, gold:5000, bossChance:0, enemySkill:'暗黒斬'
@@ -246,7 +248,6 @@ function saveGame(){
   if(isResettingUserData) return;
   try{
     const data={
-      version:44,
       level:state.level, xp:state.xp, xpNext:state.xpNext, lastXpGain:state.lastXpGain,
       chests:state.chests, mats:state.mats, defeated:state.defeated,
       hp:Math.max(1, Math.floor(state.hp||1)), base:state.base,
@@ -2667,7 +2668,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 
 /* v95.1: visible build badge + inventory/menu touch fix */
 function v951EnsureVersionBadge(){
-  const text = 'ver.' + (typeof GAME_VERSION !== 'undefined' ? GAME_VERSION : '95.2');
+  const text = 'ver.' + (typeof GAME_VERSION !== 'undefined' ? GAME_VERSION : '99.3');
   document.querySelectorAll('.build-version,.debug-version').forEach(el=>{
     if(el.classList.contains('debug-version')) el.textContent = 'Build: ' + text;
     else el.textContent = text;
@@ -2710,7 +2711,7 @@ window.addEventListener('resize', v951FinalFixes);
 
 /* v95.2: small-screen item menu, modal z-index, always-visible version badge */
 function v952EnsureVersionBadge(){
-  const text = 'ver.' + (typeof GAME_VERSION !== 'undefined' ? GAME_VERSION : '95.3');
+  const text = 'ver.' + (typeof GAME_VERSION !== 'undefined' ? GAME_VERSION : '99.3');
   let header = document.querySelector('.brand .build-version');
   const brand = document.querySelector('.brand');
   if(brand && !header){
@@ -2823,7 +2824,7 @@ window.addEventListener('resize', v952FinalFixes);
 
 /* v95.9: debug reset double-confirm prevention + final version badge */
 (function(){
-  const BUILD_TEXT = 'ver.99.0';
+  const BUILD_TEXT = 'ver.' + (window.MINI_BROWSER_HERO_LATEST_VERSION || GAME_VERSION);
   function forceBuildBadge(){
     document.querySelectorAll('.build-version,.fixed-build-version').forEach(el=>{ el.textContent = BUILD_TEXT; });
     document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent = 'Build: ' + BUILD_TEXT; });
@@ -2862,7 +2863,7 @@ window.addEventListener('resize', v952FinalFixes);
 
 /* v97: red unique gear, humble ring, debug grants, natural regen options */
 (function(){
-  const BUILD_TEXT = 'ver.99.0';
+  const BUILD_TEXT = 'ver.' + (window.MINI_BROWSER_HERO_LATEST_VERSION || GAME_VERSION);
   function v97uuid(){ try{return crypto.randomUUID();}catch(_){return 'v97_'+Math.random().toString(36).slice(2)+Date.now();} }
   function legendaryRarity(){ return (rarities.find(r=>r.id==='legendary') || rarities[rarities.length-1]); }
   function addBuild97(){
@@ -3067,8 +3068,8 @@ window.addEventListener('resize', v952FinalFixes);
 /* v97.1: dark sword saint progression, 100-win guarantee, no-loss flee */
 (function(){
   function forceV971Ui(){
-    document.querySelectorAll('.build-version,.fixed-build-version').forEach(el=>{ el.textContent='ver.99.0'; });
-    document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent='Build: ver.99.0'; });
+    document.querySelectorAll('.build-version,.fixed-build-version').forEach(el=>{ el.textContent='ver.'+(window.MINI_BROWSER_HERO_LATEST_VERSION || GAME_VERSION); });
+    document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent='Build: ver.'+(window.MINI_BROWSER_HERO_LATEST_VERSION || GAME_VERSION); });
     const modal=document.getElementById('fleeModal');
     if(modal){
       const p=modal.querySelector('p');
@@ -3083,8 +3084,8 @@ window.addEventListener('resize', v952FinalFixes);
 /* v97.2: force flee visibility and remove legacy strongest debug controls */
 (function(){
   function applyV972Fixes(){
-    document.querySelectorAll('.build-version,.fixed-build-version').forEach(el=>{ el.textContent='ver.99.0'; });
-    document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent='Build: ver.99.0'; });
+    document.querySelectorAll('.build-version,.fixed-build-version').forEach(el=>{ el.textContent='ver.'+(window.MINI_BROWSER_HERO_LATEST_VERSION || GAME_VERSION); });
+    document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent='Build: ver.'+(window.MINI_BROWSER_HERO_LATEST_VERSION || GAME_VERSION); });
     const oldSword=document.getElementById('debugBestSword'); if(oldSword) oldSword.remove();
     const oldAcc=document.getElementById('debugBestAccessory'); if(oldAcc) oldAcc.remove();
     const battle=document.querySelector('.battle-panel') || document.body;
@@ -3111,7 +3112,7 @@ window.addEventListener('resize', v952FinalFixes);
 
 /* v97.3: real lock, warehouse filters, humility protection */
 (function(){
-  const BUILD = '99.1';
+  const BUILD = (window.MINI_BROWSER_HERO_LATEST_VERSION || GAME_VERSION);
   function byId(id){ return document.getElementById(id); }
   function updateBuild973(){
     document.querySelectorAll('.build-version,.fixed-build-version').forEach(el=>{ el.textContent='ver.'+BUILD; });
@@ -3361,7 +3362,7 @@ window.addEventListener('resize', v952FinalFixes);
 
 /* v97.4: Dark Sword Saint independent level, cutin preload, streak notice, flee layout */
 (function(){
-  const BUILD = '99.1';
+  const BUILD = (window.MINI_BROWSER_HERO_LATEST_VERSION || GAME_VERSION);
   function updateBuild974(){
     document.querySelectorAll('.build-version,.fixed-build-version').forEach(el=>{ el.textContent='ver.'+BUILD; });
     document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent='Build: ver.'+BUILD; });
@@ -3488,7 +3489,7 @@ window.addEventListener('resize', v952FinalFixes);
 
 /* v98: dark equipment set expansion */
 (function(){
-  const BUILD = '99.1';
+  const BUILD = (window.MINI_BROWSER_HERO_LATEST_VERSION || GAME_VERSION);
   function legendaryRarity98(){ return (rarities.find(r=>r.id==='legendary') || rarities[rarities.length-1]); }
   function darkBase98(slot, levelOverride){
     const lv = Math.max(1, Math.floor(levelOverride || state.level || 1));
@@ -3664,7 +3665,7 @@ window.addEventListener('resize', v952FinalFixes);
 
 /* v98.2: real UI tabs, log filters, dark equipment debug grant, dark saint HP0 watchdog, defeat status clear */
 (function(){
-  const BUILD = '99.1';
+  const BUILD = (window.MINI_BROWSER_HERO_LATEST_VERSION || GAME_VERSION);
   function safe(fn){ try{return fn();}catch(e){ console.warn('[v98.2]', e); } }
   function updateBuild982(){
     document.querySelectorAll('.build-version,.fixed-build-version').forEach(el=>{ el.textContent='ver.'+BUILD; });
@@ -3758,7 +3759,7 @@ window.addEventListener('resize', v952FinalFixes);
   function ensureDarkDebug982(){
     const panel=document.getElementById('debugPanel'); if(!panel || panel.__v982DarkDebug) return; panel.__v982DarkDebug=true;
     const box=document.createElement('div'); box.className='debug-v982-dark-box';
-    box.innerHTML='<div style="margin-top:6px;font-weight:700;color:#d8a8ff;">闇装備付与 v98.2</div><button type="button" data-dark982="set">闇装備7種セット</button>'+['闇の聖剣','闇の盾','闇のアミュレット','闇の鎧','闇の籠手','闇の兜','暗黒の靴'].map(n=>`<button type="button" data-dark982="${n}">${n}</button>`).join('');
+    box.innerHTML='<div style="margin-top:6px;font-weight:700;color:#d8a8ff;">闇装備付与 ver.'+(window.MINI_BROWSER_HERO_LATEST_VERSION || GAME_VERSION)+'</div><button type="button" data-dark982="set">闇装備7種セット</button>'+['闇の聖剣','闇の盾','闇のアミュレット','闇の鎧','闇の籠手','闇の兜','暗黒の靴'].map(n=>`<button type="button" data-dark982="${n}">${n}</button>`).join('');
     panel.appendChild(box);
     box.addEventListener('click', e=>{
       const b=e.target.closest('button[data-dark982]'); if(!b) return; e.preventDefault(); e.stopPropagation();
@@ -3818,9 +3819,9 @@ window.addEventListener('resize', v952FinalFixes);
 })();
 
 
-/* v99.0: authoritative integrated latest patch */
+/* latest: authoritative integrated patch */
 (function(){
-  const BUILD = '99.1';
+  const BUILD = (window.MINI_BROWSER_HERO_LATEST_VERSION || GAME_VERSION);
   window.__LATEST_BUILD__ = BUILD;
 
   const DARK_NAMES = ['闇の聖剣','闇の盾','闇のアミュレット','闇の鎧','闇の籠手','闇の兜','暗黒の靴'];
@@ -4267,10 +4268,10 @@ window.addEventListener('resize', v952FinalFixes);
 })();
 
 
-/* ver.99.0 final spec lock: direct integrated requirements */
+/* latest final spec lock: direct integrated requirements */
 (function(){
   'use strict';
-  const BUILD = '99.1';
+  const BUILD = (window.MINI_BROWSER_HERO_LATEST_VERSION || GAME_VERSION);
   const DARK_NAMES = ['闇の聖剣','闇の盾','闇のアミュレット','闇の鎧','闇の籠手','闇の兜','暗黒の靴'];
   const PAGE_LABELS = {stats:'ステータス', equip:'装備・強化', inventory:'倉庫', log:'ログ'};
   const LOG_LABELS = {all:'すべて', damage:'ダメージ', system:'システム', drop:'ドロップ'};
@@ -4458,13 +4459,13 @@ window.addEventListener('resize', v952FinalFixes);
 })();
 
 
-/* ver.99.2 final stability patch: layout, logs, dark saint, dark equips */
+/* latest final stability patch: layout, logs, dark saint, dark equips */
 (function(){
   'use strict';
-  const BUILD='99.2';
+  const BUILD=(window.MINI_BROWSER_HERO_LATEST_VERSION || GAME_VERSION);
   const DARK_NAMES=['闇の聖剣','闇の盾','闇のアミュレット','闇の鎧','闇の籠手','闇の兜','暗黒の靴'];
   const LOG_LABELS={all:'すべて',damage:'ダメージ',system:'システム',drop:'ドロップ'};
-  function safe(fn){try{return fn();}catch(e){console.warn('[99.1]',e);}}
+  function safe(fn){try{return fn();}catch(e){console.warn('[latest]',e);}}
   function id(x){return document.getElementById(x)}
   function ver(){
     document.querySelectorAll('.build-version,.fixed-build-version').forEach(e=>e.textContent='ver.'+BUILD);
@@ -4618,14 +4619,14 @@ window.addEventListener('resize', v952FinalFixes);
   setInterval(()=>{boot991(); darkDeadFinalize991();},700);
 })();
 
-/* ver.99.2 confirmed bugfix: dark saint transition, dark dance reset, debug dark equips, log filters, labels */
+/* latest confirmed bugfix: dark saint transition, dark dance reset, debug dark equips, log filters, labels */
 (function(){
   'use strict';
-  const BUILD='99.2';
+  const BUILD=(window.MINI_BROWSER_HERO_LATEST_VERSION || GAME_VERSION);
   const DARK_NAMES=['闇の聖剣','闇の盾','闇のアミュレット','闇の鎧','闇の籠手','闇の兜','暗黒の靴'];
   const LOG_LABELS={all:'すべて',damage:'ダメージ',system:'システム',drop:'ドロップ'};
   function byId(id){return document.getElementById(id);}
-  function safe(fn){try{return fn();}catch(e){console.warn('[99.2]',e);}}
+  function safe(fn){try{return fn();}catch(e){console.warn('[latest]',e);}}
   function updateVersion992(){
     document.querySelectorAll('.build-version,.fixed-build-version').forEach(e=>e.textContent='ver.'+BUILD);
     document.querySelectorAll('.debug-version').forEach(e=>e.textContent='Build: ver.'+BUILD);
@@ -4806,4 +4807,26 @@ window.addEventListener('resize', v952FinalFixes);
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot992); else boot992();
   window.addEventListener('load',boot992); window.addEventListener('resize',boot992);
   setInterval(()=>{boot992(); forceFinalizeDark992();},500);
+})();
+
+
+/* latest-version authority: single-source build version + cache-safe display */
+(function(){
+  function latest(){
+    return (window.MINI_BROWSER_HERO_LATEST_VERSION || window.MINI_BROWSER_HERO_BUILD_VERSION || document.documentElement.dataset.buildVersion || window.GAME_VERSION || '99.3');
+  }
+  function applyLatestVersion(){
+    var v = latest();
+    window.GAME_VERSION = v;
+    window.MINI_BROWSER_HERO_LATEST_VERSION = v;
+    window.MINI_BROWSER_HERO_BUILD_VERSION = v;
+    document.querySelectorAll('.build-version,.fixed-build-version').forEach(function(el){ el.textContent = 'ver.' + v; });
+    document.querySelectorAll('.debug-version').forEach(function(el){ el.textContent = 'Build: ver.' + v; });
+    var fixed = document.getElementById('fixedBuildVersion');
+    if(fixed) fixed.textContent = 'ver.' + v;
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', applyLatestVersion); else applyLatestVersion();
+  window.addEventListener('load', applyLatestVersion);
+  window.addEventListener('pageshow', applyLatestVersion);
+  setInterval(applyLatestVersion, 250);
 })();
