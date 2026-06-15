@@ -2681,7 +2681,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* ver99.15 clean stabilization patch: single source, no stacked UI injection */
 (function(){
   'use strict';
-  const BUILD = '99.15';
+  const BUILD = '99.16';
   const byId = (id)=>document.getElementById(id);
   function safe(fn){ try{ return fn && fn(); }catch(e){ console.warn('[ver99.15]', e); return null; } }
 
@@ -2804,9 +2804,18 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   }
 
   function bindCleanDebug(){
+    // ver99.16: debug panel must be idempotent. Clone once to remove stacked click/pointer handlers.
+    let panel = byId('debugPanel');
+    if(panel){
+      const fresh = panel.cloneNode(false);
+      fresh.id = 'debugPanel';
+      fresh.className = panel.className;
+      panel.parentNode.replaceChild(fresh, panel);
+    }
     cleanDebugPanel();
-    const panel = byId('debugPanel');
-    const bindBtn = (id, fn)=>{ const b=byId(id); if(b) b.onclick=(e)=>{ e.preventDefault(); e.stopPropagation(); safe(fn); return false; }; };
+    panel = byId('debugPanel');
+    const once = (fn)=>{ let lock=false; return (e)=>{ e.preventDefault(); e.stopPropagation(); if(lock) return false; lock=true; try{ safe(fn); } finally { setTimeout(()=>{lock=false;}, 180); } return false; }; };
+    const bindBtn = (id, fn)=>{ const b=byId(id); if(b) b.onclick=once(fn); };
     bindBtn('debugAddChests', ()=>{ for(let i=0;i<50;i++) state.inventory.unshift(makeRandomItem()); safe(()=>renderAll()); safe(()=>scheduleSave()); log('デバッグ：装備を50個追加。','drop'); });
     bindBtn('debugResetData', ()=>resetUserData());
     bindBtn('debugDarkSwordSaint', forceNextDarkSaint);
@@ -2818,7 +2827,16 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
     bindBtn('debugStopDarkDance', stopDarkDanceTimers);
     bindBtn('debugClose', ()=>{ if(panel) panel.classList.add('hidden'); });
     if(panel){
-      panel.addEventListener('click', (e)=>{ const b=e.target.closest('[data-dark-grant]'); if(!b) return; e.preventDefault(); e.stopPropagation(); grantDark(b.dataset.darkGrant); }, {capture:true});
+      let darkGrantLock = false;
+      panel.addEventListener('click', (e)=>{
+        const b=e.target.closest('[data-dark-grant]'); if(!b) return;
+        e.preventDefault(); e.stopPropagation();
+        if(darkGrantLock) return false;
+        darkGrantLock = true;
+        grantDark(b.dataset.darkGrant);
+        setTimeout(()=>{ darkGrantLock=false; }, 180);
+        return false;
+      }, {capture:true});
       panel.addEventListener('change', (e)=>{ if(e.target && e.target.id==='debugKillEnemy') state.debug.killEnemy = !!e.target.checked; if(e.target && e.target.id==='debugKillHero') state.debug.killHero = !!e.target.checked; });
     }
   }
@@ -2941,6 +2959,8 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   function fixUpgradeWording(){ document.querySelectorAll('button').forEach(b=>{ if((b.textContent||'').trim()==='強化選択') b.textContent='強化ボタン'; }); }
 
   function boot(){
+    if(window.__mbh9916Booted) return;
+    window.__mbh9916Booted = true;
     safe(syncVersion);
     safe(bindCleanDebug);
     safe(bindTrace);
@@ -2949,6 +2969,6 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
     safe(installPcBgmKeep);
     safe(fixUpgradeWording);
   }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', boot); else setTimeout(boot,0);
-  window.addEventListener('load', boot);
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', boot, {once:true}); else setTimeout(boot,0);
+  window.addEventListener('load', boot, {once:true});
 })();
