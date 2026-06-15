@@ -59,13 +59,13 @@
           <div id="heroStatusList" class="status-list" aria-label="主人公の状態"></div>
         </div>
         <div class="expbar"><div id="expFill"></div><span id="expLabel">Lv.1 EXP 0 / 80</span><b id="expGainLabel">+0</b></div>
-        <button id="fleeBtn" class="flee-btn" type="button" aria-label="戦闘から逃げる" title="戦闘から逃げる">🏃</button>
+        <button id="fleeBtn" class="flee-btn" type="button" aria-label="逃走">🏃</button>
       </section>
 
       <aside class="side-panel">
-        <nav class="mobile-menu-tabs" aria-label="メニューページ切り替え">
+        <nav class="mobile-menu-tabs side-tabs" aria-label="右側タブ">
           <button type="button" data-menu-page="stats" class="active">ステータス</button>
-          <button type="button" data-menu-page="equip">装備/強化</button>
+          <button type="button" data-menu-page="equip">装備・強化</button>
           <button type="button" data-menu-page="inventory">倉庫</button>
           <button type="button" data-menu-page="log">ログ</button>
         </nav>
@@ -112,6 +112,7 @@
 
         <div class="panel log-panel">
           <h2>バトルログ</h2>
+          <div id="logFilterBar" class="log-filter-bar"><button type="button" data-log-filter="all" class="active">すべて</button><button type="button" data-log-filter="damage">ダメージ</button><button type="button" data-log-filter="system">システム</button><button type="button" data-log-filter="drop">ドロップ</button></div>
           <div id="log" class="log"></div>
         </div>
         <div class="legal-links" aria-label="公開情報">
@@ -126,24 +127,16 @@
         <div class="debug-head">デバッグ</div>
         <button id="debugAddChests">装備+50</button>
         <button id="debugResetData">ユーザーデータリセット</button>
-        <button id="debugDarkSwordSaint">暗黒剣聖を強制召喚</button>
+        <button id="debugDarkSwordSaint">暗黒剣聖召喚</button>
+        <button id="debugGrantDarkSet">闇装備7種セット付与</button>
+        <div id="debugGrantDarkItems" class="debug-grid"></div>
+        <button id="debugHp0Kill">HP0即撃破</button>
+        <button id="debugForceDefeated">dead/defeated即確定</button>
+        <button id="debugClearBleed">出血・暗黒出血解除</button>
+        <button id="debugStopDot">DOTタイマー停止</button>
+        <button id="debugStopDarkDance">暗黒剣舞タイマー停止</button>
         <label><input id="debugKillEnemy" type="checkbox"> 敵への攻撃で即死</label>
         <label><input id="debugKillHero" type="checkbox"> 敵からの攻撃で即死</label>
-
-        <div class="debug-section-title">最新版デバッグ</div>
-        <button id="debugDarkSet" type="button">闇装備7種セット付与</button>
-        <button id="debugDarkSword" type="button">闇の聖剣付与</button>
-        <button id="debugDarkShield" type="button">闇の盾付与</button>
-        <button id="debugDarkAmulet" type="button">闇のアミュレット付与</button>
-        <button id="debugDarkArmor" type="button">闇の鎧付与</button>
-        <button id="debugDarkGauntlets" type="button">闇の籠手付与</button>
-        <button id="debugDarkHelm" type="button">闇の兜付与</button>
-        <button id="debugDarkBoots" type="button">暗黒の靴付与</button>
-        <button id="debugEnemyHpZero" type="button">敵HP0即撃破</button>
-        <button id="debugForceDefeated" type="button">dead/defeated即確定</button>
-        <button id="debugClearBleeds" type="button">出血・暗黒出血解除</button>
-        <button id="debugStopDotTimers" type="button">DOTタイマー停止</button>
-        <button id="debugStopDarkDanceTimers" type="button">暗黒剣舞タイマー停止</button>
         <div class="debug-version">Build: ver.99.0</div>
         <button id="debugClose">閉じる</button>
       </div>
