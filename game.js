@@ -2972,3 +2972,104 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', boot, {once:true}); else setTimeout(boot,0);
   window.addEventListener('load', boot, {once:true});
 })();
+
+/* ver.99.17: top controls recovery - menu/debug/mute single tap on PC/mobile */
+(function(){
+  'use strict';
+  const BUILD='99.17';
+  const $=(id)=>document.getElementById(id);
+  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.17]', e); } }
+  function setVersion(){
+    window.GAME_VERSION=BUILD; window.BUILD_VERSION=BUILD;
+    document.documentElement.setAttribute('data-build-version', BUILD);
+    document.querySelectorAll('[data-version],#versionText,.version-badge,.brand span').forEach(el=>{ if(el) el.textContent='ver.'+BUILD; });
+    const dv=$('debugPanel')?.querySelector('.debug-version'); if(dv) dv.textContent='Build: ver.'+BUILD;
+    const title=$('mbhTraceBox')?.querySelector('.debug-trace-title'); if(title) title.textContent='進行デバッグログ ver.'+BUILD;
+  }
+  function injectCss(){
+    if($('mbh-9917-control-css')) return;
+    const st=document.createElement('style'); st.id='mbh-9917-control-css';
+    st.textContent=`
+      .topbar{position:relative!important;z-index:9999!important;pointer-events:auto!important;}
+      .topbar .controls,.topbar button,#equipToggleBtn,#debugBtn,#muteBtn{position:relative!important;z-index:10000!important;pointer-events:auto!important;touch-action:manipulation!important;user-select:none!important;}
+      #debugPanel{z-index:10001!important;pointer-events:auto!important;}
+      #debugPanel.hidden{display:none!important;}
+      .side-panel:not(.open){pointer-events:none!important;}
+      .side-panel.open{pointer-events:auto!important;}
+    `;
+    document.head.appendChild(st);
+  }
+  function stopEvent(e){ if(e){ e.preventDefault(); e.stopPropagation(); if(e.stopImmediatePropagation) e.stopImmediatePropagation(); } }
+  function bindOneTap(el, fn){
+    if(!el) return;
+    const fresh=el.cloneNode(true);
+    el.parentNode.replaceChild(fresh, el);
+    let lock=0;
+    const handler=(e)=>{
+      stopEvent(e);
+      const now=Date.now(); if(now-lock<220) return false; lock=now;
+      safe(fn);
+      return false;
+    };
+    fresh.addEventListener('pointerup', handler, {capture:true, passive:false});
+    fresh.addEventListener('click', handler, {capture:true, passive:false});
+    fresh.addEventListener('touchend', handler, {capture:true, passive:false});
+    return fresh;
+  }
+  function isOverlay(){ return matchMedia('(max-width: 1279px), (max-height: 700px), (pointer: coarse)').matches; }
+  function applyMenu(open){
+    const side=document.querySelector('.side-panel'); const btn=$('equipToggleBtn');
+    if(!side) return;
+    if(isOverlay()){
+      side.classList.toggle('open', !!open);
+      side.style.display = open ? '' : 'none';
+      side.style.pointerEvents = open ? 'auto' : 'none';
+      if(window.state) window.state.uiOpen=!!open;
+      if(btn) btn.textContent=open?'閉じる':'メニュー';
+    }else{
+      side.style.display='';
+      side.classList.add('open');
+      side.style.pointerEvents='auto';
+      if(window.state) window.state.uiOpen=true;
+      if(btn) btn.textContent='メニュー';
+    }
+  }
+  function toggleMenu(){
+    const side=document.querySelector('.side-panel');
+    const open = !(side && side.classList.contains('open') && isOverlay());
+    applyMenu(open);
+    safe(()=>window.startAudio && window.startAudio());
+    safe(()=>window.playUiClick && window.playUiClick());
+  }
+  function toggleDebug(){
+    let panel=$('debugPanel');
+    if(!panel) return;
+    panel.classList.toggle('hidden');
+    panel.style.pointerEvents='auto';
+    safe(()=>window.startAudio && window.startAudio());
+    safe(()=>window.playUiClick && window.playUiClick());
+  }
+  function toggleMute(){
+    safe(()=>{
+      if(window.setMobileMuted && window.state){ window.setMobileMuted(!window.state.mobileMuted); }
+      else {
+        window.__mbhMuted=!window.__mbhMuted;
+        const b=$('muteBtn'); if(b) b.textContent=window.__mbhMuted?'🔇':'🔊';
+      }
+      if(window.state && !window.state.mobileMuted && window.startAudio) window.startAudio();
+      if(window.playUiClick) window.playUiClick();
+    });
+  }
+  function bindTopControls(){
+    injectCss(); setVersion();
+    bindOneTap($('equipToggleBtn'), toggleMenu);
+    bindOneTap($('debugBtn'), toggleDebug);
+    bindOneTap($('muteBtn'), toggleMute);
+    bindOneTap($('debugClose'), ()=>{ const p=$('debugPanel'); if(p) p.classList.add('hidden'); });
+    applyMenu(window.state ? !!window.state.uiOpen : false);
+  }
+  function boot(){ setTimeout(bindTopControls, 80); setTimeout(bindTopControls, 600); }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', boot, {once:true}); else boot();
+  window.addEventListener('load', boot, {once:true});
+  window.addEventListener('resize', ()=>safe(()=>applyMenu(window.state ? !!window.state.uiOpen : false)));
+})();
