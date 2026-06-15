@@ -1885,3 +1885,138 @@ body.using-touch .tooltip.status-tooltip-modal:not(.hidden),
 @media(min-width:1280px) and (min-height:701px) and (pointer:fine){
   .side-panel{display:block!important;pointer-events:auto!important;}
 }
+
+
+/* ver.99.20: menu overlay / inventory filters / panel height final UI fix */
+body.mbh-menu-overlay-open .battle-panel .expbar,
+body.mbh-menu-overlay-open .battle-panel .flee-btn{
+  z-index:1!important;
+  pointer-events:none!important;
+  opacity:.18!important;
+}
+.inventory-filter-bar,
+.log-filter-bar{
+  flex:0 0 auto!important;
+  display:flex!important;
+  gap:6px!important;
+  align-items:center!important;
+  overflow-x:auto!important;
+  overflow-y:hidden!important;
+  padding:0 0 7px 0!important;
+  margin:0 0 7px 0!important;
+  scrollbar-width:thin!important;
+  scrollbar-color:#9d742a #120807!important;
+}
+.inventory-filter-bar button,
+.log-filter-bar button{
+  flex:0 0 auto!important;
+  padding:6px 9px!important;
+  font-size:12px!important;
+  line-height:1.1!important;
+  white-space:nowrap!important;
+}
+.inventory-filter-bar button.active,
+.log-filter-bar button.active{
+  outline:2px solid #ffd76b!important;
+  filter:brightness(1.18)!important;
+}
+.inventory-filter-bar::-webkit-scrollbar,
+.log-filter-bar::-webkit-scrollbar,
+.inventory::-webkit-scrollbar,
+.log::-webkit-scrollbar{
+  width:8px!important;
+  height:8px!important;
+}
+.inventory-filter-bar::-webkit-scrollbar-thumb,
+.log-filter-bar::-webkit-scrollbar-thumb,
+.inventory::-webkit-scrollbar-thumb,
+.log::-webkit-scrollbar-thumb{
+  background:linear-gradient(#d6a33a,#7b541b)!important;
+  border:1px solid #201308!important;
+  border-radius:999px!important;
+}
+.inventory-filter-bar::-webkit-scrollbar-track,
+.log-filter-bar::-webkit-scrollbar-track,
+.inventory::-webkit-scrollbar-track,
+.log::-webkit-scrollbar-track{
+  background:#120807!important;
+  border-radius:999px!important;
+}
+.side-panel{
+  max-height:calc(100vh - 78px)!important;
+  min-height:0!important;
+  overflow:hidden!important;
+}
+.menu-col,
+.menu-left,
+.menu-right,
+.inventory-panel,
+.log-panel{
+  min-height:0!important;
+  overflow:hidden!important;
+}
+.inventory-panel,
+.log-panel{
+  display:flex!important;
+  flex-direction:column!important;
+  max-height:100%!important;
+}
+.inventory-panel h2,
+.log-panel h2,
+.inventory-panel .inventory-actions,
+.log-panel .log-filter-bar{
+  flex:0 0 auto!important;
+}
+.inventory-panel .inventory{
+  flex:1 1 auto!important;
+  min-height:90px!important;
+  max-height:none!important;
+  overflow-y:auto!important;
+  padding-bottom:10px!important;
+}
+.log-panel .log{
+  flex:1 1 auto!important;
+  height:auto!important;
+  min-height:80px!important;
+  max-height:none!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  padding-bottom:10px!important;
+}
+@media(min-width:1280px){
+  .layout{height:calc(100vh - 58px)!important;overflow:hidden!important;}
+  .side-panel{height:100%!important;max-height:calc(100vh - 78px)!important;}
+  .menu-right{grid-template-rows:minmax(0,1fr) minmax(120px,190px)!important;}
+}
+@media(max-width:1279px){
+  .side-panel.open{
+    top:68px!important;
+    bottom:18px!important;
+    max-height:calc(100vh - 86px)!important;
+    overflow:hidden!important;
+  }
+  .side-panel.open .panel.active-page{
+    max-height:100%!important;
+    overflow:hidden!important;
+  }
+  .side-panel.open .inventory-panel.active-page,
+  .side-panel.open .log-panel.active-page{
+    display:flex!important;
+    flex-direction:column!important;
+    height:100%!important;
+  }
+  .side-panel.open .inventory,
+  .side-panel.open .log{
+    min-height:0!important;
+    overflow-y:auto!important;
+  }
+}
+@media(max-width:760px){
+  .side-panel.open{
+    top:58px!important;
+    bottom:16px!important;
+    max-height:calc(100vh - 74px)!important;
+  }
+  .inventory-filter-bar button,
+  .log-filter-bar button{font-size:11px!important;padding:6px 8px!important;}
+}

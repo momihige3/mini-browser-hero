@@ -2682,7 +2682,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* ver99.15 clean stabilization patch: single source, no stacked UI injection */
 (function(){
   'use strict';
-  const BUILD = '99.16';
+  const BUILD = '99.20';
   const byId = (id)=>document.getElementById(id);
   function safe(fn){ try{ return fn && fn(); }catch(e){ console.warn('[ver99.15]', e); return null; } }
 
@@ -2977,9 +2977,9 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* ver.99.18: audio restore - use lexical state/audio functions, not window fallback */
 (function(){
   'use strict';
-  const BUILD='99.19';
+  const BUILD='99.20';
   const $=(id)=>document.getElementById(id);
-  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.19]', e); } }
+  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.20]', e); } }
   function setVersion(){
     window.GAME_VERSION=BUILD; window.BUILD_VERSION=BUILD;
     document.documentElement.setAttribute('data-build-version', BUILD);
@@ -3079,7 +3079,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   window.addEventListener('resize', ()=>safe(()=>applyMenu(typeof state !== 'undefined' ? !!state.uiOpen : false)));
 
 
-  /* ver.99.19: mute icon sync fix
+  /* ver.99.20: mute icon sync fix
      bindOneTap() clones top buttons, so els.muteBtn can point to a removed old node.
      Always sync els.muteBtn to the current DOM button before updating the icon. */
   const __mbhOriginalUpdateMuteButton = updateMuteButton;
@@ -3103,6 +3103,120 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   };
   setTimeout(updateMuteButton, 0);
   setTimeout(updateMuteButton, 500);
+
+
+
+  /* ver.99.20: UI-only patch
+     - hide EXP/flee behind overlay menu
+     - revive inventory filters
+     - keep inventory/log inside viewport with unified scrollbars
+  */
+  function mbh9920Safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.20]', e); } }
+  function mbh9920IsOverlay(){
+    return matchMedia('(max-width: 1279px), (max-height: 700px), (pointer: coarse)').matches;
+  }
+  function mbh9920SyncMenuClass(){
+    const side=document.querySelector('.side-panel');
+    const open=!!(side && side.classList.contains('open') && mbh9920IsOverlay());
+    document.body.classList.toggle('mbh-menu-overlay-open', open);
+  }
+  const mbh9920MenuObserverTarget = document.querySelector('.side-panel');
+  if(mbh9920MenuObserverTarget){
+    new MutationObserver(mbh9920SyncMenuClass).observe(mbh9920MenuObserverTarget,{attributes:true,attributeFilter:['class','style']});
+  }
+  window.addEventListener('resize', ()=>setTimeout(mbh9920SyncMenuClass, 0));
+  setInterval(mbh9920SyncMenuClass, 700);
+  setTimeout(mbh9920SyncMenuClass, 0);
+
+  function mbh9920EnsureInventoryFilter(){
+    const panel=document.querySelector('.inventory-panel');
+    const inv=document.getElementById('inventory');
+    if(!panel || !inv) return null;
+    let bar=document.getElementById('inventoryFilterBar');
+    if(!bar){
+      bar=document.createElement('div');
+      bar.id='inventoryFilterBar';
+      bar.className='inventory-filter-bar';
+      bar.innerHTML=[
+        ['all','すべて'],['weapon','武器'],['armor','防具'],['accessory','装飾'],['dark','闇装備'],['legendary','レジェンド']
+      ].map(([k,t])=>`<button type="button" data-inv-filter="${k}">${t}</button>`).join('');
+      panel.insertBefore(bar, inv);
+    }
+    state.inventoryFilter = state.inventoryFilter || 'all';
+    bar.querySelectorAll('button[data-inv-filter]').forEach(b=>{
+      b.classList.toggle('active',(b.dataset.invFilter||'all')===state.inventoryFilter);
+    });
+    if(!bar.dataset.bound9920){
+      bar.dataset.bound9920='1';
+      const handler=(e)=>{
+        const b=e.target.closest('button[data-inv-filter]');
+        if(!b) return;
+        e.preventDefault(); e.stopPropagation();
+        state.inventoryFilter=b.dataset.invFilter||'all';
+        renderInventory();
+      };
+      bar.addEventListener('click', handler, {passive:false});
+      bar.addEventListener('pointerup', handler, {passive:false});
+    }
+    return bar;
+  }
+  function mbh9920InventoryMatch(it){
+    const f=state.inventoryFilter || 'all';
+    if(f==='all') return true;
+    if(f==='dark') return !!(it && (it.specialFrame==='darkholy' || /^闇の|^暗黒/.test(it.name||'')));
+    if(f==='legendary') return it && it.rarity==='legendary';
+    if(f==='weapon') return it && ['剣','弓','杖','斧'].includes(it.slot);
+    if(f==='armor') return it && ['盾','鎧','兜','籠手','靴'].includes(it.slot);
+    if(f==='accessory') return it && ['リング','アミュレット'].includes(it.slot);
+    return true;
+  }
+  const mbh9920OriginalRenderInventory = renderInventory;
+  renderInventory = function(){
+    const inv=document.getElementById('inventory');
+    if(!inv){ return mbh9920OriginalRenderInventory(); }
+    mbh9920EnsureInventoryFilter();
+    inv.innerHTML='';
+    const selectedId = state.inventoryMenuItemId;
+    const items=(state.inventory||[]).filter(mbh9920InventoryMatch);
+    if(items.length===0){
+      const empty=document.createElement('div');
+      empty.className='inventory-empty';
+      empty.textContent='この条件の装備はありません';
+      inv.appendChild(empty);
+    }
+    items.forEach(it=>{
+      const div=document.createElement('div');
+      div.className=`item ${it.rarity} ${itemFrameClass(it)}${selectedId===it.id?' selected-inventory':''}`;
+      div.dataset.itemId = String(it.id);
+      div.innerHTML=`<b style="color:${itemNameColor(it)}">${it.name}</b><span>${it.slot}</span>`;
+      div.onpointerdown=(e)=>{ if(e.pointerType && e.pointerType !== 'mouse'){ setPointerMode('touch'); els.tooltip.classList.add('hidden'); } };
+      const openItemMenu=(e)=>{ if(e){ e.preventDefault(); e.stopPropagation(); } els.tooltip.classList.add('hidden'); showInventoryActionMenu(it, div); };
+      div.onclick=openItemMenu;
+      div.onpointerup=(e)=>{ if(e.pointerType && e.pointerType !== 'mouse') openItemMenu(e); };
+      div.ontouchend=openItemMenu;
+      div.onpointerenter=(e)=>{
+        if(isMouseLikePointer(e)){ setPointerMode('mouse'); showTip(e,it); }
+        else { setPointerMode('touch'); els.tooltip.classList.add('hidden'); }
+      };
+      div.onpointermove=(e)=>{
+        if(isMouseLikePointer(e)){ setPointerMode('mouse'); showTip(e,it); }
+        else { setPointerMode('touch'); els.tooltip.classList.add('hidden'); }
+      };
+      div.onmousemove=(e)=>{ setPointerMode('mouse'); showTip(e,it); };
+      div.onmouseleave=()=>{ if(state.inventoryMenuItemId!==it.id) els.tooltip.classList.add('hidden'); };
+      inv.appendChild(div);
+      if(selectedId===it.id) setTimeout(()=>showInventoryActionMenu(it, div), 0);
+    });
+    if(els.openAllBtn){ els.openAllBtn.style.display='none'; }
+    updateSellButtonState();
+    mbh9920EnsureInventoryFilter();
+  };
+  setTimeout(()=>mbh9920Safe(()=>{ mbh9920EnsureInventoryFilter(); renderInventory(); }), 300);
+
+  // Ensure latest visible build number is single and clear.
+  document.documentElement.setAttribute('data-build-version','99.20');
+  document.querySelectorAll('.build-version').forEach(el=>{ el.textContent='ver.99.20'; });
+  document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent='Build: ver.99.20'; });
 
   // PCでは非アクティブ時もBGMを止めない。スマホだけ従来どおり停止。
   window.__mbhPcKeepBgm = true;
