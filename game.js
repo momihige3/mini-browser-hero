@@ -35,7 +35,7 @@ const DEATH_DANCE_CUTINS = [
 ];
 const DARK_SWORD_SAINT_CUTIN = {quote:'私を超えてみせろ。', img:'assets/cutin_dark_sword_dance.png'};
 const DARK_SWORD_TECHNIQUE_CUTIN = {quote:'', img:'assets/cutin_dark_sword_technique.png'};
-const GAME_VERSION = '97.4';
+const GAME_VERSION = '98';
 const DARK_SWORD_SAINT = {
   id:'dark_sword_saint', name:'暗黒剣聖', type:'裏ボス', img:'assets/enemy_dark_sword_saint.png', element:'dark',
   hp:32000, atk:260, def:95, xp:2600, gold:5000, bossChance:0, enemySkill:'暗黒斬'
@@ -1581,7 +1581,7 @@ function enemyDefeated(){
   state.lastXpGain = gainXp; state.xp += gainXp;
   if(e && e.id === 'dark_sword_saint'){
     const legendary = rarities.find(r=>r.id==='legendary') || rarities[rarities.length-1];
-    const darkPool = [makeDarkHolySword, makeDarkShield, makeDarkAmulet];
+    const darkPool = [makeDarkHolySword, makeDarkShield, makeDarkAmulet, makeDarkArmor, makeDarkGauntlets, makeDarkHelm, makeDarkBoots];
     const darkReward = darkPool[Math.floor(Math.random()*darkPool.length)](state.level);
     const rewards = [];
     for(let i=0;i<2;i++) rewards.push(makeItem(slots[Math.floor(Math.random()*slots.length)], legendary, {isBossDrop:true}));
@@ -1685,7 +1685,7 @@ function beginDeathDanceAfterCutin(){
   const hb=document.getElementById('deathDanceHeartbeat'); if(hb) hb.remove();
   hideDeathDanceCutin();
   state.deathDance=true;
-  state.deathDanceBattleCount = (state.deathDanceBattleCount || 0) + 1;
+  state.deathDanceBattleCount = (state.deathDanceBattleCount || 0) + 1 + (calcStats().deathDanceCountBonus || 0);
   state.deathDanceUntil=performance.now()+Math.floor(10000 * (calcStats().deathDanceDurationMul || 1));
   state.hp=1;
   state.lastHeroAttack = performance.now() - 9999;
@@ -3033,19 +3033,27 @@ window.addEventListener('resize', v952FinalFixes);
       <button type="button" data-v97="holy">闇の聖剣</button>
       <button type="button" data-v97="darkshield">闇の盾</button>
       <button type="button" data-v97="darkamulet">闇のアミュレット</button>
+      <button type="button" data-v97="darkarmor">闇の鎧</button>
+      <button type="button" data-v97="darkgauntlets">闇の籠手</button>
+      <button type="button" data-v97="darkhelm">闇の兜</button>
+      <button type="button" data-v97="darkboots">暗黒の靴</button>
       <button type="button" data-v97="humble">謙虚の指輪</button>`;
     if(ref && ref.parentNode) ref.parentNode.insertBefore(box, ref.nextSibling); else panel.appendChild(box);
     box.addEventListener('click', e=>{
       const b=e.target.closest('button[data-v97]'); if(!b) return; e.preventDefault(); e.stopPropagation();
       const k=b.dataset.v97;
       if(k==='redset'){ [makeBlessedShield(),makeMysticArmor(),makeEffortRing()].forEach(x=>state.inventory.unshift(x)); log('デバッグ：赤装備セットを追加。','good'); }
-      if(k==='darkset'){ [makeDarkHolySword(state.level),makeDarkShield(state.level),makeDarkAmulet(state.level)].forEach(x=>state.inventory.unshift(x)); log('デバッグ：闇装備セットを追加。','good'); }
+      if(k==='darkset'){ [makeDarkHolySword(state.level),makeDarkShield(state.level),makeDarkAmulet(state.level),makeDarkArmor(state.level),makeDarkGauntlets(state.level),makeDarkHelm(state.level),makeDarkBoots(state.level)].forEach(x=>state.inventory.unshift(x)); log('デバッグ：闇装備セットを追加。','good'); }
       if(k==='bless') grantItem(makeBlessedShield());
       if(k==='mystic') grantItem(makeMysticArmor());
       if(k==='effort') grantItem(makeEffortRing());
       if(k==='holy') grantItem(makeDarkHolySword(state.level));
       if(k==='darkshield') grantItem(makeDarkShield(state.level));
       if(k==='darkamulet') grantItem(makeDarkAmulet(state.level));
+      if(k==='darkarmor') grantItem(makeDarkArmor(state.level));
+      if(k==='darkgauntlets') grantItem(makeDarkGauntlets(state.level));
+      if(k==='darkhelm') grantItem(makeDarkHelm(state.level));
+      if(k==='darkboots') grantItem(makeDarkBoots(state.level));
       if(k==='humble') grantItem(makeHumbleRing());
       renderAll(); scheduleSave();
     });
@@ -3475,4 +3483,180 @@ window.addEventListener('resize', v952FinalFixes);
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', install974); else install974();
   window.addEventListener('load', install974);
   setTimeout(install974,300); setTimeout(install974,1200);
+})();
+
+
+/* v98: dark equipment set expansion */
+(function(){
+  const BUILD='98';
+  function legendaryRarity98(){ return (rarities.find(r=>r.id==='legendary') || rarities[rarities.length-1]); }
+  function darkBase98(slot, levelOverride){
+    const lv = Math.max(1, Math.floor(levelOverride || state.level || 1));
+    const it = makeItem(slot, legendaryRarity98(), {isBossDrop:true});
+    it.rarity='legendary'; it.rarityName='レジェンダリー'; it.specialFrame='darkholy'; it.level = it.level || 0;
+    return {it, lv, mult:(legendaryRarity98().mult || 3.2)};
+  }
+  window.makeDarkArmor = makeDarkArmor = function(levelOverride){
+    const b=darkBase98('鎧', levelOverride), it=b.it, lv=b.lv, m=b.mult;
+    it.name='闇の鎧';
+    it.def=Math.floor((28 + lv*6)*m); it.hp=Math.floor((120 + lv*22)*m);
+    it.darkArmor=true; it.darkDamageReduce=0.25; it.darkRegenPerSecond=0.02; it.darkBleedMax=20;
+    it.flavor='被ダメージ25%軽減。1秒ごとに最大HP2%回復。自身への暗黒出血を最大20スタックまで減少。';
+    return it;
+  };
+  window.makeDarkGauntlets = makeDarkGauntlets = function(levelOverride){
+    const b=darkBase98('腕', levelOverride), it=b.it, lv=b.lv, m=b.mult;
+    it.name='闇の籠手';
+    it.def=Math.floor((18 + lv*4)*m); it.atk=Math.floor((10 + lv*3)*m); it.hp=Math.floor((55 + lv*10)*m);
+    it.darkGauntlets=true; it.deathDanceCountBonus=2;
+    it.flavor='死線の剣舞発動時、剣舞発動回数+2。';
+    return it;
+  };
+  window.makeDarkHelm = makeDarkHelm = function(levelOverride){
+    const b=darkBase98('兜', levelOverride), it=b.it, lv=b.lv, m=b.mult;
+    it.name='闇の兜';
+    it.def=Math.floor((20 + lv*5)*m); it.hp=Math.floor((70 + lv*12)*m);
+    it.darkHelm=true; it.deathDanceChance=0.10;
+    it.flavor='死線の剣舞発動率+10%。出血・暗黒出血解除。死線の剣舞発動中、出血・暗黒出血を受けない。';
+    return it;
+  };
+  window.makeDarkBoots = makeDarkBoots = function(levelOverride){
+    const b=darkBase98('足', levelOverride), it=b.it, lv=b.lv, m=b.mult;
+    it.name='暗黒の靴';
+    it.def=Math.floor((14 + lv*4)*m); it.hp=Math.floor((55 + lv*10)*m);
+    it.darkBoots=true; it.evasion=0.25; it.lowHpEvasion=0.25;
+    it.flavor='回避率+25%。HP半分以下でさらに+25%。';
+    return it;
+  };
+
+  const oldCalc98 = calcStats;
+  window.calcStats = calcStats = function(){
+    const s = oldCalc98.apply(this, arguments);
+    s.darkArmor=false; s.darkDamageReduce=s.darkDamageReduce||0; s.darkRegenPerSecond=s.darkRegenPerSecond||0; s.darkBleedMax=100;
+    s.darkGauntlets=false; s.deathDanceCountBonus=s.deathDanceCountBonus||0;
+    s.darkHelm=false; s.bleedImmuneDuringDeathDance=false;
+    s.evasion=s.evasion||0; s.lowHpEvasion=s.lowHpEvasion||0;
+    Object.values(state.equip||{}).filter(Boolean).forEach(it=>{
+      if(it.darkArmor){ s.darkArmor=true; s.darkDamageReduce=Math.max(s.darkDamageReduce||0, it.darkDamageReduce||0.25); s.darkRegenPerSecond += it.darkRegenPerSecond||0.02; s.darkBleedMax=Math.min(s.darkBleedMax, it.darkBleedMax||20); }
+      if(it.darkGauntlets){ s.darkGauntlets=true; s.deathDanceCountBonus += it.deathDanceCountBonus||2; }
+      if(it.darkHelm){ s.darkHelm=true; s.bleedImmuneDuringDeathDance=true; }
+      if(it.darkBoots){ s.evasion += it.evasion||0.25; s.lowHpEvasion += it.lowHpEvasion||0.25; }
+    });
+    s.evasion = Math.min(0.75, s.evasion || 0);
+    return s;
+  };
+
+  const oldAddBleed98 = addBleed;
+  window.addBleed = addBleed = function(target){
+    if(target==='hero' && state.deathDance && calcStats().bleedImmuneDuringDeathDance) return false;
+    return oldAddBleed98.apply(this, arguments);
+  };
+  const oldAddDarkBleed98 = addDarkBleed;
+  window.addDarkBleed = addDarkBleed = function(target='hero'){
+    if(target==='hero'){
+      const st=calcStats();
+      if(state.deathDance && st.bleedImmuneDuringDeathDance) return false;
+      ensureStatusContainers(); cleanupStatuses();
+      const max = Math.max(0, Math.min(100, st.darkBleedMax || 100));
+      const box = state.heroStatuses.darkBleeds || (state.heroStatuses.darkBleeds=[]);
+      if(box.length >= max) return false;
+    }
+    return oldAddDarkBleed98.apply(this, arguments);
+  };
+
+  const oldProcess98 = processStatusDots;
+  window.processStatusDots = processStatusDots = function(now){
+    oldProcess98.apply(this, arguments);
+    ensureStatusContainers();
+    const st=calcStats();
+    if(st.darkHelm){
+      if((state.heroStatuses.bleeds||[]).length || (state.heroStatuses.darkBleeds||[]).length){
+        state.heroStatuses.bleeds=[]; state.heroStatuses.darkBleeds=[];
+        renderStatusLists();
+      }
+    }else if(st.darkArmor && (state.heroStatuses.darkBleeds||[]).length > (st.darkBleedMax||20)){
+      state.heroStatuses.darkBleeds = state.heroStatuses.darkBleeds.slice(0, st.darkBleedMax||20);
+      renderStatusLists();
+    }
+    if(!state.down && !state.deathDanceCutin && st.darkRegenPerSecond > 0){
+      if(!state.heroStatuses.darkArmorRegenLast) state.heroStatuses.darkArmorRegenLast = now;
+      const ticks = Math.floor((now - state.heroStatuses.darkArmorRegenLast)/1000);
+      if(ticks > 0){
+        state.heroStatuses.darkArmorRegenLast += ticks*1000;
+        const heal = Math.max(1, Math.floor(maxHp() * st.darkRegenPerSecond * ticks));
+        if(state.hp > 0 && state.hp < maxHp()){ state.hp=Math.min(maxHp(), state.hp+heal); showHeroFloat(`闇鎧+${heal}`, 'heal'); renderBattle(); }
+      }
+    }
+  };
+
+  const oldApplyDarkShield98 = applyDarkShieldToDamage;
+  window.applyDarkShieldToDamage = applyDarkShieldToDamage = function(dmg){
+    let out = oldApplyDarkShield98.apply(this, arguments);
+    const st=calcStats();
+    if(st.darkArmor && out > 0){ out = Math.max(1, Math.floor(out * (1 - (st.darkDamageReduce||0.25)))); }
+    return out;
+  };
+
+  function rollDodge98(label='MISS'){
+    const st=calcStats();
+    let rate=st.evasion||0;
+    if(state.hp <= maxHp()*0.5) rate += st.lowHpEvasion||0;
+    rate = Math.min(0.85, rate);
+    if(rate > 0 && Math.random() < rate){ showHeroFloat(label,'guard'); playSfx('guard'); log(`暗黒の靴：攻撃を回避！`,'good'); renderBattle(); return true; }
+    return false;
+  }
+  const oldEnemyAttack98 = enemyAttack;
+  window.enemyAttack = enemyAttack = function(now){
+    if(state.enemy && rollDodge98('MISS')){ state.lastEnemyAttack = now || performance.now(); return; }
+    return oldEnemyAttack98.apply(this, arguments);
+  };
+  const oldDarkHit98 = applyDarkSwordDanceHit;
+  window.applyDarkSwordDanceHit = applyDarkSwordDanceHit = function(i,total,mode='finish'){
+    if(state.enemy && rollDodge98('MISS')) return;
+    return oldDarkHit98.apply(this, arguments);
+  };
+
+  const oldSummary98 = itemSummary;
+  window.itemSummary = itemSummary = function(it){
+    let base = oldSummary98.apply(this, arguments);
+    const arr=[];
+    if(it?.darkArmor) arr.push('闇の鎧：被ダメ25%軽減 / 毎秒HP2%回復 / 暗黒出血最大20');
+    if(it?.darkGauntlets) arr.push('闇の籠手：死線の剣舞発動回数+2');
+    if(it?.darkHelm) arr.push('闇の兜：剣舞率+10% / 出血・暗黒出血解除 / 剣舞中DOT無効');
+    if(it?.darkBoots) arr.push('暗黒の靴：回避+25% / HP半分以下でさらに+25%');
+    return [base, ...arr].filter(Boolean).join(' / ');
+  };
+  const oldPower98 = itemPower;
+  window.itemPower = itemPower = function(it){
+    let v=oldPower98.apply(this, arguments); if(!it) return v;
+    if(it.darkArmor) v += 4200;
+    if(it.darkGauntlets) v += 3800;
+    if(it.darkHelm) v += 3600;
+    if(it.darkBoots) v += 3400;
+    return v;
+  };
+
+  function installDebug98(){
+    const panel=document.getElementById('debugPanel'); if(!panel || panel.__v98Buttons) return; panel.__v98Buttons=true;
+    const box=document.createElement('div'); box.className='debug-v98-box';
+    box.innerHTML=`<div style="margin-top:6px;font-weight:700;color:#d8a8ff;">闇装備追加付与</div>
+      <button type="button" data-v98="armor">闇の鎧</button>
+      <button type="button" data-v98="gauntlets">闇の籠手</button>
+      <button type="button" data-v98="helm">闇の兜</button>
+      <button type="button" data-v98="boots">暗黒の靴</button>`;
+    panel.appendChild(box);
+    box.addEventListener('click', e=>{
+      const b=e.target.closest('button[data-v98]'); if(!b) return; e.preventDefault(); e.stopPropagation();
+      const k=b.dataset.v98;
+      const map={armor:makeDarkArmor,gauntlets:makeDarkGauntlets,helm:makeDarkHelm,boots:makeDarkBoots};
+      const fn=map[k]; if(fn){ const it=fn(state.level); state.inventory.unshift(it); log(`デバッグ：${it.name}を倉庫に追加。`,'good'); renderAll(); scheduleSave?.(); }
+    });
+  }
+  function updateBuild98(){
+    document.querySelectorAll('.build-version,.fixed-build-version').forEach(el=>{ el.textContent='ver.'+BUILD; });
+    document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent='Build: ver.'+BUILD; });
+    installDebug98();
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', updateBuild98); else updateBuild98();
+  window.addEventListener('load', updateBuild98); setTimeout(updateBuild98,300); setTimeout(updateBuild98,1200);
 })();
