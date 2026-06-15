@@ -5354,8 +5354,8 @@ window.addEventListener('resize', v952FinalFixes);
 
 /* ver99.7 focused fix: Dark Sword Saint defeat clears DOT and always resumes battle */
 (function(){
-  var BUILD='99.7';
-  function safe(fn){ try{ return fn&&fn(); }catch(e){ console.warn('[99.7 dark saint transition]', e); return null; } }
+  var BUILD='99.8';
+  function safe(fn){ try{ return fn&&fn(); }catch(e){ console.warn('[99.8 dark saint transition]', e); return null; } }
   function isDarkSaint(){ return window.state && state.enemy && state.enemy.id === 'dark_sword_saint'; }
   function clearArrayOwner(o){
     if(!o) return;
@@ -5418,7 +5418,7 @@ window.addEventListener('resize', v952FinalFixes);
         enemyDefeated();
         called=true;
       }
-    }catch(e){ console.warn('[99.7] enemyDefeated failed, forcing next battle', e); }
+    }catch(e){ console.warn('[99.8] enemyDefeated failed, forcing next battle', e); }
     clearAllDotAndBlocking997();
     setTimeout(function(){
       clearAllDotAndBlocking997();
@@ -5466,4 +5466,148 @@ window.addEventListener('resize', v952FinalFixes);
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',renderVer); else renderVer();
   window.addEventListener('load',renderVer);
+})();
+
+
+/* ver99.8 diagnostic trace: Dark Sword Saint transition investigation */
+(function(){
+  const BUILD='99.8';
+  const KEY='mbh_debug_trace_v998';
+  const MAX=350;
+  function safe(fn){ try{return fn&&fn();}catch(e){ console.warn('[TRACE99.8]', e); return null; } }
+  function shortErr(e){ return e ? String(e && (e.stack || e.message || e)).slice(0,900) : ''; }
+  function snapshot(extra){
+    let enemy=null, est=null, hst=null;
+    safe(()=>{ enemy = state && state.enemy ? {id:state.enemy.id,name:state.enemy.name,level:state.enemy.level,hp:state.enemyHp,maxHp:state.enemy.maxHp,dead:!!state.enemy.dead,defeated:!!state.enemy.defeated} : null; });
+    safe(()=>{ est = state && state.enemyStatuses ? {
+      darkDeadConfirmed:!!state.enemyStatuses.darkDeadConfirmed,
+      darkRevivingUntil:Math.round(state.enemyStatuses.darkRevivingUntil||0),
+      darkReviveStart:Math.round(state.enemyStatuses.darkReviveStart||0),
+      darkDanceCount:state.enemyStatuses.darkDanceCount||0,
+      enemyBleeds:(state.enemyStatuses.bleeds||[]).length,
+      enemyDarkBleeds:(state.enemyStatuses.darkBleeds||[]).length,
+      darkAuraStacks:state.enemyStatuses.darkAuraStacks||0,
+      darkTechniqueAwakened:!!state.enemyStatuses.darkTechniqueAwakened
+    } : null; });
+    safe(()=>{ hst = state && state.heroStatuses ? {
+      heroBleeds:(state.heroStatuses.bleeds||[]).length,
+      heroDarkBleeds:(state.heroStatuses.darkBleeds||[]).length,
+      burnUntil:Math.round(state.heroStatuses.burnUntil||0)
+    } : null; });
+    return Object.assign({
+      t:new Date().toLocaleTimeString('ja-JP',{hour12:false}),
+      ms:Math.round(performance.now()),
+      build:BUILD,
+      enemy,
+      enemyStatuses:est,
+      heroStatuses:hst,
+      hp:safe(()=>Math.round(state.hp)),
+      maxHp:safe(()=>Math.round(maxHp())),
+      down:safe(()=>!!state.down),
+      defeatSequence:safe(()=>!!state.defeatSequence),
+      deathDance:safe(()=>!!state.deathDance),
+      deathDanceBattleCount:safe(()=>state.deathDanceBattleCount||0),
+      deathDanceCutin:safe(()=>!!state.deathDanceCutin),
+      darkSwordCutinActive:safe(()=>!!state.darkSwordCutinActive),
+      winStreak:safe(()=>state.winStreak||0),
+      defeated:safe(()=>state.defeated||0),
+      forceNextDarkSwordSaint:safe(()=>!!state.forceNextDarkSwordSaint),
+      lastHeroAttack:safe(()=>Math.round(state.lastHeroAttack||0)),
+      lastEnemyAttack:safe(()=>Math.round(state.lastEnemyAttack||0))
+    }, extra||{});
+  }
+  function read(){ try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch(_){return []} }
+  function write(arr){ try{localStorage.setItem(KEY, JSON.stringify(arr.slice(-MAX)));}catch(_){} }
+  function trace(label, extra){
+    const row=snapshot(Object.assign({label}, extra||{}));
+    const arr=read(); arr.push(row); write(arr);
+    try{ console.log('[MBH TRACE]', label, row); }catch(_){ }
+    return row;
+  }
+  window.MBH_TRACE_KEY=KEY;
+  window.mbhTrace=trace;
+  window.mbhGetTrace=function(){ return read(); };
+  window.mbhClearTrace=function(){ localStorage.removeItem(KEY); trace('trace-cleared'); renderTracePanel(); };
+  window.mbhCopyTrace=function(){
+    const text=JSON.stringify(read(), null, 2);
+    if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(text).then(()=>{ safe(()=>log('進行デバッグログをコピーした。','good')); }); }
+    else { prompt('このログをコピーして送ってね', text); }
+    return text;
+  };
+  window.mbhDownloadTrace=function(){
+    const text=JSON.stringify(read(), null, 2);
+    const blob=new Blob([text], {type:'application/json'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='mbh-debug-trace-ver99.8.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
+  };
+  function wrap(name, before, after){
+    const old=window[name] || (typeof globalThis!=='undefined' ? globalThis[name] : null);
+    if(typeof old!=='function' || old.__trace998) return;
+    const fn=function(){
+      const args=[...arguments];
+      safe(()=>before&&before(args));
+      try{
+        const ret=old.apply(this, arguments);
+        safe(()=>after&&after(args, ret));
+        return ret;
+      }catch(e){
+        trace(name+':throw', {error:shortErr(e)});
+        throw e;
+      }
+    };
+    fn.__trace998=true; fn.__old=old;
+    try{ window[name]=fn; }catch(_){ }
+    try{ globalThis[name]=fn; }catch(_){ }
+  }
+  function installWraps(){
+    wrap('tryDarkSwordDanceRevive', ()=>trace('tryDarkSwordDanceRevive:before'), (a,r)=>trace('tryDarkSwordDanceRevive:after',{returned:!!r}));
+    wrap('enemyDefeated', ()=>trace('enemyDefeated:before'), ()=>trace('enemyDefeated:after'));
+    wrap('spawnEnemy', (a)=>trace('spawnEnemy:before',{forceFirst:!!a[0]}), ()=>trace('spawnEnemy:after'));
+    wrap('setEnemy', (a)=>trace('setEnemy:before',{nextEnemy:a&&a[0]?{id:a[0].id,name:a[0].name,level:a[0].level}:null}), ()=>trace('setEnemy:after'));
+    wrap('handleHeroDeath', ()=>trace('handleHeroDeath:before'), ()=>trace('handleHeroDeath:after'));
+    wrap('spawnEnemyAfterDefeat', ()=>trace('spawnEnemyAfterDefeat:before'), ()=>trace('spawnEnemyAfterDefeat:after'));
+    wrap('processStatusDots', (a)=>{
+      const e=safe(()=>state.enemy&&state.enemy.id);
+      if(e==='dark_sword_saint' || safe(()=>state.heroStatuses&&(state.heroStatuses.darkBleeds||[]).length)){ trace('processStatusDots:tick',{nowArg:Math.round(a[0]||0)}); }
+    }, null);
+    wrap('clearDarkSwordTimers', ()=>trace('clearDarkSwordTimers:before'), ()=>trace('clearDarkSwordTimers:after'));
+  }
+  function renderTracePanel(){
+    const out=document.getElementById('mbhTraceOut'); if(!out) return;
+    const arr=read().slice(-40).reverse();
+    out.textContent=arr.map(x=>`${x.t} ${x.label} enemy=${x.enemy?x.enemy.name+' HP'+x.enemy.hp+'/'+x.enemy.maxHp:'なし'} down=${x.down} defeatSeq=${x.defeatSequence} heroDB=${x.heroStatuses?x.heroStatuses.heroDarkBleeds:0} eDB=${x.enemyStatuses?x.enemyStatuses.enemyDarkBleeds:0} ddc=${x.enemyStatuses?x.enemyStatuses.darkDanceCount:0}`).join('\n');
+  }
+  function ensurePanel(){
+    const panel=document.getElementById('debugPanel') || document.body;
+    if(document.getElementById('mbhTraceBox')) return;
+    const box=document.createElement('div');
+    box.id='mbhTraceBox';
+    box.style.cssText='margin-top:8px;padding:8px;border:1px solid rgba(180,120,255,.45);border-radius:10px;background:rgba(20,10,35,.7);font-size:12px;';
+    box.innerHTML='<div style="font-weight:800;color:#d8a8ff;margin-bottom:6px;">進行デバッグログ ver.99.8</div><button type="button" id="mbhTraceMark">現在状態を記録</button> <button type="button" id="mbhTraceCopy">ログコピー</button> <button type="button" id="mbhTraceDownload">DL</button> <button type="button" id="mbhTraceClear">消去</button><pre id="mbhTraceOut" style="white-space:pre-wrap;max-height:180px;overflow:auto;background:rgba(0,0,0,.35);padding:6px;border-radius:8px;margin-top:6px;"></pre>';
+    panel.appendChild(box);
+    document.getElementById('mbhTraceMark').onclick=()=>{ trace('manual-mark'); renderTracePanel(); };
+    document.getElementById('mbhTraceCopy').onclick=()=>{ window.mbhCopyTrace(); renderTracePanel(); };
+    document.getElementById('mbhTraceDownload').onclick=()=>{ window.mbhDownloadTrace(); renderTracePanel(); };
+    document.getElementById('mbhTraceClear').onclick=()=>{ localStorage.removeItem(KEY); trace('trace-cleared'); renderTracePanel(); };
+    renderTracePanel();
+  }
+  function hp0Watch(){
+    const isDSS=safe(()=>state.enemy&&state.enemy.id==='dark_sword_saint');
+    if(!isDSS) return;
+    const hp=safe(()=>state.enemyHp);
+    const rev=safe(()=>state.enemyStatuses && (state.enemyStatuses.darkRevivingUntil||0)>performance.now());
+    const dead=safe(()=>state.enemyStatuses && state.enemyStatuses.darkDeadConfirmed);
+    if(hp<=0) trace('watch:dark-saint-hp0', {reviving:!!rev, deadConfirmed:!!dead});
+  }
+  function boot(){
+    installWraps(); ensurePanel();
+    trace('trace-boot');
+    const v=BUILD;
+    document.documentElement.dataset.buildVersion=v;
+    window.GAME_VERSION=v; window.MINI_BROWSER_HERO_LATEST_VERSION=v; window.MINI_BROWSER_HERO_BUILD_VERSION=v;
+    document.querySelectorAll('.build-version,.fixed-build-version').forEach(el=>el.textContent='ver.'+v);
+    document.querySelectorAll('.debug-version').forEach(el=>el.textContent='Build: ver.'+v+' debug');
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', boot); else boot();
+  window.addEventListener('load', boot);
+  setInterval(()=>{ safe(installWraps); safe(ensurePanel); safe(renderTracePanel); safe(hp0Watch); }, 1000);
 })();
