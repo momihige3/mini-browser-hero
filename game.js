@@ -2977,9 +2977,9 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* ver.99.18: audio restore - use lexical state/audio functions, not window fallback */
 (function(){
   'use strict';
-  const BUILD='99.18';
+  const BUILD='99.19';
   const $=(id)=>document.getElementById(id);
-  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.18]', e); } }
+  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.19]', e); } }
   function setVersion(){
     window.GAME_VERSION=BUILD; window.BUILD_VERSION=BUILD;
     document.documentElement.setAttribute('data-build-version', BUILD);
@@ -3077,6 +3077,33 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', boot, {once:true}); else boot();
   window.addEventListener('load', boot, {once:true});
   window.addEventListener('resize', ()=>safe(()=>applyMenu(typeof state !== 'undefined' ? !!state.uiOpen : false)));
+
+
+  /* ver.99.19: mute icon sync fix
+     bindOneTap() clones top buttons, so els.muteBtn can point to a removed old node.
+     Always sync els.muteBtn to the current DOM button before updating the icon. */
+  const __mbhOriginalUpdateMuteButton = updateMuteButton;
+  updateMuteButton = function(){
+    const btn = document.getElementById('muteBtn');
+    if(btn) els.muteBtn = btn;
+    if(!els.muteBtn) return;
+    els.muteBtn.style.display = 'inline-flex';
+    els.muteBtn.textContent = state.mobileMuted ? '🔇' : '🔊';
+    els.muteBtn.title = state.mobileMuted ? 'ミュート中' : '音ON';
+    els.muteBtn.setAttribute('aria-pressed', state.mobileMuted ? 'true' : 'false');
+    els.muteBtn.dataset.muted = state.mobileMuted ? '1' : '0';
+    if(els.audioHint) els.audioHint.classList.add('hidden');
+  };
+  const __mbhOriginalSetMobileMuted = setMobileMuted;
+  setMobileMuted = function(flag){
+    __mbhOriginalSetMobileMuted(!!flag);
+    updateMuteButton();
+    setTimeout(updateMuteButton, 0);
+    setTimeout(updateMuteButton, 120);
+  };
+  setTimeout(updateMuteButton, 0);
+  setTimeout(updateMuteButton, 500);
+
   // PCでは非アクティブ時もBGMを止めない。スマホだけ従来どおり停止。
   window.__mbhPcKeepBgm = true;
 })();
