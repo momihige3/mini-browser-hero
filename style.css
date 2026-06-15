@@ -1873,25 +1873,15 @@ body.using-touch .tooltip.status-tooltip-modal:not(.hidden),
 #mbhTraceBox button{margin:2px!important;padding:7px 8px!important;}
 
 
-/* ver.99.12 UI cleanup: no always-on top menu, single overlay menu */
-.topbar > .top-panel-tabs,
-.topbar > .v990-top-panel-tabs,
-#topPanelTabs,
-#v990TopPanelTabs{
-  display:none!important;
-  visibility:hidden!important;
-  pointer-events:none!important;
-  height:0!important;
-  min-height:0!important;
-  max-height:0!important;
-  overflow:hidden!important;
-  padding:0!important;
-  margin:0!important;
-  border:0!important;
+/* ver99.13 cleanup: prevent stacked patches / duplicate overlays */
+.fixed-build-version{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;}
+#debugPanel.debug-panel{position:fixed!important;right:8px!important;top:8px!important;bottom:8px!important;max-height:calc(100dvh - 16px)!important;overflow:auto!important;z-index:9999!important;}
+#debugPanel.hidden{display:none!important;}
+#debugGrantDarkItems.debug-grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:6px!important;margin:6px 0!important;}
+@media(max-width:1279px),(max-height:700px),(pointer:coarse){
+  .side-panel{position:fixed!important;left:8px!important;right:8px!important;top:72px!important;bottom:8px!important;width:auto!important;max-height:calc(100dvh - 80px)!important;overflow:auto!important;z-index:9000!important;display:none!important;pointer-events:none!important;}
+  .side-panel.open{display:block!important;pointer-events:auto!important;}
 }
-@media (max-width:1279px){
-  .side-panel:not(.open){display:none!important;visibility:hidden!important;pointer-events:none!important;}
-  .side-panel.open{display:flex!important;visibility:visible!important;pointer-events:auto!important;}
+@media(min-width:1280px) and (min-height:701px) and (pointer:fine){
+  .side-panel{display:block!important;pointer-events:auto!important;}
 }
-#debugPanel .debug-grid{grid-template-columns:repeat(auto-fit,minmax(118px,1fr))!important;}
-#latestDarkDebugBox{display:none!important;}
