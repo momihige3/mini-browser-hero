@@ -2714,7 +2714,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* ver99.15 clean stabilization patch: single source, no stacked UI injection */
 (function(){
   'use strict';
-  const BUILD = '99.21';
+  const BUILD = '99.22';
   const byId = (id)=>document.getElementById(id);
   function safe(fn){ try{ return fn && fn(); }catch(e){ console.warn('[ver99.15]', e); return null; } }
 
@@ -3009,9 +3009,9 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* ver.99.18: audio restore - use lexical state/audio functions, not window fallback */
 (function(){
   'use strict';
-  const BUILD='99.21';
+  const BUILD='99.22';
   const $=(id)=>document.getElementById(id);
-  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.21]', e); } }
+  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.22]', e); } }
   function setVersion(){
     window.GAME_VERSION=BUILD; window.BUILD_VERSION=BUILD;
     document.documentElement.setAttribute('data-build-version', BUILD);
@@ -3111,7 +3111,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   window.addEventListener('resize', ()=>safe(()=>applyMenu(typeof state !== 'undefined' ? !!state.uiOpen : false)));
 
 
-  /* ver.99.21: mute icon sync fix
+  /* ver.99.22: mute icon sync fix
      bindOneTap() clones top buttons, so els.muteBtn can point to a removed old node.
      Always sync els.muteBtn to the current DOM button before updating the icon. */
   const __mbhOriginalUpdateMuteButton = updateMuteButton;
@@ -3138,12 +3138,12 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 
 
 
-  /* ver.99.21: UI-only patch
+  /* ver.99.22: UI-only patch
      - hide EXP/flee behind overlay menu
      - revive inventory filters
      - keep inventory/log inside viewport with unified scrollbars
   */
-  function mbh9920Safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.21]', e); } }
+  function mbh9920Safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.22]', e); } }
   function mbh9920IsOverlay(){
     return matchMedia('(max-width: 1279px), (max-height: 700px), (pointer: coarse)').matches;
   }
@@ -3246,10 +3246,177 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   setTimeout(()=>mbh9920Safe(()=>{ mbh9920EnsureInventoryFilter(); renderInventory(); }), 300);
 
   // Ensure latest visible build number is single and clear.
-  document.documentElement.setAttribute('data-build-version','99.21');
-  document.querySelectorAll('.build-version').forEach(el=>{ el.textContent='ver.99.21'; });
-  document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent='Build: ver.99.21'; });
+  document.documentElement.setAttribute('data-build-version','99.22');
+  document.querySelectorAll('.build-version').forEach(el=>{ el.textContent='ver.99.22'; });
+  document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent='Build: ver.99.22'; });
 
   // PCでは非アクティブ時もBGMを止めない。スマホだけ従来どおり停止。
   window.__mbhPcKeepBgm = true;
+})();
+
+
+/* ver.99.22: inventory filter and log viewport final fix */
+(function(){
+  'use strict';
+  const BUILD='99.22';
+  const $=(id)=>document.getElementById(id);
+  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.22]', e); } }
+  function setVersion(){
+    window.GAME_VERSION=BUILD; window.BUILD_VERSION=BUILD;
+    document.documentElement.setAttribute('data-build-version', BUILD);
+    document.querySelectorAll('.build-version').forEach(el=>{ el.textContent='ver.'+BUILD; });
+    document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent='Build: ver.'+BUILD; });
+    const title=$('mbhTraceBox')?.querySelector('.debug-trace-title'); if(title) title.textContent='進行デバッグログ ver.'+BUILD;
+  }
+  function normalizeSlot(slot){
+    const s=String(slot||'');
+    if(s==='武器' || /剣|弓|杖|斧|槍|短剣|刀|銃|矢|ボルト/.test(s)) return 'weapon';
+    if(['盾','兜','鎧','腕','足','籠手','靴','頭','胴','手'].includes(s) || /盾|兜|鎧|腕|籠手|靴|ブーツ|足|ヘルム|アーマー|ガントレット/.test(s)) return 'armor';
+    if(['リング','アミュレット','指輪','護符'].includes(s) || /リング|アミュレット|指輪|護符/.test(s)) return 'accessory';
+    return 'other';
+  }
+  function isDarkItem(it){ return !!(it && (it.specialFrame==='darkholy' || it.dark || /^闇の|^暗黒/.test(String(it.name||'')))); }
+  function inventoryMatch9922(it){
+    const f=(state && state.inventoryFilter) || 'all';
+    if(f==='all') return true;
+    if(f==='weapon') return normalizeSlot(it?.slot)==='weapon';
+    if(f==='armor') return normalizeSlot(it?.slot)==='armor';
+    if(f==='accessory') return normalizeSlot(it?.slot)==='accessory';
+    if(f==='dark') return isDarkItem(it);
+    return true;
+  }
+  function ensureInventoryFilter9922(){
+    const panel=document.querySelector('.inventory-panel');
+    const inv=$('inventory');
+    if(!panel || !inv) return;
+    let bar=$('inventoryFilterBar');
+    if(!bar){
+      bar=document.createElement('div');
+      bar.id='inventoryFilterBar';
+      bar.className='inventory-filter-bar';
+      panel.insertBefore(bar, inv);
+    }
+    // レジェンドタブは不要なので完全に消す
+    bar.innerHTML=[
+      ['all','すべて'],['weapon','武器'],['armor','防具'],['accessory','装飾'],['dark','闇装備']
+    ].map(([k,t])=>`<button type="button" data-inv-filter="${k}">${t}</button>`).join('');
+    if(!['all','weapon','armor','accessory','dark'].includes(state.inventoryFilter)) state.inventoryFilter='all';
+    bar.querySelectorAll('button[data-inv-filter]').forEach(b=>{
+      b.classList.toggle('active',(b.dataset.invFilter||'all')===state.inventoryFilter);
+      b.onclick=(e)=>{ e.preventDefault(); e.stopPropagation(); state.inventoryFilter=b.dataset.invFilter||'all'; safe(()=>renderInventory()); return false; };
+      b.onpointerup=(e)=>{ e.preventDefault(); e.stopPropagation(); b.click(); return false; };
+    });
+  }
+  function installInventoryRender9922(){
+    if(window.__mbhInventoryRender9922) return;
+    window.__mbhInventoryRender9922=true;
+    renderInventory=function(){
+      const inv=$('inventory'); if(!inv) return;
+      ensureInventoryFilter9922();
+      inv.innerHTML='';
+      const selectedId=state.inventoryMenuItemId;
+      const items=(state.inventory||[]).filter(inventoryMatch9922);
+      if(items.length===0){
+        const empty=document.createElement('div');
+        empty.className='inventory-empty';
+        empty.textContent='この条件の装備はありません';
+        inv.appendChild(empty);
+      }
+      items.forEach(it=>{
+        const div=document.createElement('div');
+        div.className=`item ${it.rarity} ${itemFrameClass(it)}${selectedId===it.id?' selected-inventory':''}`;
+        div.dataset.itemId=String(it.id);
+        div.innerHTML=`<b style="color:${itemNameColor(it)}">${it.name}</b><span>${it.slot}</span>`;
+        div.onpointerdown=(e)=>{ if(e.pointerType && e.pointerType!=='mouse'){ setPointerMode('touch'); els.tooltip.classList.add('hidden'); } };
+        const openItemMenu=(e)=>{ if(e){ e.preventDefault(); e.stopPropagation(); } els.tooltip.classList.add('hidden'); showInventoryActionMenu(it, div); };
+        div.onclick=openItemMenu;
+        div.onpointerup=(e)=>{ if(e.pointerType && e.pointerType!=='mouse') openItemMenu(e); };
+        div.ontouchend=openItemMenu;
+        div.onpointerenter=(e)=>{ if(isMouseLikePointer(e)){ setPointerMode('mouse'); showTip(e,it); } else { setPointerMode('touch'); els.tooltip.classList.add('hidden'); } };
+        div.onpointermove=(e)=>{ if(isMouseLikePointer(e)){ setPointerMode('mouse'); showTip(e,it); } else { setPointerMode('touch'); els.tooltip.classList.add('hidden'); } };
+        div.onmousemove=(e)=>{ setPointerMode('mouse'); showTip(e,it); };
+        div.onmouseleave=()=>{ if(state.inventoryMenuItemId!==it.id) els.tooltip.classList.add('hidden'); };
+        inv.appendChild(div);
+        if(selectedId===it.id) setTimeout(()=>showInventoryActionMenu(it, div),0);
+      });
+      if(els.openAllBtn) els.openAllBtn.style.display='none';
+      updateSellButtonState();
+      ensureInventoryFilter9922();
+      fitScrollablePanels9922();
+    };
+  }
+  function classifyLog9922(l){
+    const c=String(l.cls||'').toLowerCase(); const m=String(l.msg||'');
+    if(c.includes('drop') || /装備ドロップ|倉庫に追加|付与|獲得|闇装備|レジェンダリー/.test(m)) return 'drop';
+    if(c.includes('damage') || c.includes('skilllog') || /ダメージ|攻撃|斬|雷撃|炎斬り|連続攻撃|剣舞/.test(m)) return 'damage';
+    return 'system';
+  }
+  function renderLogFiltered9922(){
+    const el=$('log'); if(!el) return;
+    const f=state.logFilter||'all';
+    const rows=(state.log||[]).filter(l=>f==='all' || classifyLog9922(l)===f);
+    el.innerHTML=rows.map(l=>`<div class="${l.cls||''}">[${l.time}] ${l.msg}</div>`).join('');
+    document.querySelectorAll('#logFilterBar button').forEach(b=>b.classList.toggle('active',(b.dataset.logFilter||'all')===f));
+    // 新しいログが上に入る設計。フィルター変更時も先頭を見せる。
+    el.scrollTop=0;
+    fitScrollablePanels9922();
+  }
+  function installLogFilter9922(){
+    const bar=$('logFilterBar'); if(!bar) return;
+    state.logFilter=state.logFilter||'all';
+    bar.innerHTML='<button type="button" data-log-filter="all">すべて</button><button type="button" data-log-filter="damage">ダメージ</button><button type="button" data-log-filter="system">システム</button><button type="button" data-log-filter="drop">ドロップ</button>';
+    bar.querySelectorAll('button[data-log-filter]').forEach(b=>{
+      b.onclick=(e)=>{ e.preventDefault(); e.stopPropagation(); state.logFilter=b.dataset.logFilter||'all'; renderLogFiltered9922(); return false; };
+      b.onpointerup=(e)=>{ e.preventDefault(); e.stopPropagation(); b.click(); return false; };
+    });
+    if(!window.__mbhLogOverride9922 && typeof log==='function'){
+      window.__mbhLogOverride9922=true;
+      const escape=(s)=> typeof escapeHtml==='function' ? escapeHtml(s) : String(s).replace(/[&<>"']/g, ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+      log=function(msg, cls='', html=false){
+        const time=new Date().toLocaleTimeString('ja-JP',{hour12:false});
+        const safeMsg=html ? msg : escape(msg);
+        state.log.unshift({time,msg:safeMsg,cls,html:true});
+        state.log=state.log.slice(0,160);
+        renderLogFiltered9922();
+      };
+    }
+    renderLogFiltered9922();
+  }
+  function fitScrollablePanels9922(){
+    const side=document.querySelector('.side-panel');
+    const invPanel=document.querySelector('.inventory-panel');
+    const logPanel=document.querySelector('.log-panel');
+    const inv=$('inventory');
+    const logEl=$('log');
+    if(side){ side.style.overflow='hidden'; }
+    const fit=(panel, body, min=80)=>{
+      if(!panel || !body) return;
+      const pr=panel.getBoundingClientRect();
+      const br=body.getBoundingClientRect();
+      const bottomPad=18;
+      const available=Math.max(min, window.innerHeight - br.top - bottomPad);
+      // パネル外枠より内側で止める。下枠に食い込ませない。
+      const inside=Math.max(min, pr.bottom - br.top - 14);
+      body.style.maxHeight=Math.max(min, Math.min(available, inside))+'px';
+      body.style.overflowY='auto';
+      body.style.overflowX='hidden';
+      body.style.paddingBottom='16px';
+      body.style.boxSizing='border-box';
+    };
+    fit(invPanel, inv, 100);
+    fit(logPanel, logEl, 90);
+  }
+  function boot(){
+    setVersion();
+    installInventoryRender9922();
+    ensureInventoryFilter9922();
+    installLogFilter9922();
+    safe(()=>renderInventory());
+    fitScrollablePanels9922();
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', boot, {once:true}); else setTimeout(boot,0);
+  window.addEventListener('load', boot, {once:true});
+  window.addEventListener('resize', ()=>setTimeout(fitScrollablePanels9922,0));
+  setTimeout(boot,250);
+  setTimeout(fitScrollablePanels9922,800);
 })();
