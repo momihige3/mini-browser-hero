@@ -1887,7 +1887,7 @@ body.using-touch .tooltip.status-tooltip-modal:not(.hidden),
 }
 
 
-/* ver.99.20: menu overlay / inventory filters / panel height final UI fix */
+/* ver.99.21: menu overlay / inventory filters / panel height final UI fix */
 body.mbh-menu-overlay-open .battle-panel .expbar,
 body.mbh-menu-overlay-open .battle-panel .flee-btn{
   z-index:1!important;

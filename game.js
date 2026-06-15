@@ -517,6 +517,18 @@ function resetTransientStatuses(){
   hideStatusTooltip();
   renderStatusLists();
 }
+function clearHeroDebuffsForDeathDance(){
+  ensureStatusContainers();
+  state.heroStatuses.bleeds = [];
+  state.heroStatuses.darkBleeds = [];
+  state.heroStatuses.burnUntil = 0;
+  state.heroStatuses.lastBleedTick = performance.now();
+  state.heroStatuses.lastDarkBleedTick = performance.now();
+  renderStatusLists();
+}
+function isHeroDebuffImmune(){
+  return !!(state.deathDance || state.deathDanceCutin);
+}
 function cleanupStatuses(){
   ensureStatusContainers();
   const n = nowMs();
@@ -542,6 +554,7 @@ function bleedCount(target){ ensureStatusContainers(); cleanupStatuses(); return
 function darkBleedCount(target='hero'){ ensureStatusContainers(); cleanupStatuses(); return (target==='enemy' ? (state.enemyStatuses.darkBleeds||[]) : (state.heroStatuses.darkBleeds||[])).length; }
 function addDarkBleed(target='hero'){
   ensureStatusContainers(); cleanupStatuses();
+  if(target !== 'enemy' && isHeroDebuffImmune()) return false;
   const owner = target==='enemy' ? state.enemyStatuses : state.heroStatuses;
   const box = owner.darkBleeds || (owner.darkBleeds = []);
   if(box.length >= 100) return false;
@@ -551,6 +564,7 @@ function addDarkBleed(target='hero'){
 }
 function addBleed(target){
   ensureStatusContainers(); cleanupStatuses();
+  if(target === 'hero' && isHeroDebuffImmune()) return false;
   const box = target==='hero' ? state.heroStatuses : state.enemyStatuses;
   if(box.bleeds.length >= 20) return false;
   box.bleeds.push(nowMs() + 10000);
@@ -559,6 +573,7 @@ function addBleed(target){
 }
 function addBurn(target){
   ensureStatusContainers(); cleanupStatuses();
+  if(target === 'hero' && isHeroDebuffImmune()) return false;
   const until = nowMs() + 10000;
   if(target==='hero') state.heroStatuses.burnUntil = until;
   else state.enemyStatuses.burnUntil = until;
@@ -758,7 +773,16 @@ function spawnEnemyAfterDefeat(){
   scheduleSave();
 }
 function fleeBattle(){
+  const darkSaintBattle = isDarkSwordSaint();
   const currentLevel = Math.max(1, Math.floor(state.enemy?.level || state.enemyLevelBase || state.level || 1));
+  if(darkSaintBattle){
+    state.winStreak = 0;
+    state.forceNextDarkSwordSaint = false;
+    log('暗黒剣聖戦から離脱した。暗黒剣聖は独立レベルのため、敵の出現レベルは低下しない。', 'danger');
+    banner('暗黒剣聖から離脱');
+    spawnWeakEnemyAfterEscape();
+    return;
+  }
   const nextBase = Math.max(1, currentLevel - 20);
   state.enemyLevelBase = nextBase;
   state.enemyLevelBaseDefeated = state.defeated || 0;
@@ -770,6 +794,12 @@ function fleeBattle(){
 }
 function confirmFlee(){
   const modal = document.getElementById('fleeModal');
+  const desc = document.getElementById('fleeModalDesc');
+  if(desc){
+    desc.innerHTML = isDarkSwordSaint()
+      ? '暗黒剣聖は独立レベルのため、逃走しても敵の出現レベルは下がりません。<br>経験値は失いません。'
+      : '敵の出現レベルが20下がります。<br>経験値は失いません。';
+  }
   if(modal) modal.classList.remove('hidden');
 }
 function closeFleeModal(){
@@ -871,12 +901,12 @@ function statusTooltipHtml(kind, target){
   if(kind === 'bleed') return `<b>出血</b><br>現在：${bleedCount(target)}スタック<br>1スタックごとに10秒継続。<br>1秒ごとに最大HPの1%ダメージ。<br>最大20スタック。`;
   if(kind === 'darkbleed') return `<b>暗黒出血</b><br>現在：${darkBleedCount(target||'hero')}スタック<br>暗黒剣舞の攻撃ごとに50%で付与。<br>15秒ごとに最大HPの1%ダメージ。<br>最大100スタック。効果時間60秒。`; 
   if(kind === 'burn') return `<b>火傷</b><br>残り：${burnSeconds(target)}秒<br>防御力25%低下。<br>火耐性10%以上で無効化。`;
-  if(kind === 'deathdance') return `<b>死線の剣舞</b><br>残り：${Math.max(0, Math.ceil((state.deathDanceUntil-nowMs())/1000))}秒<br>極限状態で連続攻撃を放つ。<br>この戦闘での発動回数：${state.deathDanceBattleCount||0}回<br>現在威力：${Math.pow(2, state.deathDanceBattleCount||0)}倍`; 
+  if(kind === 'deathdance') return `<b>死線の剣舞</b><br>残り：${Math.max(0, Math.ceil((state.deathDanceUntil-nowMs())/1000))}秒<br>極限状態で連続攻撃を放つ。<br>発動時にすべてのデバフを解除し、発動中は新たなデバフを無効化する。<br>この戦闘での発動回数：${state.deathDanceBattleCount||0}回<br>現在威力：${Math.pow(2, state.deathDanceBattleCount||0)}倍`; 
   if(kind === 'unyielding') return `<b>不屈</b><br>暗黒剣聖と対峙中のみ発動。<br>死線の剣舞発動率+50%。<br>現在の剣舞発動率：${Math.round(calcStats().deathDanceChance*100)}%。`;
   if(kind === 'darkaura') return `<b>闇オーラ</b><br>現在：${darkAuraStacks()}スタック<br>1スタックごとに被ダメージ10%軽減。<br>闇オーラ中は出血ダメージ90%軽減。<br>最大10スタック。10秒ごとに1減少。<br>暗黒剣舞発動時に10へ回復。`;
   if(kind === 'darksword') return `<b>暗黒の剣</b><br>現在：${darkSwordBuffCount()}スタック<br>攻撃力+50% / スタック。<br>効果時間：60秒。スタック可能。<br>最長残り：${darkSwordBuffSeconds()}秒。`;
   if(kind === 'darktechnique') return `<b>暗黒剣技</b><br>暗黒剣聖の通常攻撃で1ダメージが20回発生すると覚醒。<br>覚醒後は通常攻撃が暗黒剣技に置き換わる。<br>暗黒剣舞の回数にはカウントしない。<br>HP回復・闇オーラ回復・暗黒の剣付与はなし。<br>攻撃速度3倍、ガード無効、防御力50%無視。<br>攻撃ごとに出血50%、暗黒出血50%。<br>現在：${state.enemyStatuses?.darkTechniqueAwakened?'覚醒中':((state.enemyStatuses?.darkOneDamageCount||0)+' / 20')}。`;
-  if(kind === 'darkdance') return `<b>暗黒剣舞</b><br>発動済み：${state.enemyStatuses?.darkDanceCount||0}回 / 10回<br>次回発動率：${darkDanceChanceForNext()}%<br>暗黒剣舞回数：${state.enemyStatuses?.darkDanceCount||0} / 10<br>HP0時に発動判定。カットイン後に5秒無敵、HPをゆっくり100%まで回復、闇オーラ10、暗黒の剣+1。<br>連続攻撃は10秒間、攻撃速度3倍、ガード無効、防御力50%無視。<br>攻撃ごとに出血50%、暗黒出血50%。`;
+  if(kind === 'darkdance') return `<b>暗黒剣舞</b><br>発動済み：${state.enemyStatuses?.darkDanceCount||0}回 / 10回<br>次回発動率：${darkDanceChanceForNext()}%<br>暗黒剣舞回数：${state.enemyStatuses?.darkDanceCount||0} / 10<br>HP0時に発動判定。カットイン後に5秒無敵、HPをゆっくり100%まで回復、闇オーラ10、暗黒の剣+1。<br>発動時、主人公の「死線の剣舞」の発動回数をリセットする。<br>連続攻撃は10秒間、攻撃速度3倍、ガード無効、防御力50%無視。<br>攻撃ごとに出血50%、暗黒出血50%。`;
   if(kind === 'acid_body') return `<b>酸ボディ</b><br>受けた直接ダメージの10%を跳ね返す。`;
   if(kind === 'super_regen') return `<b>超再生</b><br>10秒ごとに最大HPの1%を回復する。`;
   if(kind === 'apex') return `<b>種族の頂点</b><br>被ダメージ50%軽減。<br>出血ダメージ50%軽減。`;
@@ -1657,6 +1687,7 @@ function startDeathDance(){
   if(state.defeatSequence || state.down) return false;
   if(state.deathDance || (state.deathDanceCutin && !state.darkSwordCutinActive)) return true;
   clearDeathDanceSequence();
+  clearHeroDebuffsForDeathDance();
   state.hp = 1;
   state.deathDanceCutin = true;
   state.lastHeroAttack = performance.now();
@@ -1696,6 +1727,7 @@ function beginDeathDanceAfterCutin(){
   state.deathDanceSeqTimers=[];
   const hb=document.getElementById('deathDanceHeartbeat'); if(hb) hb.remove();
   hideDeathDanceCutin();
+  clearHeroDebuffsForDeathDance();
   state.deathDance=true;
   state.deathDanceBattleCount = (state.deathDanceBattleCount || 0) + 1 + (calcStats().deathDanceCountBonus || 0);
   state.deathDanceUntil=performance.now()+Math.floor(10000 * (calcStats().deathDanceDurationMul || 1));
@@ -1708,7 +1740,7 @@ function beginDeathDanceAfterCutin(){
   renderStatusLists();
   playSfx('dance');
   setBgmMode('dance');
-  log(`死線の剣舞発動！ 極限状態で連続攻撃。今回の戦闘中${state.deathDanceBattleCount}回目、威力${Math.pow(2,state.deathDanceBattleCount)}倍。`,'skilllog');
+  log(`死線の剣舞発動！ すべてのデバフを解除し、発動中は新たなデバフを無効化。今回の戦闘中${state.deathDanceBattleCount}回目、威力${Math.pow(2,state.deathDanceBattleCount)}倍。`,'skilllog');
   renderBattle();
 }
 function endDeathDance(){
@@ -2682,7 +2714,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* ver99.15 clean stabilization patch: single source, no stacked UI injection */
 (function(){
   'use strict';
-  const BUILD = '99.20';
+  const BUILD = '99.21';
   const byId = (id)=>document.getElementById(id);
   function safe(fn){ try{ return fn && fn(); }catch(e){ console.warn('[ver99.15]', e); return null; } }
 
@@ -2977,9 +3009,9 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* ver.99.18: audio restore - use lexical state/audio functions, not window fallback */
 (function(){
   'use strict';
-  const BUILD='99.20';
+  const BUILD='99.21';
   const $=(id)=>document.getElementById(id);
-  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.20]', e); } }
+  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.21]', e); } }
   function setVersion(){
     window.GAME_VERSION=BUILD; window.BUILD_VERSION=BUILD;
     document.documentElement.setAttribute('data-build-version', BUILD);
@@ -3079,7 +3111,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   window.addEventListener('resize', ()=>safe(()=>applyMenu(typeof state !== 'undefined' ? !!state.uiOpen : false)));
 
 
-  /* ver.99.20: mute icon sync fix
+  /* ver.99.21: mute icon sync fix
      bindOneTap() clones top buttons, so els.muteBtn can point to a removed old node.
      Always sync els.muteBtn to the current DOM button before updating the icon. */
   const __mbhOriginalUpdateMuteButton = updateMuteButton;
@@ -3106,12 +3138,12 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 
 
 
-  /* ver.99.20: UI-only patch
+  /* ver.99.21: UI-only patch
      - hide EXP/flee behind overlay menu
      - revive inventory filters
      - keep inventory/log inside viewport with unified scrollbars
   */
-  function mbh9920Safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.20]', e); } }
+  function mbh9920Safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.21]', e); } }
   function mbh9920IsOverlay(){
     return matchMedia('(max-width: 1279px), (max-height: 700px), (pointer: coarse)').matches;
   }
@@ -3214,9 +3246,9 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   setTimeout(()=>mbh9920Safe(()=>{ mbh9920EnsureInventoryFilter(); renderInventory(); }), 300);
 
   // Ensure latest visible build number is single and clear.
-  document.documentElement.setAttribute('data-build-version','99.20');
-  document.querySelectorAll('.build-version').forEach(el=>{ el.textContent='ver.99.20'; });
-  document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent='Build: ver.99.20'; });
+  document.documentElement.setAttribute('data-build-version','99.21');
+  document.querySelectorAll('.build-version').forEach(el=>{ el.textContent='ver.99.21'; });
+  document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent='Build: ver.99.21'; });
 
   // PCでは非アクティブ時もBGMを止めない。スマホだけ従来どおり停止。
   window.__mbhPcKeepBgm = true;
