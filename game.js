@@ -5354,7 +5354,7 @@ window.addEventListener('resize', v952FinalFixes);
 
 /* ver99.7 focused fix: Dark Sword Saint defeat clears DOT and always resumes battle */
 (function(){
-  var BUILD='99.8';
+  var BUILD='99.9';
   function safe(fn){ try{ return fn&&fn(); }catch(e){ console.warn('[99.8 dark saint transition]', e); return null; } }
   function isDarkSaint(){ return window.state && state.enemy && state.enemy.id === 'dark_sword_saint'; }
   function clearArrayOwner(o){
@@ -5469,9 +5469,9 @@ window.addEventListener('resize', v952FinalFixes);
 })();
 
 
-/* ver99.8 diagnostic trace: Dark Sword Saint transition investigation */
+/* ver99.9 diagnostic trace: Dark Sword Saint transition investigation */
 (function(){
-  const BUILD='99.8';
+  const BUILD='99.9';
   const KEY='mbh_debug_trace_v998';
   const MAX=350;
   function safe(fn){ try{return fn&&fn();}catch(e){ console.warn('[TRACE99.8]', e); return null; } }
@@ -5537,7 +5537,7 @@ window.addEventListener('resize', v952FinalFixes);
   window.mbhDownloadTrace=function(){
     const text=JSON.stringify(read(), null, 2);
     const blob=new Blob([text], {type:'application/json'});
-    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='mbh-debug-trace-ver99.8.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='mbh-debug-trace-ver99.9.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
   };
   function wrap(name, before, after){
     const old=window[name] || (typeof globalThis!=='undefined' ? globalThis[name] : null);
@@ -5582,7 +5582,7 @@ window.addEventListener('resize', v952FinalFixes);
     const box=document.createElement('div');
     box.id='mbhTraceBox';
     box.style.cssText='margin-top:8px;padding:8px;border:1px solid rgba(180,120,255,.45);border-radius:10px;background:rgba(20,10,35,.7);font-size:12px;';
-    box.innerHTML='<div style="font-weight:800;color:#d8a8ff;margin-bottom:6px;">進行デバッグログ ver.99.8</div><button type="button" id="mbhTraceMark">現在状態を記録</button> <button type="button" id="mbhTraceCopy">ログコピー</button> <button type="button" id="mbhTraceDownload">DL</button> <button type="button" id="mbhTraceClear">消去</button><pre id="mbhTraceOut" style="white-space:pre-wrap;max-height:180px;overflow:auto;background:rgba(0,0,0,.35);padding:6px;border-radius:8px;margin-top:6px;"></pre>';
+    box.innerHTML='<div style="font-weight:800;color:#d8a8ff;margin-bottom:6px;">進行デバッグログ ver.99.9</div><button type="button" id="mbhTraceMark">現在状態を記録</button> <button type="button" id="mbhTraceCopy">ログコピー</button> <button type="button" id="mbhTraceDownload">DL</button> <button type="button" id="mbhTraceClear">消去</button><pre id="mbhTraceOut" style="white-space:pre-wrap;max-height:180px;overflow:auto;background:rgba(0,0,0,.35);padding:6px;border-radius:8px;margin-top:6px;"></pre>';
     panel.appendChild(box);
     document.getElementById('mbhTraceMark').onclick=()=>{ trace('manual-mark'); renderTracePanel(); };
     document.getElementById('mbhTraceCopy').onclick=()=>{ window.mbhCopyTrace(); renderTracePanel(); };

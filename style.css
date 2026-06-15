@@ -1865,3 +1865,9 @@ body.using-touch .tooltip.status-tooltip-modal:not(.hidden),
   .side-panel.open{top:90px!important;max-height:calc(100dvh - 98px)!important;}
   .debug-panel{top:90px!important;max-height:calc(100dvh - 98px)!important;}
 }
+
+/* ver99.9 debug trace visible controls */
+.debug-trace-box{display:block!important;margin-top:8px!important;padding:8px!important;border:1px solid rgba(180,120,255,.65)!important;border-radius:10px!important;background:rgba(20,10,35,.88)!important;font-size:12px!important;color:#f0dcff!important;}
+.debug-trace-title{font-weight:900;color:#d8a8ff;margin-bottom:6px;}
+.debug-trace-output{display:block;white-space:pre-wrap;max-height:180px;overflow:auto;background:rgba(0,0,0,.35);padding:6px;border-radius:8px;margin-top:6px;min-height:48px;color:#eee;}
+#mbhTraceBox button{margin:2px!important;padding:7px 8px!important;}

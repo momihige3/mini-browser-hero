@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja" data-build-version="99.8" data-build-date="2026-06-15">
+<html lang="ja" data-build-version="99.9" data-build-date="2026-06-15">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -138,9 +138,17 @@
         <button id="debugClearBleed">出血・暗黒出血解除</button>
         <button id="debugStopDot">DOTタイマー停止</button>
         <button id="debugStopDarkDance">暗黒剣舞タイマー停止</button>
+        <div id="mbhTraceBox" class="debug-trace-box">
+          <div class="debug-trace-title">進行デバッグログ ver.99.9</div>
+          <button id="mbhTraceMark" type="button">現在状態を記録</button>
+          <button id="mbhTraceCopy" type="button">ログコピー</button>
+          <button id="mbhTraceDownload" type="button">DL</button>
+          <button id="mbhTraceClear" type="button">消去</button>
+          <pre id="mbhTraceOut" class="debug-trace-output"></pre>
+        </div>
         <label><input id="debugKillEnemy" type="checkbox"> 敵への攻撃で即死</label>
         <label><input id="debugKillHero" type="checkbox"> 敵からの攻撃で即死</label>
-        <div class="debug-version">Build: ver.99.8</div>
+        <div class="debug-version">Build: ver.99.9 debug</div>
         <button id="debugClose">閉じる</button>
       </div>
   </div>
