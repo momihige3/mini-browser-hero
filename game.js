@@ -5350,3 +5350,120 @@ window.addEventListener('resize', v952FinalFixes);
   window.MINI_BROWSER_HERO_LATEST_VERSION = BUILD;
   window.MINI_BROWSER_HERO_BUILD_VERSION = BUILD;
 })();
+
+
+/* ver99.7 focused fix: Dark Sword Saint defeat clears DOT and always resumes battle */
+(function(){
+  var BUILD='99.7';
+  function safe(fn){ try{ return fn&&fn(); }catch(e){ console.warn('[99.7 dark saint transition]', e); return null; } }
+  function isDarkSaint(){ return window.state && state.enemy && state.enemy.id === 'dark_sword_saint'; }
+  function clearArrayOwner(o){
+    if(!o) return;
+    o.bleeds=[]; o.darkBleeds=[]; o.burnUntil=0;
+    o.lastBleedTick=performance.now(); o.lastDarkBleedTick=performance.now();
+  }
+  function clearAllDotAndBlocking997(){
+    if(!window.state) return;
+    safe(function(){ if(typeof clearDarkSwordTimers==='function') clearDarkSwordTimers(); });
+    safe(function(){ if(typeof clearDeathDanceSequence==='function') clearDeathDanceSequence(); });
+    safe(function(){ if(typeof hideDeathDanceCutin==='function') hideDeathDanceCutin(); });
+    clearArrayOwner(state.heroStatuses || (state.heroStatuses={}));
+    clearArrayOwner(state.enemyStatuses || (state.enemyStatuses={}));
+    if(state.enemyStatuses){
+      state.enemyStatuses.darkDeadConfirmed=true;
+      state.enemyStatuses.darkRevivingUntil=0;
+      state.enemyStatuses.darkReviveStart=0;
+      state.enemyStatuses.darkSwordBuffs=[];
+    }
+    state.darkSwordCutinActive=false;
+    state.deathDanceCutin=false;
+    state.deathDance=false;
+    state.down=false;
+    state.defeatSequence=false;
+    state.__enemyDefeatedRunning992=false;
+    state.__darkFinalize992=false;
+    state.__darkDefeatFinalizing991=false;
+    state.__darkSaintDefeat994=false;
+    state.__darkSaintDefeat995=false;
+    if(state.hp<=0) state.hp = (typeof maxHp==='function') ? maxHp() : 1;
+    safe(function(){ if(typeof renderStatusLists==='function') renderStatusLists(); });
+  }
+  var inFinalize=false;
+  function forceNext997(){
+    if(!window.state) return;
+    clearAllDotAndBlocking997();
+    if(state.enemy && state.enemy.id==='dark_sword_saint' && state.enemyHp<=0){ state.enemy=null; }
+    if(!state.enemy){
+      safe(function(){ if(typeof spawnEnemy==='function') spawnEnemy(false); });
+      safe(function(){ if(typeof setBgmMode==='function') setBgmMode(state.enemy && state.enemy.id==='dark_sword_saint' ? 'dark_sword_saint' : 'normal'); });
+      safe(function(){ if(typeof renderAll==='function') renderAll(); else if(typeof renderBattle==='function') renderBattle(); });
+      safe(function(){ if(typeof scheduleSave==='function') scheduleSave(); });
+    }
+    inFinalize=false;
+  }
+  function finalize997(reason){
+    if(!isDarkSaint()) return false;
+    if(state.enemyHp>0) return false;
+    var reviving=state.enemyStatuses && (state.enemyStatuses.darkRevivingUntil||0)>performance.now();
+    if(reviving) return false;
+    if(inFinalize) return true;
+    inFinalize=true;
+    clearAllDotAndBlocking997();
+    state.enemyHp=0;
+    var before=state.enemy;
+    safe(function(){ if(typeof log==='function') log('暗黒剣聖撃破：状態異常を解除して次のバトルへ移行。','good'); });
+    var called=false;
+    try{
+      if(typeof enemyDefeated==='function'){
+        enemyDefeated();
+        called=true;
+      }
+    }catch(e){ console.warn('[99.7] enemyDefeated failed, forcing next battle', e); }
+    clearAllDotAndBlocking997();
+    setTimeout(function(){
+      clearAllDotAndBlocking997();
+      if(state.enemy===before || (state.enemy && state.enemy.id==='dark_sword_saint' && state.enemyHp<=0)) state.enemy=null;
+      if(!state.enemy) forceNext997(); else inFinalize=false;
+    }, called ? 950 : 80);
+    setTimeout(function(){ if(!state.enemy || (state.enemy && state.enemy.id==='dark_sword_saint' && state.enemyHp<=0)) forceNext997(); }, 2200);
+    return true;
+  }
+  window.finalizeDarkSaintDefeat997=finalize997;
+
+  var prevProcess=(typeof processStatusDots==='function')?processStatusDots:null;
+  if(prevProcess && !prevProcess.__v997){
+    var wrapProcess=function(now){
+      if(window.state && (inFinalize || (!state.enemy && state.__lastDarkSaintDefeat997))){ clearAllDotAndBlocking997(); return; }
+      return prevProcess.apply(this,arguments);
+    };
+    wrapProcess.__v997=true; processStatusDots=window.processStatusDots=wrapProcess;
+  }
+
+  var prevEnemyDef=(typeof enemyDefeated==='function')?enemyDefeated:null;
+  if(prevEnemyDef && !prevEnemyDef.__v997){
+    var wrapEnemyDef=function(){
+      var wasDark=isDarkSaint();
+      if(wasDark){ clearAllDotAndBlocking997(); state.__lastDarkSaintDefeat997=Date.now(); }
+      var r=prevEnemyDef.apply(this,arguments);
+      if(wasDark){ clearAllDotAndBlocking997(); setTimeout(forceNext997,950); }
+      return r;
+    };
+    wrapEnemyDef.__v997=true; enemyDefeated=window.enemyDefeated=wrapEnemyDef;
+  }
+
+  function watch997(){
+    if(!isDarkSaint()) return;
+    if(state.enemyHp<=0) finalize997('watch');
+  }
+  setInterval(watch997,100);
+  document.documentElement.dataset.buildVersion=BUILD;
+  window.GAME_VERSION=BUILD;
+  window.MINI_BROWSER_HERO_LATEST_VERSION=BUILD;
+  window.MINI_BROWSER_HERO_BUILD_VERSION=BUILD;
+  function renderVer(){
+    document.querySelectorAll('.build-version,.fixed-build-version').forEach(function(el){el.textContent='ver.'+BUILD;});
+    document.querySelectorAll('.debug-version').forEach(function(el){el.textContent='Build: ver.'+BUILD;});
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',renderVer); else renderVer();
+  window.addEventListener('load',renderVer);
+})();
