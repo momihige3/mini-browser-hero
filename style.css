@@ -1710,3 +1710,16 @@ body.using-touch .tooltip.status-tooltip-modal:not(.hidden),
 .inventory-empty{padding:12px;text-align:center;opacity:.65;font-size:12px}
 .inventory-action-buttons button[disabled]{opacity:.45;filter:grayscale(1);cursor:not-allowed}
 @media (max-width:760px){.inventory-filter-bar{font-size:11px}.inventory-filter-bar select{font-size:12px;min-height:36px}.inventory-action-menu{z-index:1600!important}}
+
+
+/* v97.4: 逃走ボタンがEXPバーに重ならないように上へ退避 */
+.flee-btn{
+  bottom:58px!important;
+  z-index:1500!important;
+}
+@media(max-width:760px){
+  .flee-btn{bottom:62px!important;}
+}
+@media(min-width:1280px){
+  .flee-btn{bottom:62px!important;}
+}

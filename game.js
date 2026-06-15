@@ -35,7 +35,7 @@ const DEATH_DANCE_CUTINS = [
 ];
 const DARK_SWORD_SAINT_CUTIN = {quote:'私を超えてみせろ。', img:'assets/cutin_dark_sword_dance.png'};
 const DARK_SWORD_TECHNIQUE_CUTIN = {quote:'', img:'assets/cutin_dark_sword_technique.png'};
-const GAME_VERSION = '97.1';
+const GAME_VERSION = '97.4';
 const DARK_SWORD_SAINT = {
   id:'dark_sword_saint', name:'暗黒剣聖', type:'裏ボス', img:'assets/enemy_dark_sword_saint.png', element:'dark',
   hp:32000, atk:260, def:95, xp:2600, gold:5000, bossChance:0, enemySkill:'暗黒斬'
@@ -1117,7 +1117,7 @@ function makeScaledEnemy(base, forceLevel=null){
   }else{
     e.level = Math.max(1, state.level + Math.floor(state.defeated/3) + bossBonus);
   }
-  if(calcStats && calcStats().humbleRing){
+  if(e.id !== 'dark_sword_saint' && calcStats && calcStats().humbleRing){
     if(state.humbleEnemyFixedLevel == null) state.humbleEnemyFixedLevel = Math.max(1, e.level || state.level || 1);
     e.level = Math.max(1, Math.floor(state.humbleEnemyFixedLevel));
   }else{
@@ -1166,7 +1166,7 @@ function spawnEnemy(forceFirst=false){
     base = DARK_SWORD_SAINT;
     state.forceNextDarkSwordSaint = false;
     log('100連勝の気配に、暗黒剣聖が現れた。', 'danger');
-    banner('100連勝達成…暗黒剣聖出現！', 1800);
+    banner('暗黒剣聖出現！', 1800);
   }else{
     base=forceFirst ? makeFirstEnemy() : pickEnemy();
   }
@@ -1571,7 +1571,9 @@ function enemyDefeated(){
   }else if(state.winStreak >= 100){
     state.forceNextDarkSwordSaint = true;
     state.winStreak = 0;
-    log('100連勝達成！ 次の敵として暗黒剣聖が確定出現する。','danger');
+    log('100連勝達成！ 5秒後に暗黒剣聖が確定出現する。','danger');
+    banner('100連勝達成！', 5000);
+    state.pendingDarkSwordSaintDelay = true;
   }
   markEnemyDefeated(e);
   const xpMult = 1 + Math.max(0, (e.level || 1) - 1) * 0.08;
@@ -1597,7 +1599,9 @@ function enemyDefeated(){
   }
   log(`${e.name} を撃破！ 経験値+${gainXp}`,'good'); playSfx('win');
   checkLevelUp(); renderAll(); scheduleSave();
-  setTimeout(spawnEnemy,850);
+  const nextDelay = state.pendingDarkSwordSaintDelay ? 5000 : 850;
+  state.pendingDarkSwordSaintDelay = false;
+  setTimeout(spawnEnemy,nextDelay);
 }
 function checkLevelUp(){
   while(state.xp>=state.xpNext){ state.xp-=state.xpNext; state.level++; state.xpNext=Math.floor(state.xpNext*1.42+40); state.hp=maxHp(); showLevelUp(); log(`LEVEL UP！ Lv.${state.level}`,'good'); }
@@ -3344,4 +3348,131 @@ window.addEventListener('resize', v952FinalFixes);
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', install973); else install973();
   window.addEventListener('load', install973); setTimeout(install973,300); setTimeout(install973,1200);
+})();
+
+
+/* v97.4: Dark Sword Saint independent level, cutin preload, streak notice, flee layout */
+(function(){
+  const BUILD='97.4';
+  function updateBuild974(){
+    document.querySelectorAll('.build-version,.fixed-build-version').forEach(el=>{ el.textContent='ver.'+BUILD; });
+    document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent='Build: ver.'+BUILD; });
+  }
+  function normalEnemyReferenceLevel(){
+    if(state.enemyLevelBase != null){
+      const progress = Math.max(0, Math.floor(((state.defeated||0) - (state.enemyLevelBaseDefeated||0)) / 3));
+      return Math.max(1, Math.floor(state.enemyLevelBase) + progress);
+    }
+    return Math.max(1, Math.floor((state.level||1) + Math.floor((state.defeated||0)/3)));
+  }
+  handleHeroDeath = window.handleHeroDeath = function(){
+    if(state.defeatSequence || state.down || state.deathDance || (state.deathDanceCutin && !state.darkSwordCutinActive)) return;
+    const wasDarkSwordSaint = isDarkSwordSaint();
+    state.defeatSequence = true;
+    if(state.defeatCountdownTimer){ clearInterval(state.defeatCountdownTimer); state.defeatCountdownTimer = null; }
+    clearDarkSwordTimers();
+    clearDeathDanceSequence();
+    hideDeathDanceCutin();
+    state.deathDance = false;
+    state.deathDanceCutin = false;
+    state.darkSwordCutinActive = false;
+    state.hp = 0;
+    resetTransientStatuses();
+    state.hp = 0;
+    state.winStreak = 0;
+    state.forceNextDarkSwordSaint = false;
+    state.pendingDarkSwordSaintDelay = false;
+    const defeatedEnemyLevel = wasDarkSwordSaint ? normalEnemyReferenceLevel() : Math.max(1, Math.floor(state.enemy?.level || state.enemyLevelBase || state.level || 1));
+    const nextEnemyLevelBase = Math.max(1, Math.floor(defeatedEnemyLevel * 0.9));
+    state.enemyLevelBase = nextEnemyLevelBase;
+    state.enemyLevelBaseDefeated = state.defeated || 0;
+    const st = calcStats();
+    loseExpPercent(st.effortRing ? 0 : (st.humbleRing ? 0.09 : 0.25));
+    state.hp = 0;
+    const lostPct = st.effortRing ? 0 : (st.humbleRing ? 9 : 25);
+    if(wasDarkSwordSaint){
+      log(`暗黒剣聖に敗北。暗黒剣聖Lvは維持。経験値を${lostPct}%失った。通常敵レベル基準が${defeatedEnemyLevel}→${nextEnemyLevelBase}に低下した。`,'danger');
+    }else{
+      log(`騎士は力尽きた。経験値を${lostPct}%失った。敵レベルが${defeatedEnemyLevel}→${nextEnemyLevelBase}に低下した。`,'danger');
+    }
+    banner('敗北…');
+    if(els.heroCard) els.heroCard.classList.add('down');
+    if(els.downOverlay){
+      els.downOverlay.classList.remove('hidden');
+      const dt = els.downOverlay.querySelector('.down-text');
+      if(dt) dt.textContent = 'DOWN...';
+      if(els.downCount) els.downCount.textContent = '5';
+    }
+    if(els.enemyCard){
+      els.enemyCard.classList.remove('hit','attack','enter');
+      els.enemyCard.classList.add('defeated-gone');
+    }
+    if(els.enemyHpFill) els.enemyHpFill.style.width='0%';
+    if(els.enemyHpText) els.enemyHpText.textContent='消滅';
+    renderStatusLists();
+    renderBattle();
+    scheduleSave();
+
+    let count = 5;
+    state.defeatCountdownTimer = setInterval(()=>{
+      count -= 1;
+      if(els.downCount) els.downCount.textContent = String(Math.max(0,count));
+      if(count <= 0){
+        clearInterval(state.defeatCountdownTimer);
+        state.defeatCountdownTimer = null;
+        if(els.enemyCard) els.enemyCard.classList.remove('defeated-gone');
+        spawnEnemyAfterDefeat();
+        state.defeatSequence = false;
+        log('敵レベル低下後の戦闘を再開。','good');
+      }
+    }, 1000);
+  };
+
+  function showCutinPreloaded({img, quote, title, dark=false, hero=false, voice=false}){
+    if(!els.deathDanceCutin) return;
+    const box = els.deathDanceCutin;
+    box.classList.remove('show');
+    box.classList.add('hidden');
+    box.classList.toggle('dark-cutin', !!dark);
+    box.classList.toggle('hero-cutin', !!hero);
+    if(els.deathDanceCutinQuote) els.deathDanceCutinQuote.textContent = quote || '';
+    if(els.deathDanceCutinTitle) els.deathDanceCutinTitle.textContent = title || '';
+    const reveal = ()=>{
+      box.classList.remove('hidden');
+      void box.offsetWidth;
+      box.classList.add('show');
+      playSfx('cutin');
+      if(voice) playDarkSwordSaintVoice();
+    };
+    if(els.deathDanceCutinImg){
+      els.deathDanceCutinImg.onload = ()=>{ els.deathDanceCutinImg.onload = null; reveal(); };
+      els.deathDanceCutinImg.src = '';
+      // 画像セット前に1フレーム消して、前回カットインの相手画像が一瞬出るのを防ぐ。
+      requestAnimationFrame(()=>{
+        if(els.deathDanceCutinImg) els.deathDanceCutinImg.src = img;
+        setTimeout(()=>{ if(box.classList.contains('hidden')) reveal(); }, 220);
+      });
+    }else{
+      reveal();
+    }
+  }
+  showDeathDanceCutin = window.showDeathDanceCutin = function(){
+    const data = DEATH_DANCE_CUTINS[Math.floor(Math.random() * DEATH_DANCE_CUTINS.length)];
+    showCutinPreloaded({img:data.img, quote:data.quote, title:'死線の剣舞', hero:true});
+  };
+  showDarkSwordDanceCutin = window.showDarkSwordDanceCutin = function(){
+    showCutinPreloaded({img:DARK_SWORD_SAINT_CUTIN.img, quote:DARK_SWORD_SAINT_CUTIN.quote, title:'暗黒剣舞', dark:true, voice:true});
+  };
+  showDarkSwordTechniqueCutin = window.showDarkSwordTechniqueCutin = function(){
+    showCutinPreloaded({img:DARK_SWORD_TECHNIQUE_CUTIN.img, quote:DARK_SWORD_TECHNIQUE_CUTIN.quote, title:'暗黒剣技', dark:true});
+  };
+  const oldHide974 = hideDeathDanceCutin;
+  hideDeathDanceCutin = window.hideDeathDanceCutin = function(){
+    oldHide974();
+    if(els.deathDanceCutinImg){ els.deathDanceCutinImg.onload = null; }
+  };
+  function install974(){ updateBuild974(); }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', install974); else install974();
+  window.addEventListener('load', install974);
+  setTimeout(install974,300); setTimeout(install974,1200);
 })();
