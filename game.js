@@ -5747,3 +5747,125 @@ window.addEventListener('resize', v952FinalFixes);
   window.addEventListener('load', boot);
   setInterval(boot, 1000);
 })();
+
+
+/* ver99.12: menu/debug cleanup patch */
+(function(){
+  'use strict';
+  var BUILD='99.12';
+  var DARK_NAMES_9912=['闇の聖剣','闇の盾','闇のアミュレット','闇の鎧','闇の籠手','闇の兜','暗黒の靴'];
+  function $(id){return document.getElementById(id)}
+  function safe(fn){try{return fn()}catch(e){console.warn('[v99.12]',e)}}
+  function setVersion(){
+    window.GAME_VERSION=BUILD;
+    window.MINI_BROWSER_HERO_LATEST_VERSION=BUILD;
+    window.MINI_BROWSER_HERO_BUILD_VERSION=BUILD;
+    document.documentElement.dataset.buildVersion=BUILD;
+    document.querySelectorAll('.build-version,.fixed-build-version').forEach(function(el){el.textContent='ver.'+BUILD});
+    document.querySelectorAll('.debug-version').forEach(function(el){el.textContent='Build: ver.'+BUILD});
+    var t=document.querySelector('.debug-trace-title'); if(t) t.textContent='進行デバッグログ ver.'+BUILD;
+  }
+  function removeTopTabs(){
+    document.querySelectorAll('#topPanelTabs,#v990TopPanelTabs,.topbar > .top-panel-tabs,.topbar > .v990-top-panel-tabs').forEach(function(el){ el.remove(); });
+  }
+  function showMenu(open){
+    var sp=document.querySelector('.side-panel');
+    var btn=$('equipToggleBtn');
+    if(!window.state) window.state={};
+    state.uiOpen=!!open;
+    if(sp){
+      sp.classList.toggle('open',!!open);
+      sp.style.pointerEvents=!!open || window.innerWidth>=1280 ? 'auto':'none';
+    }
+    if(btn) btn.textContent=(window.innerWidth<=760)?(open?'×':'☰'):(open?'閉じる':'メニュー');
+    if(open && typeof setMenuPage==='function') safe(function(){setMenuPage(state.menuPage || 'stats')});
+  }
+  function bindSingleMenu(){
+    var btn=$('equipToggleBtn'); if(!btn || btn.__v9912MenuBound) return;
+    btn.__v9912MenuBound=true;
+    var run=function(e){
+      if(e){e.preventDefault();e.stopPropagation(); if(e.stopImmediatePropagation)e.stopImmediatePropagation();}
+      removeTopTabs();
+      showMenu(!(window.state&&state.uiOpen));
+      safe(function(){ if(typeof startAudio==='function') startAudio(); });
+      safe(function(){ if(typeof playUiClick==='function') playUiClick(); });
+    };
+    btn.addEventListener('pointerup',run,{capture:true,passive:false});
+    btn.addEventListener('click',run,true);
+    btn.addEventListener('touchend',run,{capture:true,passive:false});
+  }
+  function makeDark(name){
+    var lv=(window.state&&state.level)||1;
+    if(name==='闇の聖剣' && typeof window.makeDarkHolySword==='function') return window.makeDarkHolySword(lv);
+    if(name==='闇の盾' && typeof window.makeDarkShield==='function') return window.makeDarkShield(lv);
+    if(name==='闇のアミュレット' && typeof window.makeDarkAmulet==='function') return window.makeDarkAmulet(lv);
+    var maker={'闇の鎧':window.makeDarkArmor,'闇の籠手':window.makeDarkGauntlets,'闇の兜':window.makeDarkHelm,'暗黒の靴':window.makeDarkBoots}[name];
+    if(typeof maker==='function') return maker(lv);
+    return null;
+  }
+  function grantOne(name){
+    if(!window.state || DARK_NAMES_9912.indexOf(name)<0) return;
+    var it=makeDark(name); if(!it) return;
+    state.inventory=Array.isArray(state.inventory)?state.inventory:[];
+    state.inventory.unshift(it);
+    safe(function(){renderAll()}); safe(function(){scheduleSave()}); safe(function(){log('デバッグ：'+name+'を付与。','good')});
+  }
+  function grantSet(){
+    if(!window.state) return;
+    state.inventory=Array.isArray(state.inventory)?state.inventory:[];
+    DARK_NAMES_9912.slice().reverse().forEach(function(n){var it=makeDark(n); if(it) state.inventory.unshift(it);});
+    safe(function(){renderAll()}); safe(function(){scheduleSave()}); safe(function(){log('デバッグ：闇装備7種セットを付与。','good')});
+  }
+  window.grantDarkEquipLatest=grantOne;
+  window.grantDarkSetLatest=grantSet;
+  function cleanDebugDarkButtons(){
+    var panel=$('debugPanel'); if(!panel) return;
+    // 古い追加箱を消す
+    document.querySelectorAll('#latestDarkDebugBox').forEach(function(el){el.remove();});
+    // 既存の正規ボタンだけ残す
+    var set=$('debugGrantDarkSet');
+    if(!set){
+      set=document.createElement('button'); set.id='debugGrantDarkSet'; set.type='button';
+      panel.insertBefore(set,$('debugHp0Kill')||$('debugClose')||null);
+    }
+    set.textContent='闇装備7種セット付与';
+    var box=$('debugGrantDarkItems');
+    if(!box){
+      box=document.createElement('div'); box.id='debugGrantDarkItems'; box.className='debug-grid';
+      set.insertAdjacentElement('afterend',box);
+    }
+    box.className='debug-grid';
+    box.innerHTML='';
+    DARK_NAMES_9912.forEach(function(name){
+      var b=document.createElement('button'); b.type='button'; b.dataset.dark9912=name; b.textContent=name; box.appendChild(b);
+    });
+    var stop=function(e,fn){ if(e){e.preventDefault();e.stopPropagation(); if(e.stopImmediatePropagation)e.stopImmediatePropagation();} fn(); };
+    set.onclick=function(e){stop(e,grantSet)};
+    set.onpointerup=function(e){stop(e,grantSet)};
+    box.querySelectorAll('[data-dark9912]').forEach(function(b){
+      b.onclick=function(e){stop(e,function(){grantOne(b.dataset.dark9912)})};
+      b.onpointerup=function(e){stop(e,function(){grantOne(b.dataset.dark9912)})};
+    });
+  }
+  function bindTabMemory(){
+    document.querySelectorAll('.mobile-menu-tabs button[data-menu-page],.side-tabs button[data-menu-page]').forEach(function(btn){
+      if(btn.__v9912TabBound) return; btn.__v9912TabBound=true;
+      var run=function(e){
+        if(e){e.preventDefault();e.stopPropagation(); if(e.stopImmediatePropagation)e.stopImmediatePropagation();}
+        if(window.state) state.menuPage=btn.dataset.menuPage;
+        safe(function(){ if(typeof setMenuPage==='function') setMenuPage(btn.dataset.menuPage); });
+        safe(function(){ if(typeof playUiClick==='function') playUiClick(); });
+      };
+      btn.addEventListener('pointerup',run,{capture:true,passive:false});
+      btn.addEventListener('click',run,true);
+    });
+  }
+  function apply(){
+    setVersion(); removeTopTabs(); bindSingleMenu(); cleanDebugDarkButtons(); bindTabMemory();
+    // 起動直後は狭い画面でメニューを閉じる。大画面は右パネル常設のまま。
+    if(window.innerWidth<1280 && window.state && !state.uiOpen) showMenu(false);
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',apply); else apply();
+  window.addEventListener('resize',function(){ removeTopTabs(); if(window.innerWidth<1280 && window.state && !state.uiOpen) showMenu(false); });
+  var n=0, timer=setInterval(function(){ apply(); if(++n>12) clearInterval(timer); },500);
+})();

@@ -1871,3 +1871,27 @@ body.using-touch .tooltip.status-tooltip-modal:not(.hidden),
 .debug-trace-title{font-weight:900;color:#d8a8ff;margin-bottom:6px;}
 .debug-trace-output{display:block;white-space:pre-wrap;max-height:180px;overflow:auto;background:rgba(0,0,0,.35);padding:6px;border-radius:8px;margin-top:6px;min-height:48px;color:#eee;}
 #mbhTraceBox button{margin:2px!important;padding:7px 8px!important;}
+
+
+/* ver.99.12 UI cleanup: no always-on top menu, single overlay menu */
+.topbar > .top-panel-tabs,
+.topbar > .v990-top-panel-tabs,
+#topPanelTabs,
+#v990TopPanelTabs{
+  display:none!important;
+  visibility:hidden!important;
+  pointer-events:none!important;
+  height:0!important;
+  min-height:0!important;
+  max-height:0!important;
+  overflow:hidden!important;
+  padding:0!important;
+  margin:0!important;
+  border:0!important;
+}
+@media (max-width:1279px){
+  .side-panel:not(.open){display:none!important;visibility:hidden!important;pointer-events:none!important;}
+  .side-panel.open{display:flex!important;visibility:visible!important;pointer-events:auto!important;}
+}
+#debugPanel .debug-grid{grid-template-columns:repeat(auto-fit,minmax(118px,1fr))!important;}
+#latestDarkDebugBox{display:none!important;}
