@@ -40,7 +40,7 @@ const DEATH_DANCE_CUTINS = [
 ];
 const DARK_SWORD_SAINT_CUTIN = {quote:'私を超えてみせろ。', img:'assets/cutin_dark_sword_dance.png'};
 const DARK_SWORD_TECHNIQUE_CUTIN = {quote:'', img:'assets/cutin_dark_sword_technique.png'};
-const GAME_VERSION = (window.MINI_BROWSER_HERO_LATEST_VERSION || window.MINI_BROWSER_HERO_BUILD_VERSION || document.documentElement.dataset.buildVersion || '99.13');
+const GAME_VERSION = (window.MINI_BROWSER_HERO_LATEST_VERSION || window.MINI_BROWSER_HERO_BUILD_VERSION || document.documentElement.dataset.buildVersion || '99.14');
 window.GAME_VERSION = GAME_VERSION;
 window.MINI_BROWSER_HERO_LATEST_VERSION = GAME_VERSION;
 const DARK_SWORD_SAINT = {
@@ -2677,12 +2677,12 @@ window.addEventListener("pageshow",()=>{ if(state.mobileMuted) stopAllAudioForMu
 window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(); });
 
 
-/* ver99.13 clean stabilization patch: single source, no stacked UI injection */
+/* ver99.14 clean stabilization patch: single source, no stacked UI injection */
 (function(){
   'use strict';
-  const BUILD = '99.13';
+  const BUILD = '99.14';
   const byId = (id)=>document.getElementById(id);
-  function safe(fn){ try{ return fn && fn(); }catch(e){ console.warn('[ver99.13]', e); return null; } }
+  function safe(fn){ try{ return fn && fn(); }catch(e){ console.warn('[ver99.14]', e); return null; } }
 
   // --- version: one source only, no floating badge ---
   window.MINI_BROWSER_HERO_LATEST_VERSION = BUILD;
@@ -2950,4 +2950,101 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', boot); else setTimeout(boot,0);
   window.addEventListener('load', boot);
+})();
+
+
+/* ver99.14: menu click single-bind fix. Remove stacked click/pointerup handlers by replacing menu/tabs nodes. */
+(function(){
+  const BUILD = '99.14';
+  function byId(id){ return document.getElementById(id); }
+  function safe(fn){ try{ return fn && fn(); }catch(e){ console.warn('[ver99.14]', e); return null; } }
+  function overlayMode(){ return window.matchMedia('(max-width: 1279px), (max-height: 700px), (pointer: coarse)').matches; }
+  function syncVersion9914(){
+    window.MINI_BROWSER_HERO_LATEST_VERSION = BUILD;
+    window.MINI_BROWSER_HERO_BUILD_VERSION = BUILD;
+    window.GAME_VERSION = BUILD;
+    document.documentElement.dataset.buildVersion = BUILD;
+    document.querySelectorAll('.build-version').forEach(el=>el.textContent='ver.'+BUILD);
+    document.querySelectorAll('.debug-version').forEach(el=>el.textContent='Build: ver.'+BUILD);
+    document.querySelectorAll('.debug-trace-title').forEach(el=>el.textContent='進行デバッグログ ver.'+BUILD);
+  }
+  function currentPage(){
+    return localStorage.getItem('mbh-last-menu-page') || (window.state && state.menuPage) || 'stats';
+  }
+  function savePage(page){
+    if(window.state) state.menuPage = page || 'stats';
+    try{ localStorage.setItem('mbh-last-menu-page', page || 'stats'); }catch(e){}
+  }
+  function showPage(page){
+    page = page || currentPage();
+    savePage(page);
+    if(typeof window.setMenuPage === 'function') safe(()=>window.setMenuPage(page));
+    else if(typeof setMenuPage === 'function') safe(()=>setMenuPage(page));
+    document.querySelectorAll('.mobile-menu-tabs button,.side-tabs button').forEach(b=>{
+      b.classList.toggle('active', b.dataset.menuPage === page);
+    });
+  }
+  function applyMenu9914(){
+    const side=document.querySelector('.side-panel');
+    const btn=byId('equipToggleBtn');
+    if(!side) return;
+    if(overlayMode()){
+      const open = !!(window.state && state.uiOpen);
+      side.classList.toggle('open', open);
+      side.style.pointerEvents = open ? 'auto' : 'none';
+      side.style.visibility = open ? 'visible' : '';
+      if(btn) btn.textContent = open ? '閉じる' : 'メニュー';
+    }else{
+      if(window.state) state.uiOpen = true;
+      side.classList.add('open');
+      side.style.pointerEvents = 'auto';
+      side.style.visibility = 'visible';
+      if(btn) btn.textContent = 'メニュー';
+    }
+  }
+  function replaceNodeClean(el){
+    if(!el || !el.parentNode) return el;
+    const n=el.cloneNode(true);
+    el.parentNode.replaceChild(n, el);
+    return n;
+  }
+  function bindSingleMenu9914(){
+    syncVersion9914();
+    let btn=byId('equipToggleBtn');
+    btn=replaceNodeClean(btn);
+    if(btn){
+      btn.addEventListener('click', function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        if(overlayMode()){
+          if(window.state) state.uiOpen = !state.uiOpen;
+        }else{
+          if(window.state) state.uiOpen = true;
+        }
+        showPage(currentPage());
+        applyMenu9914();
+        safe(()=>startAudio());
+        safe(()=>playUiClick());
+      }, {capture:false});
+    }
+    document.querySelectorAll('.mobile-menu-tabs button,.side-tabs button').forEach(old=>{
+      const b=replaceNodeClean(old);
+      if(!b) return;
+      b.addEventListener('click', function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        showPage(b.dataset.menuPage || 'stats');
+        applyMenu9914();
+        safe(()=>playUiClick());
+      }, {capture:false});
+    });
+    if(window.state && typeof state.uiOpen !== 'boolean') state.uiOpen=false;
+    showPage(currentPage());
+    applyMenu9914();
+  }
+  let resizeTimer=0;
+  window.addEventListener('resize', ()=>{ clearTimeout(resizeTimer); resizeTimer=setTimeout(applyMenu9914, 80); });
+  function boot(){ bindSingleMenu9914(); setTimeout(bindSingleMenu9914, 250); setTimeout(bindSingleMenu9914, 900); }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true}); else boot();
+  window.addEventListener('load', ()=>setTimeout(bindSingleMenu9914, 0), {once:true});
 })();
