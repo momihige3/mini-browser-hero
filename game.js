@@ -1627,7 +1627,7 @@ function enemyDefeated(){
     const makeDarkReward = () => darkPool[Math.floor(Math.random()*darkPool.length)](state.level);
     const makeLegendReward = () => makeItem(slots[Math.floor(Math.random()*slots.length)], legendary, {isBossDrop:true});
 
-    // ver99.25: 報酬枠を明示的に固定する。
+    // ver99.26: 報酬枠を明示的に固定する。
     // rewards[0] = 1枠目、rewards[1] = 2枠目、rewards[2] = 3枠目。
     // 3枠目は必ず闇装備。1〜2枠目は確率で闇装備になってもよい。
     const rewards = [
@@ -2739,7 +2739,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* ver99.15 clean stabilization patch: single source, no stacked UI injection */
 (function(){
   'use strict';
-  const BUILD = '99.25';
+  const BUILD = '99.26';
   const byId = (id)=>document.getElementById(id);
   function safe(fn){ try{ return fn && fn(); }catch(e){ console.warn('[ver99.15]', e); return null; } }
 
@@ -3034,9 +3034,9 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* ver.99.18: audio restore - use lexical state/audio functions, not window fallback */
 (function(){
   'use strict';
-  const BUILD='99.25';
+  const BUILD='99.26';
   const $=(id)=>document.getElementById(id);
-  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.25]', e); } }
+  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.26]', e); } }
   function setVersion(){
     window.GAME_VERSION=BUILD; window.BUILD_VERSION=BUILD;
     document.documentElement.setAttribute('data-build-version', BUILD);
@@ -3136,7 +3136,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   window.addEventListener('resize', ()=>safe(()=>applyMenu(typeof state !== 'undefined' ? !!state.uiOpen : false)));
 
 
-  /* ver.99.25: mute icon sync fix
+  /* ver.99.26: mute icon sync fix
      bindOneTap() clones top buttons, so els.muteBtn can point to a removed old node.
      Always sync els.muteBtn to the current DOM button before updating the icon. */
   const __mbhOriginalUpdateMuteButton = updateMuteButton;
@@ -3163,12 +3163,12 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 
 
 
-  /* ver.99.25: UI-only patch
+  /* ver.99.26: UI-only patch
      - hide EXP/flee behind overlay menu
      - revive inventory filters
      - keep inventory/log inside viewport with unified scrollbars
   */
-  function mbh9920Safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.25]', e); } }
+  function mbh9920Safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.26]', e); } }
   function mbh9920IsOverlay(){
     return matchMedia('(max-width: 1279px), (max-height: 700px), (pointer: coarse)').matches;
   }
@@ -3271,21 +3271,21 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   setTimeout(()=>mbh9920Safe(()=>{ mbh9920EnsureInventoryFilter(); renderInventory(); }), 300);
 
   // Ensure latest visible build number is single and clear.
-  document.documentElement.setAttribute('data-build-version','99.25');
-  document.querySelectorAll('.build-version').forEach(el=>{ el.textContent='ver.99.25'; });
-  document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent='Build: ver.99.25'; });
+  document.documentElement.setAttribute('data-build-version','99.26');
+  document.querySelectorAll('.build-version').forEach(el=>{ el.textContent='ver.99.26'; });
+  document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent='Build: ver.99.26'; });
 
   // PCでは非アクティブ時もBGMを止めない。スマホだけ従来どおり停止。
   window.__mbhPcKeepBgm = true;
 })();
 
 
-/* ver.99.25: inventory filter and log viewport final fix */
+/* ver.99.26: inventory filter and log viewport final fix */
 (function(){
   'use strict';
-  const BUILD='99.25';
+  const BUILD='99.26';
   const $=(id)=>document.getElementById(id);
-  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.25]', e); } }
+  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.26]', e); } }
   function setVersion(){
     window.GAME_VERSION=BUILD; window.BUILD_VERSION=BUILD;
     document.documentElement.setAttribute('data-build-version', BUILD);
@@ -3444,4 +3444,98 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   window.addEventListener('resize', ()=>setTimeout(fitScrollablePanels9922,0));
   setTimeout(boot,250);
   setTimeout(fitScrollablePanels9922,800);
+})();
+
+/* ver.99.26: mobile tap recovery only. PC mouse behavior is untouched. */
+(function(){
+  'use strict';
+  const BUILD = '99.26';
+  const isMobileTapEnv = () => {
+    try { return window.matchMedia('(pointer: coarse), (max-width: 760px)').matches; }
+    catch(_) { return window.innerWidth <= 760; }
+  };
+  function syncBuild(){
+    document.documentElement.setAttribute('data-build-version', BUILD);
+    window.MINI_BROWSER_HERO_BUILD_VERSION = BUILD;
+    window.MINI_BROWSER_HERO_LATEST_VERSION = BUILD;
+    window.BUILD_VERSION = BUILD;
+    window.GAME_VERSION = BUILD;
+    document.querySelectorAll('.build-version').forEach(el => { el.textContent = 'ver.' + BUILD; });
+    document.querySelectorAll('.debug-version').forEach(el => { el.textContent = 'Build: ver.' + BUILD; });
+    document.querySelectorAll('.debug-trace-title').forEach(el => { el.textContent = '進行デバッグログ ver.' + BUILD; });
+  }
+  function injectMobileCss(){
+    if(document.getElementById('mbh-9926-mobile-tap-css')) return;
+    const st = document.createElement('style');
+    st.id = 'mbh-9926-mobile-tap-css';
+    st.textContent = `
+      @media (pointer: coarse), (max-width: 760px){
+        .topbar, .topbar .controls, .topbar button,
+        .side-panel.open, .side-panel.open * ,
+        #debugPanel:not(.hidden), #debugPanel:not(.hidden) *{
+          pointer-events:auto!important;
+          touch-action:manipulation!important;
+        }
+        .side-panel:not(.open){ pointer-events:none!important; }
+        .battle-panel{ pointer-events:auto!important; }
+        button, input, label, .item, .equip-slot, .status-pill, [data-menu-page], [data-log-filter], [data-inv-filter]{
+          touch-action:manipulation!important;
+          -webkit-tap-highlight-color:rgba(255,210,75,.28);
+        }
+      }
+    `;
+    document.head.appendChild(st);
+  }
+  function closestActionTarget(start){
+    if(!start || !start.closest) return null;
+    return start.closest('button, input[type="checkbox"], input[type="button"], input[type="submit"], label, .item, .equip-slot, .status-pill, [role="button"], [data-menu-page], [data-log-filter], [data-inv-filter], #muteBtn, #debugBtn, #equipToggleBtn');
+  }
+  let lastTapAt = 0;
+  let lastTapEl = null;
+  function runMobileTap(e){
+    if(!isMobileTapEnv()) return;
+    if(e.type === 'pointerup' && e.pointerType === 'mouse') return;
+    const el = closestActionTarget(e.target);
+    if(!el) return;
+    // Safariでrange操作を壊さない
+    if(el.matches && el.matches('input[type="range"]')) return;
+    const now = Date.now();
+    if(lastTapEl === el && now - lastTapAt < 260){
+      e.preventDefault();
+      e.stopPropagation();
+      if(e.stopImmediatePropagation) e.stopImmediatePropagation();
+      return;
+    }
+    lastTapEl = el;
+    lastTapAt = now;
+    e.preventDefault();
+    e.stopPropagation();
+    if(e.stopImmediatePropagation) e.stopImmediatePropagation();
+    try { if(typeof startAudio === 'function') startAudio(); } catch(_) {}
+    setTimeout(() => {
+      try {
+        // 既存のPC用click/onchange処理をそのまま使う。スマホだけ疑似クリックを通す。
+        if(el.tagName === 'LABEL'){
+          const input = el.querySelector('input');
+          if(input) input.click(); else el.click();
+        }else{
+          el.click();
+        }
+      } catch(err) {
+        console.warn('[MBH99.26 mobile tap]', err);
+      }
+    }, 0);
+  }
+  function boot(){
+    syncBuild();
+    injectMobileCss();
+    if(window.__mbh9926MobileTapRecovery) return;
+    window.__mbh9926MobileTapRecovery = true;
+    // document captureで先に拾う。既存の二重click/pointer処理はPC側へ残す。
+    document.addEventListener('touchend', runMobileTap, {capture:true, passive:false});
+    document.addEventListener('pointerup', runMobileTap, {capture:true, passive:false});
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true});
+  else boot();
+  window.addEventListener('load', boot, {once:true});
 })();
