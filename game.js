@@ -35,7 +35,7 @@ const DEATH_DANCE_CUTINS = [
 ];
 const DARK_SWORD_SAINT_CUTIN = {quote:'私を超えてみせろ。', img:'assets/cutin_dark_sword_dance.png'};
 const DARK_SWORD_TECHNIQUE_CUTIN = {quote:'', img:'assets/cutin_dark_sword_technique.png'};
-const GAME_VERSION = (window.MINI_BROWSER_HERO_LATEST_VERSION || window.MINI_BROWSER_HERO_BUILD_VERSION || document.documentElement.dataset.buildVersion || '99.5');
+const GAME_VERSION = (window.MINI_BROWSER_HERO_LATEST_VERSION || window.MINI_BROWSER_HERO_BUILD_VERSION || document.documentElement.dataset.buildVersion || '99.6');
 window.GAME_VERSION = GAME_VERSION;
 window.MINI_BROWSER_HERO_LATEST_VERSION = GAME_VERSION;
 const DARK_SWORD_SAINT = {
@@ -1152,7 +1152,7 @@ function setEnemy(e){
   log(`${e.name} が現れた。${e.type==='ボス'||e.type==='裏ボス'?'ボス出現！':''}`, e.type==='ボス'||e.type==='裏ボス'?'danger':'');
 }
 function forceSpawnDarkSwordSaint(){
-  // ver99.5: 即時召喚ではなく、次の敵として暗黒剣聖を予約する
+  // ver99.6: 即時召喚ではなく、次の敵として暗黒剣聖を予約する
   state.forceNextDarkSwordSaint = true;
   state.pendingDarkSwordSaintDelay = false;
   banner('次の敵に暗黒剣聖をセット！', 1400);
@@ -1385,7 +1385,7 @@ function tryDarkSwordDanceRevive(){
 
   const t = performance.now();
   state.enemyStatuses.darkDanceCount = count + 1;
-  // ver99.5: 暗黒剣舞発動時、主人公の死線の剣舞発動回数と剣舞状態を必ずリセット
+  // ver99.6: 暗黒剣舞発動時、主人公の死線の剣舞発動回数と剣舞状態を必ずリセット
   state.deathDanceBattleCount = 0;
   state.deathDanceComboCount = 0;
   state.deathDance = false;
@@ -2674,7 +2674,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 
 /* v95.1: visible build badge + inventory/menu touch fix */
 function v951EnsureVersionBadge(){
-  const text = 'ver.' + (typeof GAME_VERSION !== 'undefined' ? GAME_VERSION : '99.5');
+  const text = 'ver.' + (typeof GAME_VERSION !== 'undefined' ? GAME_VERSION : '99.6');
   document.querySelectorAll('.build-version,.debug-version').forEach(el=>{
     if(el.classList.contains('debug-version')) el.textContent = 'Build: ' + text;
     else el.textContent = text;
@@ -2717,7 +2717,7 @@ window.addEventListener('resize', v951FinalFixes);
 
 /* v95.2: small-screen item menu, modal z-index, always-visible version badge */
 function v952EnsureVersionBadge(){
-  const text = 'ver.' + (typeof GAME_VERSION !== 'undefined' ? GAME_VERSION : '99.5');
+  const text = 'ver.' + (typeof GAME_VERSION !== 'undefined' ? GAME_VERSION : '99.6');
   let header = document.querySelector('.brand .build-version');
   const brand = document.querySelector('.brand');
   if(brand && !header){
@@ -4819,7 +4819,7 @@ window.addEventListener('resize', v952FinalFixes);
 /* latest-version authority: single-source build version + cache-safe display */
 (function(){
   function latest(){
-    return (window.MINI_BROWSER_HERO_LATEST_VERSION || window.MINI_BROWSER_HERO_BUILD_VERSION || document.documentElement.dataset.buildVersion || window.GAME_VERSION || '99.5');
+    return (window.MINI_BROWSER_HERO_LATEST_VERSION || window.MINI_BROWSER_HERO_BUILD_VERSION || document.documentElement.dataset.buildVersion || window.GAME_VERSION || '99.6');
   }
   function applyLatestVersion(){
     var v = latest();
@@ -4838,14 +4838,14 @@ window.addEventListener('resize', v952FinalFixes);
 })();
 
 
-/* ver99.5 definitive fixes: direct final overrides */
+/* ver99.6 definitive fixes: direct final overrides */
 (function(){
   'use strict';
-  const BUILD='99.5';
+  const BUILD='99.6';
   const DARK_NAMES=['闇の聖剣','闇の盾','闇のアミュレット','闇の鎧','闇の籠手','闇の兜','暗黒の靴'];
   const LOG_LABELS={all:'すべて',damage:'ダメージ',system:'システム',drop:'ドロップ'};
   const $=id=>document.getElementById(id);
-  const safe=fn=>{try{return fn&&fn();}catch(e){console.warn('[99.5]',e);}};
+  const safe=fn=>{try{return fn&&fn();}catch(e){console.warn('[99.6]',e);}};
   window.MINI_BROWSER_HERO_LATEST_VERSION=BUILD;
   window.MINI_BROWSER_HERO_BUILD_VERSION=BUILD;
   window.GAME_VERSION=BUILD;
@@ -5054,14 +5054,14 @@ window.addEventListener('resize', v952FinalFixes);
 })();
 
 
-/* ver99.5 hard confirmed fixes: no more layered-miss guard */
+/* ver99.6 hard confirmed fixes: no more layered-miss guard */
 (function(){
   'use strict';
-  var BUILD='99.5';
+  var BUILD='99.6';
   var DARK_NAMES=['闇の聖剣','闇の盾','闇のアミュレット','闇の鎧','闇の籠手','闇の兜','暗黒の靴'];
   var LOG_LABELS={all:'すべて',damage:'ダメージ',system:'システム',drop:'ドロップ'};
   function $(id){return document.getElementById(id)}
-  function safe(fn){try{return fn&&fn()}catch(e){console.warn('[99.5 hard]',e)}}
+  function safe(fn){try{return fn&&fn()}catch(e){console.warn('[99.6 hard]',e)}}
   function esc(s){return String(s).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c]})}
   function version(){
     window.GAME_VERSION=BUILD; window.MINI_BROWSER_HERO_LATEST_VERSION=BUILD; window.MINI_BROWSER_HERO_BUILD_VERSION=BUILD;
@@ -5251,4 +5251,102 @@ window.addEventListener('resize', v952FinalFixes);
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot); else boot();
   window.addEventListener('load',boot); window.addEventListener('resize',boot); window.addEventListener('pageshow',boot);
   setInterval(boot,250);
+})();
+
+
+/* ver99.6 single fix: Dark Sword Saint defeat must always move to the next battle */
+(function(){
+  var BUILD='99.6';
+  function safe(fn){ try{ return fn&&fn(); }catch(e){ console.warn('[99.6 dark saint defeat]', e); return null; } }
+  function isDarkSaintActive(){ return window.state && state.enemy && state.enemy.id === 'dark_sword_saint'; }
+  function clearDarkBlockingFlags(){
+    safe(function(){ if(typeof clearDarkSwordTimers==='function') clearDarkSwordTimers(); });
+    safe(function(){ if(typeof hideDeathDanceCutin==='function') hideDeathDanceCutin(); });
+    if(!window.state) return;
+    state.darkSwordCutinActive=false;
+    state.deathDanceCutin=false;
+    state.__enemyDefeatedRunning992=false;
+    state.__darkFinalize992=false;
+    state.__darkDefeatFinalizing991=false;
+    state.__darkSaintDefeat994=false;
+    state.__darkSaintDefeat995=false;
+    if(state.enemyStatuses){
+      state.enemyStatuses.darkDeadConfirmed=true;
+      state.enemyStatuses.darkRevivingUntil=0;
+      state.enemyStatuses.darkReviveStart=0;
+    }
+  }
+  function spawnNextIfNeeded(){
+    if(!window.state) return;
+    // If the old stacked patches left the defeated Dark Sword Saint in place, remove it.
+    if(state.enemy && state.enemy.id === 'dark_sword_saint' && state.enemyHp <= 0){
+      state.enemy = null;
+    }
+    if(!state.enemy){
+      safe(function(){ if(typeof spawnEnemy==='function') spawnEnemy(false); });
+      safe(function(){ if(typeof setBgmMode==='function') setBgmMode(state.enemy && state.enemy.id==='dark_sword_saint' ? 'dark_sword_saint' : 'normal'); });
+      safe(function(){ if(typeof renderAll==='function') renderAll(); else if(typeof renderBattle==='function') renderBattle(); });
+      safe(function(){ if(typeof scheduleSave==='function') scheduleSave(); });
+    }
+  }
+  function finalizeDarkSaintDefeat996(reason){
+    if(!isDarkSaintActive()) return false;
+    if(state.enemyHp > 0) return false;
+    var reviving = state.enemyStatuses && (state.enemyStatuses.darkRevivingUntil||0) > performance.now();
+    if(reviving) return false;
+    if(state.__darkSaintFinalizing996) return true;
+    state.__darkSaintFinalizing996 = true;
+    clearDarkBlockingFlags();
+    state.enemyHp = 0;
+    // Do not set enemy.defeated before calling enemyDefeated; some old paths use it as a guard.
+    safe(function(){ if(typeof log==='function') log('暗黒剣聖を撃破。次の敵へ移行する。','good'); });
+    var before = state.enemy;
+    var ok = false;
+    try{
+      if(typeof enemyDefeated === 'function'){
+        enemyDefeated();
+        ok = true;
+      }
+    }catch(e){ console.warn('[99.6] enemyDefeated failed; using fallback spawn', e); }
+    setTimeout(function(){
+      // Normal enemyDefeated schedules the next enemy. If it did not, force it.
+      if(state.enemy === before || (state.enemy && state.enemy.id === 'dark_sword_saint' && state.enemyHp <= 0)){
+        state.enemy = null;
+      }
+      spawnNextIfNeeded();
+      state.__darkSaintFinalizing996 = false;
+    }, ok ? 1300 : 100);
+    return true;
+  }
+  window.finalizeDarkSaintDefeat996 = finalizeDarkSaintDefeat996;
+
+  var prevTry = (typeof tryDarkSwordDanceRevive === 'function') ? tryDarkSwordDanceRevive : null;
+  if(prevTry){
+    tryDarkSwordDanceRevive = window.tryDarkSwordDanceRevive = function(){
+      if(!isDarkSaintActive()) return prevTry.apply(this, arguments);
+      var r = prevTry.apply(this, arguments);
+      if(!r && state.enemyHp <= 0){ finalizeDarkSaintDefeat996('tryDarkSwordDanceRevive:false'); }
+      return r;
+    };
+  }
+
+  var prevEnemyDefeated = (typeof enemyDefeated === 'function') ? enemyDefeated : null;
+  if(prevEnemyDefeated){
+    enemyDefeated = window.enemyDefeated = function(){
+      var wasDark = isDarkSaintActive();
+      if(wasDark){ clearDarkBlockingFlags(); }
+      var r = prevEnemyDefeated.apply(this, arguments);
+      if(wasDark){ setTimeout(spawnNextIfNeeded, 1300); }
+      return r;
+    };
+  }
+
+  function watch(){
+    if(!isDarkSaintActive()) return;
+    if(state.enemyHp <= 0) finalizeDarkSaintDefeat996('watch');
+  }
+  setInterval(watch, 200);
+  document.documentElement.dataset.buildVersion = BUILD;
+  window.MINI_BROWSER_HERO_LATEST_VERSION = BUILD;
+  window.MINI_BROWSER_HERO_BUILD_VERSION = BUILD;
 })();
