@@ -1,5 +1,10 @@
 'use strict';
 
+// ver99.10: 闇装備4種の生成関数をグローバル束縛として先に宣言。
+// strict modeで `makeDarkArmor = function...` がReferenceErrorになり、
+// 後続パッチ全体が止まる問題を防ぐ。
+var makeDarkArmor, makeDarkGauntlets, makeDarkHelm, makeDarkBoots;
+
 document.addEventListener('contextmenu', e => e.preventDefault());
 document.addEventListener('click', e => { if(!e.target.closest?.('.status-badge')) hideStatusTooltip(); });
 
@@ -5354,7 +5359,7 @@ window.addEventListener('resize', v952FinalFixes);
 
 /* ver99.7 focused fix: Dark Sword Saint defeat clears DOT and always resumes battle */
 (function(){
-  var BUILD='99.9';
+  var BUILD='99.10';
   function safe(fn){ try{ return fn&&fn(); }catch(e){ console.warn('[99.8 dark saint transition]', e); return null; } }
   function isDarkSaint(){ return window.state && state.enemy && state.enemy.id === 'dark_sword_saint'; }
   function clearArrayOwner(o){
@@ -5469,9 +5474,9 @@ window.addEventListener('resize', v952FinalFixes);
 })();
 
 
-/* ver99.9 diagnostic trace: Dark Sword Saint transition investigation */
+/* ver99.10 diagnostic trace: Dark Sword Saint transition investigation */
 (function(){
-  const BUILD='99.9';
+  const BUILD='99.10';
   const KEY='mbh_debug_trace_v998';
   const MAX=350;
   function safe(fn){ try{return fn&&fn();}catch(e){ console.warn('[TRACE99.8]', e); return null; } }
@@ -5537,7 +5542,7 @@ window.addEventListener('resize', v952FinalFixes);
   window.mbhDownloadTrace=function(){
     const text=JSON.stringify(read(), null, 2);
     const blob=new Blob([text], {type:'application/json'});
-    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='mbh-debug-trace-ver99.9.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='mbh-debug-trace-ver99.10.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
   };
   function wrap(name, before, after){
     const old=window[name] || (typeof globalThis!=='undefined' ? globalThis[name] : null);
@@ -5582,7 +5587,7 @@ window.addEventListener('resize', v952FinalFixes);
     const box=document.createElement('div');
     box.id='mbhTraceBox';
     box.style.cssText='margin-top:8px;padding:8px;border:1px solid rgba(180,120,255,.45);border-radius:10px;background:rgba(20,10,35,.7);font-size:12px;';
-    box.innerHTML='<div style="font-weight:800;color:#d8a8ff;margin-bottom:6px;">進行デバッグログ ver.99.9</div><button type="button" id="mbhTraceMark">現在状態を記録</button> <button type="button" id="mbhTraceCopy">ログコピー</button> <button type="button" id="mbhTraceDownload">DL</button> <button type="button" id="mbhTraceClear">消去</button><pre id="mbhTraceOut" style="white-space:pre-wrap;max-height:180px;overflow:auto;background:rgba(0,0,0,.35);padding:6px;border-radius:8px;margin-top:6px;"></pre>';
+    box.innerHTML='<div style="font-weight:800;color:#d8a8ff;margin-bottom:6px;">進行デバッグログ ver.99.10</div><button type="button" id="mbhTraceMark">現在状態を記録</button> <button type="button" id="mbhTraceCopy">ログコピー</button> <button type="button" id="mbhTraceDownload">DL</button> <button type="button" id="mbhTraceClear">消去</button><pre id="mbhTraceOut" style="white-space:pre-wrap;max-height:180px;overflow:auto;background:rgba(0,0,0,.35);padding:6px;border-radius:8px;margin-top:6px;"></pre>';
     panel.appendChild(box);
     document.getElementById('mbhTraceMark').onclick=()=>{ trace('manual-mark'); renderTracePanel(); };
     document.getElementById('mbhTraceCopy').onclick=()=>{ window.mbhCopyTrace(); renderTracePanel(); };
@@ -5610,4 +5615,135 @@ window.addEventListener('resize', v952FinalFixes);
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', boot); else boot();
   window.addEventListener('load', boot);
   setInterval(()=>{ safe(installWraps); safe(ensurePanel); safe(renderTracePanel); safe(hp0Watch); }, 1000);
+})();
+
+
+/* ver99.10 dark equipment sanity patch */
+(function(){
+  var BUILD='99.10';
+  function safe(fn){ try{return fn&&fn();}catch(e){ console.warn('[99.10 dark equip sanity]', e); return null; } }
+  function rarity(){ return (typeof rarities!=='undefined' && rarities.find(function(r){return r.id==='legendary'})) || {id:'legendary',name:'レジェンダリー',mult:3.2,color:'#b06cff'}; }
+  function newId(){ return 'dark9910_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2); }
+  function slotOf(name){ return {'闇の鎧':'鎧','闇の籠手':'腕','闇の兜':'兜','暗黒の靴':'足'}[name] || 'リング'; }
+  function base(name, lv){
+    lv=Math.max(1, Math.floor(lv || (window.state&&state.level) || 1));
+    var r=rarity(), it=null;
+    try{ if(typeof makeItem==='function') it=makeItem(slotOf(name), r, {isBossDrop:true}); }catch(e){ it=null; }
+    if(!it) it={id:newId(), slot:slotOf(name), level:0};
+    it.id=it.id||newId(); it.name=name; it.slot=slotOf(name); it.rarity='legendary'; it.rarityName='レジェンダリー'; it.specialFrame='darkholy'; it.darkEquip=true;
+    return {it:it, lv:lv, mult:(r.mult||3.2)};
+  }
+  function makeArmor(lv){ var o=base('闇の鎧',lv), it=o.it, m=o.mult; Object.assign(it,{def:Math.floor((30+o.lv*6)*m),hp:Math.floor((140+o.lv*24)*m),darkArmor:true,darkDamageReduce:.25,darkRegenPerSecond:.02,darkBleedMax:20,flavor:'被ダメージ25%軽減。1秒ごとに最大HP2%回復。暗黒出血を最大20スタックへ抑える。'}); return it; }
+  function makeGauntlets(lv){ var o=base('闇の籠手',lv), it=o.it, m=o.mult; Object.assign(it,{atk:Math.floor((24+o.lv*5)*m),def:Math.floor((12+o.lv*4)*m),hp:Math.floor((60+o.lv*10)*m),darkGauntlets:true,deathDanceCountBonus:2,flavor:'死線の剣舞発動時、剣舞発動回数+2。'}); return it; }
+  function makeHelm(lv){ var o=base('闇の兜',lv), it=o.it, m=o.mult; Object.assign(it,{def:Math.floor((20+o.lv*5)*m),hp:Math.floor((90+o.lv*15)*m),darkHelm:true,deathDanceChance:.10,preventBleedDuringDance:true,flavor:'死線の剣舞発動率+10%。出血・暗黒出血解除。剣舞中は出血系を受けない。'}); return it; }
+  function makeBoots(lv){ var o=base('暗黒の靴',lv), it=o.it, m=o.mult; Object.assign(it,{def:Math.floor((14+o.lv*4)*m),hp:Math.floor((75+o.lv*13)*m),darkBoots:true,evasion:.25,lowHpEvasion:.25,flavor:'回避率+25%。HP半分以下でさらに+25%。'}); return it; }
+  window.makeDarkArmor = makeDarkArmor = makeArmor;
+  window.makeDarkGauntlets = makeDarkGauntlets = makeGauntlets;
+  window.makeDarkHelm = makeDarkHelm = makeHelm;
+  window.makeDarkBoots = makeDarkBoots = makeBoots;
+  function grant(it){ if(!it || !window.state) return; state.inventory=Array.isArray(state.inventory)?state.inventory:[]; state.inventory.unshift(it); safe(function(){renderAll()}); safe(function(){scheduleSave()}); safe(function(){log('デバッグ：'+it.name+'を付与。','good')}); }
+  window.grantDarkEquip9910 = function(name){
+    var lv=(window.state&&state.level)||1;
+    var maker={'闇の鎧':makeArmor,'闇の籠手':makeGauntlets,'闇の兜':makeHelm,'暗黒の靴':makeBoots}[name];
+    if(maker) grant(maker(lv));
+  };
+  window.grantDarkSet9910 = function(){
+    if(!window.state) return; ['暗黒の靴','闇の兜','闇の籠手','闇の鎧'].forEach(function(n){ window.grantDarkEquip9910(n); });
+  };
+  window.GAME_VERSION=BUILD; window.MINI_BROWSER_HERO_LATEST_VERSION=BUILD; window.MINI_BROWSER_HERO_BUILD_VERSION=BUILD;
+  safe(function(){ document.querySelectorAll('.build-version,.fixed-build-version').forEach(function(el){el.textContent='ver.'+BUILD}); document.querySelectorAll('.debug-version').forEach(function(el){el.textContent='Build: ver.'+BUILD}); });
+})();
+
+/* ver99.11: robust debug trace copy/download patch */
+(function(){
+  var BUILD='99.11';
+  var KEY=window.MBH_TRACE_KEY || 'mbh_debug_trace_v998';
+  function safe(fn){ try{return fn&&fn();}catch(e){ console.warn('[99.11 trace copy dl]', e); return null; } }
+  function readText(){
+    var arr=[];
+    safe(function(){ arr=JSON.parse(localStorage.getItem(KEY)||'[]'); });
+    return JSON.stringify(arr||[], null, 2);
+  }
+  function ensureFallbackBox(){
+    var panel=document.getElementById('mbhTraceBox') || document.getElementById('debugPanel') || document.body;
+    var box=document.getElementById('mbhTraceFallbackBox');
+    if(!box){
+      box=document.createElement('div');
+      box.id='mbhTraceFallbackBox';
+      box.style.cssText='margin-top:8px;padding:8px;border:1px solid rgba(255,220,120,.55);border-radius:10px;background:rgba(30,25,10,.78);font-size:12px;';
+      box.innerHTML='<div style="font-weight:800;color:#ffe38a;margin-bottom:6px;">コピー/DL予備欄</div><textarea id="mbhTraceTextArea" readonly style="width:100%;height:160px;box-sizing:border-box;background:#080808;color:#f6f0d0;border:1px solid #777;border-radius:8px;padding:6px;font-size:11px;"></textarea><div id="mbhTraceDlLinkWrap" style="margin-top:6px;"></div>';
+      panel.appendChild(box);
+    }
+    return box;
+  }
+  function setFallbackText(text){
+    ensureFallbackBox();
+    var ta=document.getElementById('mbhTraceTextArea');
+    if(ta){ ta.value=text; ta.focus(); ta.select(); }
+    return ta;
+  }
+  function notify(msg, kind){ safe(function(){ if(typeof log==='function') log(msg, kind||'good'); }); }
+  window.mbhCopyTrace=function(){
+    var text=readText();
+    var ta=setFallbackText(text);
+    var done=false;
+    function ok(){ if(done) return; done=true; notify('進行デバッグログをコピーした。','good'); }
+    function fallback(){
+      var copied=false;
+      safe(function(){ if(ta){ ta.focus(); ta.select(); copied=document.execCommand && document.execCommand('copy'); } });
+      if(copied) ok(); else notify('コピーできない場合は、下の予備欄を全選択して手動コピーしてね。','warn');
+    }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(ok).catch(fallback);
+    }else{
+      fallback();
+    }
+    return text;
+  };
+  window.mbhDownloadTrace=function(){
+    var text=readText();
+    setFallbackText(text);
+    var name='mbh-debug-trace-ver99.11.json';
+    var wrap=document.getElementById('mbhTraceDlLinkWrap');
+    var a=document.createElement('a');
+    a.textContent='ログをダウンロード';
+    a.download=name;
+    a.style.cssText='display:inline-block;padding:6px 10px;border:1px solid #ffe38a;border-radius:8px;color:#ffe38a;background:rgba(0,0,0,.25);text-decoration:none;';
+    safe(function(){
+      var blob=new Blob([text], {type:'application/json'});
+      a.href=URL.createObjectURL(blob);
+    });
+    if(!a.href){ a.href='data:application/json;charset=utf-8,'+encodeURIComponent(text); }
+    if(wrap){ wrap.innerHTML=''; wrap.appendChild(a); }
+    safe(function(){ document.body.appendChild(a); a.click(); setTimeout(function(){ if(a.parentNode===document.body) document.body.removeChild(a); if(a.href.indexOf('blob:')===0) URL.revokeObjectURL(a.href); }, 1200); });
+    notify('DLできない場合は、表示された「ログをダウンロード」を押してね。','good');
+    return text;
+  };
+  function ensureButtons(){
+    var panel=document.getElementById('debugPanel') || document.body;
+    var box=document.getElementById('mbhTraceBox');
+    if(!box){
+      box=document.createElement('div');
+      box.id='mbhTraceBox';
+      box.className='debug-trace-box';
+      box.style.cssText='margin-top:8px;padding:8px;border:1px solid rgba(180,120,255,.45);border-radius:10px;background:rgba(20,10,35,.7);font-size:12px;';
+      box.innerHTML='<div class="debug-trace-title">進行デバッグログ ver.99.11</div><button id="mbhTraceMark" type="button">現在状態を記録</button> <button id="mbhTraceCopy" type="button">ログコピー</button> <button id="mbhTraceDownload" type="button">DL</button> <button id="mbhTraceClear" type="button">消去</button><pre id="mbhTraceOut" class="debug-trace-output"></pre>';
+      panel.appendChild(box);
+    }
+    var c=document.getElementById('mbhTraceCopy');
+    var d=document.getElementById('mbhTraceDownload');
+    if(c && !c.__v9911){ c.__v9911=true; c.onclick=function(e){ if(e) e.preventDefault(); window.mbhCopyTrace(); return false; }; c.addEventListener('pointerup', function(e){ e.preventDefault(); window.mbhCopyTrace(); }, {passive:false}); }
+    if(d && !d.__v9911){ d.__v9911=true; d.onclick=function(e){ if(e) e.preventDefault(); window.mbhDownloadTrace(); return false; }; d.addEventListener('pointerup', function(e){ e.preventDefault(); window.mbhDownloadTrace(); }, {passive:false}); }
+  }
+  function updateVersion(){
+    window.GAME_VERSION=BUILD; window.MINI_BROWSER_HERO_LATEST_VERSION=BUILD; window.MINI_BROWSER_HERO_BUILD_VERSION=BUILD;
+    document.documentElement.dataset.buildVersion=BUILD;
+    document.querySelectorAll('.build-version,.fixed-build-version').forEach(function(el){el.textContent='ver.'+BUILD;});
+    document.querySelectorAll('.debug-version').forEach(function(el){el.textContent='Build: ver.'+BUILD+' debug';});
+    var t=document.querySelector('.debug-trace-title'); if(t) t.textContent='進行デバッグログ ver.'+BUILD;
+  }
+  function boot(){ safe(ensureButtons); safe(updateVersion); }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', boot); else boot();
+  window.addEventListener('load', boot);
+  setInterval(boot, 1000);
 })();
