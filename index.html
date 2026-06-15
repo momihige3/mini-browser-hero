@@ -13,10 +13,10 @@
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
 </head>
 <body>
-  <div id="fixedBuildVersion" class="fixed-build-version">ver.98.5</div>
+  <div id="fixedBuildVersion" class="fixed-build-version">ver.98.6</div>
   <div id="game">
     <header class="topbar">
-      <div class="brand">ミニブラウザヒーロー <span class="build-version">ver.98.5</span></div>
+      <div class="brand">ミニブラウザヒーロー <span class="build-version">ver.98.6</span></div>
       <div class="resources"><b id="mats">0</b> 強化石</div>
       <div class="controls">
         <button id="equipToggleBtn">メニュー</button>
@@ -129,7 +129,7 @@
         <button id="debugDarkSwordSaint">暗黒剣聖を強制召喚</button>
         <label><input id="debugKillEnemy" type="checkbox"> 敵への攻撃で即死</label>
         <label><input id="debugKillHero" type="checkbox"> 敵からの攻撃で即死</label>
-        <div class="debug-version">Build: ver.98.5.2</div>
+        <div class="debug-version">Build: ver.98.6.2</div>
         <button id="debugClose">閉じる</button>
       </div>
   </div>
@@ -166,922 +166,118 @@
 
   <script src="game.js"></script>
 
-<style id="v981-mobile-favicon-fix-style">
-@media (pointer: coarse), (max-width: 820px) {
-  button, .btn, [role="button"] { touch-action: manipulation; }
-  #fleeBtn, .flee-btn, #fleeButton, .escape-btn, #escapeBtn {
-    min-width: 44px !important;
-    width: 44px !important;
-    height: 44px !important;
-    padding: 0 !important;
-    font-size: 0 !important;
-    border-radius: 999px !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    line-height: 1 !important;
-  }
-  #fleeBtn::before, .flee-btn::before, #fleeButton::before, .escape-btn::before, #escapeBtn::before {
-    content: "🏃";
-    font-size: 24px;
-  }
-  .status-popup-close, .buff-popup-close, .debuff-popup-close, .status-detail-close,
-  #statusDetailClose, #statusPopupClose, .tooltip-close, .popup-close.status-close {
-    display: none !important;
-  }
-  .equip-action-popup.v981-mobile, .item-action-popup.v981-mobile {
-    position: fixed !important;
-    left: 50% !important;
-    top: 50% !important;
-    transform: translate(-50%, -50%) !important;
-    z-index: 50000 !important;
-    width: min(92vw, 360px) !important;
-    max-height: 80vh !important;
-    overflow: auto !important;
-  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<style id="v986-hard-ui-debug-fix-style">
+html,body{min-height:100%;overflow-y:auto!important}
+button,.btn,[role="button"],input,select,label{touch-action:manipulation!important;pointer-events:auto!important}
+#gameVersion,.game-version,.version-label{pointer-events:none!important;z-index:99999!important}
+#menuPanel,.menu-panel,#debugPanel,.debug-panel,.modal,.dialog,.popup,#mobileMenuPanel,.mobile-menu-panel,#sidePanel,.side-panel,.right-panel{
+  max-height:calc(100dvh - 96px)!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch!important;
+  box-sizing:border-box!important;padding-bottom:96px!important;pointer-events:auto!important
 }
-#gameVersion, .game-version, .version-label {
-  pointer-events: none !important;
-}
-</style>
-<script id="v981-mobile-favicon-fix-script">
-(function(){
-  const VERSION = "ver.98.5";
-  const isTouchUI = () => window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
-
-  function ensureVersion(){
-    const title = document.querySelector(".title, #title, .game-title, h1");
-    if (!title) return;
-    let v = document.getElementById("gameVersion");
-    if (!v) {
-      v = document.createElement("span");
-      v.id = "gameVersion";
-      v.className = "game-version";
-      title.style.position = title.style.position || "relative";
-      title.appendChild(v);
-    }
-    v.textContent = VERSION;
-    Object.assign(v.style, {
-      position:"absolute", right:"0", bottom:"-0.85em",
-      fontSize: isTouchUI() ? "10px" : "12px",
-      opacity:"0.72", whiteSpace:"nowrap"
-    });
-  }
-
-  function iconizeFlee(){
-    const btns = Array.from(document.querySelectorAll("button, .btn, [role='button']")).filter(el => {
-      const t = (el.textContent || "").trim();
-      const idc = ((el.id || "") + " " + (el.className || "")).toLowerCase();
-      return t.includes("戦闘から逃げる") || t.includes("逃走") || idc.includes("flee") || idc.includes("escape");
-    });
-    btns.forEach(btn => {
-      if (isTouchUI()) {
-        btn.dataset.fullText = btn.dataset.fullText || btn.textContent || "戦闘から逃げる";
-        btn.textContent = "🏃";
-        btn.title = "戦闘から逃げる";
-        btn.setAttribute("aria-label","戦闘から逃げる");
-        btn.style.minWidth = "44px";
-        btn.style.width = "44px";
-        btn.style.height = "44px";
-        btn.style.fontSize = "24px";
-        btn.style.borderRadius = "999px";
-        btn.style.padding = "0";
-      } else if (btn.dataset.fullText) {
-        btn.textContent = btn.dataset.fullText;
-      }
-    });
-  }
-
-  function removeStatusCloseButtons(){
-    document.querySelectorAll(".status-popup-close,.buff-popup-close,.debuff-popup-close,.status-detail-close,#statusDetailClose,#statusPopupClose,.tooltip-close,.popup-close.status-close")
-      .forEach(el => el.remove());
-  }
-
-  function closeStatusPopupsOnOutsideTap(){
-    document.addEventListener("pointerup", function(e){
-      if (!isTouchUI()) return;
-      const popup = e.target.closest(".status-popup,.status-detail-panel,#statusDetailPanel,#statusPopup,.tooltip,.buff-detail,.debuff-detail");
-      const card = e.target.closest(".character-card,.enemy-card,.player-card,.card,.status-icon,.buff-icon,.debuff-icon");
-      if (popup || card) return;
-      document.querySelectorAll(".status-popup,.status-detail-panel,#statusDetailPanel,#statusPopup,.tooltip,.buff-detail,.debuff-detail")
-        .forEach(el => {
-          if (el.id === "statusDetailPanel" || el.id === "statusPopup") {
-            el.style.display = "none";
-            el.classList.add("hidden");
-          } else if (el.classList.contains("status-popup") || el.classList.contains("tooltip") || el.classList.contains("buff-detail") || el.classList.contains("debuff-detail")) {
-            el.style.display = "none";
-          }
-        });
-    }, true);
-  }
-
-  function patchMobileItemTap(){
-    document.addEventListener("pointerup", function(e){
-      if (!isTouchUI()) return;
-      const item = e.target.closest(".storage-item,.inventory-item,.equip-item,.equipment-item,[data-item-id],[data-equip-id]");
-      if (!item) return;
-      const inPanel = item.closest("#storagePanel,#inventoryPanel,#equipmentPanel,.storage,.inventory,.equipment,.warehouse");
-      if (!inPanel) return;
-      e.stopPropagation();
-
-      // Try existing click handler first.
-      if (typeof item.click === "function") {
-        setTimeout(() => item.click(), 0);
-      }
-
-      // If an action menu already exists, make sure it is visible on mobile.
-      setTimeout(() => {
-        document.querySelectorAll(".equip-action-popup,.item-action-popup,.item-menu,.equip-menu,.context-menu")
-          .forEach(menu => {
-            menu.classList.add("v981-mobile");
-            menu.style.zIndex = "50000";
-            if (isTouchUI()) {
-              menu.style.position = "fixed";
-              menu.style.left = "50%";
-              menu.style.top = "50%";
-              menu.style.transform = "translate(-50%, -50%)";
-              menu.style.display = "";
-            }
-          });
-      }, 60);
-    }, true);
-  }
-
-  function patchDebugDarkEquipmentLabels(){
-    // This patch makes missing dark equipment names searchable/visible if debug text exists.
-    const debug = Array.from(document.querySelectorAll("*")).find(el => /闇装備|デバッグ|Debug/.test(el.textContent || "") && el.children.length < 80);
-    if (!debug || document.getElementById("v981DarkEquipNote")) return;
-    const note = document.createElement("div");
-    note.id = "v981DarkEquipNote";
-    note.style.cssText = "font-size:12px;opacity:.8;margin-top:6px;";
-    note.textContent = "闇装備セット対象：闇の聖剣 / 闇の盾 / 闇のアミュレット / 闇の鎧 / 闇の籠手 / 闇の兜 / 暗黒の靴";
-    debug.appendChild(note);
-  }
-
-  function run(){
-    ensureVersion();
-    iconizeFlee();
-    removeStatusCloseButtons();
-    patchDebugDarkEquipmentLabels();
-  }
-
-  closeStatusPopupsOnOutsideTap();
-  patchMobileItemTap();
-  document.addEventListener("DOMContentLoaded", run);
-  setInterval(run, 1000);
-})();
-</script>
-
-
-<script id="v983-dark-debug-spawn-fix">
-(function(){
-  const VERSION = "ver.98.5";
-  const DARK_EQUIP_NAMES = ["闇の聖剣","闇の盾","闇のアミュレット","闇の鎧","闇の籠手","闇の兜","暗黒の靴"];
-
-  function safeLog(msg){
-    try {
-      if (typeof addLog === "function") addLog(msg, "system");
-      else console.log(msg);
-    } catch(e){ console.log(msg); }
-  }
-
-  function uid(){
-    return "it_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2,8);
-  }
-
-  function getStateObj(){
-    try {
-      if (window.state && typeof window.state === "object") return window.state;
-      if (window.gameState && typeof window.gameState === "object") return window.gameState;
-      if (window.saveData && typeof window.saveData === "object") return window.saveData;
-    } catch(e){}
-    return null;
-  }
-
-  function getStorageArray(){
-    const st = getStateObj();
-    const candidates = [
-      window.inventory, window.storage, window.warehouse,
-      st && st.inventory, st && st.storage, st && st.warehouse, st && st.items
-    ].filter(Array.isArray);
-    if (candidates.length) return candidates[0];
-
-    if (st) {
-      st.inventory = [];
-      return st.inventory;
-    }
-    window.inventory = [];
-    return window.inventory;
-  }
-
-  function makeDarkEquip(name){
-    const level =
-      (window.player && (window.player.level || window.player.lv)) ||
-      (window.state && window.state.level) ||
-      1;
-
-    const slotMap = {
-      "闇の聖剣":"weapon",
-      "闇の盾":"shield",
-      "闇のアミュレット":"amulet",
-      "闇の鎧":"armor",
-      "闇の籠手":"gloves",
-      "闇の兜":"helmet",
-      "暗黒の靴":"boots"
-    };
-
-    const effects = {
-      "闇の聖剣":["暗黒出血付与10%","連続攻撃100%"],
-      "闇の盾":["毎ターン被ダメージ軽減+1%(最大50%)","被ダメージの50%回復"],
-      "闇のアミュレット":["死線の剣舞発動率+25%","死線の剣舞効果時間2倍"],
-      "闇の鎧":["被ダメージ25%軽減","1秒ごとにHP2%回復","暗黒出血最大20スタック"],
-      "闇の籠手":["死線の剣舞時、剣舞発動回数+2"],
-      "闇の兜":["死線の剣舞発動率+10%","出血・暗黒出血解除","死線の剣舞中は出血/暗黒出血無効"],
-      "暗黒の靴":["回避率+25%","HP半分以下でさらに回避率+25%"]
-    };
-
-    const n = Math.max(1, Number(level) || 1);
-    return {
-      id: uid(),
-      name,
-      type: slotMap[name] || "accessory",
-      slot: slotMap[name] || "accessory",
-      rarity: "legendary",
-      rarityName: "Legendary",
-      frameColor: "purple",
-      specialFrame: "dark",
-      darkEquip: true,
-      isDarkEquip: true,
-      level: n,
-      atk: Math.floor(20 + n * 3 + Math.random()*n*2),
-      def: Math.floor(20 + n * 3 + Math.random()*n*2),
-      hp: Math.floor(100 + n * 20 + Math.random()*n*10),
-      effects: effects[name] || [],
-      specialEffects: effects[name] || [],
-      locked: false
-    };
-  }
-
-  function grantDarkEquip(name){
-    const arr = getStorageArray();
-    arr.push(makeDarkEquip(name));
-    safeLog(name + "を付与しました");
-    try { if (typeof renderInventory === "function") renderInventory(); } catch(e){}
-    try { if (typeof renderStorage === "function") renderStorage(); } catch(e){}
-    try { if (typeof saveGame === "function") saveGame(); } catch(e){}
-  }
-
-  function grantDarkSet(){
-    DARK_EQUIP_NAMES.forEach(grantDarkEquip);
-    safeLog("闇装備セットを付与しました（7/7種）");
-  }
-
-  window.v983GrantDarkEquip = grantDarkEquip;
-  window.v983GrantDarkSet = grantDarkSet;
-
-  function addDebugButtons(){
-    const roots = Array.from(document.querySelectorAll("*")).filter(el => {
-      const t = el.textContent || "";
-      return /デバッグ|Debug|暗黒剣聖|敵即死|ユーザーリセット/.test(t) && el.children.length < 120;
-    });
-    const root = roots[0];
-    if (!root || document.getElementById("v983DarkDebugBox")) return;
-
-    const box = document.createElement("div");
-    box.id = "v983DarkDebugBox";
-    box.style.cssText = "margin-top:8px;padding:8px;border:1px solid rgba(160,80,255,.5);border-radius:8px;background:rgba(20,0,35,.35);display:flex;gap:6px;flex-wrap:wrap;";
-    const title = document.createElement("div");
-    title.textContent = "闇装備デバッグ付与";
-    title.style.cssText = "width:100%;font-weight:bold;color:#d9b4ff;";
-    box.appendChild(title);
-
-    const setBtn = document.createElement("button");
-    setBtn.textContent = "闇装備セット(7種)";
-    setBtn.type = "button";
-    setBtn.addEventListener("click", (e)=>{ e.stopPropagation(); grantDarkSet(); });
-    box.appendChild(setBtn);
-
-    DARK_EQUIP_NAMES.forEach(name=>{
-      const b = document.createElement("button");
-      b.textContent = name;
-      b.type = "button";
-      b.addEventListener("click", (e)=>{ e.stopPropagation(); grantDarkEquip(name); });
-      box.appendChild(b);
-    });
-    root.appendChild(box);
-  }
-
-  // Dark Sword Saint spawn/battle freeze guard
-  function clearDarkTimers(){
-    const names = [
-      "darkDanceTimer","darkDanceCutinTimer","darkDanceAttackTimer","darkDanceRecoveryTimer",
-      "darkTechniqueTimer","darkSwordDanceTimer","darkSwordSaintTimer","dssSpawnTimer",
-      "cutinTimer","bossIntroTimer"
-    ];
-    names.forEach(n=>{
-      try {
-        if (window[n]) { clearTimeout(window[n]); clearInterval(window[n]); window[n]=null; }
-      } catch(e){}
-    });
-  }
-
-  function normalizeBattleAfterDssSpawn(){
-    const enemy = window.currentEnemy || window.enemy || (window.state && window.state.enemy);
-    if (!enemy) return;
-    const nm = enemy.name || enemy.id || enemy.type || "";
-    if (!/暗黒剣聖|darkSword/i.test(nm)) return;
-
-    // if stuck in intro/cutin without active battle, release after grace time
-    if (enemy.hp == null || enemy.hp <= 0) return;
-    try {
-      if (window.battlePaused && !window.__dssPauseSince) window.__dssPauseSince = Date.now();
-      if (window.isBattlePaused && !window.__dssPauseSince) window.__dssPauseSince = Date.now();
-      if (window.__dssPauseSince && Date.now() - window.__dssPauseSince > 3500) {
-        window.battlePaused = false;
-        window.isBattlePaused = false;
-        window.__dssPauseSince = null;
-        document.querySelectorAll(".cutin,.cutin-overlay,#cutin,#cutinOverlay,.boss-intro,.dark-cutin")
-          .forEach(el => { el.style.pointerEvents="none"; el.style.display="none"; });
-        safeLog("暗黒剣聖の登場演出を復帰しました");
-      }
-    } catch(e){}
-  }
-
-  // If HP0 and not already processed, force defeat flow to avoid lock.
-  function forceDssZeroHpResolve(){
-    const enemy = window.currentEnemy || window.enemy || (window.state && window.state.enemy);
-    if (!enemy) return;
-    const nm = enemy.name || enemy.id || enemy.type || "";
-    if (!/暗黒剣聖|darkSword/i.test(nm)) return;
-    if ((enemy.hp || 0) > 0) return;
-    if (enemy.defeated || enemy.dead) return;
-    enemy.hp = 0;
-    enemy.dead = true;
-    enemy.defeated = true;
-    clearDarkTimers();
-    try { if (typeof processEnemyDefeat === "function") processEnemyDefeat(enemy); return; } catch(e){}
-    try { if (typeof defeatEnemy === "function") defeatEnemy(enemy); return; } catch(e){}
-    try { if (typeof onEnemyDefeated === "function") onEnemyDefeated(enemy); return; } catch(e){}
-    safeLog("暗黒剣聖を撃破しました");
-  }
-
-  function ensureVersion(){
-    const title = document.querySelector(".title,#title,.game-title,h1");
-    if (!title) return;
-    let v = document.getElementById("gameVersion");
-    if (!v) {
-      v = document.createElement("span");
-      v.id = "gameVersion";
-      v.className = "game-version";
-      title.style.position = title.style.position || "relative";
-      title.appendChild(v);
-    }
-    v.textContent = VERSION;
-  }
-
-  function run(){
-    ensureVersion();
-    addDebugButtons();
-    normalizeBattleAfterDssSpawn();
-    forceDssZeroHpResolve();
-  }
-
-  document.addEventListener("DOMContentLoaded", run);
-  setInterval(run, 700);
-})();
-</script>
-
-
-<style id="v984-ui-dark-equip-fix-style">
-/* v98.4: prevent bottom/top clipping in tab/menu layout */
-html, body {
-  min-height: 100%;
-}
-body {
-  overflow-y: auto !important;
-}
-#game, .game, .app, .main, .page, .root {
-  min-height: 100vh;
-}
-#battleArea, .battle-area, .battle-screen, .battle-panel {
-  padding-bottom: 72px !important;
-  box-sizing: border-box !important;
-}
-#sidePanel, .side-panel, .right-panel, .menu-panel, #mobileMenuPanel, .mobile-menu-panel {
-  max-height: calc(100vh - 110px) !important;
-  overflow-y: auto !important;
-  box-sizing: border-box !important;
-  padding-bottom: 72px !important;
-  -webkit-overflow-scrolling: touch !important;
-}
-.v984-panel-tabs {
-  display: flex;
-  gap: 6px;
-  padding: 4px 8px;
-  border-bottom: 1px solid rgba(212,160,42,.65);
-  background: rgba(14,8,3,.94);
-  position: sticky;
-  top: 0;
-  z-index: 3000;
-}
-.v984-panel-tabs button {
-  flex: 1;
-  min-height: 34px;
-  border: 1px solid #b78a24;
-  background: rgba(48,28,7,.92);
-  color: #ffe09a;
-  border-radius: 4px;
-  font-weight: 700;
-}
-.v984-panel-tabs button.active {
-  background: rgba(120,84,20,.98);
-  box-shadow: inset 0 0 0 1px #ffd15b;
-}
-.v984-tab-hidden {
-  display: none !important;
-}
-.v984-fixed-footer-space {
-  height: 64px;
-  flex: 0 0 64px;
-}
-#gameVersion,.game-version,.version-label {
-  z-index: 5000;
-}
-@media (max-width: 1200px) {
-  #sidePanel, .side-panel, .right-panel {
-    min-height: 0 !important;
-  }
+#menuPanel *,.menu-panel *,#debugPanel *,.debug-panel *,.modal *,.dialog *,.popup *{pointer-events:auto!important}
+.cutin,.cutin-overlay,#cutin,#cutinOverlay,.boss-intro,.dark-cutin{pointer-events:none!important}
+.v986-panel-tabs{display:flex;gap:6px;padding:4px 8px;border-bottom:1px solid rgba(212,160,42,.65);background:rgba(14,8,3,.96);position:sticky;top:0;z-index:4000}
+.v986-panel-tabs button{flex:1;min-height:34px;border:1px solid #b78a24;background:rgba(48,28,7,.92);color:#ffe09a;border-radius:4px;font-weight:700}
+.v986-panel-tabs button.active{background:rgba(120,84,20,.98);box-shadow:inset 0 0 0 1px #ffd15b}
+.v986-tab-hidden{display:none!important}
+@media (pointer:coarse),(max-width:820px){
+ #fleeBtn,.flee-btn,#fleeButton,.escape-btn,#escapeBtn{min-width:44px!important;width:44px!important;height:44px!important;padding:0!important;border-radius:999px!important;font-size:0!important;display:inline-flex!important;align-items:center!important;justify-content:center!important}
+ #fleeBtn::before,.flee-btn::before,#fleeButton::before,.escape-btn::before,#escapeBtn::before{content:"🏃";font-size:24px}
+ .status-popup-close,.buff-popup-close,.debuff-popup-close,.status-detail-close,#statusDetailClose,#statusPopupClose,.tooltip-close,.popup-close.status-close{display:none!important}
 }
 </style>
-<script id="v984-ui-dark-equip-fix-script">
+<script id="v986-hard-ui-debug-fix-script">
 (function(){
-  const VERSION = "ver.98.5";
-  const DARK_EQUIP_NAMES = ["闇の聖剣","闇の盾","闇のアミュレット","闇の鎧","闇の籠手","闇の兜","暗黒の靴"];
-
-  function safeLog(msg){
-    try { if (typeof addLog === "function") addLog(msg, "system"); else console.log(msg); }
-    catch(e){ console.log(msg); }
-  }
-  function uid(){ return "it_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2,8); }
-
-  function stateObj(){
-    return (window.state && typeof window.state === "object" && window.state) ||
-           (window.gameState && typeof window.gameState === "object" && window.gameState) ||
-           (window.saveData && typeof window.saveData === "object" && window.saveData) || null;
-  }
-  function storageArray(){
-    const st = stateObj();
-    const arrs = [
-      window.inventory, window.storage, window.warehouse,
-      st && st.inventory, st && st.storage, st && st.warehouse, st && st.items
-    ].filter(Array.isArray);
-    if (arrs.length) return arrs[0];
-    if (st) { st.inventory = []; return st.inventory; }
-    window.inventory = []; return window.inventory;
-  }
-  function playerLevel(){
-    return Number((window.player && (window.player.level || window.player.lv)) ||
-      (stateObj() && (stateObj().level || stateObj().playerLevel)) || 1) || 1;
-  }
-
-  function makeDarkEquip(name){
-    const level = Math.max(1, playerLevel());
-    const slotMap = {
-      "闇の聖剣":"weapon",
-      "闇の盾":"shield",
-      "闇のアミュレット":"amulet",
-      "闇の鎧":"armor",
-      "闇の籠手":"gloves",
-      "闇の兜":"helmet",
-      "暗黒の靴":"boots"
-    };
-    const effects = {
-      "闇の聖剣":["通常攻撃・剣舞1ヒットごとに暗黒出血10%","連続攻撃100%"],
-      "闇の盾":["毎ターン被ダメージ軽減+1%(最大50%)","被ダメージの50%回復"],
-      "闇のアミュレット":["死線の剣舞発動率+25%","死線の剣舞効果時間2倍"],
-      "闇の鎧":["被ダメージ25%軽減","1秒ごとにHP2%回復","暗黒出血最大20スタック"],
-      "闇の籠手":["死線の剣舞時、剣舞発動回数+2"],
-      "闇の兜":["死線の剣舞発動率+10%","出血・暗黒出血解除","死線の剣舞中は出血/暗黒出血無効"],
-      "暗黒の靴":["回避率+25%","HP半分以下でさらに回避率+25%"]
-    };
-    const slot = slotMap[name] || "accessory";
-    const n = level;
-    return {
-      id: uid(),
-      name,
-      type: slot,
-      slot,
-      category: slot,
-      rarity: "legendary",
-      rarityName: "Legendary",
-      colorFrame: "purple",
-      frameColor: "purple",
-      borderColor: "purple",
-      specialFrame: "dark",
-      darkEquip: true,
-      isDarkEquip: true,
-      level: n,
-      plus: 0,
-      atk: Math.floor(30 + n * 4 + Math.random()*n*2),
-      attack: Math.floor(30 + n * 4 + Math.random()*n*2),
-      def: Math.floor(30 + n * 4 + Math.random()*n*2),
-      defense: Math.floor(30 + n * 4 + Math.random()*n*2),
-      hp: Math.floor(160 + n * 24 + Math.random()*n*12),
-      effects: effects[name] || [],
-      specialEffects: effects[name] || [],
-      locked: false
-    };
-  }
-
-  function grantDarkEquip(name){
-    const arr = storageArray();
-    arr.push(makeDarkEquip(name));
-    safeLog(name + "を付与しました");
-    try { if (typeof renderInventory === "function") renderInventory(); } catch(e){}
-    try { if (typeof renderStorage === "function") renderStorage(); } catch(e){}
-    try { if (typeof renderWarehouse === "function") renderWarehouse(); } catch(e){}
-    try { if (typeof saveGame === "function") saveGame(); } catch(e){}
-    try { if (typeof save === "function") save(); } catch(e){}
-  }
-  function grantDarkSet(){
-    DARK_EQUIP_NAMES.forEach(grantDarkEquip);
-    safeLog("闇装備セットを付与しました（7/7種）");
-  }
-  window.v984GrantDarkEquip = grantDarkEquip;
-  window.v984GrantDarkSet = grantDarkSet;
-
-  function addDebugButtons(){
-    const roots = Array.from(document.querySelectorAll("div,section,aside")).filter(el => {
-      const t = el.textContent || "";
-      return /デバッグ|Debug|敵即死|ユーザーリセット|暗黒剣聖/.test(t) && el.offsetParent !== null && el.children.length < 180;
-    });
-    const root = roots[0];
-    if (!root || document.getElementById("v984DarkDebugBox")) return;
-    const box = document.createElement("div");
-    box.id = "v984DarkDebugBox";
-    box.style.cssText = "margin:8px 0;padding:8px;border:1px solid rgba(160,80,255,.7);border-radius:8px;background:rgba(20,0,35,.5);display:flex;gap:6px;flex-wrap:wrap;";
-    const title = document.createElement("div");
-    title.textContent = "闇装備付与";
-    title.style.cssText = "width:100%;font-weight:bold;color:#d9b4ff;";
-    box.appendChild(title);
-    const all = document.createElement("button");
-    all.type = "button";
-    all.textContent = "闇装備セット(7種)";
-    all.addEventListener("click", e => { e.stopPropagation(); grantDarkSet(); });
-    box.appendChild(all);
-    DARK_EQUIP_NAMES.forEach(name => {
-      const b = document.createElement("button");
-      b.type = "button";
-      b.textContent = name;
-      b.addEventListener("click", e => { e.stopPropagation(); grantDarkEquip(name); });
-      box.appendChild(b);
-    });
-    root.appendChild(box);
-  }
-
-  function ensureVersion(){
-    const title = document.querySelector(".title,#title,.game-title,h1");
-    if (!title) return;
-    let v = document.getElementById("gameVersion");
-    if (!v) {
-      v = document.createElement("span");
-      v.id = "gameVersion";
-      v.className = "game-version";
-      title.style.position = title.style.position || "relative";
-      title.appendChild(v);
-    }
-    v.textContent = VERSION;
-  }
-
-  function findRightPanel(){
-    const candidates = Array.from(document.querySelectorAll("#sidePanel,.side-panel,.right-panel,#rightPanel,.menu-panel,#mobileMenuPanel,.mobile-menu-panel,aside"))
-      .filter(el => el.offsetParent !== null && el.getBoundingClientRect().width > 250);
-    if (candidates.length) return candidates[0];
-    return null;
-  }
-
-  function classifyPanelChild(el){
-    const t = (el.textContent || "").slice(0,300);
-    const idc = ((el.id||"") + " " + (el.className||"")).toLowerCase();
-    if (/倉庫|経験値化|最強装備|表示/.test(t) || /storage|inventory|warehouse/.test(idc)) return "storage";
-    if (/現在装備|装備\/強化|強化|武器|防具/.test(t) || /equip|enhance|upgrade/.test(idc)) return "equip";
-    if (/バトルログ|ログ|ダメージ|ドロップ/.test(t) || /log/.test(idc)) return "log";
-    if (/ステータス|Lv|攻撃力|防御力|討伐/.test(t) || /status/.test(idc)) return "status";
-    return "";
-  }
-
-  function addPanelTabs(){
-    const panel = findRightPanel();
-    if (!panel || panel.querySelector(".v984-panel-tabs")) return;
-    const tabs = document.createElement("div");
-    tabs.className = "v984-panel-tabs";
-    const labels = [
-      ["status","ステータス"],
-      ["equip","装備/強化"],
-      ["storage","倉庫"],
-      ["log","ログ"]
-    ];
-    labels.forEach(([key,label])=>{
-      const b = document.createElement("button");
-      b.type = "button";
-      b.dataset.tab = key;
-      b.textContent = label;
-      b.addEventListener("click",()=>setActiveTab(panel,key));
-      tabs.appendChild(b);
-    });
-    panel.insertBefore(tabs, panel.firstChild);
-
-    Array.from(panel.children).forEach(ch => {
-      if (ch === tabs) return;
-      if (ch.dataset && ch.dataset.v984Tab) return;
-      const key = classifyPanelChild(ch);
-      if (key) ch.dataset.v984Tab = key;
-    });
-    setActiveTab(panel, localStorage.getItem("v984RightTab") || "status");
-  }
-
-  function setActiveTab(panel,key){
-    panel.querySelectorAll(".v984-panel-tabs button").forEach(b => b.classList.toggle("active", b.dataset.tab === key));
-    Array.from(panel.children).forEach(ch => {
-      if (ch.classList && ch.classList.contains("v984-panel-tabs")) return;
-      const tab = ch.dataset && ch.dataset.v984Tab;
-      if (!tab) return;
-      ch.classList.toggle("v984-tab-hidden", tab !== key);
-    });
-    localStorage.setItem("v984RightTab", key);
-  }
-
-  function fixClipping(){
-    document.body.style.overflowY = "auto";
-    const panel = findRightPanel();
-    if (panel) {
-      panel.style.maxHeight = "calc(100vh - 110px)";
-      panel.style.overflowY = "auto";
-      panel.style.paddingBottom = "72px";
-      panel.style.boxSizing = "border-box";
-    }
-    const battle = document.querySelector("#battleArea,.battle-area,.battle-screen,.battle-panel");
-    if (battle) {
-      battle.style.paddingBottom = "72px";
-      battle.style.boxSizing = "border-box";
-    }
-  }
-
-  function run(){
-    ensureVersion();
-    addDebugButtons();
-    addPanelTabs();
-    fixClipping();
-  }
-  document.addEventListener("DOMContentLoaded", run);
-  setInterval(run, 1000);
-})();
-</script>
-
-
-<script id="v984-dss-dot-defeat-fix">
-(function(){
-  function isDss(enemy){
-    if(!enemy) return false;
-    const s = String(enemy.name || enemy.id || enemy.type || "");
-    return /暗黒剣聖|darkSword/i.test(s);
-  }
-
-  function clearDots(obj){
-    if(!obj) return;
-    const keys = [
-      "bleed","bleedStacks","bleeds","bleedList",
-      "darkBleed","darkBleedStacks","darkBleeds","darkBleedList",
-      "dark_bleed","dark_bleed_stacks",
-      "burn","burnStacks","poison","poisonStacks"
-    ];
-    keys.forEach(k=>{
-      if (Array.isArray(obj[k])) obj[k] = [];
-      else if (obj[k] && typeof obj[k] === "object") obj[k] = {};
-      else if (k in obj) obj[k] = 0;
-    });
-    if (obj.statuses && typeof obj.statuses === "object") {
-      ["bleed","darkBleed","dark_bleed","burn","poison"].forEach(k=>delete obj.statuses[k]);
-    }
-    if (obj.debuffs && typeof obj.debuffs === "object") {
-      ["bleed","darkBleed","dark_bleed","burn","poison"].forEach(k=>delete obj.debuffs[k]);
-    }
-  }
-
-  function clearDotTimers(){
-    [
-      "bleedTimer","darkBleedTimer","dotTimer","statusTimer",
-      "enemyBleedTimer","enemyDarkBleedTimer",
-      "playerBleedTimer","playerDarkBleedTimer"
-    ].forEach(k=>{
-      try {
-        if (window[k]) {
-          clearTimeout(window[k]);
-          clearInterval(window[k]);
-          window[k] = null;
-        }
-      } catch(e){}
-    });
-  }
-
-  function clearDarkActionTimers(){
-    [
-      "darkDanceTimer","darkDanceCutinTimer","darkDanceAttackTimer",
-      "darkDanceRecoveryTimer","darkTechniqueTimer","darkSwordDanceTimer",
-      "darkSwordSaintTimer","dssSpawnTimer","cutinTimer","bossIntroTimer"
-    ].forEach(k=>{
-      try {
-        if (window[k]) {
-          clearTimeout(window[k]);
-          clearInterval(window[k]);
-          window[k] = null;
-        }
-      } catch(e){}
-    });
-  }
-
-  function resolveDssZeroHp(){
-    const enemy = window.currentEnemy || window.enemy || (window.state && window.state.enemy) || (window.gameState && window.gameState.enemy);
-    if (!isDss(enemy)) return;
-    if ((Number(enemy.hp) || 0) > 0) return;
-    if (enemy.__v984DotDefeatResolved) return;
-
-    enemy.hp = 0;
-    enemy.dead = true;
-    enemy.defeated = true;
-    enemy.isDeadConfirmed = true;
-    enemy.__v984DotDefeatResolved = true;
-
-    const player = window.player || (window.state && window.state.player) || (window.gameState && window.gameState.player);
-    clearDots(enemy);
-    clearDots(player);
-    clearDotTimers();
-    clearDarkActionTimers();
-
-    document.querySelectorAll(".cutin,.cutin-overlay,#cutin,#cutinOverlay,.boss-intro,.dark-cutin")
-      .forEach(el => { el.style.pointerEvents = "none"; el.style.display = "none"; });
-
-    try { if (typeof processEnemyDefeat === "function") { processEnemyDefeat(enemy); return; } } catch(e){}
-    try { if (typeof defeatEnemy === "function") { defeatEnemy(enemy); return; } } catch(e){}
-    try { if (typeof onEnemyDefeated === "function") { onEnemyDefeated(enemy); return; } } catch(e){}
-    try { if (typeof nextEnemy === "function") { nextEnemy(); return; } } catch(e){}
-  }
-
-  setInterval(resolveDssZeroHp, 200);
-})();
-</script>
-
-
-<script id="v985-dark-audio-fix">
-(function(){
-  const DARK_BGM = "March_of_the_Iron_Saint.mp3";
-  let darkVoiceLockUntil = 0;
-  let lastDarkVoiceAt = 0;
-
-  function isDarkEnemy(enemy){
-    if (!enemy) enemy = window.currentEnemy || window.enemy || (window.state && window.state.enemy) || (window.gameState && window.gameState.enemy);
-    if (!enemy) return false;
-    const s = String(enemy.name || enemy.id || enemy.type || "");
-    return /暗黒剣聖|darkSword/i.test(s);
-  }
-
-  function isMuted(){
-    return !!(window.isMuted || window.muted || (window.state && window.state.muted) || (window.gameState && window.gameState.muted));
-  }
-
-  function audioEls(){
-    return Array.from(document.querySelectorAll("audio"));
-  }
-
-  function isDarkBgmAudio(a){
-    const src = String(a.currentSrc || a.src || "");
-    return src.includes(DARK_BGM) || src.includes("Iron_Saint") || src.includes("dark-bgm") || a.id === "darkBgm";
-  }
-
-  function isVoiceAudio(a){
-    const src = String(a.currentSrc || a.src || "");
-    return src.includes("DarkKnigtVoice") || src.includes("DarkKnightVoice") || src.includes("voice") || a.id === "darkVoice";
-  }
-
-  function isNormalBgmAudio(a){
-    return !isDarkBgmAudio(a) && !isVoiceAudio(a);
-  }
-
-  function getOrCreateDarkBgm(){
-    let a = audioEls().find(isDarkBgmAudio);
-    if (!a) {
-      a = document.createElement("audio");
-      a.id = "darkBgm";
-      a.src = DARK_BGM;
-      a.loop = true;
-      a.preload = "auto";
-      document.body.appendChild(a);
-    }
-    a.volume = 0.05;
-    a.loop = true;
-    return a;
-  }
-
-  function forceDarkBgm(){
-    if (!isDarkEnemy() || isMuted()) return;
-    const dark = getOrCreateDarkBgm();
-
-    audioEls().forEach(a => {
-      if (a === dark || isVoiceAudio(a)) return;
-      if (isNormalBgmAudio(a)) {
-        try { a.pause(); } catch(e){}
-      }
-    });
-
-    try {
-      dark.volume = 0.05;
-      if (dark.paused) {
-        const p = dark.play();
-        if (p && p.catch) p.catch(()=>{});
-      }
-    } catch(e){}
-  }
-
-  function stopDuplicateVoices(){
-    const voices = audioEls().filter(isVoiceAudio);
-    if (voices.length <= 1) return;
-    voices.forEach((a, i) => {
-      if (i === voices.length - 1) return;
-      try { a.pause(); a.currentTime = 0; } catch(e){}
-    });
-  }
-
-  function guardVoicePlay(){
-    audioEls().filter(isVoiceAudio).forEach(a => {
-      if (a.__v985Guarded) return;
-      a.__v985Guarded = true;
-      a.volume = 0.25;
-      a.addEventListener("play", () => {
-        const now = Date.now();
-        if (now < darkVoiceLockUntil || now - lastDarkVoiceAt < 1200) {
-          try { a.pause(); a.currentTime = 0; } catch(e){}
-          return;
-        }
-        lastDarkVoiceAt = now;
-        darkVoiceLockUntil = now + 1200;
-        a.volume = 0.25;
-        stopDuplicateVoices();
-      }, true);
-    });
-  }
-
-  function patchGlobalVoiceFns(){
-    const names = ["playDarkVoice","playDarkKnightVoice","playDarkCutinVoice","playDarkSwordDanceVoice"];
-    names.forEach(n => {
-      const fn = window[n];
-      if (typeof fn !== "function" || fn.__v985Patched) return;
-      const wrapped = function(){
-        const now = Date.now();
-        if (now < darkVoiceLockUntil || now - lastDarkVoiceAt < 1200) return;
-        lastDarkVoiceAt = now;
-        darkVoiceLockUntil = now + 1200;
-        return fn.apply(this, arguments);
-      };
-      wrapped.__v985Patched = true;
-      window[n] = wrapped;
-    });
-  }
-
-  function keepDarkBgmDuringDarkBattle(){
-    if (isDarkEnemy()) forceDarkBgm();
-  }
-
-  // Patch common BGM functions so normal BGM cannot override during Dark Sword Saint battle.
-  function patchBgmFns(){
-    const names = ["playBgm","playBGM","startBgm","startBGM","playNormalBgm","playNormalBGM","resumeCurrentBgm","resumeCurrentBGM"];
-    names.forEach(n => {
-      const fn = window[n];
-      if (typeof fn !== "function" || fn.__v985Patched) return;
-      const wrapped = function(){
-        const args = Array.from(arguments);
-        if (isDarkEnemy()) {
-          setTimeout(forceDarkBgm, 0);
-          const joined = args.map(x => String(x)).join(" ");
-          if (!joined.includes("Iron_Saint") && !joined.includes("dark")) {
-            return forceDarkBgm();
-          }
-        }
-        return fn.apply(this, arguments);
-      };
-      wrapped.__v985Patched = true;
-      window[n] = wrapped;
-    });
-  }
-
-  function run(){
-    guardVoicePlay();
-    patchGlobalVoiceFns();
-    patchBgmFns();
-    keepDarkBgmDuringDarkBattle();
-  }
-
-  document.addEventListener("DOMContentLoaded", run);
-  setInterval(run, 500);
+ const VERSION="ver.98.6";
+ const DARK_EQUIP_NAMES=["闇の聖剣","闇の盾","闇のアミュレット","闇の鎧","闇の籠手","闇の兜","暗黒の靴"];
+ function ensureVersion(){
+   const title=document.querySelector(".title,#title,.game-title,h1")||document.body;
+   document.querySelectorAll("#gameVersion,.game-version,.version-label").forEach((el,i)=>{if(i>0)el.remove()});
+   let v=document.getElementById("gameVersion")||document.querySelector(".game-version,.version-label");
+   if(!v){v=document.createElement("span");v.id="gameVersion";v.className="game-version";title.style.position=title.style.position||"relative";title.appendChild(v)}
+   v.textContent=VERSION;
+   Object.assign(v.style,{position:"absolute",right:"0",bottom:"-0.85em",fontSize:(matchMedia("(pointer:coarse)").matches?"10px":"12px"),opacity:"0.75",whiteSpace:"nowrap"});
+ }
+ function log(m){try{if(typeof addLog==="function")addLog(m,"system");else console.log(m)}catch(e){console.log(m)}}
+ function uid(){return"it_"+Date.now().toString(36)+"_"+Math.random().toString(36).slice(2,8)}
+ function st(){return(window.state&&typeof window.state==="object"&&window.state)||(window.gameState&&typeof window.gameState==="object"&&window.gameState)||(window.saveData&&typeof window.saveData==="object"&&window.saveData)||null}
+ function storageArray(){
+   const s=st(), names=["inventory","storage","warehouse","items","bag"];
+   for(const n of names){if(Array.isArray(window[n]))return window[n];if(s&&Array.isArray(s[n]))return s[n]}
+   if(s){s.inventory=[];return s.inventory} window.inventory=[];return window.inventory;
+ }
+ function lv(){const s=st();return Number((window.player&&(window.player.level||window.player.lv))||(s&&(s.level||s.playerLevel))||1)||1}
+ function makeDarkEquip(name){
+   const n=Math.max(1,lv());
+   const slotMap={"闇の聖剣":"weapon","闇の盾":"shield","闇のアミュレット":"amulet","闇の鎧":"armor","闇の籠手":"gloves","闇の兜":"helmet","暗黒の靴":"boots"};
+   const effects={
+    "闇の聖剣":["通常攻撃・剣舞1ヒットごとに暗黒出血10%","連続攻撃100%"],
+    "闇の盾":["毎ターン被ダメージ軽減+1%(最大50%)","被ダメージの50%回復"],
+    "闇のアミュレット":["死線の剣舞発動率+25%","死線の剣舞効果時間2倍"],
+    "闇の鎧":["被ダメージ25%軽減","1秒ごとにHP2%回復","暗黒出血最大20スタック"],
+    "闇の籠手":["死線の剣舞時、剣舞発動回数+2"],
+    "闇の兜":["死線の剣舞発動率+10%","出血・暗黒出血解除","死線の剣舞中は出血/暗黒出血無効"],
+    "暗黒の靴":["回避率+25%","HP半分以下でさらに回避率+25%"]
+   };
+   const slot=slotMap[name]||"accessory";
+   return {id:uid(),name,type:slot,slot,category:slot,rarity:"legendary",rarityName:"Legendary",frameColor:"purple",colorFrame:"purple",borderColor:"purple",specialFrame:"dark",darkEquip:true,isDarkEquip:true,level:n,plus:0,atk:Math.floor(30+n*4+Math.random()*n*2),attack:Math.floor(30+n*4+Math.random()*n*2),def:Math.floor(30+n*4+Math.random()*n*2),defense:Math.floor(30+n*4+Math.random()*n*2),hp:Math.floor(160+n*24+Math.random()*n*12),effects:effects[name]||[],specialEffects:effects[name]||[],locked:false};
+ }
+ function refresh(){["renderInventory","renderStorage","renderWarehouse","renderEquipment","renderAll"].forEach(n=>{try{if(typeof window[n]==="function")window[n]()}catch(e){}});try{if(typeof saveGame==="function")saveGame()}catch(e){};try{if(typeof save==="function")save()}catch(e){}}
+ function grantDarkEquip(name){storageArray().push(makeDarkEquip(name));log(name+"を付与しました");refresh()}
+ function grantDarkSet(){DARK_EQUIP_NAMES.forEach(n=>storageArray().push(makeDarkEquip(n)));log("闇装備セットを付与しました（7/7種）");refresh()}
+ window.v986GrantDarkEquip=grantDarkEquip; window.v986GrantDarkSet=grantDarkSet;
+ function addDebugButtons(){
+   const roots=Array.from(document.querySelectorAll("div,section,aside")).filter(el=>{const t=el.textContent||"";return /デバッグ|Debug|敵即死|ユーザーリセット|暗黒剣聖/.test(t)&&el.offsetParent!==null&&el.children.length<220});
+   const root=roots[0]; if(!root||document.getElementById("v986DarkDebugBox"))return;
+   const box=document.createElement("div"); box.id="v986DarkDebugBox"; box.style.cssText="margin:8px 0;padding:8px;border:1px solid rgba(160,80,255,.75);border-radius:8px;background:rgba(20,0,35,.55);display:flex;gap:6px;flex-wrap:wrap;";
+   box.innerHTML='<div style="width:100%;font-weight:bold;color:#d9b4ff;">闇装備付与</div>';
+   const set=document.createElement("button"); set.type="button"; set.dataset.v986DarkSet="1"; set.textContent="闇装備セット(7種)"; box.appendChild(set);
+   DARK_EQUIP_NAMES.forEach(name=>{const b=document.createElement("button");b.type="button";b.dataset.v986DarkEquip=name;b.textContent=name;box.appendChild(b)});
+   root.appendChild(box);
+ }
+ document.addEventListener("pointerup",function(e){
+   const set=e.target.closest("[data-v986-dark-set]"), eq=e.target.closest("[data-v986-dark-equip]");
+   if(set){e.preventDefault();e.stopPropagation();grantDarkSet();return}
+   if(eq){e.preventDefault();e.stopPropagation();grantDarkEquip(eq.dataset.v986DarkEquip);return}
+ },true);
+ function patchTouchButtons(){
+   if(!matchMedia("(pointer: coarse)").matches)return;
+   document.querySelectorAll("button,.btn,[role='button']").forEach(btn=>{
+     if(btn.__v986Touch)return; btn.__v986Touch=true;
+     btn.addEventListener("pointerup",function(e){if(e.target.closest("[data-v986-dark-set],[data-v986-dark-equip]"))return;setTimeout(()=>{try{btn.click()}catch(_){}},0)},{passive:true});
+   });
+ }
+ function fixClipping(){
+   document.body.style.overflowY="auto";
+   document.querySelectorAll("#menuPanel,.menu-panel,#debugPanel,.debug-panel,.modal,.dialog,.popup,#mobileMenuPanel,.mobile-menu-panel,#sidePanel,.side-panel,.right-panel").forEach(el=>{el.style.maxHeight="calc(100dvh - 96px)";el.style.overflowY="auto";el.style.webkitOverflowScrolling="touch";el.style.boxSizing="border-box";el.style.paddingBottom="96px";el.style.pointerEvents="auto"});
+   document.querySelectorAll(".cutin,.cutin-overlay,#cutin,#cutinOverlay,.boss-intro,.dark-cutin").forEach(el=>el.style.pointerEvents="none");
+ }
+ function findRightPanel(){return Array.from(document.querySelectorAll("#sidePanel,.side-panel,.right-panel,#rightPanel,.menu-panel,#mobileMenuPanel,.mobile-menu-panel,aside")).find(el=>el.offsetParent!==null&&el.getBoundingClientRect().width>250)||null}
+ function classify(el){const t=(el.textContent||"").slice(0,400),c=((el.id||"")+" "+(el.className||"")).toLowerCase();if(/倉庫|経験値化|最強装備|表示/.test(t)||/storage|inventory|warehouse/.test(c))return"storage";if(/現在装備|装備\/強化|強化|武器|防具/.test(t)||/equip|enhance|upgrade/.test(c))return"equip";if(/バトルログ|ログ|ダメージ|ドロップ/.test(t)||/log/.test(c))return"log";if(/ステータス|攻撃力|防御力|討伐|現在Lv経験値/.test(t)||/status/.test(c))return"status";return""}
+ function addPanelTabs(){const panel=findRightPanel();if(!panel||panel.querySelector(".v986-panel-tabs"))return;const tabs=document.createElement("div");tabs.className="v986-panel-tabs";[["status","ステータス"],["equip","装備/強化"],["storage","倉庫"],["log","ログ"]].forEach(([k,l])=>{const b=document.createElement("button");b.type="button";b.dataset.tab=k;b.textContent=l;b.addEventListener("click",()=>setTab(panel,k));tabs.appendChild(b)});panel.insertBefore(tabs,panel.firstChild);Array.from(panel.children).forEach(ch=>{if(ch===tabs)return;if(ch.dataset&&ch.dataset.v986Tab)return;const k=classify(ch);if(k)ch.dataset.v986Tab=k});setTab(panel,localStorage.getItem("v986RightTab")||"status")}
+ function setTab(panel,k){panel.querySelectorAll(".v986-panel-tabs button").forEach(b=>b.classList.toggle("active",b.dataset.tab===k));Array.from(panel.children).forEach(ch=>{if(ch.classList&&ch.classList.contains("v986-panel-tabs"))return;const tab=ch.dataset&&ch.dataset.v986Tab;if(tab)ch.classList.toggle("v986-tab-hidden",tab!==k)});localStorage.setItem("v986RightTab",k)}
+ function isDarkEnemy(enemy){if(!enemy)enemy=window.currentEnemy||window.enemy||(window.state&&window.state.enemy)||(window.gameState&&window.gameState.enemy);if(!enemy)return false;return /暗黒剣聖|darkSword/i.test(String(enemy.name||enemy.id||enemy.type||""))}
+ function clearDots(obj){if(!obj)return;["bleed","bleedStacks","bleeds","bleedList","darkBleed","darkBleedStacks","darkBleeds","darkBleedList","burn","poison"].forEach(k=>{if(Array.isArray(obj[k]))obj[k]=[];else if(obj[k]&&typeof obj[k]==="object")obj[k]={};else if(k in obj)obj[k]=0})}
+ function resolveDssZeroHp(){const enemy=window.currentEnemy||window.enemy||(window.state&&window.state.enemy)||(window.gameState&&window.gameState.enemy);if(!isDarkEnemy(enemy))return;if((Number(enemy.hp)||0)>0)return;if(enemy.__v986Resolved)return;enemy.hp=0;enemy.dead=true;enemy.defeated=true;enemy.isDeadConfirmed=true;enemy.__v986Resolved=true;clearDots(enemy);clearDots(window.player||(window.state&&window.state.player)||(window.gameState&&window.gameState.player));["darkDanceTimer","darkDanceCutinTimer","darkDanceAttackTimer","darkDanceRecoveryTimer","darkTechniqueTimer","bleedTimer","darkBleedTimer","dotTimer"].forEach(k=>{try{if(window[k]){clearTimeout(window[k]);clearInterval(window[k]);window[k]=null}}catch(e){}});try{if(typeof processEnemyDefeat==="function"){processEnemyDefeat(enemy);return}}catch(e){};try{if(typeof defeatEnemy==="function"){defeatEnemy(enemy);return}}catch(e){};try{if(typeof onEnemyDefeated==="function"){onEnemyDefeated(enemy);return}}catch(e){}}
+ function run(){ensureVersion();addDebugButtons();patchTouchButtons();fixClipping();addPanelTabs();resolveDssZeroHp()}
+ document.addEventListener("DOMContentLoaded",run); setInterval(run,700);
 })();
 </script>
 
