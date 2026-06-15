@@ -35,7 +35,7 @@ const DEATH_DANCE_CUTINS = [
 ];
 const DARK_SWORD_SAINT_CUTIN = {quote:'私を超えてみせろ。', img:'assets/cutin_dark_sword_dance.png'};
 const DARK_SWORD_TECHNIQUE_CUTIN = {quote:'', img:'assets/cutin_dark_sword_technique.png'};
-const GAME_VERSION = '98.2';
+const GAME_VERSION = '98.7';
 const DARK_SWORD_SAINT = {
   id:'dark_sword_saint', name:'暗黒剣聖', type:'裏ボス', img:'assets/enemy_dark_sword_saint.png', element:'dark',
   hp:32000, atk:260, def:95, xp:2600, gold:5000, bossChance:0, enemySkill:'暗黒斬'
@@ -2823,7 +2823,7 @@ window.addEventListener('resize', v952FinalFixes);
 
 /* v95.9: debug reset double-confirm prevention + final version badge */
 (function(){
-  const BUILD_TEXT = 'ver.95.9';
+  const BUILD_TEXT = 'ver.98.7';
   function forceBuildBadge(){
     document.querySelectorAll('.build-version,.fixed-build-version').forEach(el=>{ el.textContent = BUILD_TEXT; });
     document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent = 'Build: ' + BUILD_TEXT; });
@@ -2862,7 +2862,7 @@ window.addEventListener('resize', v952FinalFixes);
 
 /* v97: red unique gear, humble ring, debug grants, natural regen options */
 (function(){
-  const BUILD_TEXT = 'ver.98.2';
+  const BUILD_TEXT = 'ver.98.7';
   function v97uuid(){ try{return crypto.randomUUID();}catch(_){return 'v97_'+Math.random().toString(36).slice(2)+Date.now();} }
   function legendaryRarity(){ return (rarities.find(r=>r.id==='legendary') || rarities[rarities.length-1]); }
   function addBuild97(){
@@ -3067,8 +3067,8 @@ window.addEventListener('resize', v952FinalFixes);
 /* v97.1: dark sword saint progression, 100-win guarantee, no-loss flee */
 (function(){
   function forceV971Ui(){
-    document.querySelectorAll('.build-version,.fixed-build-version').forEach(el=>{ el.textContent='ver.97.2'; });
-    document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent='Build: ver.98.2'; });
+    document.querySelectorAll('.build-version,.fixed-build-version').forEach(el=>{ el.textContent='ver.98.7'; });
+    document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent='Build: ver.98.7'; });
     const modal=document.getElementById('fleeModal');
     if(modal){
       const p=modal.querySelector('p');
@@ -3083,8 +3083,8 @@ window.addEventListener('resize', v952FinalFixes);
 /* v97.2: force flee visibility and remove legacy strongest debug controls */
 (function(){
   function applyV972Fixes(){
-    document.querySelectorAll('.build-version,.fixed-build-version').forEach(el=>{ el.textContent='ver.97.2'; });
-    document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent='Build: ver.98.2'; });
+    document.querySelectorAll('.build-version,.fixed-build-version').forEach(el=>{ el.textContent='ver.98.7'; });
+    document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent='Build: ver.98.7'; });
     const oldSword=document.getElementById('debugBestSword'); if(oldSword) oldSword.remove();
     const oldAcc=document.getElementById('debugBestAccessory'); if(oldAcc) oldAcc.remove();
     const battle=document.querySelector('.battle-panel') || document.body;
@@ -3111,7 +3111,7 @@ window.addEventListener('resize', v952FinalFixes);
 
 /* v97.3: real lock, warehouse filters, humility protection */
 (function(){
-  const BUILD='97.3';
+  const BUILD = '98.7';
   function byId(id){ return document.getElementById(id); }
   function updateBuild973(){
     document.querySelectorAll('.build-version,.fixed-build-version').forEach(el=>{ el.textContent='ver.'+BUILD; });
@@ -3361,7 +3361,7 @@ window.addEventListener('resize', v952FinalFixes);
 
 /* v97.4: Dark Sword Saint independent level, cutin preload, streak notice, flee layout */
 (function(){
-  const BUILD='97.4';
+  const BUILD = '98.7';
   function updateBuild974(){
     document.querySelectorAll('.build-version,.fixed-build-version').forEach(el=>{ el.textContent='ver.'+BUILD; });
     document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent='Build: ver.'+BUILD; });
@@ -3488,7 +3488,7 @@ window.addEventListener('resize', v952FinalFixes);
 
 /* v98: dark equipment set expansion */
 (function(){
-  const BUILD='98';
+  const BUILD = '98.7';
   function legendaryRarity98(){ return (rarities.find(r=>r.id==='legendary') || rarities[rarities.length-1]); }
   function darkBase98(slot, levelOverride){
     const lv = Math.max(1, Math.floor(levelOverride || state.level || 1));
@@ -3664,7 +3664,7 @@ window.addEventListener('resize', v952FinalFixes);
 
 /* v98.2: real UI tabs, log filters, dark equipment debug grant, dark saint HP0 watchdog, defeat status clear */
 (function(){
-  const BUILD = '98.2';
+  const BUILD = '98.7';
   function safe(fn){ try{return fn();}catch(e){ console.warn('[v98.2]', e); } }
   function updateBuild982(){
     document.querySelectorAll('.build-version,.fixed-build-version').forEach(el=>{ el.textContent='ver.'+BUILD; });
@@ -3816,3 +3816,195 @@ window.addEventListener('resize', v952FinalFixes);
   window.addEventListener('load', boot982);
   setInterval(()=>{ boot982(); darkHp0Watchdog(); }, 1000);
 })();
+
+
+/* v98.7: latest-build guard, debug dark equipment root fix, mobile tap hard fix */
+(function(){
+  const LATEST_BUILD = '98.7';
+  window.__LATEST_BUILD__ = LATEST_BUILD;
+
+  function setLatestVersion(){
+    document.querySelectorAll('.build-version,.fixed-build-version').forEach(el=>{ el.textContent = 'ver.' + LATEST_BUILD; });
+    document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent = 'Build: ver.' + LATEST_BUILD; });
+    const fixed = document.getElementById('fixedBuildVersion');
+    if(fixed) fixed.textContent = 'ver.' + LATEST_BUILD;
+  }
+
+  function _uuid(){
+    try{ return crypto.randomUUID(); }catch(e){ return 'dark_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8); }
+  }
+
+  function _legendary(){
+    return (rarities.find(r=>r.id==='legendary') || rarities[rarities.length-1]);
+  }
+
+  function makeDarkEquipV987(name, levelOverride){
+    const lv = Math.max(1, Math.floor(levelOverride || state.level || 1));
+    const legendary = _legendary();
+    const slotMap = {
+      '闇の聖剣':'武器',
+      '闇の盾':'盾',
+      '闇のアミュレット':'アミュレット',
+      '闇の鎧':'鎧',
+      '闇の籠手':'腕',
+      '闇の兜':'兜',
+      '暗黒の靴':'足'
+    };
+    const slot = slotMap[name] || 'リング';
+    let it;
+    if(name === '闇の聖剣' && typeof makeDarkHolySword === 'function') return makeDarkHolySword(lv);
+    if(name === '闇の盾' && typeof makeDarkShield === 'function') return makeDarkShield(lv);
+    if(name === '闇のアミュレット' && typeof makeDarkAmulet === 'function') return makeDarkAmulet(lv);
+    it = makeItem(slot, legendary, {isBossDrop:true});
+    it.id = _uuid();
+    it.name = name;
+    it.rarity = 'legendary';
+    it.rarityName = 'レジェンダリー';
+    it.specialFrame = 'darkholy';
+    it.level = it.level || 0;
+    it.darkEquip = true;
+    if(name === '闇の鎧'){
+      it.darkArmor = true;
+      it.def = Math.floor((24 + lv * 6) * legendary.mult);
+      it.hp = Math.floor((120 + lv * 22) * legendary.mult);
+      it.damageReduce = Math.max(it.damageReduce||0, 0.25);
+      it.darkArmorRegen = 0.02;
+      it.darkBleedMaxOverride = 20;
+      it.flavor = '被ダメージ25%軽減。1秒ごとにHP2%回復。暗黒出血を最大20スタックまで減少。';
+    } else if(name === '闇の籠手'){
+      it.darkGauntlets = true;
+      it.def = Math.floor((14 + lv * 4) * legendary.mult);
+      it.atk = Math.floor((18 + lv * 5) * legendary.mult);
+      it.deathDanceCountBonus = 2;
+      it.flavor = '死線の剣舞時、剣舞発動回数+2。';
+    } else if(name === '闇の兜'){
+      it.darkHelm = true;
+      it.def = Math.floor((18 + lv * 5) * legendary.mult);
+      it.hp = Math.floor((80 + lv * 15) * legendary.mult);
+      it.deathDanceChance = 0.10;
+      it.clearBleedOnEquip = true;
+      it.preventBleedDuringDance = true;
+      it.flavor = '死線の剣舞発動率+10%。出血・暗黒出血解除。剣舞中は出血・暗黒出血を受けない。';
+    } else if(name === '暗黒の靴'){
+      it.darkBoots = true;
+      it.def = Math.floor((12 + lv * 4) * legendary.mult);
+      it.hp = Math.floor((70 + lv * 13) * legendary.mult);
+      it.evasion = Math.max(it.evasion||0, 0.25);
+      it.lowHpEvasion = Math.max(it.lowHpEvasion||0, 0.25);
+      it.flavor = '回避率+25%。HP半分以下でさらに+25%。';
+    }
+    return it;
+  }
+
+  window.makeDarkArmor = window.makeDarkArmor || function(levelOverride){ return makeDarkEquipV987('闇の鎧', levelOverride); };
+  window.makeDarkGauntlets = window.makeDarkGauntlets || function(levelOverride){ return makeDarkEquipV987('闇の籠手', levelOverride); };
+  window.makeDarkHelm = window.makeDarkHelm || function(levelOverride){ return makeDarkEquipV987('闇の兜', levelOverride); };
+  window.makeDarkBoots = window.makeDarkBoots || function(levelOverride){ return makeDarkEquipV987('暗黒の靴', levelOverride); };
+
+  const DARK_NAMES = ['闇の聖剣','闇の盾','闇のアミュレット','闇の鎧','闇の籠手','闇の兜','暗黒の靴'];
+
+  function grantDarkEquip(name){
+    const it = makeDarkEquipV987(name, state.level);
+    state.inventory.unshift(it);
+    renderAll();
+    scheduleSave();
+    log('デバッグ：' + name + 'を倉庫に追加。','good');
+  }
+
+  function grantDarkSet(){
+    DARK_NAMES.slice().reverse().forEach(name => state.inventory.unshift(makeDarkEquipV987(name, state.level)));
+    renderAll();
+    scheduleSave();
+    log('デバッグ：闇装備セット7種を倉庫に追加。','good');
+  }
+
+  window.grantDarkEquipLatest = grantDarkEquip;
+  window.grantDarkSetLatest = grantDarkSet;
+
+  function installLatestDebugButtons(){
+    const panel = document.getElementById('debugPanel');
+    if(!panel) return;
+    const old = document.getElementById('latestDarkDebugBox');
+    if(old) return;
+
+    const box = document.createElement('div');
+    box.id = 'latestDarkDebugBox';
+    box.className = 'debug-latest-dark-box';
+    box.style.cssText = 'margin:8px 0;padding:8px;border:1px solid rgba(185,120,255,.8);border-radius:8px;background:rgba(30,0,45,.55);display:flex;gap:6px;flex-wrap:wrap;';
+    box.innerHTML = '<div style="width:100%;font-weight:700;color:#e5c3ff;">最新版 闇装備付与</div>';
+
+    const setBtn = document.createElement('button');
+    setBtn.type = 'button';
+    setBtn.textContent = '闇装備セット7種';
+    setBtn.dataset.latestDarkSet = '1';
+    box.appendChild(setBtn);
+
+    DARK_NAMES.forEach(name=>{
+      const b=document.createElement('button');
+      b.type='button';
+      b.textContent=name;
+      b.dataset.latestDarkEquip=name;
+      box.appendChild(b);
+    });
+
+    const close = document.getElementById('debugClose');
+    if(close && close.parentNode) close.parentNode.insertBefore(box, close);
+    else panel.appendChild(box);
+  }
+
+  document.addEventListener('pointerup', function(e){
+    const set = e.target.closest?.('[data-latest-dark-set]');
+    const eq = e.target.closest?.('[data-latest-dark-equip]');
+    if(set){
+      e.preventDefault(); e.stopPropagation();
+      grantDarkSet();
+      return;
+    }
+    if(eq){
+      e.preventDefault(); e.stopPropagation();
+      grantDarkEquip(eq.dataset.latestDarkEquip);
+      return;
+    }
+  }, true);
+
+  function hardTouchFix(){
+    if(!isTouchDevice || !isTouchDevice()) return;
+    document.querySelectorAll('#debugPanel button,#debugPanel input,#debugPanel label,.mobile-menu-tabs button,#equipToggleBtn,#debugBtn,#muteBtn,#fleeBtn,#fleeOkBtn,#fleeCancelBtn').forEach(el=>{
+      if(el.__latestTouchFix) return;
+      el.__latestTouchFix = true;
+      el.style.pointerEvents = 'auto';
+      el.style.touchAction = 'manipulation';
+      el.addEventListener('touchend', function(e){
+        if(e.target.closest?.('[data-latest-dark-set],[data-latest-dark-equip]')) return;
+        try{ e.preventDefault(); e.stopPropagation(); }catch(_e){}
+        setTimeout(()=>{ try{ el.click(); }catch(_e){} },0);
+      }, {passive:false});
+    });
+    if(els && els.debugPanel){
+      els.debugPanel.style.pointerEvents = els.debugPanel.classList.contains('hidden') ? 'none' : 'auto';
+      els.debugPanel.style.maxHeight = 'calc(100dvh - 96px)';
+      els.debugPanel.style.overflowY = 'auto';
+      els.debugPanel.style.webkitOverflowScrolling = 'touch';
+      els.debugPanel.style.paddingBottom = '96px';
+    }
+    if(els && els.sidePanel){
+      els.sidePanel.style.maxHeight = 'calc(100dvh - 96px)';
+      els.sidePanel.style.overflowY = 'auto';
+      els.sidePanel.style.webkitOverflowScrolling = 'touch';
+      els.sidePanel.style.paddingBottom = '96px';
+    }
+  }
+
+  function latestLoop(){
+    setLatestVersion();
+    installLatestDebugButtons();
+    hardTouchFix();
+  }
+
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', latestLoop);
+  else latestLoop();
+  window.addEventListener('load', latestLoop);
+  window.addEventListener('resize', latestLoop);
+  setInterval(latestLoop, 500);
+})();
+
