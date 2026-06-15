@@ -4458,10 +4458,10 @@ window.addEventListener('resize', v952FinalFixes);
 })();
 
 
-/* ver.99.1 final stability patch: layout, logs, dark saint, dark equips */
+/* ver.99.2 final stability patch: layout, logs, dark saint, dark equips */
 (function(){
   'use strict';
-  const BUILD='99.1';
+  const BUILD='99.2';
   const DARK_NAMES=['闇の聖剣','闇の盾','闇のアミュレット','闇の鎧','闇の籠手','闇の兜','暗黒の靴'];
   const LOG_LABELS={all:'すべて',damage:'ダメージ',system:'システム',drop:'ドロップ'};
   function safe(fn){try{return fn();}catch(e){console.warn('[99.1]',e);}}
@@ -4616,4 +4616,194 @@ window.addEventListener('resize', v952FinalFixes);
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot991); else boot991();
   window.addEventListener('load',boot991); window.addEventListener('resize',boot991);
   setInterval(()=>{boot991(); darkDeadFinalize991();},700);
+})();
+
+/* ver.99.2 confirmed bugfix: dark saint transition, dark dance reset, debug dark equips, log filters, labels */
+(function(){
+  'use strict';
+  const BUILD='99.2';
+  const DARK_NAMES=['闇の聖剣','闇の盾','闇のアミュレット','闇の鎧','闇の籠手','闇の兜','暗黒の靴'];
+  const LOG_LABELS={all:'すべて',damage:'ダメージ',system:'システム',drop:'ドロップ'};
+  function byId(id){return document.getElementById(id);}
+  function safe(fn){try{return fn();}catch(e){console.warn('[99.2]',e);}}
+  function updateVersion992(){
+    document.querySelectorAll('.build-version,.fixed-build-version').forEach(e=>e.textContent='ver.'+BUILD);
+    document.querySelectorAll('.debug-version').forEach(e=>e.textContent='Build: ver.'+BUILD);
+    const f=byId('fixedBuildVersion'); if(f) f.textContent='ver.'+BUILD;
+  }
+  function rawText(x){return String(x||'').replace(/<[^>]*>/g,'');}
+  function classifyLog992(entry){
+    const msg=rawText(entry&&entry.msg!==undefined?entry.msg:entry);
+    const cls=String((entry&&entry.cls)||'');
+    if(/装備ドロップ|ドロップ|討伐報酬|報酬|付与|強化石|獲得|倉庫|経験値化/.test(msg)) return 'drop';
+    if(/\d+ダメージ|攻撃|斬撃|剣舞|暗黒剣舞|暗黒剣技|出血|暗黒出血|火傷|反射|回復|GUARD|MISS|吸収|不発|撃破/.test(msg) || /damage|danger|skilllog|fire|dark/.test(cls)) return 'damage';
+    return 'system';
+  }
+  function renderLog992(){
+    const logEl=byId('log');
+    if(!logEl || !Array.isArray(state.log)) return;
+    const filter=state.logFilter||'all';
+    const rows=state.log.filter(l=>filter==='all' || (l.type||classifyLog992(l))===filter);
+    logEl.innerHTML=rows.map(l=>`<div class="${l.cls||''}">[${l.time||''}] ${l.msg||''}</div>`).join('');
+    document.querySelectorAll('#logFilterBar button,#logFilterTabs button,[data-log-filter]').forEach(b=>{
+      if(b.dataset&&b.dataset.logFilter) b.classList.toggle('active',(b.dataset.logFilter||'all')===filter);
+    });
+  }
+  function ensureLogFilter992(){
+    const logEl=byId('log'); if(!logEl) return;
+    const panel=logEl.closest('.log-panel') || logEl.parentElement;
+    if(!panel) return;
+    let bar=byId('logFilterBar');
+    if(!bar){ bar=document.createElement('div'); bar.id='logFilterBar'; bar.className='log-filter-bar'; panel.insertBefore(bar,logEl); }
+    bar.innerHTML=Object.entries(LOG_LABELS).map(([k,v])=>`<button type="button" data-log-filter="${k}">${v}</button>`).join('');
+    renderLog992();
+  }
+  function onLogFilter992(e){
+    const b=e.target.closest&&e.target.closest('#logFilterBar button,#logFilterTabs button,[data-log-filter]');
+    if(!b || !b.dataset || !b.dataset.logFilter) return;
+    e.preventDefault(); e.stopPropagation(); if(e.stopImmediatePropagation) e.stopImmediatePropagation();
+    state.logFilter=b.dataset.logFilter||'all';
+    renderLog992();
+  }
+  document.addEventListener('click',onLogFilter992,true);
+  document.addEventListener('pointerup',onLogFilter992,{capture:true,passive:false});
+  const baseLog992 = (typeof log==='function') ? log : null;
+  window.log = log = function(msg, cls='', html=false){
+    const time=new Date().toLocaleTimeString('ja-JP',{hour12:false});
+    const safeMsg=html?msg:(typeof escapeHtml==='function'?escapeHtml(msg):String(msg));
+    state.log.unshift({time,msg:safeMsg,cls,html:true,type:classifyLog992({msg,cls})});
+    state.log=state.log.slice(0,200);
+    renderLog992();
+  };
+
+  function resetHeroDeathDance992(){
+    state.deathDanceBattleCount=0;
+    state.deathDanceComboCount=0;
+    state.deathDance=false;
+    state.deathDanceUntil=0;
+    const aura=byId('deathAura'); if(aura) aura.classList.add('hidden');
+    const stat=byId('deathDanceStatus'); if(stat) stat.classList.add('hidden');
+    safe(()=>renderBattle&&renderBattle());
+    safe(()=>renderStatusLists&&renderStatusLists());
+  }
+  if(typeof tryDarkSwordDanceRevive==='function'){
+    const baseTry=tryDarkSwordDanceRevive;
+    window.tryDarkSwordDanceRevive = tryDarkSwordDanceRevive = function(){
+      const before=(state.enemyStatuses&&state.enemyStatuses.darkDanceCount)||0;
+      const result=baseTry.apply(this,arguments);
+      const after=(state.enemyStatuses&&state.enemyStatuses.darkDanceCount)||0;
+      if(result || after>before){
+        resetHeroDeathDance992();
+        safe(()=>log('暗黒剣舞：主人公の死線の剣舞発動回数をリセット。','danger'));
+      }
+      return result;
+    };
+  }
+  if(typeof showDarkSwordDanceCutin==='function'){
+    const baseShow=showDarkSwordDanceCutin;
+    window.showDarkSwordDanceCutin = showDarkSwordDanceCutin = function(){
+      resetHeroDeathDance992();
+      return baseShow.apply(this,arguments);
+    };
+  }
+  if(typeof finishDarkSwordDanceRevive==='function'){
+    const baseFinish=finishDarkSwordDanceRevive;
+    window.finishDarkSwordDanceRevive = finishDarkSwordDanceRevive = function(){
+      resetHeroDeathDance992();
+      return baseFinish.apply(this,arguments);
+    };
+  }
+
+  function rarity992(){return (typeof rarities!=='undefined'&&rarities.find(r=>r.id==='legendary')) || {id:'legendary',name:'レジェンダリー',mult:3.2,color:'#b06cff'};}
+  function slotOf992(name){return {'闇の聖剣':'武器','闇の盾':'盾','闇のアミュレット':'アミュレット','闇の鎧':'鎧','闇の籠手':'腕','闇の兜':'兜','暗黒の靴':'足'}[name]||'リング';}
+  function baseDarkItem992(name,lv){
+    lv=Math.max(1,Math.floor(lv||state.level||1));
+    const r=rarity992();
+    let it;
+    if(typeof makeItem==='function') it=makeItem(slotOf992(name),r,{isBossDrop:true});
+    else it={id:'dark_'+Date.now()+'_'+Math.random().toString(16).slice(2),slot:slotOf992(name),level:0};
+    Object.assign(it,{name,rarity:'legendary',rarityName:'レジェンダリー',specialFrame:'darkholy',darkEquip:true,level:it.level||0});
+    return {it,lv,mult:r.mult||3.2};
+  }
+  function makeDark992(name,lv){
+    lv=Math.max(1,Math.floor(lv||state.level||1));
+    if(name==='闇の聖剣' && typeof makeDarkHolySword==='function') return makeDarkHolySword(lv);
+    if(name==='闇の盾' && typeof makeDarkShield==='function') return makeDarkShield(lv);
+    if(name==='闇のアミュレット' && typeof makeDarkAmulet==='function') return makeDarkAmulet(lv);
+    const o=baseDarkItem992(name,lv), it=o.it, mult=o.mult;
+    if(name==='闇の鎧') Object.assign(it,{def:Math.floor((28+lv*6)*mult),hp:Math.floor((120+lv*22)*mult),darkArmor:true,darkDamageReduce:.25,darkRegenPerSecond:.02,darkBleedMax:20,flavor:'被ダメージ25%軽減。1秒ごとに最大HP2%回復。暗黒出血を最大20スタックへ抑える。'});
+    if(name==='闇の籠手') Object.assign(it,{atk:Math.floor((22+lv*5)*mult),def:Math.floor((12+lv*4)*mult),hp:Math.floor((55+lv*10)*mult),darkGauntlets:true,deathDanceCountBonus:2,flavor:'死線の剣舞発動時、剣舞発動回数+2。'});
+    if(name==='闇の兜') Object.assign(it,{def:Math.floor((18+lv*5)*mult),hp:Math.floor((80+lv*15)*mult),darkHelm:true,deathDanceChance:.10,preventBleedDuringDance:true,flavor:'死線の剣舞発動率+10%。出血・暗黒出血解除。剣舞中は出血系を受けない。'});
+    if(name==='暗黒の靴') Object.assign(it,{def:Math.floor((12+lv*4)*mult),hp:Math.floor((70+lv*13)*mult),darkBoots:true,evasion:.25,lowHpEvasion:.25,flavor:'回避率+25%。HP半分以下でさらに+25%。'});
+    return it;
+  }
+  window.makeDarkArmor=function(lv){return makeDark992('闇の鎧',lv);};
+  window.makeDarkGauntlets=function(lv){return makeDark992('闇の籠手',lv);};
+  window.makeDarkHelm=function(lv){return makeDark992('闇の兜',lv);};
+  window.makeDarkBoots=function(lv){return makeDark992('暗黒の靴',lv);};
+  function grantDarkItem992(name){
+    if(!DARK_NAMES.includes(name)) return;
+    state.inventory.unshift(makeDark992(name,state.level));
+    safe(()=>renderAll&&renderAll()); safe(()=>scheduleSave&&scheduleSave()); safe(()=>log('デバッグ：'+name+'を付与。','good'));
+  }
+  function grantDarkSet992(){
+    DARK_NAMES.slice().reverse().forEach(n=>state.inventory.unshift(makeDark992(n,state.level)));
+    safe(()=>renderAll&&renderAll()); safe(()=>scheduleSave&&scheduleSave()); safe(()=>log('デバッグ：闇装備7種セットを付与。','good'));
+  }
+  window.grantDarkEquipLatest=grantDarkItem992;
+  window.grantDarkSetLatest=grantDarkSet992;
+  function ensureDebugDark992(){
+    const panel=byId('debugPanel'); if(!panel) return;
+    let set=byId('debugGrantDarkSet');
+    if(!set){ set=document.createElement('button'); set.id='debugGrantDarkSet'; set.type='button'; set.textContent='闇装備7種セット付与'; panel.insertBefore(set,byId('debugHp0Kill')||byId('debugClose')||null); }
+    let box=byId('debugGrantDarkItems');
+    if(!box){ box=document.createElement('div'); box.id='debugGrantDarkItems'; box.className='debug-grid'; panel.insertBefore(box,byId('debugHp0Kill')||byId('debugClose')||null); }
+    box.innerHTML=DARK_NAMES.map(n=>`<button type="button" data-dark992="${n}">${n}</button>`).join('');
+  }
+  function onDebugDark992(e){
+    const set=e.target.closest&&e.target.closest('#debugGrantDarkSet,[data-latest-dark-set]');
+    const item=e.target.closest&&e.target.closest('[data-dark992],[data-dark991],[data-final-dark],[data-latest-dark-equip]');
+    if(set){ e.preventDefault(); e.stopPropagation(); if(e.stopImmediatePropagation)e.stopImmediatePropagation(); grantDarkSet992(); return; }
+    if(item){ e.preventDefault(); e.stopPropagation(); if(e.stopImmediatePropagation)e.stopImmediatePropagation(); grantDarkItem992(item.dataset.dark992||item.dataset.dark991||item.dataset.finalDark||item.dataset.latestDarkEquip); return; }
+  }
+  document.addEventListener('click',onDebugDark992,true);
+  document.addEventListener('pointerup',onDebugDark992,{capture:true,passive:false});
+
+  const baseEnemyDefeated992=(typeof enemyDefeated==='function')?enemyDefeated:null;
+  if(baseEnemyDefeated992){
+    window.enemyDefeated = enemyDefeated = function(){
+      if(state.__enemyDefeatedRunning992) return;
+      const wasDark=state.enemy&&state.enemy.id==='dark_sword_saint';
+      state.__enemyDefeatedRunning992=true;
+      let result;
+      try{ result=baseEnemyDefeated992.apply(this,arguments); }
+      finally{ setTimeout(()=>{state.__enemyDefeatedRunning992=false;},300); }
+      if(wasDark){
+        setTimeout(()=>{
+          if(!state.enemy){ safe(()=>spawnEnemy&&spawnEnemy()); }
+        },1400);
+      }
+      return result;
+    };
+  }
+  function forceFinalizeDark992(){
+    if(!state.enemy || state.enemy.id!=='dark_sword_saint') return;
+    if(state.enemyHp>0) return;
+    const reviving=state.enemyStatuses && (state.enemyStatuses.darkRevivingUntil||0)>performance.now();
+    if(reviving || state.deathDanceCutin || state.darkSwordCutinActive) return;
+    if(state.__darkFinalize992) return;
+    state.__darkFinalize992=true;
+    safe(()=>{ if(state.enemyStatuses){ state.enemyStatuses.darkDeadConfirmed=true; state.enemyStatuses.darkRevivingUntil=0; state.enemyStatuses.darkReviveStart=0; state.enemyStatuses.bleeds=[]; state.enemyStatuses.darkBleeds=[]; }});
+    safe(()=>clearDarkSwordTimers&&clearDarkSwordTimers()); safe(()=>hideDeathDanceCutin&&hideDeathDanceCutin());
+    state.enemyHp=0; if(state.enemy){ state.enemy.dead=true; state.enemy.defeated=true; }
+    state.darkSwordCutinActive=false; state.deathDanceCutin=false;
+    setTimeout(()=>{ safe(()=>enemyDefeated&&enemyDefeated()); setTimeout(()=>{state.__darkFinalize992=false; if(!state.enemy) safe(()=>spawnEnemy&&spawnEnemy());},1600); },50);
+  }
+  function fixUpgradeLabels992(){
+    document.querySelectorAll('button').forEach(b=>{ if((b.textContent||'').trim()==='強化選択') b.textContent='強化'; });
+  }
+  function boot992(){ updateVersion992(); ensureLogFilter992(); ensureDebugDark992(); fixUpgradeLabels992(); renderLog992(); }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot992); else boot992();
+  window.addEventListener('load',boot992); window.addEventListener('resize',boot992);
+  setInterval(()=>{boot992(); forceFinalizeDark992();},500);
 })();
