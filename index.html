@@ -13,10 +13,10 @@
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
 </head>
 <body>
-  <div id="fixedBuildVersion" class="fixed-build-version">ver.98.7</div>
+  <div id="fixedBuildVersion" class="fixed-build-version">ver.99.0</div>
   <div id="game">
     <header class="topbar">
-      <div class="brand">ミニブラウザヒーロー <span class="build-version">ver.98.7</span></div>
+      <div class="brand">ミニブラウザヒーロー <span class="build-version">ver.99.0</span></div>
       <div class="resources"><b id="mats">0</b> 強化石</div>
       <div class="controls">
         <button id="equipToggleBtn">メニュー</button>
@@ -59,7 +59,7 @@
           <div id="heroStatusList" class="status-list" aria-label="主人公の状態"></div>
         </div>
         <div class="expbar"><div id="expFill"></div><span id="expLabel">Lv.1 EXP 0 / 80</span><b id="expGainLabel">+0</b></div>
-        <button id="fleeBtn" class="flee-btn" type="button">戦闘から逃げる</button>
+        <button id="fleeBtn" class="flee-btn" type="button" aria-label="戦闘から逃げる" title="戦闘から逃げる">🏃</button>
       </section>
 
       <aside class="side-panel">
@@ -129,7 +129,22 @@
         <button id="debugDarkSwordSaint">暗黒剣聖を強制召喚</button>
         <label><input id="debugKillEnemy" type="checkbox"> 敵への攻撃で即死</label>
         <label><input id="debugKillHero" type="checkbox"> 敵からの攻撃で即死</label>
-        <div class="debug-version">Build: ver.98.7.2</div>
+
+        <div class="debug-section-title">最新版デバッグ</div>
+        <button id="debugDarkSet" type="button">闇装備7種セット付与</button>
+        <button id="debugDarkSword" type="button">闇の聖剣付与</button>
+        <button id="debugDarkShield" type="button">闇の盾付与</button>
+        <button id="debugDarkAmulet" type="button">闇のアミュレット付与</button>
+        <button id="debugDarkArmor" type="button">闇の鎧付与</button>
+        <button id="debugDarkGauntlets" type="button">闇の籠手付与</button>
+        <button id="debugDarkHelm" type="button">闇の兜付与</button>
+        <button id="debugDarkBoots" type="button">暗黒の靴付与</button>
+        <button id="debugEnemyHpZero" type="button">敵HP0即撃破</button>
+        <button id="debugForceDefeated" type="button">dead/defeated即確定</button>
+        <button id="debugClearBleeds" type="button">出血・暗黒出血解除</button>
+        <button id="debugStopDotTimers" type="button">DOTタイマー停止</button>
+        <button id="debugStopDarkDanceTimers" type="button">暗黒剣舞タイマー停止</button>
+        <div class="debug-version">Build: ver.99.0</div>
         <button id="debugClose">閉じる</button>
       </div>
   </div>
