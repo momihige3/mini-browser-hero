@@ -408,8 +408,8 @@ function bind(){
   els.debugClose.onclick = () => { els.debugPanel.classList.add('hidden'); playUiClick(); };
   if(els.debugResetData) els.debugResetData.onclick = () => { playUiClick(); resetUserData(); };
   els.debugAddChests.onclick = () => { playUiClick(); for(let i=0;i<50;i++) state.inventory.unshift(makeRandomItem()); renderAll(); log('デバッグ：装備を50個追加。','good'); scheduleSave(); };
-  els.debugBestSword.onclick = () => { playUiClick(); const it=makeDebugSword(); state.inventory.unshift(it); renderAll(); log('デバッグ：最強剣を倉庫に追加。','good'); scheduleSave(); };
-  els.debugBestAccessory.onclick = () => { playUiClick(); const a=makeDebugAccessory('リング'); const b=makeDebugAccessory('アミュレット'); state.inventory.unshift(a,b); renderAll(); log('デバッグ：最強アクセを倉庫に追加。','good'); scheduleSave(); };
+  if(els.debugBestSword) els.debugBestSword.onclick = () => { playUiClick(); const it=makeDarkHolySword ? makeDarkHolySword(state.level) : makeDebugSword(); state.inventory.unshift(it); renderAll(); log('デバッグ：闇の聖剣を倉庫に追加。','good'); scheduleSave(); };
+  if(els.debugBestAccessory) els.debugBestAccessory.onclick = () => { playUiClick(); const a=makeDarkAmulet ? makeDarkAmulet(state.level) : makeDebugAccessory('アミュレット'); state.inventory.unshift(a); renderAll(); log('デバッグ：闇のアミュレットを倉庫に追加。','good'); scheduleSave(); };
   els.debugKillEnemy.onchange = () => { state.debug.killEnemy = els.debugKillEnemy.checked; log(`デバッグ：敵への攻撃で即死 ${state.debug.killEnemy?'ON':'OFF'}`, state.debug.killEnemy?'danger':''); scheduleSave(); };
   els.debugKillHero.onchange = () => { state.debug.killHero = els.debugKillHero.checked; log(`デバッグ：敵からの攻撃で即死 ${state.debug.killHero?'ON':'OFF'}`, state.debug.killHero?'danger':''); scheduleSave(); };
   if(els.debugDarkSwordSaint) els.debugDarkSwordSaint.onclick = () => { playUiClick(); forceSpawnDarkSwordSaint(); };
@@ -2620,8 +2620,8 @@ function v94InstallTouchControls(){
   v94BindTap(byId('debugClose'), () => { els.debugPanel.classList.add('hidden'); playUiClick(); });
   v94BindTap(byId('debugResetData'), () => { playUiClick(); resetUserData(); });
   v94BindTap(byId('debugAddChests'), () => { playUiClick(); for(let i=0;i<50;i++) state.inventory.unshift(makeRandomItem()); renderAll(); log('デバッグ：装備を50個追加。','good'); scheduleSave(); });
-  v94BindTap(byId('debugBestSword'), () => { playUiClick(); const it=makeDebugSword(); state.inventory.unshift(it); renderAll(); log('デバッグ：最強剣を倉庫に追加。','good'); scheduleSave(); });
-  v94BindTap(byId('debugBestAccessory'), () => { playUiClick(); const a=makeDebugAccessory('リング'); const b=makeDebugAccessory('アミュレット'); state.inventory.unshift(a,b); renderAll(); log('デバッグ：最強アクセを倉庫に追加。','good'); scheduleSave(); });
+  if(byId('debugBestSword')) v94BindTap(byId('debugBestSword'), () => { playUiClick(); const it=makeDarkHolySword ? makeDarkHolySword(state.level) : makeDebugSword(); state.inventory.unshift(it); renderAll(); log('デバッグ：闇の聖剣を倉庫に追加。','good'); scheduleSave(); });
+  if(byId('debugBestAccessory')) v94BindTap(byId('debugBestAccessory'), () => { playUiClick(); const a=makeDarkAmulet ? makeDarkAmulet(state.level) : makeDebugAccessory('アミュレット'); state.inventory.unshift(a); renderAll(); log('デバッグ：闇のアミュレットを倉庫に追加。','good'); scheduleSave(); });
   v94BindTap(byId('debugDarkSwordSaint'), () => { playUiClick(); forceSpawnDarkSwordSaint(); });
   document.querySelectorAll('.mobile-menu-tabs button').forEach(btn=>{
     v94BindTap(btn, () => { setMenuPage(btn.dataset.menuPage); playUiClick(); });
@@ -3055,8 +3055,8 @@ window.addEventListener('resize', v952FinalFixes);
 /* v97.1: dark sword saint progression, 100-win guarantee, no-loss flee */
 (function(){
   function forceV971Ui(){
-    document.querySelectorAll('.build-version,.fixed-build-version').forEach(el=>{ el.textContent='ver.97.1'; });
-    document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent='Build: ver.97.1'; });
+    document.querySelectorAll('.build-version,.fixed-build-version').forEach(el=>{ el.textContent='ver.97.2'; });
+    document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent='Build: ver.97.2'; });
     const modal=document.getElementById('fleeModal');
     if(modal){
       const p=modal.querySelector('p');
@@ -3065,4 +3065,283 @@ window.addEventListener('resize', v952FinalFixes);
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', forceV971Ui); else forceV971Ui();
   window.addEventListener('load', forceV971Ui); setTimeout(forceV971Ui,250); setTimeout(forceV971Ui,1000);
+})();
+
+
+/* v97.2: force flee visibility and remove legacy strongest debug controls */
+(function(){
+  function applyV972Fixes(){
+    document.querySelectorAll('.build-version,.fixed-build-version').forEach(el=>{ el.textContent='ver.97.2'; });
+    document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent='Build: ver.97.2'; });
+    const oldSword=document.getElementById('debugBestSword'); if(oldSword) oldSword.remove();
+    const oldAcc=document.getElementById('debugBestAccessory'); if(oldAcc) oldAcc.remove();
+    const battle=document.querySelector('.battle-panel') || document.body;
+    let btn=document.getElementById('fleeBtn');
+    if(!btn){
+      btn=document.createElement('button');
+      btn.id='fleeBtn'; btn.className='flee-btn'; btn.type='button'; btn.textContent='戦闘から逃げる';
+      battle.appendChild(btn);
+    }
+    btn.style.display='block'; btn.style.visibility='visible'; btn.style.opacity='1'; btn.style.pointerEvents='auto';
+    if(!btn.__v972Bound){
+      const run=(e)=>{ if(e){ e.preventDefault(); e.stopPropagation(); } try{ playUiClick && playUiClick(); }catch(_){} if(typeof confirmFlee==='function') confirmFlee(); };
+      btn.addEventListener('pointerup', run, {passive:false});
+      btn.addEventListener('touchend', run, {passive:false});
+      btn.addEventListener('click', run, {passive:false});
+      btn.__v972Bound=true;
+    }
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', applyV972Fixes); else applyV972Fixes();
+  window.addEventListener('load', applyV972Fixes);
+  setTimeout(applyV972Fixes,250);
+  setTimeout(applyV972Fixes,1000);
+})();
+
+/* v97.3: real lock, warehouse filters, humility protection */
+(function(){
+  const BUILD='97.3';
+  function byId(id){ return document.getElementById(id); }
+  function updateBuild973(){
+    document.querySelectorAll('.build-version,.fixed-build-version').forEach(el=>{ el.textContent='ver.'+BUILD; });
+    document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent='Build: ver.'+BUILD; });
+  }
+  function normalizeProtectItem(it){
+    if(!it) return it;
+    if(it.name === '謙虚の指輪' || it.humbleRing){
+      it.humbleRing = true;
+      it.unsellable = true;
+      if(it.locked == null) it.locked = true;
+      it.specialFrame = it.specialFrame || 'darkholy';
+    }
+    return it;
+  }
+  function normalizeAllLocks(){
+    Object.values(state.equip||{}).forEach(normalizeProtectItem);
+    (state.inventory||[]).forEach(normalizeProtectItem);
+  }
+  const oldEnsureStarter973 = window.ensureStarterEquipment || (typeof ensureStarterEquipment==='function' ? ensureStarterEquipment : null);
+  if(oldEnsureStarter973){
+    window.ensureStarterEquipment = ensureStarterEquipment = function(){
+      const r = oldEnsureStarter973.apply(this, arguments);
+      normalizeAllLocks();
+      return r;
+    };
+  }
+  function ensureInventoryFilterUi(){
+    const panel=document.querySelector('.inventory-panel');
+    const inv=byId('inventory');
+    if(!panel || !inv) return;
+    let bar=byId('inventoryFilterBar');
+    if(!bar){
+      bar=document.createElement('div');
+      bar.id='inventoryFilterBar';
+      bar.className='inventory-filter-bar';
+      bar.innerHTML=`<label>表示 <select id="inventoryFilterSelect">
+        <option value="all">全て</option>
+        <option value="weapon">武器</option>
+        <option value="armor">防具</option>
+        <option value="shield">盾</option>
+        <option value="ring">指輪</option>
+        <option value="amulet">アミュレット</option>
+        <option value="normal">ノーマル</option>
+        <option value="rare">レア</option>
+        <option value="legendary">レジェンダリー</option>
+        <option value="purple">紫枠</option>
+        <option value="red">赤枠</option>
+        <option value="locked">ロック中</option>
+        <option value="unlocked">未ロック</option>
+      </select></label>`;
+      panel.insertBefore(bar, inv);
+      const sel=bar.querySelector('select');
+      sel.value = state.inventoryFilter || 'all';
+      sel.addEventListener('change', ()=>{ state.inventoryFilter=sel.value; cancelInventoryActionMenu?.(); renderInventory(); scheduleSave?.(); });
+    }
+  }
+  function passesInventoryFilter(it){
+    const f=state.inventoryFilter || 'all';
+    if(f==='all') return true;
+    if(f==='weapon') return it.slot==='武器';
+    if(f==='armor') return it.slot==='鎧' || it.slot==='防具';
+    if(f==='shield') return it.slot==='盾';
+    if(f==='ring') return it.slot==='リング';
+    if(f==='amulet') return it.slot==='アミュレット';
+    if(f==='normal') return it.rarity==='normal';
+    if(f==='rare') return it.rarity==='rare';
+    if(f==='legendary') return it.rarity==='legendary';
+    if(f==='purple') return it.specialFrame==='darkholy';
+    if(f==='red') return it.specialFrame==='redunique';
+    if(f==='locked') return !!it.locked;
+    if(f==='unlocked') return !it.locked;
+    return true;
+  }
+  function lockedLabel(it){ return it?.locked ? '🔒 ' : ''; }
+  const oldSummary973 = itemSummary;
+  itemSummary = window.itemSummary = function(it){
+    let s = oldSummary973.apply(this, arguments);
+    if(it?.locked) s = (s ? s + ' / ' : '') + 'ロック中：経験値化対象外';
+    return s;
+  };
+  function canExpConvert(it){ return !!it && !it.unsellable && !it.locked; }
+  const oldSellExpValue973 = sellExpValue;
+  sellExpValue = window.sellExpValue = function(it){ return oldSellExpValue973.apply(this, arguments); };
+  selectedSellRarities = window.selectedSellRarities = function(){
+    const targets=[];
+    if(els.sellNormalChk?.checked) targets.push('normal');
+    if(els.sellRareChk?.checked) targets.push('rare');
+    if(els.sellLegendaryChk?.checked) targets.push('legendary');
+    return targets;
+  };
+  updateSellButtonState = window.updateSellButtonState = function(){
+    if(!els.sellSelectedBtn) return;
+    const targets=selectedSellRarities();
+    const count=(state.inventory||[]).filter(it=>targets.includes(it.rarity) && canExpConvert(it)).length;
+    els.sellSelectedBtn.disabled = targets.length===0;
+    els.sellSelectedBtn.textContent = `経験値化 (${count})`;
+  };
+  sellSelectedRarities = window.sellSelectedRarities = function(){
+    const targets=selectedSellRarities();
+    if(targets.length===0){ log('経験値化対象のレアリティを選択して。','danger'); return; }
+    const soldItems=(state.inventory||[]).filter(it=>targets.includes(it.rarity) && canExpConvert(it));
+    state.inventory=(state.inventory||[]).filter(it=>!(targets.includes(it.rarity) && canExpConvert(it)));
+    const gainedXp=soldItems.reduce((sum,it)=>sum+sellExpValue(it),0);
+    const label=targets.map(r=>(rarities.find(x=>x.id===r)?.name||r)).join('・');
+    if(els.tooltip) els.tooltip.classList.add('hidden');
+    if(soldItems.length){
+      state.xp += gainedXp; state.lastXpGain = gainedXp;
+      log(`${label}装備を${soldItems.length}個経験値化し、経験値+${gainedXp.toLocaleString()}。`,'good');
+      checkLevelUp();
+    }else{
+      log(`${label}装備に経験値化できるものがない。`, '');
+    }
+    renderAll(); scheduleSave?.();
+  };
+  equipItem = window.equipItem = function(it){
+    if(!it) return;
+    normalizeProtectItem(it);
+    state.inventoryMenuItemId = null;
+    const actionMenu=byId('inventoryActionMenu'); if(actionMenu) actionMenu.remove();
+    const idx=(state.inventory||[]).findIndex(x=>x.id===it.id); if(idx>=0) state.inventory.splice(idx,1);
+    if(state.equip[it.slot]) state.inventory.unshift(state.equip[it.slot]);
+    state.equip[it.slot]=it; state.hp=Math.min(state.hp,maxHp()); log(`${it.name} を装備。`,'good'); renderAll(); scheduleSave?.();
+  };
+  bestEquip = window.bestEquip = function(){
+    let changed=0;
+    [...(state.inventory||[])].forEach(it=>{
+      normalizeProtectItem(it);
+      if((it.name==='謙虚の指輪' || it.humbleRing) && !(state.equip[it.slot] && (state.equip[it.slot].name==='謙虚の指輪' || state.equip[it.slot].humbleRing))) return;
+      if(!state.equip[it.slot] || itemPower(it)>itemPower(state.equip[it.slot])){ equipItem(it); changed++; }
+    });
+    log(`最強装備を一括装備（${changed}件）。`,'good'); renderAll();
+  };
+  function toggleLockItem(it){
+    if(!it) return;
+    normalizeProtectItem(it);
+    if(it.unsellable || it.name==='謙虚の指輪' || it.humbleRing){
+      it.locked=true;
+      log(`${it.name} は保護装備のためロック固定。`,'good');
+    }else{
+      it.locked = !it.locked;
+      log(`${it.name} を${it.locked?'ロック':'ロック解除'}。`, it.locked?'good':'');
+    }
+    cancelInventoryActionMenu?.(); renderAll(); scheduleSave?.();
+  }
+  renderInventory = window.renderInventory = function(){
+    normalizeAllLocks();
+    ensureInventoryFilterUi();
+    const inv=els.inventory; if(!inv) return;
+    inv.innerHTML='';
+    const selectedId=state.inventoryMenuItemId;
+    const shown=(state.inventory||[]).filter(passesInventoryFilter);
+    if(!shown.length){
+      const empty=document.createElement('div'); empty.className='inventory-empty'; empty.textContent='表示できる装備がない'; inv.appendChild(empty);
+    }
+    shown.forEach(it=>{
+      const div=document.createElement('div');
+      div.className=`item ${it.rarity} ${itemFrameClass(it)}${selectedId===it.id?' selected-inventory':''}${it.locked?' locked':''}`;
+      div.dataset.itemId=String(it.id);
+      div.innerHTML=`<b style="color:${itemNameColor(it)}">${lockedLabel(it)}${it.name}</b><span>${it.slot}</span>`;
+      const openItemMenu=(e)=>{ if(e){ e.preventDefault(); e.stopPropagation(); } els.tooltip?.classList.add('hidden'); showInventoryActionMenu(it, div); };
+      div.onclick=openItemMenu;
+      div.onpointerup=(e)=>{ if(!e.pointerType || e.pointerType!=='mouse') openItemMenu(e); };
+      div.ontouchend=openItemMenu;
+      div.onpointerenter=(e)=>{ if(isMouseLikePointer(e)){ setPointerMode('mouse'); showTip(e,it); } else { setPointerMode('touch'); els.tooltip?.classList.add('hidden'); } };
+      div.onpointermove=(e)=>{ if(isMouseLikePointer(e)){ setPointerMode('mouse'); showTip(e,it); } else { setPointerMode('touch'); els.tooltip?.classList.add('hidden'); } };
+      div.onmousemove=(e)=>{ setPointerMode('mouse'); showTip(e,it); };
+      div.onmouseleave=()=>{ if(state.inventoryMenuItemId!==it.id) els.tooltip?.classList.add('hidden'); };
+      inv.appendChild(div);
+      if(selectedId===it.id) setTimeout(()=>showInventoryActionMenu(it, div),0);
+    });
+    if(els.openAllBtn) els.openAllBtn.style.display='none';
+    updateSellButtonState();
+  };
+  showInventoryActionMenu = window.showInventoryActionMenu = function(it, anchor){
+    normalizeProtectItem(it);
+    state.inventoryMenuItemId = it.id;
+    document.querySelectorAll('.item.selected-inventory').forEach(el=>el.classList.remove('selected-inventory'));
+    if(anchor) anchor.classList.add('selected-inventory');
+    let menu=byId('inventoryActionMenu');
+    if(!menu){ menu=document.createElement('div'); menu.id='inventoryActionMenu'; menu.className='inventory-action-menu'; document.body.appendChild(menu); }
+    const current=state.equip[it.slot];
+    const diff=current ? Math.round(itemPower(it)-itemPower(current)) : 0;
+    const canSell=canExpConvert(it);
+    menu.innerHTML = `<div class="inventory-action-title"><b>${escapeHtml(lockedLabel(it)+it.name)}+${it.level}</b><small>${escapeHtml(it.slot)} / ${escapeHtml(it.rarityName||it.rarity)}</small></div><div class="inventory-action-summary">${escapeHtml(itemSummary(it)||'追加能力なし')}${current?`<br>現在: ${escapeHtml(current.name)}+${current.level} / 戦力差: ${diff>=0?'+':''}${diff}`:'<br>現在: 未装備'}</div><div class="inventory-action-buttons"><button type="button" data-action="equip">装備</button><button type="button" data-action="lock">${it.locked?'ロック解除':'ロック'}</button><button type="button" data-action="sell" ${canSell?'':'disabled'}>${canSell?'経験値化':'経験値化不可'}</button><button type="button" data-action="cancel">キャンセル</button></div>`;
+    const r=anchor?.getBoundingClientRect ? anchor.getBoundingClientRect() : {left:8,bottom:80,top:80};
+    const width=Math.min(320, window.innerWidth-16);
+    menu.style.width=width+'px';
+    if(isTouchDevice() || window.innerWidth<760){ menu.style.left='50%'; menu.style.right='auto'; menu.style.top='auto'; menu.style.bottom='12px'; menu.style.transform='translateX(-50%)'; }
+    else { let left=Math.min(Math.max(8,r.left),window.innerWidth-width-8); menu.style.left=left+'px'; menu.style.right='auto'; menu.style.top=(r.bottom+6)+'px'; menu.style.bottom='auto'; menu.style.transform='none'; }
+    menu.classList.remove('hidden');
+    const bind=(sel,fn)=>{ const b=menu.querySelector(sel); if(!b) return; let last=0; const run=(e)=>{ if(e){e.preventDefault();e.stopPropagation();} if(b.disabled) return; const n=performance.now?performance.now():Date.now(); if(n-last<300) return; last=n; playUiClick?.(); fn(); }; b.onclick=run; b.onpointerup=run; b.ontouchend=run; };
+    bind('[data-action="equip"]',()=>{ cancelInventoryActionMenu(); equipItem(it); });
+    bind('[data-action="lock"]',()=>{ toggleLockItem(it); });
+    bind('[data-action="sell"]',()=>{
+      if(!canExpConvert(it)) return;
+      const idx=(state.inventory||[]).findIndex(x=>x.id===it.id);
+      if(idx>=0) state.inventory.splice(idx,1);
+      const xp=sellExpValue(it); state.xp+=xp; state.lastXpGain=xp;
+      log(`${it.name} を経験値化し、経験値+${xp.toLocaleString()}。`,'good');
+      checkLevelUp(); cancelInventoryActionMenu(); renderAll(); scheduleSave?.();
+    });
+    bind('[data-action="cancel"]',()=>{ cancelInventoryActionMenu(); renderInventory(); });
+    menu.onclick=e=>e.stopPropagation(); menu.onpointerup=e=>e.stopPropagation(); menu.ontouchend=e=>e.stopPropagation();
+  };
+  renderEquip = window.renderEquip = function(){
+    normalizeAllLocks();
+    if(!els.equipList) return;
+    els.equipList.innerHTML='';
+    slots.forEach(slot=>{
+      const it=state.equip[slot]; const div=document.createElement('div');
+      div.className='equip'+(it?` ${itemFrameClass(it)} ${it.rarity}`:'')+(state.selectedEquip===slot?' selected':'')+(it?.locked?' locked':'');
+      div.innerHTML=it?`<b style="color:${itemNameColor(it)}">${slot}: ${lockedLabel(it)}${it.name}+${it.level}</b><small>${itemSummary(it)}</small>`:`<b>${slot}: 未装備</b>`;
+      div.onclick=(e)=>{ state.selectedEquip=slot; renderEquip(); if(it) showEquippedActionMenu973(it, div); };
+      div.onpointerup=(e)=>{ if(e.pointerType && e.pointerType!=='mouse'){ e.preventDefault(); state.selectedEquip=slot; renderEquip(); if(it) showEquippedActionMenu973(it, div); } };
+      if(it){ div.onmousemove=(e)=>showTip(e,it); div.onmouseleave=()=>els.tooltip.classList.add('hidden'); }
+      els.equipList.appendChild(div);
+    });
+    const it=state.selectedEquip && state.equip[state.selectedEquip];
+    els.upgradeBtn.disabled=!it || state.mats<=0;
+    els.upgradeBtn.textContent=it?`${it.name}+${it.level} を強化`:'装備を選択して強化';
+    els.upgradeBtn.classList.toggle('attention', !it && state.mats>0);
+  };
+  function showEquippedActionMenu973(it, anchor){
+    let menu=byId('inventoryActionMenu');
+    if(!menu){ menu=document.createElement('div'); menu.id='inventoryActionMenu'; menu.className='inventory-action-menu'; document.body.appendChild(menu); }
+    menu.innerHTML=`<div class="inventory-action-title"><b>${escapeHtml(lockedLabel(it)+it.name)}+${it.level}</b><small>${escapeHtml(it.slot)} / 装備中</small></div><div class="inventory-action-summary">${escapeHtml(itemSummary(it)||'追加能力なし')}</div><div class="inventory-action-buttons"><button type="button" data-action="select">強化選択</button><button type="button" data-action="lock">${it.locked?'ロック解除':'ロック'}</button><button type="button" data-action="cancel">閉じる</button></div>`;
+    const r=anchor.getBoundingClientRect(); const width=Math.min(320, window.innerWidth-16); menu.style.width=width+'px';
+    if(isTouchDevice() || window.innerWidth<760){ menu.style.left='50%'; menu.style.right='auto'; menu.style.top='auto'; menu.style.bottom='12px'; menu.style.transform='translateX(-50%)'; }
+    else { menu.style.left=Math.min(Math.max(8,r.left),window.innerWidth-width-8)+'px'; menu.style.top=(r.bottom+6)+'px'; menu.style.bottom='auto'; menu.style.transform='none'; }
+    menu.classList.remove('hidden');
+    const bind=(sel,fn)=>{ const b=menu.querySelector(sel); if(!b) return; const run=(e)=>{ if(e){e.preventDefault();e.stopPropagation();} playUiClick?.(); fn(); }; b.onclick=run; b.onpointerup=run; b.ontouchend=run; };
+    bind('[data-action="select"]',()=>{ state.selectedEquip=it.slot; cancelInventoryActionMenu(); renderEquip(); });
+    bind('[data-action="lock"]',()=>{ toggleLockItem(it); });
+    bind('[data-action="cancel"]',()=>{ cancelInventoryActionMenu(); renderEquip(); });
+    menu.onclick=e=>e.stopPropagation(); menu.onpointerup=e=>e.stopPropagation(); menu.ontouchend=e=>e.stopPropagation();
+  }
+  function install973(){
+    updateBuild973(); normalizeAllLocks(); ensureInventoryFilterUi();
+    const sel=byId('inventoryFilterSelect'); if(sel){ sel.value=state.inventoryFilter||'all'; }
+    renderAll?.();
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', install973); else install973();
+  window.addEventListener('load', install973); setTimeout(install973,300); setTimeout(install973,1200);
 })();

@@ -1681,3 +1681,32 @@ body.using-touch .tooltip.status-tooltip-modal:not(.hidden),
 .item.redunique,.equip.redunique{border-color:#ff3030!important;box-shadow:0 0 13px rgba(255,48,48,.55), inset 0 0 8px rgba(255,48,48,.18)!important;}
 .debug-v97-box{display:grid;gap:4px;margin:6px 0;padding:6px;border-top:1px solid rgba(201,155,57,.35);border-bottom:1px solid rgba(201,155,57,.20);}
 .debug-v97-box button{min-height:30px;}
+
+
+/* v97.2: flee button visibility + hide legacy strongest debug buttons */
+.flee-btn{
+  position:fixed!important;
+  left:50%!important;
+  bottom:14px!important;
+  transform:translateX(-50%)!important;
+  z-index:1500!important;
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
+  pointer-events:auto!important;
+  min-width:176px!important;
+  min-height:46px!important;
+}
+.flee-btn:active{transform:translateX(-50%) scale(.98)!important;}
+#debugBestSword,#debugBestAccessory{display:none!important;}
+@media(max-width:760px){
+  .flee-btn{bottom:10px!important;min-width:168px!important;min-height:48px!important;font-size:13px!important;}
+}
+
+/* v97.3 lock/filter UI */
+.inventory-filter-bar{display:flex;align-items:center;gap:6px;margin:6px 0 8px;font-size:12px;opacity:.95}
+.inventory-filter-bar select{background:#171b2a;color:#f3f3f3;border:1px solid rgba(255,255,255,.18);border-radius:8px;padding:5px 8px;max-width:100%;}
+.item.locked,.equip.locked{box-shadow:0 0 0 1px rgba(120,210,255,.42), inset 0 0 16px rgba(120,210,255,.08)}
+.inventory-empty{padding:12px;text-align:center;opacity:.65;font-size:12px}
+.inventory-action-buttons button[disabled]{opacity:.45;filter:grayscale(1);cursor:not-allowed}
+@media (max-width:760px){.inventory-filter-bar{font-size:11px}.inventory-filter-bar select{font-size:12px;min-height:36px}.inventory-action-menu{z-index:1600!important}}
