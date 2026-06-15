@@ -1624,12 +1624,20 @@ function enemyDefeated(){
   if(e && e.id === 'dark_sword_saint'){
     const legendary = rarities.find(r=>r.id==='legendary') || rarities[rarities.length-1];
     const darkPool = [makeDarkHolySword, makeDarkShield, makeDarkAmulet, makeDarkArmor, makeDarkGauntlets, makeDarkHelm, makeDarkBoots];
-    const darkReward = darkPool[Math.floor(Math.random()*darkPool.length)](state.level);
+    const makeDarkReward = () => darkPool[Math.floor(Math.random()*darkPool.length)](state.level);
     const rewards = [];
-    for(let i=0;i<2;i++) rewards.push(makeItem(slots[Math.floor(Math.random()*slots.length)], legendary, {isBossDrop:true}));
-    rewards.push(darkReward); // 闇シリーズは3枠目で通知・ドロップ
+    // 1〜2枠目：レジェンダリー確定。低確率で闇装備も混ざる。
+    for(let i=0;i<2;i++){
+      if(Math.random() < 0.18){
+        rewards.push(makeDarkReward());
+      }else{
+        rewards.push(makeItem(slots[Math.floor(Math.random()*slots.length)], legendary, {isBossDrop:true}));
+      }
+    }
+    // 3枠目：必ず闇シリーズ。通知順も3番目として表示する。
+    rewards.push(makeDarkReward());
     for(let i=rewards.length-1;i>=0;i--) state.inventory.unshift(rewards[i]);
-    log('暗黒剣聖討伐報酬：レジェンダリー確定装備×2、3枠目に闇シリーズ装備！','good');
+    log('暗黒剣聖討伐報酬：1〜2枠目はレジェンダリー確定、3枠目は闇シリーズ確定！','good');
     showDropSequence(rewards);
   }else if(Math.random()<.38){ const it=makeRandomItem(e?.type==='ボス'); state.inventory.unshift(it); logItemDrop(it); showDropToast(it); }
   if(Math.random()<.22){ const m=randInt(1,3); state.mats += m; log(`強化石+${m} を獲得。`,'good'); }
@@ -2714,7 +2722,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* ver99.15 clean stabilization patch: single source, no stacked UI injection */
 (function(){
   'use strict';
-  const BUILD = '99.22';
+  const BUILD = '99.23';
   const byId = (id)=>document.getElementById(id);
   function safe(fn){ try{ return fn && fn(); }catch(e){ console.warn('[ver99.15]', e); return null; } }
 
@@ -3009,9 +3017,9 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* ver.99.18: audio restore - use lexical state/audio functions, not window fallback */
 (function(){
   'use strict';
-  const BUILD='99.22';
+  const BUILD='99.23';
   const $=(id)=>document.getElementById(id);
-  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.22]', e); } }
+  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.23]', e); } }
   function setVersion(){
     window.GAME_VERSION=BUILD; window.BUILD_VERSION=BUILD;
     document.documentElement.setAttribute('data-build-version', BUILD);
@@ -3111,7 +3119,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   window.addEventListener('resize', ()=>safe(()=>applyMenu(typeof state !== 'undefined' ? !!state.uiOpen : false)));
 
 
-  /* ver.99.22: mute icon sync fix
+  /* ver.99.23: mute icon sync fix
      bindOneTap() clones top buttons, so els.muteBtn can point to a removed old node.
      Always sync els.muteBtn to the current DOM button before updating the icon. */
   const __mbhOriginalUpdateMuteButton = updateMuteButton;
@@ -3138,12 +3146,12 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 
 
 
-  /* ver.99.22: UI-only patch
+  /* ver.99.23: UI-only patch
      - hide EXP/flee behind overlay menu
      - revive inventory filters
      - keep inventory/log inside viewport with unified scrollbars
   */
-  function mbh9920Safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.22]', e); } }
+  function mbh9920Safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.23]', e); } }
   function mbh9920IsOverlay(){
     return matchMedia('(max-width: 1279px), (max-height: 700px), (pointer: coarse)').matches;
   }
@@ -3246,21 +3254,21 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   setTimeout(()=>mbh9920Safe(()=>{ mbh9920EnsureInventoryFilter(); renderInventory(); }), 300);
 
   // Ensure latest visible build number is single and clear.
-  document.documentElement.setAttribute('data-build-version','99.22');
-  document.querySelectorAll('.build-version').forEach(el=>{ el.textContent='ver.99.22'; });
-  document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent='Build: ver.99.22'; });
+  document.documentElement.setAttribute('data-build-version','99.23');
+  document.querySelectorAll('.build-version').forEach(el=>{ el.textContent='ver.99.23'; });
+  document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent='Build: ver.99.23'; });
 
   // PCでは非アクティブ時もBGMを止めない。スマホだけ従来どおり停止。
   window.__mbhPcKeepBgm = true;
 })();
 
 
-/* ver.99.22: inventory filter and log viewport final fix */
+/* ver.99.23: inventory filter and log viewport final fix */
 (function(){
   'use strict';
-  const BUILD='99.22';
+  const BUILD='99.23';
   const $=(id)=>document.getElementById(id);
-  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.22]', e); } }
+  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.23]', e); } }
   function setVersion(){
     window.GAME_VERSION=BUILD; window.BUILD_VERSION=BUILD;
     document.documentElement.setAttribute('data-build-version', BUILD);
