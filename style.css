@@ -1676,3 +1676,8 @@ body.using-touch .tooltip.status-tooltip-modal:not(.hidden),
 
 .enemy-card.defeated-gone{opacity:0!important;transform:scale(.88)!important;filter:grayscale(1) brightness(.25)!important;pointer-events:none!important;transition:opacity .45s ease, transform .45s ease, filter .45s ease;}
 @media(max-width:760px){.flee-btn{bottom:8px!important;min-width:150px!important;min-height:44px!important;font-size:13px!important;}}
+
+/* v97 unique red equipment */
+.item.redunique,.equip.redunique{border-color:#ff3030!important;box-shadow:0 0 13px rgba(255,48,48,.55), inset 0 0 8px rgba(255,48,48,.18)!important;}
+.debug-v97-box{display:grid;gap:4px;margin:6px 0;padding:6px;border-top:1px solid rgba(201,155,57,.35);border-bottom:1px solid rgba(201,155,57,.20);}
+.debug-v97-box button{min-height:30px;}

@@ -35,7 +35,7 @@ const DEATH_DANCE_CUTINS = [
 ];
 const DARK_SWORD_SAINT_CUTIN = {quote:'私を超えてみせろ。', img:'assets/cutin_dark_sword_dance.png'};
 const DARK_SWORD_TECHNIQUE_CUTIN = {quote:'', img:'assets/cutin_dark_sword_technique.png'};
-const GAME_VERSION = '96';
+const GAME_VERSION = '97.1';
 const DARK_SWORD_SAINT = {
   id:'dark_sword_saint', name:'暗黒剣聖', type:'裏ボス', img:'assets/enemy_dark_sword_saint.png', element:'dark',
   hp:32000, atk:260, def:95, xp:2600, gold:5000, bossChance:0, enemySkill:'暗黒斬'
@@ -69,7 +69,7 @@ const state = {
   level:1, xp:0, xpNext:80, chests:0, mats:3, defeated:0,
   base:{hp:520, atk:48, def:14}, hp:520, enemy:null, enemyHp:1,
   inventory:[], equip:{}, down:false, downUntil:0, deathDance:false, deathDanceUntil:0, deathDanceBattleCount:0, deathDanceCutin:false, deathDanceCutinTimer:null, deathDanceSeqTimers:[], lastHeroAttack:0, lastEnemyAttack:0,
-  log:[], debug:{killEnemy:false, killHero:false}, audio:null, masterGain:null, bgmGain:null, bgmTimer:null, bgmMode:'normal', normalBgm:null, swordDanceBgm:null, darkSwordSaintBgm:null, darkSwordSaintVoice:null, darkSwordReviveTimer:null, darkSwordComboTimers:[], darkSwordCutinActive:false, audioUnlocked:false, mobileMuted:true, menuPage:'stats', inventoryMenuItemId:null, enemyRecords:{}, forceFirstEnemy:false, bgmPausedByVisibility:false, heroStatuses:null, enemyStatuses:null, darkShieldStacks:0, dropToastTimer:null, dropToastQueueTimers:[]
+  log:[], debug:{killEnemy:false, killHero:false}, audio:null, masterGain:null, bgmGain:null, bgmTimer:null, bgmMode:'normal', normalBgm:null, swordDanceBgm:null, darkSwordSaintBgm:null, darkSwordSaintVoice:null, darkSwordReviveTimer:null, darkSwordComboTimers:[], darkSwordCutinActive:false, audioUnlocked:false, mobileMuted:true, menuPage:'stats', inventoryMenuItemId:null, enemyRecords:{}, forceFirstEnemy:false, bgmPausedByVisibility:false, heroStatuses:null, enemyStatuses:null, darkShieldStacks:0, dropToastTimer:null, dropToastQueueTimers:[], winStreak:0, bestWinStreak:0, forceNextDarkSwordSaint:false, darkSwordSaintLevel:1, darkSwordSaintKills:0
 };
 
 const SAVE_KEY = 'mini-browser-hero-save-v36';
@@ -251,7 +251,7 @@ function saveGame(){
       chests:state.chests, mats:state.mats, defeated:state.defeated,
       hp:Math.max(1, Math.floor(state.hp||1)), base:state.base,
       inventory:state.inventory.map(cleanItem), equip:serializeEquip(), selectedEquip:state.selectedEquip,
-      volume:state.volume, mobileMuted:state.mobileMuted, debug:state.debug, enemyRecords:state.enemyRecords, enemyLevelBase:state.enemyLevelBase, enemyLevelBaseDefeated:state.enemyLevelBaseDefeated,
+      volume:state.volume, mobileMuted:state.mobileMuted, debug:state.debug, enemyRecords:state.enemyRecords, enemyLevelBase:state.enemyLevelBase, enemyLevelBaseDefeated:state.enemyLevelBaseDefeated, winStreak:state.winStreak, bestWinStreak:state.bestWinStreak, forceNextDarkSwordSaint:state.forceNextDarkSwordSaint, darkSwordSaintLevel:state.darkSwordSaintLevel, darkSwordSaintKills:state.darkSwordSaintKills,
       savedAt:Date.now()
     };
     localStorage.setItem(SAVE_KEY, JSON.stringify(data));
@@ -281,6 +281,11 @@ function loadGame(){
     state.enemyRecords = sanitizeEnemyRecords(data.enemyRecords || {});
     state.enemyLevelBase = data.enemyLevelBase == null ? null : Math.max(1, Math.floor(Number(data.enemyLevelBase)||1));
     state.enemyLevelBaseDefeated = Math.max(0, Math.floor(Number(data.enemyLevelBaseDefeated)||0));
+    state.winStreak = Math.max(0, Math.floor(Number(data.winStreak)||0));
+    state.bestWinStreak = Math.max(0, Math.floor(Number(data.bestWinStreak)||0));
+    state.forceNextDarkSwordSaint = !!data.forceNextDarkSwordSaint;
+    state.darkSwordSaintLevel = Math.max(1, Math.floor(Number(data.darkSwordSaintLevel)||1));
+    state.darkSwordSaintKills = Math.max(0, Math.floor(Number(data.darkSwordSaintKills)||0));
     state.hp = Math.min(Number(data.hp)||maxHp(), maxHp());
     if(state.hp<=0) state.hp=Math.floor(maxHp()*0.5);
     sanitizeAllEquipmentDeathDanceChance();
@@ -715,18 +720,14 @@ function spawnWeakEnemyAfterEscape(){
   state.deathDanceCutin = false;
   state.darkSwordCutinActive = false;
   state.hp = maxHp();
-  const base = normals[Math.floor(Math.random()*normals.length)] || ENEMIES[0];
-  const lv = Math.max(1, Math.floor(state.level * 0.5));
-  const e = makeScaledEnemy(base, lv);
-  state.enemy = e;
-  state.enemyHp = e.maxHp;
-  state.enemyStatuses = makeEmptyEnemyStatuses(performance.now());
-  state.heroStatuses = {bleeds:[], darkBleeds:[], burnUntil:0, lastBleedTick:performance.now(), lastDarkBleedTick:performance.now(), masterRegenLast:performance.now()};
+  resetTransientStatuses();
   state.lastHeroAttack = performance.now() - 9999;
   state.lastEnemyAttack = performance.now();
   if(els.heroCard) els.heroCard.classList.remove('down');
   if(els.downOverlay) els.downOverlay.classList.add('hidden');
-  setBgmMode('normal');
+  if(els.enemyCard) els.enemyCard.classList.remove('defeated-gone');
+  spawnEnemy(false);
+  setBgmMode(isDarkSwordSaint() ? 'dark_sword_saint' : 'normal');
   renderAll();
   scheduleSave();
 }
@@ -751,8 +752,13 @@ function spawnEnemyAfterDefeat(){
   scheduleSave();
 }
 function fleeBattle(){
-  loseExpPercent(0.10);
-  log('戦闘から離脱した。経験値を10%失った。','danger');
+  const currentLevel = Math.max(1, Math.floor(state.enemy?.level || state.enemyLevelBase || state.level || 1));
+  const nextBase = Math.max(1, currentLevel - 20);
+  state.enemyLevelBase = nextBase;
+  state.enemyLevelBaseDefeated = state.defeated || 0;
+  state.winStreak = 0;
+  state.forceNextDarkSwordSaint = false;
+  log(`戦闘から離脱した。敵の出現レベルが${currentLevel}→${nextBase}に低下した。`, 'danger');
   banner('戦闘離脱');
   spawnWeakEnemyAfterEscape();
 }
@@ -778,13 +784,16 @@ function handleHeroDeath(){
   // 敗北確定時はバフ・デバフを全解除する。
   resetTransientStatuses();
   state.hp = 0;
+  state.winStreak = 0;
+  state.forceNextDarkSwordSaint = false;
   const defeatedEnemyLevel = Math.max(1, Math.floor(state.enemy?.level || state.enemyLevelBase || state.level || 1));
   const nextEnemyLevelBase = Math.max(1, Math.floor(defeatedEnemyLevel * 0.9));
   state.enemyLevelBase = nextEnemyLevelBase;
   state.enemyLevelBaseDefeated = state.defeated || 0;
-  loseExpPercent(0.25);
+  loseExpPercent(calcStats().effortRing ? 0 : (calcStats().humbleRing ? 0.09 : 0.25));
   state.hp = 0;
-  log(`騎士は力尽きた。経験値を25%失った。敵レベルが${defeatedEnemyLevel}→${nextEnemyLevelBase}に低下した。`,'danger');
+  const lostPct = calcStats().effortRing ? 0 : (calcStats().humbleRing ? 9 : 25);
+  log(`騎士は力尽きた。経験値を${lostPct}%失った。敵レベルが${defeatedEnemyLevel}→${nextEnemyLevelBase}に低下した。`,'danger');
   banner('敗北…');
   if(els.heroCard) els.heroCard.classList.add('down');
   if(els.downOverlay){
@@ -1098,6 +1107,7 @@ function pickEnemy(){
 }
 function makeScaledEnemy(base, forceLevel=null){
   const e = {...base};
+  if(e.id === 'dark_sword_saint' && forceLevel == null){ forceLevel = Math.max(1, Math.floor(state.darkSwordSaintLevel || 1)); }
   const bossBonus = e.type==='ボス' || e.type==='裏ボス' ? 4 : 0;
   if(forceLevel){
     e.level = forceLevel;
@@ -1106,6 +1116,12 @@ function makeScaledEnemy(base, forceLevel=null){
     e.level = Math.max(1, Math.floor(state.enemyLevelBase) + progress + bossBonus);
   }else{
     e.level = Math.max(1, state.level + Math.floor(state.defeated/3) + bossBonus);
+  }
+  if(calcStats && calcStats().humbleRing){
+    if(state.humbleEnemyFixedLevel == null) state.humbleEnemyFixedLevel = Math.max(1, e.level || state.level || 1);
+    e.level = Math.max(1, Math.floor(state.humbleEnemyFixedLevel));
+  }else{
+    state.humbleEnemyFixedLevel = null;
   }
   const scaledDefeated = state.enemyLevelBase != null ? Math.max(0, (state.defeated||0) - (state.enemyLevelBaseDefeated||0)) : (state.defeated||0);
   const scale=1 + e.level*.035 + Math.floor(scaledDefeated/10)*.03;
@@ -1145,7 +1161,15 @@ function forceSpawnDarkSwordSaint(){
   renderAll();
 }
 function spawnEnemy(forceFirst=false){
-  const base=forceFirst ? makeFirstEnemy() : pickEnemy();
+  let base;
+  if(!forceFirst && state.forceNextDarkSwordSaint){
+    base = DARK_SWORD_SAINT;
+    state.forceNextDarkSwordSaint = false;
+    log('100連勝の気配に、暗黒剣聖が現れた。', 'danger');
+    banner('100連勝達成…暗黒剣聖出現！', 1800);
+  }else{
+    base=forceFirst ? makeFirstEnemy() : pickEnemy();
+  }
   const e = makeScaledEnemy(base, forceFirst ? 1 : null);
   setEnemy(e);
 }
@@ -1539,6 +1563,16 @@ function enemyDefeated(){
   state.enemy=null;
   els.enemyCard.classList.add('dead');
   state.defeated++;
+  state.winStreak = Math.max(0, Math.floor(state.winStreak||0)) + 1;
+  state.bestWinStreak = Math.max(state.bestWinStreak||0, state.winStreak);
+  if(e && e.id === 'dark_sword_saint'){
+    state.darkSwordSaintKills = Math.max(0, Math.floor(state.darkSwordSaintKills||0)) + 1;
+    state.darkSwordSaintLevel = Math.max(1, Math.floor(state.darkSwordSaintLevel||1)) + 1;
+  }else if(state.winStreak >= 100){
+    state.forceNextDarkSwordSaint = true;
+    state.winStreak = 0;
+    log('100連勝達成！ 次の敵として暗黒剣聖が確定出現する。','danger');
+  }
   markEnemyDefeated(e);
   const xpMult = 1 + Math.max(0, (e.level || 1) - 1) * 0.08;
   const gainXp = Math.max(1, Math.floor(e.xp * xpMult));
@@ -2494,6 +2528,13 @@ function resetUserData(){
   state.chests = 0;
   state.mats = 3;
   state.defeated = 0;
+  state.winStreak = 0;
+  state.bestWinStreak = 0;
+  state.forceNextDarkSwordSaint = false;
+  state.darkSwordSaintLevel = 1;
+  state.darkSwordSaintKills = 0;
+  state.enemyLevelBase = null;
+  state.enemyLevelBaseDefeated = 0;
   state.base = {hp:520, atk:48, def:14};
   state.hp = maxHp();
   state.forceFirstEnemy = true;
@@ -2812,4 +2853,216 @@ window.addEventListener('resize', v952FinalFixes);
   window.addEventListener('load', install);
   setTimeout(install, 250);
   setTimeout(install, 1000);
+})();
+
+
+/* v97: red unique gear, humble ring, debug grants, natural regen options */
+(function(){
+  const BUILD_TEXT = 'ver.97';
+  function v97uuid(){ try{return crypto.randomUUID();}catch(_){return 'v97_'+Math.random().toString(36).slice(2)+Date.now();} }
+  function legendaryRarity(){ return (rarities.find(r=>r.id==='legendary') || rarities[rarities.length-1]); }
+  function addBuild97(){
+    document.querySelectorAll('.build-version,.fixed-build-version').forEach(el=>{ el.textContent = BUILD_TEXT; });
+    document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent = 'Build: ' + BUILD_TEXT; });
+  }
+  function redStats(slot){
+    const it = makeItem(slot, legendaryRarity(), {isBossDrop:true});
+    it.rarity = 'legendary'; it.rarityName = 'レジェンダリー'; it.specialFrame = 'redunique';
+    return it;
+  }
+  window.makeBlessedShield = function(){
+    const it = redStats('盾');
+    it.name = '祝福の盾'; it.blessedShield = true;
+    it.flavor = '祝福：被ダメージ時10%で発動。30秒間、1秒ごとに最大HP5%回復。';
+    return it;
+  };
+  window.makeMysticArmor = function(){
+    const it = redStats('鎧');
+    it.name = '神秘の鎧'; it.mysticArmor = true;
+    it.flavor = '神秘：敵撃破時にHP全回復。';
+    return it;
+  };
+  window.makeEffortRing = function(){
+    const it = redStats('リング');
+    it.name = '努力の指輪'; it.effortRing = true;
+    it.flavor = 'くじけぬ心：敗北時経験値ロスト無し。取得経験値25%アップ。';
+    return it;
+  };
+  window.makeHumbleRing = function(){
+    const it = makeItem('リング', legendaryRarity(), {isBossDrop:true});
+    it.name = '謙虚の指輪'; it.rarity = 'legendary'; it.rarityName = 'レジェンダリー'; it.specialFrame = 'darkholy';
+    it.humbleRing = true; it.deathDanceChance = 0;
+    it.flavor = '謙虚：敵のレベルが上がらない。死亡時の経験値ロストが9%になる。';
+    return it;
+  };
+  function hasItemByName(name){
+    return Object.values(state.equip||{}).some(it=>it&&it.name===name) || (state.inventory||[]).some(it=>it&&it.name===name);
+  }
+  function ensureHumbleStarter(){
+    if(!hasItemByName('謙虚の指輪')){ state.inventory.unshift(makeHumbleRing()); scheduleSave?.(); }
+  }
+  const oldEnsureStarter = window.ensureStarterEquipment || ensureStarterEquipment;
+  window.ensureStarterEquipment = function(){ const r=oldEnsureStarter?.apply(this, arguments); ensureHumbleStarter(); return r; };
+  const oldCalc = calcStats;
+  window.calcStats = function(){
+    const s = oldCalc.apply(this, arguments);
+    s.naturalRegenRate = 0; s.blessedShield=false; s.mysticArmor=false; s.effortRing=false; s.humbleRing=false;
+    Object.values(state.equip||{}).filter(Boolean).forEach(it=>{
+      s.naturalRegenRate += it.naturalRegenRate || 0;
+      if(it.blessedShield) s.blessedShield = true;
+      if(it.mysticArmor) s.mysticArmor = true;
+      if(it.effortRing) s.effortRing = true;
+      if(it.humbleRing) s.humbleRing = true;
+    });
+    return s;
+  };
+  const oldMakeItem = makeItem;
+  window.makeItem = function(slot, rarity, opts={}){
+    const it = oldMakeItem.apply(this, arguments);
+    if(it && !it.specialFrame && !it.masterRegen && ['normal','rare','legendary'].includes(it.rarity) && Math.random() < 0.20){
+      const max = it.rarity==='legendary' ? 5 : it.rarity==='rare' ? 3 : 1;
+      it.naturalRegenRate = (randInt ? randInt(1, max) : Math.ceil(Math.random()*max)) / 100;
+    }
+    return it;
+  };
+  const oldPower = itemPower;
+  window.itemPower = function(it){
+    let v = oldPower.apply(this, arguments);
+    if(!it) return v;
+    v += (it.naturalRegenRate||0)*1800;
+    if(it.blessedShield) v += 3600;
+    if(it.mysticArmor) v += 3200;
+    if(it.effortRing) v += 2800;
+    if(it.humbleRing) v += 1200;
+    if(it.specialFrame==='redunique') v += 2600;
+    return v;
+  };
+  const oldSummary = itemSummary;
+  window.itemSummary = function(it){
+    let base = oldSummary.apply(this, arguments);
+    const arr=[];
+    if(it?.naturalRegenRate) arr.push(`自然治癒：10秒ごとにHP${Math.round(it.naturalRegenRate*100)}%回復`);
+    if(it?.blessedShield) arr.push('祝福：被ダメージ時10%で30秒間、毎秒HP5%回復');
+    if(it?.mysticArmor) arr.push('神秘：敵撃破時HP全回復');
+    if(it?.effortRing) arr.push('くじけぬ心：敗北時EXPロスト無し / 取得EXP+25%');
+    if(it?.humbleRing) arr.push('謙虚：敵レベル上昇停止 / 死亡時EXPロスト9%');
+    return [base, ...arr].filter(Boolean).join(' / ');
+  };
+  const oldNameColor = itemNameColor;
+  window.itemNameColor = function(it){ if(it?.specialFrame==='redunique') return '#ff4040'; return oldNameColor.apply(this, arguments); };
+  const oldFrame = itemFrameClass;
+  window.itemFrameClass = function(it){ if(it?.specialFrame==='redunique') return 'redunique'; return oldFrame.apply(this, arguments); };
+  const oldApplyShield = applyDarkShieldToDamage;
+  window.applyDarkShieldToDamage = function(dmg){
+    let out = oldApplyShield.apply(this, arguments);
+    if(out > 0 && calcStats().blessedShield && Math.random() < 0.10){
+      ensureStatusContainers();
+      state.heroStatuses.blessingUntil = nowMs() + 30000;
+      state.heroStatuses.blessingLastTick = nowMs();
+      log('祝福の盾：祝福が発動！','good');
+      showHeroFloat('祝福', 'heal');
+    }
+    return out;
+  };
+  const oldProcess = processStatusDots;
+  window.processStatusDots = function(now){
+    oldProcess.apply(this, arguments);
+    ensureStatusContainers();
+    const st = calcStats();
+    if(!state.down && !state.deathDanceCutin && st.naturalRegenRate > 0){
+      if(!state.heroStatuses.naturalRegenLast) state.heroStatuses.naturalRegenLast = now;
+      const ticks = Math.floor((now - state.heroStatuses.naturalRegenLast)/10000);
+      if(ticks > 0){
+        state.heroStatuses.naturalRegenLast += ticks*10000;
+        const heal = Math.max(1, Math.floor(maxHp() * st.naturalRegenRate * ticks));
+        if(state.hp > 0 && state.hp < maxHp()){ state.hp = Math.min(maxHp(), state.hp + heal); showHeroFloat(`自然+${heal}`, 'heal'); }
+      }
+    }
+    if(state.heroStatuses.blessingUntil && now < state.heroStatuses.blessingUntil){
+      if(!state.heroStatuses.blessingLastTick) state.heroStatuses.blessingLastTick = now;
+      const ticks = Math.floor((now - state.heroStatuses.blessingLastTick)/1000);
+      if(ticks > 0){
+        state.heroStatuses.blessingLastTick += ticks*1000;
+        const heal = Math.max(1, Math.floor(maxHp() * 0.05 * ticks));
+        if(state.hp > 0 && state.hp < maxHp()){ state.hp = Math.min(maxHp(), state.hp + heal); showHeroFloat(`祝福+${heal}`, 'heal'); }
+      }
+    }else if(state.heroStatuses.blessingUntil && now >= state.heroStatuses.blessingUntil){
+      state.heroStatuses.blessingUntil = 0;
+    }
+  };
+  const oldEnemyDefeated = enemyDefeated;
+  window.enemyDefeated = function(){
+    const e = state.enemy;
+    const stBefore = calcStats();
+    const xpMult = e ? (1 + Math.max(0, (e.level || 1) - 1) * 0.08) : 1;
+    const baseGain = e ? Math.max(1, Math.floor(e.xp * xpMult)) : 0;
+    const r = oldEnemyDefeated.apply(this, arguments);
+    if(stBefore.effortRing && baseGain > 0){
+      const bonus = Math.max(1, Math.floor(baseGain * 0.25));
+      state.xp += bonus; state.lastXpGain = (state.lastXpGain||0) + bonus;
+      log(`努力の指輪：取得経験値+${bonus.toLocaleString()}。`, 'good');
+      checkLevelUp(); renderAll(); scheduleSave();
+    }
+    if(stBefore.mysticArmor && state.hp > 0){
+      state.hp = maxHp(); showHeroFloat('全回復', 'heal'); log('神秘の鎧：敵撃破時HP全回復。','good'); renderAll();
+    }
+    if(e && Math.random() < 0.01){
+      const pool=[makeBlessedShield, makeMysticArmor, makeEffortRing];
+      const it=pool[Math.floor(Math.random()*pool.length)]();
+      state.inventory.unshift(it); log(`固有レジェンダリー：${it.name} を獲得！`,'good'); showDropToast(it); scheduleSave();
+    }
+    return r;
+  };
+  const oldDebugSword = makeDebugSword;
+  window.makeDebugSword = function(){ return makeDarkHolySword ? makeDarkHolySword(state.level) : oldDebugSword(); };
+  function grantItem(it){ state.inventory.unshift(it); renderAll(); scheduleSave(); log(`デバッグ：${it.name}を倉庫に追加。`,'good'); }
+  function installDebugButtons(){
+    const panel=document.getElementById('debugPanel'); if(!panel || panel.__v97Buttons) return; panel.__v97Buttons=true;
+    const ref=document.getElementById('debugDarkSwordSaint') || document.getElementById('debugBestAccessory') || panel.querySelector('button');
+    const box=document.createElement('div'); box.className='debug-v97-box';
+    box.innerHTML=`<div style="margin-top:6px;font-weight:700;color:#ffe28a;">特殊装備付与</div>
+      <button type="button" data-v97="redset">赤装備セット付与</button>
+      <button type="button" data-v97="darkset">闇装備セット付与</button>
+      <button type="button" data-v97="bless">祝福の盾</button>
+      <button type="button" data-v97="mystic">神秘の鎧</button>
+      <button type="button" data-v97="effort">努力の指輪</button>
+      <button type="button" data-v97="holy">闇の聖剣</button>
+      <button type="button" data-v97="darkshield">闇の盾</button>
+      <button type="button" data-v97="darkamulet">闇のアミュレット</button>
+      <button type="button" data-v97="humble">謙虚の指輪</button>`;
+    if(ref && ref.parentNode) ref.parentNode.insertBefore(box, ref.nextSibling); else panel.appendChild(box);
+    box.addEventListener('click', e=>{
+      const b=e.target.closest('button[data-v97]'); if(!b) return; e.preventDefault(); e.stopPropagation();
+      const k=b.dataset.v97;
+      if(k==='redset'){ [makeBlessedShield(),makeMysticArmor(),makeEffortRing()].forEach(x=>state.inventory.unshift(x)); log('デバッグ：赤装備セットを追加。','good'); }
+      if(k==='darkset'){ [makeDarkHolySword(state.level),makeDarkShield(state.level),makeDarkAmulet(state.level)].forEach(x=>state.inventory.unshift(x)); log('デバッグ：闇装備セットを追加。','good'); }
+      if(k==='bless') grantItem(makeBlessedShield());
+      if(k==='mystic') grantItem(makeMysticArmor());
+      if(k==='effort') grantItem(makeEffortRing());
+      if(k==='holy') grantItem(makeDarkHolySword(state.level));
+      if(k==='darkshield') grantItem(makeDarkShield(state.level));
+      if(k==='darkamulet') grantItem(makeDarkAmulet(state.level));
+      if(k==='humble') grantItem(makeHumbleRing());
+      renderAll(); scheduleSave();
+    });
+  }
+  function install(){ addBuild97(); ensureHumbleStarter(); installDebugButtons(); }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', install); else install();
+  window.addEventListener('load', install); setTimeout(install,250); setTimeout(install,1000);
+})();
+
+
+/* v97.1: dark sword saint progression, 100-win guarantee, no-loss flee */
+(function(){
+  function forceV971Ui(){
+    document.querySelectorAll('.build-version,.fixed-build-version').forEach(el=>{ el.textContent='ver.97.1'; });
+    document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent='Build: ver.97.1'; });
+    const modal=document.getElementById('fleeModal');
+    if(modal){
+      const p=modal.querySelector('p');
+      if(p) p.innerHTML='敵の出現レベルが20下がります。<br>経験値は失いません。';
+    }
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', forceV971Ui); else forceV971Ui();
+  window.addEventListener('load', forceV971Ui); setTimeout(forceV971Ui,250); setTimeout(forceV971Ui,1000);
 })();
