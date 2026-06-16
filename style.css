@@ -2123,3 +2123,11 @@ body.mbh-menu-overlay-open .battle-panel .flee-btn{
 .resources.hidden{display:none!important;}
 #upgradeBtn.hidden{display:none!important;}
 .drop-plus-help{margin:6px 0 10px;padding:8px 10px;border:1px solid rgba(255,255,255,.12);border-radius:10px;background:rgba(20,24,38,.72);color:#d9e4ff;font-size:12px;line-height:1.45;}
+
+/* ver.99.35: ドラゴン火炎ブレス専用の連続ダメージ表示 */
+.float.breath-hit{
+  font-size:36px!important;
+  font-weight:1000!important;
+  text-shadow:0 3px 4px #000,0 0 18px #ff6c23,0 0 10px #ff2600!important;
+  animation-duration:1.45s!important;
+}
