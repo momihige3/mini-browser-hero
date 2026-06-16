@@ -3539,3 +3539,119 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   else boot();
   window.addEventListener('load', boot, {once:true});
 })();
+
+/* ver.99.27: mobile equipment tap + mobile background audio pause only */
+(function(){
+  'use strict';
+  const BUILD='99.27';
+  const $=(id)=>document.getElementById(id);
+  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.27]', e); } }
+  function isMobileLike(){
+    return !!(window.matchMedia && window.matchMedia('(pointer: coarse), (max-width: 760px)').matches) || ('ontouchstart' in window) || ((navigator.maxTouchPoints||0)>0);
+  }
+  function syncVersion9927(){
+    window.GAME_VERSION=BUILD; window.BUILD_VERSION=BUILD;
+    document.documentElement.setAttribute('data-build-version', BUILD);
+    document.querySelectorAll('[data-version],#versionText,.version-badge,.build-version').forEach(el=>{ if(el) el.textContent='ver.'+BUILD; });
+    document.querySelectorAll('.debug-version').forEach(el=>{ if(el) el.textContent='Build: ver.'+BUILD; });
+    const traceTitle=$('mbhTraceBox')?.querySelector('.debug-trace-title');
+    if(traceTitle) traceTitle.textContent='進行デバッグログ ver.'+BUILD;
+  }
+
+  function installMobileEquipTapRecover(){
+    if(window.__mbh9927EquipTapRecover) return;
+    window.__mbh9927EquipTapRecover=true;
+    const css=document.createElement('style');
+    css.id='mbh-9927-mobile-equip-tap-css';
+    css.textContent=`
+      @media (pointer: coarse), (max-width: 760px){
+        #inventory,.inventory-panel,#equipList,.equip-panel{pointer-events:auto!important;touch-action:manipulation!important;}
+        #inventory .item,#equipList .equip{pointer-events:auto!important;touch-action:manipulation!important;cursor:pointer!important;}
+        #inventoryActionMenu,.inventory-action-menu,.inventory-action-menu button{pointer-events:auto!important;touch-action:manipulation!important;}
+      }
+    `;
+    document.head.appendChild(css);
+
+    let lastItemTap=0;
+    const openInventoryItem=(e)=>{
+      if(!isMobileLike()) return;
+      const itemEl=e.target && e.target.closest ? e.target.closest('#inventory .item') : null;
+      if(!itemEl) return;
+      const now=Date.now();
+      if(now-lastItemTap<260){ e.preventDefault(); e.stopPropagation(); if(e.stopImmediatePropagation) e.stopImmediatePropagation(); return false; }
+      lastItemTap=now;
+      e.preventDefault(); e.stopPropagation(); if(e.stopImmediatePropagation) e.stopImmediatePropagation();
+      safe(()=>{ if(typeof setPointerMode==='function') setPointerMode('touch'); });
+      safe(()=>{ if(els && els.tooltip) els.tooltip.classList.add('hidden'); });
+      const id=itemEl.dataset ? itemEl.dataset.itemId : '';
+      let it=null;
+      if(typeof state!=='undefined' && Array.isArray(state.inventory)){
+        it=state.inventory.find(x=>String(x && x.id)===String(id));
+      }
+      if(!it && typeof state!=='undefined' && Array.isArray(state.inventory)){
+        const nodes=Array.from(document.querySelectorAll('#inventory .item'));
+        const idx=nodes.indexOf(itemEl);
+        if(idx>=0) it=state.inventory[idx];
+      }
+      if(it && typeof showInventoryActionMenu==='function') showInventoryActionMenu(it, itemEl);
+      return false;
+    };
+
+    let lastEquipTap=0;
+    const selectCurrentEquip=(e)=>{
+      if(!isMobileLike()) return;
+      const equipEl=e.target && e.target.closest ? e.target.closest('#equipList .equip') : null;
+      if(!equipEl) return;
+      const now=Date.now();
+      if(now-lastEquipTap<260){ e.preventDefault(); e.stopPropagation(); if(e.stopImmediatePropagation) e.stopImmediatePropagation(); return false; }
+      lastEquipTap=now;
+      e.preventDefault(); e.stopPropagation(); if(e.stopImmediatePropagation) e.stopImmediatePropagation();
+      safe(()=>{ if(typeof setPointerMode==='function') setPointerMode('touch'); });
+      const nodes=Array.from(document.querySelectorAll('#equipList .equip'));
+      const idx=nodes.indexOf(equipEl);
+      if(idx>=0 && typeof slots!=='undefined' && slots[idx] && typeof state!=='undefined'){
+        state.selectedEquip=slots[idx];
+        if(typeof renderEquip==='function') renderEquip();
+      }
+      return false;
+    };
+
+    ['touchend','pointerup','click'].forEach(type=>{
+      document.addEventListener(type, openInventoryItem, {capture:true, passive:false});
+      document.addEventListener(type, selectCurrentEquip, {capture:true, passive:false});
+    });
+  }
+
+  function installMobileAudioPause(){
+    if(window.__mbh9927MobileAudioPause) return;
+    window.__mbh9927MobileAudioPause=true;
+    function pauseMobileAudio(){
+      if(!isMobileLike()) return;
+      safe(()=>{ if(typeof pauseBgmForPageHidden==='function') pauseBgmForPageHidden(); });
+      // 念のためHTML Audioを直接止める。PCでは実行しない。
+      safe(()=>{
+        if(typeof state==='undefined') return;
+        state.bgmPausedByVisibility=true;
+        [state.normalBgm,state.swordDanceBgm,state.darkSwordSaintBgm,state.darkSwordSaintVoice].forEach(a=>{ try{ if(a) a.pause(); }catch(e){} });
+      });
+    }
+    function resumeMobileAudio(){
+      if(!isMobileLike()) return;
+      if(document.hidden) return;
+      safe(()=>{ if(typeof resumeBgmForPageVisible==='function') resumeBgmForPageVisible(); });
+    }
+    document.addEventListener('visibilitychange', ()=>{ document.hidden ? pauseMobileAudio() : resumeMobileAudio(); }, {capture:true});
+    window.addEventListener('pagehide', pauseMobileAudio, {capture:true});
+    window.addEventListener('blur', pauseMobileAudio, {capture:true});
+    window.addEventListener('pageshow', resumeMobileAudio, {capture:true});
+    window.addEventListener('focus', resumeMobileAudio, {capture:true});
+  }
+
+  function boot9927(){
+    safe(syncVersion9927);
+    safe(installMobileEquipTapRecover);
+    safe(installMobileAudioPause);
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', boot9927, {once:true}); else boot9927();
+  window.addEventListener('load', boot9927, {once:true});
+})();
