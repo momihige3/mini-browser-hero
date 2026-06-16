@@ -2132,6 +2132,36 @@ body.mbh-menu-overlay-open .battle-panel .flee-btn{
   animation-duration:1.45s!important;
 }
 
-/* ver99.45 enemy debug stats */
+/* ver99.46 enemy debug stats */
 .enemy-debug-stats-line{font-weight:800;font-size:12px;color:#ffd27a;text-align:center;margin:4px 0 6px;text-shadow:0 1px 2px #000;}
 .enemy-debug-stats-line.hidden{display:none!important;}
+
+
+/* ver.99.46: ダメージ/回復の表示時間と配置調整 */
+.float{
+  animation-duration:2s!important;
+  font-size:28px!important;
+}
+.float.guard,.float.immune{
+  animation-duration:3s!important;
+  font-size:36px!important;
+}
+.float.breath-hit{
+  font-size:42px!important;
+  animation-duration:3s!important;
+}
+/* 敵：回復は外側(左)、被ダメは中央寄り(右) */
+.float.enemy-heal-float{left:22%!important;}
+.float.enemy-damage-float{left:70%!important;}
+/* 主人公：被ダメは中央寄り(左)、回復は外側(右) */
+.float.hero-damage-float{left:30%!important;}
+.float.hero-heal-float{left:78%!important;}
+@media(max-width:760px){
+  .float{font-size:24px!important;}
+  .float.guard,.float.immune{font-size:30px!important;}
+  .float.breath-hit{font-size:34px!important;}
+  .float.enemy-heal-float{left:18%!important;}
+  .float.enemy-damage-float{left:72%!important;}
+  .float.hero-damage-float{left:28%!important;}
+  .float.hero-heal-float{left:82%!important;}
+}
