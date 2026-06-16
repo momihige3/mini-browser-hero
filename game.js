@@ -1,6 +1,6 @@
 'use strict';
 
-// ver99.31: 闇装備4種の生成関数をグローバル束縛として先に宣言。
+// ver99.32: 闇装備4種の生成関数をグローバル束縛として先に宣言。
 // strict modeで `makeDarkArmor = function...` がReferenceErrorになり、
 // 後続パッチ全体が止まる問題を防ぐ。
 var makeDarkArmor, makeDarkGauntlets, makeDarkHelm, makeDarkBoots;
@@ -40,7 +40,7 @@ const DEATH_DANCE_CUTINS = [
 ];
 const DARK_SWORD_SAINT_CUTIN = {quote:'私を超えてみせろ。', img:'assets/cutin_dark_sword_dance.png'};
 const DARK_SWORD_TECHNIQUE_CUTIN = {quote:'', img:'assets/cutin_dark_sword_technique.png'};
-const GAME_VERSION = (window.MINI_BROWSER_HERO_LATEST_VERSION || window.MINI_BROWSER_HERO_BUILD_VERSION || document.documentElement.dataset.buildVersion || '99.31');
+const GAME_VERSION = (window.MINI_BROWSER_HERO_LATEST_VERSION || window.MINI_BROWSER_HERO_BUILD_VERSION || document.documentElement.dataset.buildVersion || '99.32');
 window.GAME_VERSION = GAME_VERSION;
 window.MINI_BROWSER_HERO_LATEST_VERSION = GAME_VERSION;
 const DARK_SWORD_SAINT = {
@@ -495,7 +495,7 @@ function maxHp(){return calcStats().hp}
 function nowMs(){ return performance.now(); }
 
 function makeEmptyEnemyStatuses(t=0){
-  return {bleeds:[], darkBleeds:[], burnUntil:0, lastBleedTick:t, lastDarkBleedTick:t, darkAuraStacks:0, darkAuraLastTick:t, darkSwordBuffs:[], darkDanceCount:0, darkRevivingUntil:0, darkReviveStart:0, darkOneDamageCount:0, darkTechniqueAwakened:false, bossRegenLast:t, dragonBreathCount:0};
+  return {bleeds:[], darkBleeds:[], burnUntil:0, lastBleedTick:t, lastDarkBleedTick:t, darkAuraStacks:0, darkAuraLastTick:t, darkSwordBuffs:[], darkDanceCount:0, darkRevivingUntil:0, darkReviveStart:0, darkOneDamageCount:0, darkTechniqueAwakened:false, bossRegenLast:t, dragonBreathCount:0, bossBuffStart:t, bossPierceStart:t};
 }
 function isDarkSwordSaint(e=state.enemy){ return !!e && e.id === 'dark_sword_saint'; }
 function hasUnyieldingBuff(){ return isDarkSwordSaint() && !state.down; }
@@ -509,6 +509,26 @@ function darkDanceChanceForNext(){
   if(count >= 10) return 0;
   return Math.max(0, 100 - count * 10);
 }
+function isSpeciesBoss(e=state.enemy){
+  return !!e && e.type === 'ボス' && !isDarkSwordSaint(e);
+}
+function bossCommonDamageReduction(){
+  if(!isSpeciesBoss()) return 0;
+  ensureStatusContainers();
+  const start = Number(state.enemyStatuses.bossBuffStart) || nowMs();
+  const elapsed10 = Math.floor(Math.max(0, nowMs() - start) / 10000);
+  return Math.max(0, 0.25 - elapsed10 * 0.01);
+}
+function bossCommonDefensePierce(){
+  if(!isSpeciesBoss()) return 0;
+  ensureStatusContainers();
+  const start = Number(state.enemyStatuses.bossPierceStart) || nowMs();
+  const elapsed30 = Math.floor(Math.max(0, nowMs() - start) / 30000);
+  return Math.min(1, 0.05 + elapsed30 * 0.01);
+}
+function bossCommonStatusText(){
+  return `被ダメ軽減${Math.round(bossCommonDamageReduction()*100)}% / 防御無視${Math.round(bossCommonDefensePierce()*100)}%`;
+}
 function ensureStatusContainers(){
   if(!state.heroStatuses) state.heroStatuses = {bleeds:[], darkBleeds:[], burnUntil:0, lastBleedTick:0, lastDarkBleedTick:0};
   if(!state.heroStatuses.darkBleeds) state.heroStatuses.darkBleeds = [];
@@ -516,6 +536,8 @@ function ensureStatusContainers(){
   if(!state.enemyStatuses) state.enemyStatuses = makeEmptyEnemyStatuses();
   if(!state.enemyStatuses.darkBleeds) state.enemyStatuses.darkBleeds = [];
   if(!state.enemyStatuses.lastDarkBleedTick) state.enemyStatuses.lastDarkBleedTick = 0;
+  if(!state.enemyStatuses.bossBuffStart) state.enemyStatuses.bossBuffStart = nowMs();
+  if(!state.enemyStatuses.bossPierceStart) state.enemyStatuses.bossPierceStart = nowMs();
 }
 function resetTransientStatuses(){
   state.heroStatuses = {bleeds:[], darkBleeds:[], burnUntil:0, lastBleedTick:0, lastDarkBleedTick:0};
@@ -626,6 +648,7 @@ function processStatusDots(now){
     if(ticks > 0){
       state.enemyStatuses.lastBleedTick += ticks*1000;
       let dmg = Math.max(1, Math.floor(state.enemy.maxHp * 0.01 * state.enemyStatuses.bleeds.length * ticks));
+      if(isSpeciesBoss()) dmg = Math.max(1, Math.floor(dmg * (1 - bossCommonDamageReduction())));
       if(state.enemy?.bossBuff === 'apex') dmg = Math.max(1, Math.floor(dmg * 0.5));
       if(isDarkSwordSaint() && darkAuraStacks() > 0){
         dmg = Math.max(1, Math.floor(dmg * 0.10));
@@ -646,6 +669,7 @@ function processStatusDots(now){
     if(ticks > 0){
       state.enemyStatuses.lastDarkBleedTick += ticks*15000;
       let dmg = Math.max(1, Math.floor(state.enemy.maxHp * 0.01 * darkBleedCount('enemy') * ticks));
+      if(isSpeciesBoss()) dmg = Math.max(1, Math.floor(dmg * (1 - bossCommonDamageReduction())));
       if(isDarkSwordSaint() && darkAuraStacks() > 0){ dmg = Math.max(1, Math.floor(dmg * 0.10)); }
       state.enemyHp = Math.max(0, state.enemyHp - dmg);
       showFloat(`暗黒出血 ${dmg}${isDarkSwordSaint() && darkAuraStacks() > 0 ? ' 軽減' : ''}`,'dark');
@@ -925,6 +949,7 @@ function statusTooltipHtml(kind, target){
   if(kind === 'acid_body') return `<b>酸ボディ</b><br>受けた直接ダメージの10%を跳ね返す。`;
   if(kind === 'super_regen') return `<b>超再生</b><br>毎秒最大HPの1%を回復する。<br>HP50%以下では毎秒2%回復する。`;
   if(kind === 'dragon_breath') return `<b>火炎ブレス</b><br>発動まで：あと${dragonBreathTurnsLeft()}ターン<br>ドラゴンの行動5回ごとに発動。<br>ドラゴンの現在HPの1%分の火属性攻撃を10連続で行う。<br>火軽減20%未満の場合、確定で火傷を付与する。`;
+  if(kind === 'boss_common') return `<b>ボス</b><br>種族ボス共通バフ。<br>現在：${bossCommonStatusText()}<br>被ダメージを25%軽減する。軽減率は10秒ごとに1%ずつ減少する。<br>攻撃時、防御力を5%無視する。防御無視は30秒ごとに1%ずつ上昇する。`;
   if(kind === 'apex') return `<b>種族の頂点</b><br>被ダメージ50%軽減。<br>出血ダメージ50%軽減。`;
   if(kind === 'spirit_king') return `<b>精霊王</b><br>攻撃されると必ず火傷を付与する。`;
   if(kind === 'master_amulet') return `<b>師匠のアミュレット</b><br>10秒ごとに最大HP${(masterAmuletRegenRate()*100).toFixed(1)}%回復。<br>レベルに応じて+0.1%ずつ成長し、最大10%。<br>敵撃破時、最大HP25%回復。<br>死線の剣舞発動率+10%。`;
@@ -967,6 +992,7 @@ function activeStatusEntries(target){
     if(st.darkShield) entries.push(['dark_shield', 'hero']);
     if(st.darkAmulet) entries.push(['dark_amulet', 'hero']);
   }else if(target === 'enemy'){
+    if(isSpeciesBoss()) entries.push(['boss_common', 'enemy']);
     if(state.enemy?.bossBuff) entries.push([state.enemy.bossBuff, 'enemy']);
   }
   if(bleedCount(target)) entries.push(['bleed', target]);
@@ -1149,6 +1175,9 @@ function renderStatusLists(){
   ensureStatusContainers(); cleanupStatuses();
   if(els.enemyStatusList){
     const parts=[];
+    if(isSpeciesBoss()){
+      parts.push(makeStatusBadge(`👹ボス(${bossCommonStatusText()})`, 'bossbuff', 'boss_common', 'enemy'));
+    }
     if(state.enemy?.bossBuff){
       const names={acid_body:'🧪酸ボディ', super_regen:'💚超再生', apex:'👑種族の頂点', spirit_king:'🔥精霊王'};
       parts.push(makeStatusBadge(names[state.enemy.bossBuff]||'ボス特性', 'bossbuff', state.enemy.bossBuff, 'enemy'));
@@ -1199,7 +1228,7 @@ function makeFirstEnemy(){
 }
 
 function pickEnemy(){
-  // ver.99.31: 通常ボスはランダム抽選ではなく、各下位種族Lv10刻み撃破後に出現する。
+  // ver.99.32: 通常ボスはランダム抽選ではなく、各下位種族Lv10刻み撃破後に出現する。
   return {...normals[Math.floor(Math.random()*normals.length)]};
 }
 function getBossForNormal(normalId){
@@ -1213,7 +1242,7 @@ function shouldReplaceBossWithDarkSaint(){
   return !!state.darkSwordSaintFirstEncountered && Math.random() < 0.01;
 }
 function scheduleBossAfterNormalDefeat(e){
-  // ver.99.31: 撃破後停止の原因にならないよう、ボス予約処理は必ず安全に抜ける。
+  // ver.99.32: 撃破後停止の原因にならないよう、ボス予約処理は必ず安全に抜ける。
   try{
     if(!e || e.type !== '雑魚') return;
     const boss = getBossForNormal(e.id);
@@ -1223,7 +1252,7 @@ function scheduleBossAfterNormalDefeat(e){
     state.pendingBossForNext = { id: boss.id, level: lv, from: e.id };
     log(`${e.name}Lv.${lv}を制した。次の敵に${boss.name}Lv.${lv}が現れる！`, 'danger');
   }catch(err){
-    console.error('[MBH99.31 scheduleBossAfterNormalDefeat]', err);
+    console.error('[MBH99.32 scheduleBossAfterNormalDefeat]', err);
     state.pendingBossForNext = null;
   }
 }
@@ -1274,7 +1303,7 @@ function setEnemy(e){
   log(`${e.name} が現れた。${e.type==='ボス'||e.type==='裏ボス'?'ボス出現！':''}`, e.type==='ボス'||e.type==='裏ボス'?'danger':'');
 }
 function forceSpawnDarkSwordSaint(){
-  // ver99.31: 即時召喚ではなく、次の敵として暗黒剣聖を予約する
+  // ver99.32: 即時召喚ではなく、次の敵として暗黒剣聖を予約する
   state.forceNextDarkSwordSaint = true;
   state.pendingDarkSwordSaintDelay = false;
   banner('次の敵に暗黒剣聖をセット！', 1400);
@@ -1392,6 +1421,7 @@ function applyHeroHit(skill){
   if(element==='fire' && state.enemy.fireAbsorb){ state.enemyHp=Math.min(state.enemy.maxHp, state.enemyHp + dmg); absorbed=true; }
   else {
     if(element==='fire' && state.enemy.fireResist){dmg=Math.floor(dmg*(1-state.enemy.fireResist)); resisted=true;}
+    if(isSpeciesBoss()) dmg = Math.max(1, Math.floor(dmg * (1 - bossCommonDamageReduction())));
     if(state.enemy?.bossBuff === 'apex') dmg = Math.max(1, Math.floor(dmg * 0.5));
     if(isDarkSwordSaint()){
       const auraReduce = Math.min(1, darkAuraStacks() * 0.10);
@@ -1461,7 +1491,8 @@ function enemyAttack(now){
   let name = element==='dark' ? '暗黒攻撃' : (e.enemySkill && element==='fire' ? e.enemySkill:'攻撃');
   if(Math.random()<st.guard){ showHeroFloat('GUARD','guard'); playSfx('guard'); log(`${e.name} の${name}をGUARD！`,'good'); return; }
   let atk = e.atk * (1 + darkSwordBuffCount() * 0.5);
-  let dmg=Math.max(1, Math.floor(atk - st.def*.55*heroDefenseMultiplier() + rand(0,atk*.35)));
+  const bossPierce = bossCommonDefensePierce();
+  let dmg=Math.max(1, Math.floor(atk - st.def*.55*heroDefenseMultiplier()*(1-bossPierce) + rand(0,atk*.35)));
   if(state.debug.killHero){ dmg = Math.max(dmg, state.hp + 999999); }
   if(element==='fire') dmg=Math.floor(dmg*(1-st.fireRes));
   dmg = applyDarkShieldToDamage(dmg);
@@ -1532,7 +1563,7 @@ function tryDarkSwordDanceRevive(){
 
   const t = performance.now();
   state.enemyStatuses.darkDanceCount = count + 1;
-  // ver99.31: 暗黒剣舞発動時、主人公の死線の剣舞発動回数と剣舞状態を必ずリセット
+  // ver99.32: 暗黒剣舞発動時、主人公の死線の剣舞発動回数と剣舞状態を必ずリセット
   state.deathDanceBattleCount = 0;
   state.deathDanceComboCount = 0;
   state.deathDance = false;
@@ -1745,7 +1776,7 @@ function enemyDefeated(){
     const makeDarkReward = () => darkPool[Math.floor(Math.random()*darkPool.length)](state.level);
     const makeLegendReward = () => makeItem(slots[Math.floor(Math.random()*slots.length)], legendary, {isBossDrop:true});
 
-    // ver99.31: 報酬枠を明示的に固定する。
+    // ver99.32: 報酬枠を明示的に固定する。
     // rewards[0] = 1枠目、rewards[1] = 2枠目、rewards[2] = 3枠目。
     // 3枠目は必ず闇装備。1〜2枠目は確率で闇装備になってもよい。
     const rewards = [
@@ -1760,7 +1791,7 @@ function enemyDefeated(){
     log(`暗黒剣聖討伐報酬：1枠目=${rewards[0].name} / 2枠目=${rewards[1].name} / 3枠目=${rewards[2].name}（闇装備確定）`,'good');
     showDropSequence(rewards);
   }else if(Math.random()<.38){ const it=makeRandomItem(e?.type==='ボス'); state.inventory.unshift(it); logItemDrop(it); showDropToast(it); }
-  // ver.99.31: 強化石ドロップは廃止。装備はドロップ時に敵Lv依存の+値が付く。
+  // ver.99.32: 強化石ドロップは廃止。装備はドロップ時に敵Lv依存の+値が付く。
   if(calcStats().masterRegen && state.hp > 0){
     const heal = Math.max(1, Math.floor(maxHp() * 0.25));
     const beforeHp = state.hp;
@@ -2892,7 +2923,7 @@ function v94InstallTouchControls(){
 }
 
 init();
-// ver99.31: disable old stacked v94 menu/debug tap binding; clean patch below owns UI events.
+// ver99.32: disable old stacked v94 menu/debug tap binding; clean patch below owns UI events.
 // setTimeout(v94InstallTouchControls, 0);
 
 
@@ -2901,12 +2932,12 @@ window.addEventListener("pageshow",()=>{ if(state.mobileMuted) stopAllAudioForMu
 window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(); });
 
 
-/* ver99.31 clean stabilization patch: single source, no stacked UI injection */
+/* ver99.32 clean stabilization patch: single source, no stacked UI injection */
 (function(){
   'use strict';
-  const BUILD = '99.31';
+  const BUILD = '99.32';
   const byId = (id)=>document.getElementById(id);
-  function safe(fn){ try{ return fn && fn(); }catch(e){ console.warn('[ver99.31]', e); return null; } }
+  function safe(fn){ try{ return fn && fn(); }catch(e){ console.warn('[ver99.32]', e); return null; } }
 
   // --- version: one source only, no floating badge ---
   window.MINI_BROWSER_HERO_LATEST_VERSION = BUILD;
@@ -3033,7 +3064,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   }
 
   function bindCleanDebug(){
-    // ver99.31: debug panel must be idempotent. Clone once to remove stacked click/pointer handlers.
+    // ver99.32: debug panel must be idempotent. Clone once to remove stacked click/pointer handlers.
     let panel = byId('debugPanel');
     if(panel){
       const fresh = panel.cloneNode(false);
@@ -3202,12 +3233,12 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   window.addEventListener('load', boot, {once:true});
 })();
 
-/* ver.99.31: audio restore - use lexical state/audio functions, not window fallback */
+/* ver.99.32: audio restore - use lexical state/audio functions, not window fallback */
 (function(){
   'use strict';
-  const BUILD='99.31';
+  const BUILD='99.32';
   const $=(id)=>document.getElementById(id);
-  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.31]', e); } }
+  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.32]', e); } }
   function setVersion(){
     window.GAME_VERSION=BUILD; window.BUILD_VERSION=BUILD;
     document.documentElement.setAttribute('data-build-version', BUILD);
@@ -3307,7 +3338,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   window.addEventListener('resize', ()=>safe(()=>applyMenu(typeof state !== 'undefined' ? !!state.uiOpen : false)));
 
 
-  /* ver.99.31: mute icon sync fix
+  /* ver.99.32: mute icon sync fix
      bindOneTap() clones top buttons, so els.muteBtn can point to a removed old node.
      Always sync els.muteBtn to the current DOM button before updating the icon. */
   const __mbhOriginalUpdateMuteButton = updateMuteButton;
@@ -3334,12 +3365,12 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 
 
 
-  /* ver.99.31: UI-only patch
+  /* ver.99.32: UI-only patch
      - hide EXP/flee behind overlay menu
      - revive inventory filters
      - keep inventory/log inside viewport with unified scrollbars
   */
-  function mbh9920Safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.31]', e); } }
+  function mbh9920Safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.32]', e); } }
   function mbh9920IsOverlay(){
     return matchMedia('(max-width: 1279px), (max-height: 700px), (pointer: coarse)').matches;
   }
@@ -3442,21 +3473,21 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   setTimeout(()=>mbh9920Safe(()=>{ mbh9920EnsureInventoryFilter(); renderInventory(); }), 300);
 
   // Ensure latest visible build number is single and clear.
-  document.documentElement.setAttribute('data-build-version','99.31');
-  document.querySelectorAll('.build-version').forEach(el=>{ el.textContent='ver.99.31'; });
-  document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent='Build: ver.99.31'; });
+  document.documentElement.setAttribute('data-build-version','99.32');
+  document.querySelectorAll('.build-version').forEach(el=>{ el.textContent='ver.99.32'; });
+  document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent='Build: ver.99.32'; });
 
   // PCでは非アクティブ時もBGMを止めない。スマホだけ従来どおり停止。
   window.__mbhPcKeepBgm = true;
 })();
 
 
-/* ver.99.31: inventory filter and log viewport final fix */
+/* ver.99.32: inventory filter and log viewport final fix */
 (function(){
   'use strict';
-  const BUILD='99.31';
+  const BUILD='99.32';
   const $=(id)=>document.getElementById(id);
-  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.31]', e); } }
+  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.32]', e); } }
   function setVersion(){
     window.GAME_VERSION=BUILD; window.BUILD_VERSION=BUILD;
     document.documentElement.setAttribute('data-build-version', BUILD);
@@ -3617,10 +3648,10 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   setTimeout(fitScrollablePanels9922,800);
 })();
 
-/* ver.99.31: mobile tap recovery only. PC mouse behavior is untouched. */
+/* ver.99.32: mobile tap recovery only. PC mouse behavior is untouched. */
 (function(){
   'use strict';
-  const BUILD = '99.31';
+  const BUILD = '99.32';
   const isMobileTapEnv = () => {
     try { return window.matchMedia('(pointer: coarse), (max-width: 760px)').matches; }
     catch(_) { return window.innerWidth <= 760; }
@@ -3693,7 +3724,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
           el.click();
         }
       } catch(err) {
-        console.warn('[MBH99.31 mobile tap]', err);
+        console.warn('[MBH99.32 mobile tap]', err);
       }
     }, 0);
   }
@@ -3711,12 +3742,12 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   window.addEventListener('load', boot, {once:true});
 })();
 
-/* ver.99.31: mobile equipment tap + mobile background audio pause only */
+/* ver.99.32: mobile equipment tap + mobile background audio pause only */
 (function(){
   'use strict';
-  const BUILD='99.31';
+  const BUILD='99.32';
   const $=(id)=>document.getElementById(id);
-  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.31]', e); } }
+  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.32]', e); } }
   function isMobileLike(){
     return !!(window.matchMedia && window.matchMedia('(pointer: coarse), (max-width: 760px)').matches) || ('ontouchstart' in window) || ((navigator.maxTouchPoints||0)>0);
   }
@@ -3828,10 +3859,10 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 })();
 
 
-/* ver.99.31: enhancement removal + enemy-level drop plus finalizer */
+/* ver.99.32: enhancement removal + enemy-level drop plus finalizer */
 (function(){
-  const BUILD='99.31';
-  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.31]', e); } }
+  const BUILD='99.32';
+  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.32]', e); } }
   safe(()=>{
     document.documentElement.setAttribute('data-build-version', BUILD);
     document.querySelectorAll('.build-version').forEach(el=>{ el.textContent='ver.'+BUILD; });
