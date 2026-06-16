@@ -1,6 +1,6 @@
 'use strict';
 
-// ver99.10: 闇装備4種の生成関数をグローバル束縛として先に宣言。
+// ver99.28: 闇装備4種の生成関数をグローバル束縛として先に宣言。
 // strict modeで `makeDarkArmor = function...` がReferenceErrorになり、
 // 後続パッチ全体が止まる問題を防ぐ。
 var makeDarkArmor, makeDarkGauntlets, makeDarkHelm, makeDarkBoots;
@@ -40,7 +40,7 @@ const DEATH_DANCE_CUTINS = [
 ];
 const DARK_SWORD_SAINT_CUTIN = {quote:'私を超えてみせろ。', img:'assets/cutin_dark_sword_dance.png'};
 const DARK_SWORD_TECHNIQUE_CUTIN = {quote:'', img:'assets/cutin_dark_sword_technique.png'};
-const GAME_VERSION = (window.MINI_BROWSER_HERO_LATEST_VERSION || window.MINI_BROWSER_HERO_BUILD_VERSION || document.documentElement.dataset.buildVersion || '99.13');
+const GAME_VERSION = (window.MINI_BROWSER_HERO_LATEST_VERSION || window.MINI_BROWSER_HERO_BUILD_VERSION || document.documentElement.dataset.buildVersion || '99.28');
 window.GAME_VERSION = GAME_VERSION;
 window.MINI_BROWSER_HERO_LATEST_VERSION = GAME_VERSION;
 const DARK_SWORD_SAINT = {
@@ -1187,7 +1187,7 @@ function setEnemy(e){
   log(`${e.name} が現れた。${e.type==='ボス'||e.type==='裏ボス'?'ボス出現！':''}`, e.type==='ボス'||e.type==='裏ボス'?'danger':'');
 }
 function forceSpawnDarkSwordSaint(){
-  // ver99.6: 即時召喚ではなく、次の敵として暗黒剣聖を予約する
+  // ver99.28: 即時召喚ではなく、次の敵として暗黒剣聖を予約する
   state.forceNextDarkSwordSaint = true;
   state.pendingDarkSwordSaintDelay = false;
   banner('次の敵に暗黒剣聖をセット！', 1400);
@@ -1420,7 +1420,7 @@ function tryDarkSwordDanceRevive(){
 
   const t = performance.now();
   state.enemyStatuses.darkDanceCount = count + 1;
-  // ver99.6: 暗黒剣舞発動時、主人公の死線の剣舞発動回数と剣舞状態を必ずリセット
+  // ver99.28: 暗黒剣舞発動時、主人公の死線の剣舞発動回数と剣舞状態を必ずリセット
   state.deathDanceBattleCount = 0;
   state.deathDanceComboCount = 0;
   state.deathDance = false;
@@ -1627,7 +1627,7 @@ function enemyDefeated(){
     const makeDarkReward = () => darkPool[Math.floor(Math.random()*darkPool.length)](state.level);
     const makeLegendReward = () => makeItem(slots[Math.floor(Math.random()*slots.length)], legendary, {isBossDrop:true});
 
-    // ver99.26: 報酬枠を明示的に固定する。
+    // ver99.28: 報酬枠を明示的に固定する。
     // rewards[0] = 1枠目、rewards[1] = 2枠目、rewards[2] = 3枠目。
     // 3枠目は必ず闇装備。1〜2枠目は確率で闇装備になってもよい。
     const rewards = [
@@ -1642,7 +1642,7 @@ function enemyDefeated(){
     log(`暗黒剣聖討伐報酬：1枠目=${rewards[0].name} / 2枠目=${rewards[1].name} / 3枠目=${rewards[2].name}（闇装備確定）`,'good');
     showDropSequence(rewards);
   }else if(Math.random()<.38){ const it=makeRandomItem(e?.type==='ボス'); state.inventory.unshift(it); logItemDrop(it); showDropToast(it); }
-  if(Math.random()<.22){ const m=randInt(1,3); state.mats += m; log(`強化石+${m} を獲得。`,'good'); }
+  // ver.99.28: 強化石ドロップは廃止。装備はドロップ時に敵Lv依存の+値が付く。
   if(calcStats().masterRegen && state.hp > 0){
     const heal = Math.max(1, Math.floor(maxHp() * 0.25));
     const beforeHp = state.hp;
@@ -2136,10 +2136,52 @@ function playBgm(){
 
 
 
+function rollDropPlusByEnemyLevel(enemyLevel){
+  const lv = Math.max(1, Math.floor(Number(enemyLevel) || state?.enemy?.level || state?.level || 1));
+  const min = Math.max(0, Math.floor(lv / 100));
+  const max = Math.max(min, 10 + Math.floor(lv / 50));
+  return randInt(min, max);
+}
+function getDropEnemyLevel(levelOverride){
+  return Math.max(1, Math.floor(Number(levelOverride) || state?.enemy?.level || state?.level || 1));
+}
+function applyDropPlusToItem(it, enemyLevel){
+  if(!it) return it;
+  const lv = getDropEnemyLevel(enemyLevel);
+  if(it.itemLevel == null) it.itemLevel = lv;
+  if(it.level == null || Number(it.level) < 0) it.level = rollDropPlusByEnemyLevel(lv);
+  const plus = Math.max(0, Math.floor(Number(it.level) || 0));
+  // ドロップ+値は「後から強化」ではなく、拾った時点の完成度。
+  // 伸び幅は強すぎないよう、主能力は+1ごとに4%、特殊効果は+1ごとに0.2%程度。
+  const statMul = 1 + plus * 0.04;
+  if(!it.__dropPlusApplied){
+    if(it.atk) it.atk = Math.max(1, Math.floor(it.atk * statMul));
+    if(it.def) it.def = Math.max(1, Math.floor(it.def * statMul));
+    if(it.hp) it.hp = Math.max(1, Math.floor(it.hp * statMul));
+    const specialAdd = plus * 0.002;
+    if(it.crit) it.crit = Math.min(0.65, +(it.crit + specialAdd).toFixed(3));
+    if(it.lifeSteal) it.lifeSteal = Math.min(0.35, +(it.lifeSteal + specialAdd).toFixed(3));
+    if(it.guard) it.guard = Math.min(0.55, +(it.guard + specialAdd).toFixed(3));
+    if(it.fireRes) it.fireRes = Math.min(0.75, +(it.fireRes + specialAdd).toFixed(3));
+    if(it.fireDmg) it.fireDmg = Math.min(1.5, +(it.fireDmg + specialAdd).toFixed(3));
+    if(it.thunderDmg) it.thunderDmg = Math.min(1.5, +(it.thunderDmg + specialAdd).toFixed(3));
+    if(it.fireSkillChance) it.fireSkillChance = Math.min(0.95, +(it.fireSkillChance + specialAdd).toFixed(3));
+    if(it.thunderSkillChance) it.thunderSkillChance = Math.min(0.95, +(it.thunderSkillChance + specialAdd).toFixed(3));
+    if(it.deathDanceChance && it.specialFrame === 'darkholy') it.deathDanceChance = Math.min(0.50, +(it.deathDanceChance + specialAdd).toFixed(3));
+    it.__dropPlusApplied = true;
+  }
+  return it;
+}
+function formatItemNameWithPlus(it){
+  if(!it) return '';
+  const plus = Math.max(0, Math.floor(Number(it.level)||0));
+  return `${it.name}+${plus}`;
+}
+
 function makeDarkHolySword(levelOverride){
   const lv = Math.max(1, Math.floor(levelOverride || state.level || 1));
   const legendary = rarities.find(r=>r.id==='legendary') || {id:'legendary', name:'レジェンダリー', mult:3.2};
-  const it = makeItem('武器', legendary);
+  const it = makeItem('武器', legendary, {levelOverride: lv});
   it.name = '闇の聖剣';
   it.rarity = 'legendary';
   it.rarityName = 'レジェンダリー';
@@ -2149,36 +2191,39 @@ function makeDarkHolySword(levelOverride){
   it.heroDarkBleedChance = 0.10;
   it.skill = {id:'multi', name:'連続攻撃', chance:1, element:'physical'};
   it.flavor = '暗黒剣聖を超えた証。通常攻撃と剣舞の1ヒットごとに暗黒出血を刻む。';
+  it.itemLevel = lv; it.__dropPlusApplied = false; applyDropPlusToItem(it, lv);
   return it;
 }
 
 function makeDarkShield(levelOverride){
   const lv = Math.max(1, Math.floor(levelOverride || state.level || 1));
   const legendary = rarities.find(r=>r.id==='legendary') || {id:'legendary', name:'レジェンダリー', mult:3.2};
-  const it = makeItem('盾', legendary);
+  const it = makeItem('盾', legendary, {levelOverride: lv});
   it.name = '闇の盾';
   it.rarity = 'legendary'; it.rarityName = 'レジェンダリー'; it.specialFrame = 'darkholy';
   it.def = Math.floor((18 + lv * 5) * legendary.mult);
   it.hp = Math.floor((70 + lv * 14) * legendary.mult);
   it.darkShield = true;
   it.flavor = '毎ターン被ダメージ軽減+1%（最大50%）。受けたダメージの半分を回復。';
+  it.itemLevel = lv; it.__dropPlusApplied = false; applyDropPlusToItem(it, lv);
   return it;
 }
 function makeDarkAmulet(levelOverride){
   const lv = Math.max(1, Math.floor(levelOverride || state.level || 1));
   const legendary = rarities.find(r=>r.id==='legendary') || {id:'legendary', name:'レジェンダリー', mult:3.2};
-  const it = makeItem('アミュレット', legendary);
+  const it = makeItem('アミュレット', legendary, {levelOverride: lv});
   it.name = '闇のアミュレット';
   it.rarity = 'legendary'; it.rarityName = 'レジェンダリー'; it.specialFrame = 'darkholy';
   it.hp = Math.floor((90 + lv * 16) * legendary.mult);
   it.deathDanceChance = 0.25;
   it.darkAmulet = true;
   it.flavor = '死線の剣舞発動率+25%。死線の剣舞効果時間2倍。';
+  it.itemLevel = lv; it.__dropPlusApplied = false; applyDropPlusToItem(it, lv);
   return it;
 }
 function makeMasterAmulet(){
   const legendary = rarities.find(r=>r.id==='legendary') || {id:'legendary', name:'レジェンダリー', mult:3.2};
-  const it = makeItem('アミュレット', legendary);
+  const it = makeItem('アミュレット', legendary, {levelOverride: 1});
   it.id = 'master_amulet_fixed';
   it.name = '師匠のアミュレット';
   it.rarity = 'legendary'; it.rarityName = 'レジェンダリー';
@@ -2186,6 +2231,7 @@ function makeMasterAmulet(){
   it.deathDanceChance = 0.10;
   it.masterRegen = true;
   it.unsellable = true;
+  it.level = 0; it.itemLevel = 1;
   it.flavor = '師匠より託された護符。10秒ごとにHP回復（Lvで成長、最大10%）。敵撃破時HP25%回復。死線の剣舞発動率+10%。';
   return it;
 }
@@ -2214,10 +2260,11 @@ function makeRandomItem(isBossDrop=false){
   return makeItem(slot, rarity, {isBossDrop});
 }
 function makeItem(slot, rarity, opts={}){
-  const lv=Math.max(1,state?.level||1);
+  const lv=getDropEnemyLevel(opts.levelOverride);
+  const plus=rollDropPlusByEnemyLevel(lv);
   const name=(equipNames[slot]||[slot])[Math.floor(Math.random()*(equipNames[slot]||[slot]).length)];
   const m=rarity.mult;
-  const it={id:crypto.randomUUID?.()||String(Math.random()), slot, rarity:rarity.id, rarityName:rarity.name, name, level:0, atk:0, def:0, hp:0, fireRes:0, fireDmg:0, fireSkillChance:0, fireDamageHeal:0, thunderDmg:0, thunderSkillChance:0, crit:0, lifeSteal:0, guard:0, deathDanceChance:0};
+  const it={id:crypto.randomUUID?.()||String(Math.random()), slot, rarity:rarity.id, rarityName:rarity.name, name, itemLevel:lv, level:plus, atk:0, def:0, hp:0, fireRes:0, fireDmg:0, fireSkillChance:0, fireDamageHeal:0, thunderDmg:0, thunderSkillChance:0, crit:0, lifeSteal:0, guard:0, deathDanceChance:0};
   if(slot==='武器'){
     it.atk=Math.floor((18+lv*4)*m);
     if(Math.random()<.35) it.crit=.03;
@@ -2234,6 +2281,7 @@ function makeItem(slot, rarity, opts={}){
   }
   applyNameBonus(it);
   normalizeGeneratedDeathDanceChance(it, !!opts.isBossDrop);
+  applyDropPlusToItem(it, lv);
   return it;
 }
 
@@ -2318,10 +2366,9 @@ function openChests(n){
   log(`宝箱を${count}個開封。`,'good'); renderAll(); scheduleSave();
 }
 function upgradeSelected(){
-  const slot=state.selectedEquip; if(!slot || !state.equip[slot]) return;
-  if(state.mats<=0){ log('強化石が足りない。','danger'); return; }
-  const it=state.equip[slot]; state.mats--; it.level++; it.atk=Math.floor((it.atk||0)*1.08)+(it.slot==='武器'?3:0); it.def=Math.floor((it.def||0)*1.08)+(it.slot!=='武器'?2:0); it.hp=Math.floor((it.hp||0)*1.06); log(`${it.name} +${it.level} に強化。`,'good'); renderAll(); scheduleSave();
+  log('強化システムは廃止されました。装備はドロップ時の+値で厳選します。','system');
 }
+
 
 
 function makeDebugSword(){
@@ -2364,11 +2411,9 @@ function itemFrameClass(it){ return it ? (it.specialFrame || it.rarity || '') : 
 function itemNameColor(it){ return it?.specialFrame === 'darkholy' ? '#b86cff' : rarityColor(it?.rarity); }
 function renderEquip(){
   els.equipList.innerHTML='';
-  slots.forEach(slot=>{ const it=state.equip[slot]; const div=document.createElement('div'); div.className='equip'+(it?` ${itemFrameClass(it)} ${it.rarity}`:'')+(state.selectedEquip===slot?' selected':''); div.innerHTML=it?`<b style="color:${itemNameColor(it)}">${slot}: ${it.name}+${it.level}</b><small>${itemSummary(it)}</small>`:`<b>${slot}: 未装備</b>`; div.onclick=()=>{state.selectedEquip=slot; renderEquip();}; if(it){ div.onmousemove=(e)=>showTip(e,it); div.onmouseleave=()=>els.tooltip.classList.add('hidden'); } els.equipList.appendChild(div); });
+  slots.forEach(slot=>{ const it=state.equip[slot]; const div=document.createElement('div'); div.className='equip'+(it?` ${itemFrameClass(it)} ${it.rarity}`:'')+(state.selectedEquip===slot?' selected':''); div.innerHTML=it?`<b style="color:${itemNameColor(it)}">${slot}: ${formatItemNameWithPlus(it)}</b><small>${itemSummary(it)}</small>`:`<b>${slot}: 未装備</b>`; div.onclick=()=>{state.selectedEquip=slot; renderEquip();}; if(it){ div.onmousemove=(e)=>showTip(e,it); div.onmouseleave=()=>els.tooltip.classList.add('hidden'); } els.equipList.appendChild(div); });
   const it=state.selectedEquip && state.equip[state.selectedEquip];
-  els.upgradeBtn.disabled=!it || state.mats<=0;
-  els.upgradeBtn.textContent=it?`${it.name}+${it.level} を強化`:'装備を選択して強化';
-  els.upgradeBtn.classList.toggle('attention', !it && state.mats>0);
+  if(els.upgradeBtn){ els.upgradeBtn.disabled=true; els.upgradeBtn.classList.add('hidden'); els.upgradeBtn.classList.remove('attention'); }
 }
 function renderInventory(){
   els.inventory.innerHTML='';
@@ -2438,7 +2483,7 @@ function showInventoryActionMenu(it, anchor){
   }
   const current=state.equip[it.slot];
   const diff=current ? Math.round(itemPower(it)-itemPower(current)) : 0;
-  menu.innerHTML = `<div class="inventory-action-title"><b>${escapeHtml(it.name)}+${it.level}</b><small>${escapeHtml(it.slot)} / ${escapeHtml(it.rarityName||it.rarity)}</small></div><div class="inventory-action-summary">${escapeHtml(itemSummary(it)||'追加能力なし')}${current?`<br>現在: ${escapeHtml(current.name)}+${current.level} / 戦力差: ${diff>=0?'+':''}${diff}`:'<br>現在: 未装備'}</div><div class="inventory-action-buttons"><button type="button" data-action="equip">装備</button><button type="button" data-action="cancel">キャンセル</button></div>`;
+  menu.innerHTML = `<div class="inventory-action-title"><b>${escapeHtml(formatItemNameWithPlus(it))}</b><small>${escapeHtml(it.slot)} / ${escapeHtml(it.rarityName||it.rarity)}</small></div><div class="inventory-action-summary">${escapeHtml(itemSummary(it)||'追加能力なし')}${current?`<br>現在: ${escapeHtml(formatItemNameWithPlus(current))} / 戦力差: ${diff>=0?'+':''}${diff}`:'<br>現在: 未装備'}</div><div class="inventory-action-buttons"><button type="button" data-action="equip">装備</button><button type="button" data-action="cancel">キャンセル</button></div>`;
   const r = anchor.getBoundingClientRect();
   const width = Math.min(300, window.innerWidth - 16);
   menu.style.width = width + 'px';
@@ -2491,6 +2536,8 @@ function showInventoryActionMenu(it, anchor){
 }
 function itemSummary(it){
   const arr=[];
+  if(it.itemLevel) arr.push(`ドロップLv${Math.floor(Number(it.itemLevel)||1)}`);
+  arr.push(`完成度+${Math.max(0, Math.floor(Number(it.level)||0))}`);
   if(it.atk)arr.push(`攻+${it.atk}`); if(it.def)arr.push(`防+${it.def}`); if(it.hp)arr.push(`HP+${it.hp}`);
   if(it.fireRes)arr.push(`火軽減${Math.round(it.fireRes*100)}%`);
   if(it.fireDamageHeal)arr.push(`火被ダメ回復${Math.round(it.fireDamageHeal*100)}%`);
@@ -2513,8 +2560,8 @@ function itemSummary(it){
 }
 
 function showTip(e,it){
-  const current=state.equip[it.slot]; let html=`<b style="color:${itemNameColor(it)}">${it.name}+${it.level}</b><br>${it.slot} / ${it.rarityName}<br>${itemSummary(it)}<hr>`;
-  html+= current ? `現在: ${current.name}+${current.level}<br>戦力差: ${Math.round(itemPower(it)-itemPower(current))}` : '現在: 未装備';
+  const current=state.equip[it.slot]; let html=`<b style="color:${itemNameColor(it)}">${formatItemNameWithPlus(it)}</b><br>${it.slot} / ${it.rarityName}<br>${itemSummary(it)}<hr>`;
+  html+= current ? `現在: ${formatItemNameWithPlus(current)}<br>戦力差: ${Math.round(itemPower(it)-itemPower(current))}` : '現在: 未装備';
   els.tooltip.innerHTML=html; els.tooltip.style.left=(e.clientX+14)+'px'; els.tooltip.style.top=(e.clientY+14)+'px'; els.tooltip.classList.remove('hidden');
 }
 
@@ -2524,7 +2571,7 @@ function logItemDrop(it){
   const color = itemNameColor(it);
   const rarity = it.rarityName || (rarities.find(r=>r.id===it.rarity)?.name || it.rarity);
   const slotLabel = it && it.darkSaintReward ? `<span class="log-slot">${it.dropSlotNo}枠目${it.dropSlotNo===3?'確定':''}：</span>` : '';
-  log(`装備ドロップ：${slotLabel}<span class="log-item ${itemFrameClass(it)} ${it.rarity}" style="color:${color}">${escapeHtml(it.name)}</span> <span class="log-rarity ${itemFrameClass(it)} ${it.rarity}" style="color:${color}">${escapeHtml(rarity)}</span>`, 'good', true);
+  log(`装備ドロップ：${slotLabel}<span class="log-item ${itemFrameClass(it)} ${it.rarity}" style="color:${color}">${escapeHtml(formatItemNameWithPlus(it))}</span> <span class="log-rarity ${itemFrameClass(it)} ${it.rarity}" style="color:${color}">${escapeHtml(rarity)}</span>`, 'good', true);
 }
 
 function showDropSequence(items){
@@ -2550,7 +2597,7 @@ function showDropToast(it, stackIndex=0){
   const slotLabel = it && it.darkSaintReward ? `<strong class="drop-slot-label">${it.dropSlotNo}枠目${it.dropSlotNo===3?'・闇装備確定':''}</strong>` : '';
   const toast = els.dropToast.cloneNode(false);
   toast.removeAttribute('id');
-  toast.innerHTML = `${slotLabel}<span style="color:${color}">${escapeHtml(it.name)}</span><small style="color:${color}">${escapeHtml(rarity)}</small><em class="drop-performance">${summary}</em>`;
+  toast.innerHTML = `${slotLabel}<span style="color:${color}">${escapeHtml(formatItemNameWithPlus(it))}</span><small style="color:${color}">${escapeHtml(rarity)}</small><em class="drop-performance">${summary}</em>`;
   toast.className = `drop-toast drop-toast-stacked ${itemFrameClass(it)} ${it.rarity}`;
   toast.style.setProperty('--drop-y', `${18 + Math.min(stackIndex, 5) * 82}px`);
   toast.style.zIndex = String(30 + stackIndex);
@@ -2727,7 +2774,7 @@ function v94InstallTouchControls(){
 }
 
 init();
-// ver99.15: disable old stacked v94 menu/debug tap binding; clean patch below owns UI events.
+// ver99.28: disable old stacked v94 menu/debug tap binding; clean patch below owns UI events.
 // setTimeout(v94InstallTouchControls, 0);
 
 
@@ -2736,12 +2783,12 @@ window.addEventListener("pageshow",()=>{ if(state.mobileMuted) stopAllAudioForMu
 window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(); });
 
 
-/* ver99.15 clean stabilization patch: single source, no stacked UI injection */
+/* ver99.28 clean stabilization patch: single source, no stacked UI injection */
 (function(){
   'use strict';
-  const BUILD = '99.26';
+  const BUILD = '99.28';
   const byId = (id)=>document.getElementById(id);
-  function safe(fn){ try{ return fn && fn(); }catch(e){ console.warn('[ver99.15]', e); return null; } }
+  function safe(fn){ try{ return fn && fn(); }catch(e){ console.warn('[ver99.28]', e); return null; } }
 
   // --- version: one source only, no floating badge ---
   window.MINI_BROWSER_HERO_LATEST_VERSION = BUILD;
@@ -2761,39 +2808,45 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   function lv(v){ return Math.max(1, Math.floor(v || (window.state && state.level) || 1)); }
   function baseItem(slot, name, levelOverride){
     const r = legendary();
+    const n = lv(levelOverride);
     let it;
-    if(typeof makeItem === 'function') it = makeItem(slot, r);
-    else it = {id:'dark_'+Date.now()+'_'+Math.random().toString(36).slice(2), slot};
+    if(typeof makeItem === 'function') it = makeItem(slot, r, {levelOverride:n});
+    else it = {id:'dark_'+Date.now()+'_'+Math.random().toString(36).slice(2), slot, level:(typeof rollDropPlusByEnemyLevel==='function'?rollDropPlusByEnemyLevel(n):0), itemLevel:n};
     it.name = name;
     it.slot = slot;
     it.rarity = 'legendary';
     it.rarityName = 'レジェンダリー';
     it.specialFrame = 'darkholy';
-    it.level = lv(levelOverride);
+    it.itemLevel = n;
+    if(typeof applyDropPlusToItem === 'function'){ it.__dropPlusApplied = false; applyDropPlusToItem(it, n); }
     return it;
   }
   window.makeDarkArmor = makeDarkArmor = function(levelOverride){
     const n=lv(levelOverride), it=baseItem('鎧','闇の鎧',n);
     it.def=Math.floor(26+n*7); it.hp=Math.floor(190+n*22); it.fireRes=(it.fireRes||0)+0.10; it.darkArmor=true;
     it.flavor='火軽減10%。火被ダメージ回復70%。';
+    if(typeof applyDropPlusToItem === 'function'){ it.__dropPlusApplied=false; applyDropPlusToItem(it,n); }
     return it;
   };
   window.makeDarkGauntlets = makeDarkGauntlets = function(levelOverride){
     const n=lv(levelOverride), it=baseItem('腕','闇の籠手',n);
     it.atk=Math.floor(22+n*6); it.def=Math.floor(10+n*3); it.darkGauntlets=true;
     it.flavor='暗黒の力を宿す籠手。暗黒出血と剣舞を支える。';
+    if(typeof applyDropPlusToItem === 'function'){ it.__dropPlusApplied=false; applyDropPlusToItem(it,n); }
     return it;
   };
   window.makeDarkHelm = makeDarkHelm = function(levelOverride){
     const n=lv(levelOverride), it=baseItem('兜','闇の兜',n);
     it.def=Math.floor(18+n*5); it.hp=Math.floor(110+n*15); it.darkHelm=true;
     it.flavor='暗黒の力を宿す兜。神秘と詠唱を強める。';
+    if(typeof applyDropPlusToItem === 'function'){ it.__dropPlusApplied=false; applyDropPlusToItem(it,n); }
     return it;
   };
   window.makeDarkBoots = makeDarkBoots = function(levelOverride){
     const n=lv(levelOverride), it=baseItem('足','暗黒の靴',n);
     it.def=Math.floor(14+n*4); it.hp=Math.floor(85+n*12); it.darkBoots=true;
     it.flavor='暗黒の力を宿す靴。火被ダメージ回復50%。';
+    if(typeof applyDropPlusToItem === 'function'){ it.__dropPlusApplied=false; applyDropPlusToItem(it,n); }
     return it;
   };
   function makeDarkByName(name){
@@ -2862,7 +2915,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   }
 
   function bindCleanDebug(){
-    // ver99.16: debug panel must be idempotent. Clone once to remove stacked click/pointer handlers.
+    // ver99.28: debug panel must be idempotent. Clone once to remove stacked click/pointer handlers.
     let panel = byId('debugPanel');
     if(panel){
       const fresh = panel.cloneNode(false);
@@ -3031,12 +3084,12 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   window.addEventListener('load', boot, {once:true});
 })();
 
-/* ver.99.18: audio restore - use lexical state/audio functions, not window fallback */
+/* ver.99.28: audio restore - use lexical state/audio functions, not window fallback */
 (function(){
   'use strict';
-  const BUILD='99.26';
+  const BUILD='99.28';
   const $=(id)=>document.getElementById(id);
-  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.26]', e); } }
+  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.28]', e); } }
   function setVersion(){
     window.GAME_VERSION=BUILD; window.BUILD_VERSION=BUILD;
     document.documentElement.setAttribute('data-build-version', BUILD);
@@ -3136,7 +3189,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   window.addEventListener('resize', ()=>safe(()=>applyMenu(typeof state !== 'undefined' ? !!state.uiOpen : false)));
 
 
-  /* ver.99.26: mute icon sync fix
+  /* ver.99.28: mute icon sync fix
      bindOneTap() clones top buttons, so els.muteBtn can point to a removed old node.
      Always sync els.muteBtn to the current DOM button before updating the icon. */
   const __mbhOriginalUpdateMuteButton = updateMuteButton;
@@ -3163,12 +3216,12 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 
 
 
-  /* ver.99.26: UI-only patch
+  /* ver.99.28: UI-only patch
      - hide EXP/flee behind overlay menu
      - revive inventory filters
      - keep inventory/log inside viewport with unified scrollbars
   */
-  function mbh9920Safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.26]', e); } }
+  function mbh9920Safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.28]', e); } }
   function mbh9920IsOverlay(){
     return matchMedia('(max-width: 1279px), (max-height: 700px), (pointer: coarse)').matches;
   }
@@ -3271,21 +3324,21 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   setTimeout(()=>mbh9920Safe(()=>{ mbh9920EnsureInventoryFilter(); renderInventory(); }), 300);
 
   // Ensure latest visible build number is single and clear.
-  document.documentElement.setAttribute('data-build-version','99.26');
-  document.querySelectorAll('.build-version').forEach(el=>{ el.textContent='ver.99.26'; });
-  document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent='Build: ver.99.26'; });
+  document.documentElement.setAttribute('data-build-version','99.28');
+  document.querySelectorAll('.build-version').forEach(el=>{ el.textContent='ver.99.28'; });
+  document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent='Build: ver.99.28'; });
 
   // PCでは非アクティブ時もBGMを止めない。スマホだけ従来どおり停止。
   window.__mbhPcKeepBgm = true;
 })();
 
 
-/* ver.99.26: inventory filter and log viewport final fix */
+/* ver.99.28: inventory filter and log viewport final fix */
 (function(){
   'use strict';
-  const BUILD='99.26';
+  const BUILD='99.28';
   const $=(id)=>document.getElementById(id);
-  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.26]', e); } }
+  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.28]', e); } }
   function setVersion(){
     window.GAME_VERSION=BUILD; window.BUILD_VERSION=BUILD;
     document.documentElement.setAttribute('data-build-version', BUILD);
@@ -3446,10 +3499,10 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   setTimeout(fitScrollablePanels9922,800);
 })();
 
-/* ver.99.26: mobile tap recovery only. PC mouse behavior is untouched. */
+/* ver.99.28: mobile tap recovery only. PC mouse behavior is untouched. */
 (function(){
   'use strict';
-  const BUILD = '99.26';
+  const BUILD = '99.28';
   const isMobileTapEnv = () => {
     try { return window.matchMedia('(pointer: coarse), (max-width: 760px)').matches; }
     catch(_) { return window.innerWidth <= 760; }
@@ -3522,7 +3575,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
           el.click();
         }
       } catch(err) {
-        console.warn('[MBH99.26 mobile tap]', err);
+        console.warn('[MBH99.28 mobile tap]', err);
       }
     }, 0);
   }
@@ -3540,12 +3593,12 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   window.addEventListener('load', boot, {once:true});
 })();
 
-/* ver.99.27: mobile equipment tap + mobile background audio pause only */
+/* ver.99.28: mobile equipment tap + mobile background audio pause only */
 (function(){
   'use strict';
-  const BUILD='99.27';
+  const BUILD='99.28';
   const $=(id)=>document.getElementById(id);
-  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.27]', e); } }
+  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.28]', e); } }
   function isMobileLike(){
     return !!(window.matchMedia && window.matchMedia('(pointer: coarse), (max-width: 760px)').matches) || ('ontouchstart' in window) || ((navigator.maxTouchPoints||0)>0);
   }
@@ -3654,4 +3707,26 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', boot9927, {once:true}); else boot9927();
   window.addEventListener('load', boot9927, {once:true});
+})();
+
+
+/* ver.99.28: enhancement removal + enemy-level drop plus finalizer */
+(function(){
+  const BUILD='99.28';
+  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.28]', e); } }
+  safe(()=>{
+    document.documentElement.setAttribute('data-build-version', BUILD);
+    document.querySelectorAll('.build-version').forEach(el=>{ el.textContent='ver.'+BUILD; });
+    document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent='Build: ver.'+BUILD; });
+    document.querySelectorAll('.resources').forEach(el=>{ el.classList.add('hidden'); el.style.display='none'; });
+    document.querySelectorAll('[data-menu-page="equip"]').forEach(el=>{ el.textContent='装備'; });
+    const up=document.getElementById('upgradeBtn');
+    if(up){ up.disabled=true; up.classList.add('hidden'); up.style.display='none'; up.textContent='強化システムは廃止されました'; }
+    const h=document.querySelector('.equip-panel h2'); if(h) h.textContent='装備';
+    const panel=document.querySelector('.equip-panel');
+    if(panel && !document.getElementById('dropPlusHelp')){
+      const p=document.createElement('p'); p.id='dropPlusHelp'; p.className='drop-plus-help'; p.textContent='装備はドロップ時に敵Lv依存の+値が付きます。高Lvほど+値の最低値・最大値が上がります。';
+      const list=document.getElementById('equipList'); panel.insertBefore(p, list||panel.firstChild);
+    }
+  });
 })();
