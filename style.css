@@ -2,15 +2,15 @@
 
 .battle-panel.shake{animation:screenShake .24s linear}
 @keyframes screenShake{0%,100%{transform:translate(0,0)}20%{transform:translate(-4px,2px)}40%{transform:translate(5px,-2px)}60%{transform:translate(-3px,-3px)}80%{transform:translate(3px,2px)}}
-/* vAPP layout fixes */
+/* v28 layout fixes */
 .skill-row{display:none!important}.brand span,.tiny-note{display:none!important}.dance-status{font-style:normal;font-size:12px;color:#ffb0ff;background:rgba(60,0,70,.72);border:1px solid #ff4dff;border-radius:999px;padding:2px 8px;margin-left:6px;text-shadow:0 0 8px #f0f}.topbar{position:relative;z-index:80}.side-panel.open{display:grid!important;position:absolute;right:10px;top:68px;bottom:10px;width:min(430px,calc(100vw - 20px));z-index:70;background:rgba(0,0,0,.72);padding:8px;border:2px solid #c99b39;box-shadow:0 0 35px #000}.side-panel.open:before{content:"";position:fixed;inset:58px 0 0;background:rgba(0,0,0,.18);z-index:-1}.resources{font-size:14px}.log{scrollbar-color:#9d742a #111;scrollbar-width:thin}.battle-panel{min-width:0}.enemy-zone,.hero-zone{max-width:38vw}.card{max-width:100%;height:min(380px,58vh)}@media(max-width:1180px){.layout{grid-template-columns:1fr}.side-panel{display:none}.battle-panel{min-height:calc(100vh - 78px)}.enemy-zone{left:4%;top:15%;width:250px}.hero-zone{right:4%;top:15%;width:250px}.card{height:min(360px,58vh)}}@media(max-width:760px){.topbar{gap:6px;padding:7px}.brand{font-size:15px}.resources{font-size:12px}.controls button{padding:6px 7px;font-size:12px}.enemy-zone,.hero-zone{width:42vw;top:20%}.enemy-zone{left:2%}.hero-zone{right:2%}.name-line{font-size:14px}.hpbar{height:19px}.card{height:52vh}.float{font-size:24px}.center-banner{font-size:32px}}
 
-/* vAPP fixes */
+/* v30 fixes */
 .volume-control{display:flex;align-items:center;gap:6px;border:1px solid #9d742a;border-radius:4px;background:linear-gradient(#2a1b0c,#100b08);padding:6px 8px;color:#ffe8b5;font-size:13px;white-space:nowrap}.volume-control input{width:118px;accent-color:#d69a2f}.layout{grid-template-columns:minmax(760px,1fr) minmax(560px,640px);align-items:stretch}.battle-panel{min-height:calc(100vh - 78px)}.enemy-zone,.hero-zone{width:clamp(270px,18vw,360px)}.card{width:100%;height:clamp(380px,55vh,560px)}.side-panel{display:grid;grid-template-columns:minmax(230px,.9fr) minmax(310px,1.1fr);grid-template-rows:1fr;gap:10px;min-width:0;overflow:hidden}.menu-col{display:grid;gap:10px;min-height:0;overflow:hidden}.menu-left{grid-template-rows:auto 1fr}.menu-right{grid-template-rows:minmax(0,1fr) 190px}.inventory-panel{min-height:0}.inventory{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));align-content:start;gap:6px;overflow-y:auto;height:100%;max-height:none;padding-right:5px;scrollbar-color:#9d742a #111;scrollbar-width:thin}.item{height:48px}.item b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.item span{color:#cbbd95}.item.normal{border-color:#aaa;color:#f2f2f2}.item.rare{border-color:#337dff;color:#65adff}.item.legendary{border-color:#ff9b24;color:#ffbd4e;box-shadow:0 0 10px rgba(255,155,36,.18)}.item.epic,.item.common{display:none}.equip{position:relative}.battle-expbar{position:absolute;left:18px;right:18px;bottom:14px;z-index:6;border:1px solid #c99b39;background:rgba(6,5,4,.86);box-shadow:0 0 18px #000,inset 0 0 10px #000;padding:7px 10px}.exp-info{display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:900;color:#fff1bd;text-shadow:0 1px 2px #000;margin-bottom:5px}.exp-info b{color:#9dff8b}.exp-track{height:14px;border:1px solid #64481d;background:#070707;overflow:hidden}.exp-track div{height:100%;width:0;background:linear-gradient(90deg,#2d78ff,#9be3ff,#fff2a0);box-shadow:0 0 12px #42a5ff;transition:width .25s}.level-effect img{display:none}.level-effect{height:120px}.float.damage{color:#ffffff}.float.fire{color:#ff6c23}.float.thunder{color:#7ed4ff}.stat-grid{font-size:clamp(13px,.8vw,15px)}@media(min-width:1280px){#equipToggleBtn{display:none}.side-panel{display:grid!important;position:static!important;width:auto!important;background:none!important;padding:0!important;border:0!important;box-shadow:none!important}.side-panel:before{display:none!important}.layout{grid-template-columns:minmax(820px,1fr) minmax(620px,700px)}.enemy-zone{left:8%;top:13%}.hero-zone{right:8%;top:13%}}
 @media(max-width:1279px){.layout{grid-template-columns:1fr}.side-panel{display:none}.side-panel.open{display:grid!important;grid-template-columns:minmax(230px,.9fr) minmax(310px,1.1fr);grid-template-rows:1fr;left:10px;right:10px;top:68px;bottom:10px;width:auto!important;z-index:70;background:rgba(0,0,0,.9);padding:8px;border:2px solid #c99b39;box-shadow:0 0 35px #000}.battle-panel{min-height:calc(100vh - 78px)}.enemy-zone{left:5%;top:14%;width:clamp(240px,30vw,330px)}.hero-zone{right:5%;top:14%;width:clamp(240px,30vw,330px)}.card{height:clamp(340px,56vh,500px)}}
 @media(max-width:760px){.side-panel.open{grid-template-columns:1fr;overflow:auto}.menu-left,.menu-right{grid-template-rows:auto auto}.battle-expbar{left:8px;right:8px;bottom:8px}.enemy-zone,.hero-zone{width:42vw;top:19%}.card{height:48vh}.volume-control input{width:72px}}
 
-/* vAPP fixes */
+/* v31 fixes */
 .volume-control{display:flex;align-items:center;gap:6px;color:#ffe8b5;font-size:13px;white-space:nowrap;border:1px solid #7f5a1d;background:rgba(0,0,0,.35);padding:5px 8px;border-radius:4px}
 .volume-control input{width:120px;accent-color:#d8a43a}.volume-control span{min-width:42px;text-align:right;color:#ffd76b;font-weight:800}
 .expbar{position:absolute;left:18px;right:18px;bottom:12px;height:26px;border:2px solid #c99b39;background:#100905;z-index:7;box-shadow:0 0 14px #000,inset 0 0 8px #000;overflow:hidden}
@@ -23,13 +23,13 @@
 @media (min-width:1400px){.layout{grid-template-columns:minmax(900px,1fr) 520px}.enemy-zone,.hero-zone{width:310px}.card{width:310px;height:436px}.enemy-zone{left:9%;top:13%}.hero-zone{right:9%;top:13%}.side-panel{grid-template-rows:auto auto 1fr 210px}.inventory{grid-template-columns:repeat(6,1fr)}}
 @media (max-width:1279px){.layout{grid-template-columns:1fr}.side-panel{position:absolute;right:10px;top:68px;bottom:10px;width:min(760px,calc(100vw - 20px));z-index:30;display:none;grid-template-columns:1fr 1.35fr;grid-template-rows:auto 1fr;gap:10px;background:rgba(0,0,0,.75);padding:10px;border:1px solid #7f5a1d}.side-panel.open{display:grid}.hero-stats,.equip-panel,.inventory-panel,.log-panel{min-height:0}.hero-stats{grid-column:1}.equip-panel{grid-column:1;grid-row:2}.inventory-panel{grid-column:2;grid-row:1 / span 2}.log-panel{grid-column:2;grid-row:2;align-self:end;height:190px}.inventory{grid-template-columns:repeat(5,1fr)}}
 
-/* vAPP final layout overrides */
+/* v31 final layout overrides */
 .side-panel{display:grid;grid-template-columns:minmax(230px,.9fr) minmax(330px,1.1fr)!important;grid-template-rows:1fr!important;gap:10px;min-width:0;overflow:hidden}.menu-col{display:grid;gap:10px;min-height:0;overflow:hidden}.menu-left{grid-template-rows:auto 1fr}.menu-right{grid-template-rows:minmax(0,1fr) 190px}.inventory-panel{min-height:0;display:flex;flex-direction:column}.inventory{flex:1;min-height:0;overflow-y:auto!important;max-height:none!important}.log-panel{min-height:0}.log{height:100%;overflow-y:auto!important}
 @media(min-width:1280px){#equipToggleBtn{display:none!important}.side-panel{display:grid!important;position:static!important;width:auto!important;background:none!important;padding:0!important;border:0!important;box-shadow:none!important}.layout{grid-template-columns:minmax(820px,1fr) minmax(620px,700px)!important}}
 @media(max-width:1279px){#equipToggleBtn{display:inline-block!important}.layout{grid-template-columns:1fr!important}.side-panel{display:none!important;position:absolute!important;left:10px!important;right:10px!important;top:68px!important;bottom:10px!important;width:auto!important;z-index:70;background:rgba(0,0,0,.9)!important;padding:8px!important;border:2px solid #c99b39!important;box-shadow:0 0 35px #000!important}.side-panel.open{display:grid!important;grid-template-columns:minmax(230px,.9fr) minmax(310px,1.1fr)!important;grid-template-rows:1fr!important}.battle-panel{min-height:calc(100vh - 78px)}}
 @media(max-width:760px){.side-panel.open{grid-template-columns:1fr!important;overflow:auto}.menu-left,.menu-right{grid-template-rows:auto auto}.volume-control input{width:72px}}
 
-/* vAPP debug + enemy direction */
+/* v32 debug + enemy direction */
 .enemy-card img{transform:scaleX(-1);transform-origin:center center;}
 .debug-panel{position:fixed;right:18px;top:70px;z-index:120;width:280px;display:grid;gap:8px;padding:12px;border:2px solid #d2a03f;background:linear-gradient(180deg,rgba(35,20,12,.96),rgba(5,4,3,.96));box-shadow:0 0 28px #000, inset 0 0 16px rgba(255,190,65,.12);color:#ffe9b8}
 .debug-panel.hidden{display:none!important}.debug-head{font-weight:900;color:#ffd76b;text-align:center;border-bottom:1px solid #7f5a1d;padding-bottom:6px}.debug-panel button{padding:8px;border:1px solid #9d742a;background:linear-gradient(#49300f,#18100a);color:#ffe9b8;font-weight:900;cursor:pointer}.debug-panel button:hover{filter:brightness(1.2)}.debug-panel label{display:flex;gap:8px;align-items:center;font-size:13px;background:rgba(0,0,0,.28);border:1px solid #533914;padding:7px}.debug-panel input{accent-color:#e3ad39}
@@ -37,7 +37,7 @@
 
 .enemy-level{margin-left:8px;padding:1px 6px;border:1px solid rgba(255,215,107,.55);border-radius:999px;background:rgba(0,0,0,.45);color:#ffe9a8;font-size:12px;font-weight:900;vertical-align:middle}.audio-hint{position:absolute;right:14px;top:70px;z-index:30;background:rgba(0,0,0,.72);border:1px solid #d2a34b;color:#ffe9a8;border-radius:6px;padding:6px 10px;font-size:12px;box-shadow:0 0 18px #000}
 
-/* vAPP: 小さいウィンドウのメニュー内で倉庫とログが重ならないよう固定 */
+/* v35: 小さいウィンドウのメニュー内で倉庫とログが重ならないよう固定 */
 @media (max-width:1279px) and (min-width:761px){
   .side-panel.open{
     display:grid!important;
@@ -85,7 +85,7 @@
   }
 }
 
-/* vAPP: メニュー左右分割をDOM構造で固定し、倉庫はログ上までに制限 */
+/* v36: メニュー左右分割をDOM構造で固定し、倉庫はログ上までに制限 */
 .side-panel{
   display:grid!important;
   grid-template-columns:minmax(240px,.9fr) minmax(360px,1.1fr)!important;
@@ -116,7 +116,7 @@
   .log{height:160px!important;}
 }
 
-/* vAPP: バトルログと倉庫が重ならないように完全分離 */
+/* v37: バトルログと倉庫が重ならないように完全分離 */
 .side-panel,
 .menu-col,
 .inventory-panel,
@@ -215,7 +215,7 @@
   .sell-box label{font-size:11px;}
 }
 
-/* vAPP: 売却即時反映 + 大画面レスポンシブ拡大 */
+/* v37.1: 売却即時反映 + 大画面レスポンシブ拡大 */
 :root{
   --mbh-card-w:270px;
   --mbh-card-h:380px;
@@ -279,16 +279,16 @@
   .volume-control input{width:calc(118px * var(--mbh-ui-scale))!important;}
 }
 
-/* vAPP: 直接ドロップログ */
+/* v38: 直接ドロップログ */
 .log-item{font-weight:900;text-shadow:0 0 8px currentColor;}
 .log-rarity{font-weight:900;border:1px solid currentColor;border-radius:999px;padding:0 5px;margin-left:4px;font-size:.9em;background:rgba(0,0,0,.35);}
 .resources{min-width:auto;}
 
-/* vAPP: drop toast */
+/* v40: drop toast */
 .drop-toast{position:absolute;left:50%;top:18px;transform:translateX(-50%);z-index:12;min-width:260px;max-width:min(620px,70vw);padding:10px 18px;text-align:center;background:linear-gradient(180deg,rgba(18,12,7,.94),rgba(2,2,2,.9));border:2px solid #c99b39;border-radius:999px;box-shadow:0 0 28px #000,inset 0 0 18px rgba(255,215,107,.12);animation:dropToastIn 3s ease forwards;pointer-events:none}
 .drop-toast span{display:block;font-size:22px;font-weight:1000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 2px 3px #000,0 0 16px currentColor}.drop-toast small{display:block;font-size:12px;font-weight:900;letter-spacing:.12em;margin-top:1px;text-shadow:0 1px 2px #000,0 0 10px currentColor}.drop-toast.legendary{border-color:#ff9b24;box-shadow:0 0 34px rgba(255,155,36,.55),inset 0 0 18px rgba(255,155,36,.18)}.drop-toast.rare{border-color:#337dff;box-shadow:0 0 30px rgba(51,125,255,.38),inset 0 0 18px rgba(51,125,255,.14)}@keyframes dropToastIn{0%{opacity:0;transform:translate(-50%,-14px) scale(.92)}10%{opacity:1;transform:translate(-50%,0) scale(1.04)}82%{opacity:1;transform:translate(-50%,0) scale(1)}100%{opacity:0;transform:translate(-50%,-10px) scale(.96)}}
 
-/* vAPP: mobile audio unlock + smartphone menu/debug layout fix */
+/* v43: mobile audio unlock + smartphone menu/debug layout fix */
 @media (max-width: 760px){
   html, body{
     width:100%!important;
@@ -443,7 +443,7 @@
 }
 
 
-/* vAPP: mobile mute button + compact menu pages + landscape fit */
+/* v44: mobile mute button + compact menu pages + landscape fit */
 .mute-btn{display:none;align-items:center;justify-content:center;gap:4px;white-space:nowrap;}
 .mobile-menu-tabs{display:none;gap:6px;width:100%;min-width:0;}
 .mobile-menu-tabs button{flex:1 1 0;min-width:0;padding:8px 6px;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -515,7 +515,7 @@
   .side-panel.open{display:flex!important;}
 }
 
-/* vAPP: remove tap-audio hint, compact battle fit, item action menu */
+/* v45: remove tap-audio hint, compact battle fit, item action menu */
 .audio-hint{display:none!important;}
 .item.selected-inventory{outline:2px solid #ffd76b;filter:brightness(1.22);}
 .inventory-action-menu{position:fixed;z-index:120;background:linear-gradient(rgba(24,17,9,.98),rgba(5,5,5,.98));border:2px solid #c99b39;border-radius:8px;box-shadow:0 0 28px #000,inset 0 0 16px rgba(255,215,107,.12);padding:9px;color:#ffe8b5;font-size:12px;line-height:1.35;}
@@ -593,7 +593,7 @@
 }
 
 
-/* vAPP: SP縦ヘッダー圧縮・ミュート幅固定 */
+/* v46: SP縦ヘッダー圧縮・ミュート幅固定 */
 @media (max-width:760px) and (orientation:portrait){
   .controls{gap:5px!important;align-items:center!important;}
   #equipToggleBtn,
@@ -625,7 +625,7 @@
 body.using-mouse .tooltip:not(.hidden){display:block!important;}
 body.using-touch .tooltip{display:none!important;}
 
-/* vAPP: PC hover info + short-height card fit + compact warehouse header */
+/* v47: PC hover info + short-height card fit + compact warehouse header */
 @media (hover:hover) and (pointer:fine){
   .inventory .item:hover{filter:brightness(1.18);outline:1px solid rgba(255,215,107,.65);}
   .tooltip{display:block;}
@@ -728,7 +728,7 @@ body.using-touch .tooltip{display:none!important;}
   }
 }
 
-/* vAPP: card frame tightly follows scaled card image + restore PC hover tooltip */
+/* v48: card frame tightly follows scaled card image + restore PC hover tooltip */
 @media (hover:hover) and (pointer:fine){
   .tooltip:not(.hidden){display:block!important;}
   .inventory .item:hover{filter:brightness(1.18)!important;outline:1px solid rgba(255,215,107,.75)!important;}
@@ -780,14 +780,14 @@ body.using-touch .tooltip{display:none!important;}
 }
 
 
-/* vAPP: タッチ対応PCでもマウス操作なら倉庫オンカーソル情報を表示 */
+/* v49: タッチ対応PCでもマウス操作なら倉庫オンカーソル情報を表示 */
 body.using-mouse .tooltip:not(.hidden){display:block!important;}
 body.using-touch .tooltip{display:none!important;}
 @media (hover:hover), (pointer:fine){
   .inventory .item:hover{filter:brightness(1.18)!important;outline:1px solid rgba(255,215,107,.75)!important;}
 }
 
-/* vAPP: PCで縦幅に余裕がある時、バトル画面＋右メニュー＋文字をウィンドウサイズに合わせて拡大 */
+/* v50: PCで縦幅に余裕がある時、バトル画面＋右メニュー＋文字をウィンドウサイズに合わせて拡大 */
 @media (min-width:1280px) and (min-height:760px) and (hover:hover){
   :root{
     --pc-ui-scale: clamp(1, min(calc(100vw / 1600), calc(100vh / 900)), 1.45);
@@ -868,13 +868,13 @@ body.using-touch .tooltip{display:none!important;}
   .tooltip{max-width:calc(260px * var(--pc-ui-scale))!important;padding:calc(9px * var(--pc-ui-scale))!important;font-size:calc(12px * var(--pc-ui-scale))!important;}
 }
 
-/* vAPP: PCでも縦幅が狭い時は拡大せず、切れない方向を優先 */
+/* v50: PCでも縦幅が狭い時は拡大せず、切れない方向を優先 */
 @media (min-width:1280px) and (max-height:759px){
   .layout{grid-template-columns:minmax(720px,1fr) minmax(390px,430px)!important;}
   .side-panel{font-size:14px!important;}
 }
 
-/* vAPP: monster records + right-side log clamp + sell disabled */
+/* v51: monster records + right-side log clamp + sell disabled */
 .monster-records{margin-top:10px;border-top:1px solid rgba(255,215,107,.22);padding-top:8px;min-height:0;}
 .monster-records h3{margin:0 0 6px;font-size:14px;color:#ffd76b;}
 .monster-record-list{display:grid;gap:4px;max-height:210px;overflow-y:auto;padding-right:4px;}
@@ -900,7 +900,7 @@ body.using-touch .tooltip{display:none!important;}
   .monster-record-row{grid-template-columns:1fr .6fr;font-size:11px;padding:4px;}
 }
 
-/* vAPP: PC大画面でも倉庫枠を固定して中身だけスクロール */
+/* v53: PC大画面でも倉庫枠を固定して中身だけスクロール */
 @media (min-width:1280px){
   .layout{
     height:calc(100vh - 58px)!important;
@@ -946,13 +946,13 @@ body.using-touch .tooltip{display:none!important;}
 
 .right-panel,.warehouse{min-height:0}.warehouse-list{overflow-y:auto;max-height:60vh;}
 
-/* vAPP: バトル背景ランダム切替 */
+/* v55: バトル背景ランダム切替 */
 .battle-bg{transition:opacity .45s ease, filter .45s ease, transform .45s ease;}
 .battle-bg.bg-changing{animation:battleBgChange .75s ease;}
 @keyframes battleBgChange{0%{opacity:.35;transform:scale(1.08)}100%{opacity:1;transform:scale(1.04)}}
 
 
-/* vAPP: credits / terms / privacy modal */
+/* v57: credits / terms / privacy modal */
 .legal-links{
   display:flex;
   flex-wrap:wrap;
@@ -991,7 +991,7 @@ body.modal-open{overflow:hidden;}
   .legal-modal-body{font-size:12px;line-height:1.65;}
 }
 
-/* vAPP: 死線の剣舞カットイン */
+/* v58: 死線の剣舞カットイン */
 .death-dance-cutin{
   position:fixed;
   inset:0;
@@ -1081,7 +1081,7 @@ body.modal-open{overflow:hidden;}
   .death-dance-cutin-title{font-size:clamp(34px,12vw,58px);}
 }
 
-/* vAPP: 死線の剣舞 心音演出 */
+/* v59: 死線の剣舞 心音演出 */
 .death-dance-heartbeat{
   position:fixed;
   inset:0;
@@ -1108,7 +1108,7 @@ body.modal-open{overflow:hidden;}
 }
 
 
-/* vAPP: モンスター討伐記録/バトルログのスクロールバーを倉庫に統一 */
+/* v71: モンスター討伐記録/バトルログのスクロールバーを倉庫に統一 */
 .inventory,
 .log,
 .monster-record-list{
@@ -1136,7 +1136,7 @@ body.modal-open{overflow:hidden;}
 }
 
 
-/* vAPP: 倉庫・討伐記録・バトルログのスクロールバーを完全統一 */
+/* v72: 倉庫・討伐記録・バトルログのスクロールバーを完全統一 */
 .inventory,
 #log,
 .log,
@@ -1171,7 +1171,7 @@ body.modal-open{overflow:hidden;}
   border-radius:8px!important;
 }
 
-/* vAPP status badges under character cards */
+/* v73 status badges under character cards */
 .status-list{
   display:flex;
   flex-wrap:wrap;
@@ -1211,7 +1211,7 @@ body.modal-open{overflow:hidden;}
 
 @media (orientation: portrait){ .character,.enemy-character,.battle-character{margin-top:40px!important;} }
 
-/* vAPP: 縦画面UI・ツールチップ・カットイン表示修正 */
+/* v78: 縦画面UI・ツールチップ・カットイン表示修正 */
 .tooltip{
   position:fixed!important;
   z-index:20000!important;
@@ -1280,7 +1280,7 @@ body.modal-open{overflow:hidden;}
   .death-dance-cutin-title{font-size:clamp(30px,10vw,58px)!important;margin-top:12px!important;}
 }
 
-/* vAPP: PC large UI spacing + small portrait status popup + full cut-in image */
+/* v80: PC large UI spacing + small portrait status popup + full cut-in image */
 .enemy-zone,.hero-zone{display:flex!important;flex-direction:column!important;align-items:center!important;}
 .name-line,.hpbar,.status-list{position:relative!important;z-index:20!important;flex:0 0 auto!important;}
 .card{position:relative!important;z-index:1!important;margin-top:clamp(16px,2.2vh,34px)!important;}
@@ -1332,7 +1332,7 @@ body.modal-open{overflow:hidden;}
   .death-dance-cutin-quote{right:3%!important;max-width:48%!important;font-size:clamp(18px,5.2vw,34px)!important;}
 }
 
-/* vAPP: PC大画面HP/EXP表示の最終固定、倉庫は装備強化の下まで、バフ説明は下部中央 */
+/* v81: PC大画面HP/EXP表示の最終固定、倉庫は装備強化の下まで、バフ説明は下部中央 */
 .hpbar{
   display:block!important;
   position:relative!important;
@@ -1410,7 +1410,7 @@ body.modal-open{overflow:hidden;}
   .death-dance-cutin-quote{right:3%!important;max-width:50%!important;font-size:clamp(18px,5.4vw,34px)!important;}
 }
 
-/* vAPP: タッチ/狭幅でもバフ・デバフ説明を必ず下部中央に表示 */
+/* v84: タッチ/狭幅でもバフ・デバフ説明を必ず下部中央に表示 */
 body.using-touch .tooltip.status-tooltip-bottom:not(.hidden),
 body.using-touch .tooltip.status-tooltip-modal:not(.hidden),
 .tooltip.status-tooltip-bottom:not(.hidden),
@@ -1446,7 +1446,7 @@ body.using-touch .tooltip.status-tooltip-modal:not(.hidden),
   }
 }
 
-/* vAPP: 狭いPC幅・スマホでも必ず出るバフ/デバフ詳細パネル */
+/* v85: 狭いPC幅・スマホでも必ず出るバフ/デバフ詳細パネル */
 .status-detail-panel{
   position:fixed!important;
   left:50%!important;
@@ -1504,7 +1504,7 @@ body.using-touch .tooltip.status-tooltip-modal:not(.hidden),
   }
 }
 
-/* vAPP: 主人公の剣舞カットインだけ以前の迫力表示へ戻す */
+/* v85.1: 主人公の剣舞カットインだけ以前の迫力表示へ戻す */
 .death-dance-cutin.hero-cutin .death-dance-cutin-strip{
   height:clamp(108px,18vh,170px)!important;
   width:min(96vw,1280px)!important;
@@ -1544,7 +1544,7 @@ body.using-touch .tooltip.status-tooltip-modal:not(.hidden),
 }
 
 
-/* vAPP: スマホは？アイコンを使わず、キャラタップで状態一覧を開く */
+/* v86: スマホは？アイコンを使わず、キャラタップで状態一覧を開く */
 .status-q{display:none!important;}
 .status-badge{padding-right:8px!important;}
 .card.enemy-card,.card.hero-card{cursor:pointer;touch-action:manipulation;}
@@ -1557,7 +1557,7 @@ body.using-touch .tooltip.status-tooltip-modal:not(.hidden),
 
 .float.dark{color:#b45cff!important;text-shadow:0 2px 3px #000,0 0 18px #7b00ff,0 0 8px #d6a0ff!important;}
 
-/* vAPP: 主人公の剣舞カットイン文字は暗黒系の紫を使わない */
+/* v91: 主人公の剣舞カットイン文字は暗黒系の紫を使わない */
 .death-dance-cutin.hero-cutin .death-dance-cutin-title{
   color:#fff1a8!important;
   text-shadow:0 0 10px #ffb52d,0 0 24px #ff6418,0 5px 5px #000!important;
@@ -1571,7 +1571,7 @@ body.using-touch .tooltip.status-tooltip-modal:not(.hidden),
 .drop-toast.darkholy{border-color:#b86cff!important;box-shadow:0 0 34px rgba(184,108,255,.6),inset 0 0 18px rgba(184,108,255,.2)!important;}
 .log-item.darkholy,.log-rarity.darkholy{color:#b86cff!important;}
 
-/* vAPP: iPhone tap stability fix */
+/* v94: iPhone tap stability fix */
 .topbar{
   position:relative!important;
   z-index:30000!important;
@@ -1605,12 +1605,12 @@ body.using-touch .tooltip.status-tooltip-modal:not(.hidden),
 }
 
 
-/* vAPP: version / PC large UI / scroll / item color fixes */
+/* v95: version / PC large UI / scroll / item color fixes */
 .build-version{font-size:11px!important;opacity:.68!important;margin-left:6px!important;vertical-align:baseline!important;color:#d8bd71!important;text-shadow:0 0 6px #000!important;white-space:nowrap!important;pointer-events:none!important}.debug-version{font-size:11px;color:#bda36e;text-align:center;border-top:1px solid rgba(201,155,57,.35);padding-top:5px}.drop-performance{display:block;margin-top:5px;font-style:normal;font-size:11px;line-height:1.25;color:#f7ead0!important;white-space:normal;max-height:42px;overflow:hidden;text-shadow:0 1px 2px #000}.drop-toast{border-radius:14px!important;max-width:min(760px,86vw)!important}.expbar{display:block!important;overflow:hidden!important;background:#100905!important;border:2px solid #c99b39!important;z-index:95!important}.expbar #expFill,.expbar div#expFill{display:block!important;position:absolute!important;left:0!important;top:0!important;bottom:0!important;height:100%!important;min-width:2px;background:linear-gradient(90deg,#1e79ff,#7ad4ff,#ffd76b)!important;box-shadow:inset 0 0 10px rgba(255,255,255,.55),0 0 10px rgba(90,170,255,.45)!important;z-index:1!important;visibility:visible!important;opacity:1!important}.expbar span,.expbar b{z-index:2!important;position:absolute!important}.inventory,.log,.monster-record-list,.inventory-action-summary{-webkit-overflow-scrolling:touch!important;overscroll-behavior:contain!important;touch-action:pan-y!important;pointer-events:auto!important}.inventory-panel,.log-panel,.side-panel,.menu-col,.menu-right{pointer-events:auto!important}.inventory-action-menu{z-index:260!important;pointer-events:auto!important}.item{touch-action:manipulation!important;pointer-events:auto!important}.equip.common{border-color:#777!important}.equip.rare{border-color:#337dff!important;box-shadow:0 0 10px rgba(51,125,255,.20)!important}.equip.legendary{border-color:#ff9b24!important;box-shadow:0 0 12px rgba(255,155,36,.30)!important}.equip.darkholy{border-color:#b86cff!important}@media(max-width:760px){.brand{font-size:15px!important;max-width:40vw!important}.build-version{font-size:9px!important;margin-left:3px!important}.drop-performance{font-size:10px;max-height:36px}.drop-toast{top:10px!important;min-width:220px!important;max-width:94vw!important;padding:8px 10px!important}.drop-toast span{font-size:17px!important}}
 @media(min-width:1280px){.layout{overflow:hidden!important}.side-panel{overflow:hidden!important}.menu-right{grid-template-rows:minmax(0,1fr) 220px!important}.inventory-panel,.log-panel{min-height:0!important;overflow:hidden!important}.inventory,.log{overflow-y:auto!important;max-height:none!important;min-height:0!important}.expbar{height:30px!important;left:28px!important;right:28px!important;bottom:16px!important}.expbar span{line-height:26px!important}.expbar b{top:4px!important}}
 
 
-/* vAPP build badge / inventory action touch stability */
+/* v95.1 build badge / inventory action touch stability */
 .fixed-build-version{
   position:fixed; left:8px; top:4px; z-index:10020;
   font-size:11px; line-height:1; color:#d9c27a; opacity:.78;
@@ -1622,7 +1622,7 @@ body.using-touch .tooltip.status-tooltip-modal:not(.hidden),
 @media(max-width:900px),(orientation:portrait){.fixed-build-version{font-size:9px;left:5px;top:3px;opacity:.65}.side-panel:not(.open){pointer-events:none!important}.side-panel.open{pointer-events:auto!important}}
 
 
-/* vAPP: visible version + small-screen modal/menu layering */
+/* v95.2: visible version + small-screen modal/menu layering */
 .fixed-build-version{
   position:fixed!important;
   left:8px!important;
@@ -1650,7 +1650,7 @@ body.using-touch .tooltip.status-tooltip-modal:not(.hidden),
   .inventory-action-buttons button{min-height:46px!important;font-size:14px!important;}
 }
 
-/* vAPP */
+/* v95.3 */
 .brand{position:relative; display:inline-block; padding-right:42px;}
 .brand .build-version{position:absolute; right:0; bottom:-10px; font-size:12px; line-height:1; opacity:.72; font-weight:700; pointer-events:none; white-space:nowrap;}
 .fixed-build-version{display:none!important;}
@@ -1668,7 +1668,7 @@ body.using-touch .tooltip.status-tooltip-modal:not(.hidden),
 .flee-modal-actions #fleeOkBtn{background:#7a2434;}
 .float.acid{color:#a8ff6a; text-shadow:0 0 8px #4cff00;}
 .status-badge.bossbuff{border-color:rgba(255,255,255,.28); background:rgba(90,55,20,.45);}
-/* vAPP final override */
+/* v95.3 final override */
 .brand{position:relative!important;display:inline-block!important;padding-right:44px!important;}
 .brand .build-version{position:absolute!important;right:0!important;bottom:-10px!important;display:block!important;font-size:12px!important;margin-left:0!important;opacity:.72!important;}
 .fixed-build-version{display:none!important;visibility:hidden!important;opacity:0!important;}
@@ -1677,13 +1677,13 @@ body.using-touch .tooltip.status-tooltip-modal:not(.hidden),
 .enemy-card.defeated-gone{opacity:0!important;transform:scale(.88)!important;filter:grayscale(1) brightness(.25)!important;pointer-events:none!important;transition:opacity .45s ease, transform .45s ease, filter .45s ease;}
 @media(max-width:760px){.flee-btn{bottom:8px!important;min-width:150px!important;min-height:44px!important;font-size:13px!important;}}
 
-/* vAPP unique red equipment */
+/* v97 unique red equipment */
 .item.redunique,.equip.redunique{border-color:#ff3030!important;box-shadow:0 0 13px rgba(255,48,48,.55), inset 0 0 8px rgba(255,48,48,.18)!important;}
-.debug-vAPP-box{display:grid;gap:4px;margin:6px 0;padding:6px;border-top:1px solid rgba(201,155,57,.35);border-bottom:1px solid rgba(201,155,57,.20);}
-.debug-vAPP-box button{min-height:30px;}
+.debug-v97-box{display:grid;gap:4px;margin:6px 0;padding:6px;border-top:1px solid rgba(201,155,57,.35);border-bottom:1px solid rgba(201,155,57,.20);}
+.debug-v97-box button{min-height:30px;}
 
 
-/* vAPP: flee button visibility + hide legacy strongest debug buttons */
+/* v97.2: flee button visibility + hide legacy strongest debug buttons */
 .flee-btn{
   position:fixed!important;
   left:50%!important;
@@ -1703,7 +1703,7 @@ body.using-touch .tooltip.status-tooltip-modal:not(.hidden),
   .flee-btn{bottom:10px!important;min-width:168px!important;min-height:48px!important;font-size:13px!important;}
 }
 
-/* vAPP lock/filter UI */
+/* v97.3 lock/filter UI */
 .inventory-filter-bar{display:flex;align-items:center;gap:6px;margin:6px 0 8px;font-size:12px;opacity:.95}
 .inventory-filter-bar select{background:#171b2a;color:#f3f3f3;border:1px solid rgba(255,255,255,.18);border-radius:8px;padding:5px 8px;max-width:100%;}
 .item.locked,.equip.locked{box-shadow:0 0 0 1px rgba(120,210,255,.42), inset 0 0 16px rgba(120,210,255,.08)}
@@ -1712,7 +1712,7 @@ body.using-touch .tooltip.status-tooltip-modal:not(.hidden),
 @media (max-width:760px){.inventory-filter-bar{font-size:11px}.inventory-filter-bar select{font-size:12px;min-height:36px}.inventory-action-menu{z-index:1600!important}}
 
 
-/* vAPP: 逃走ボタンがEXPバーに重ならないように上へ退避 */
+/* v97.4: 逃走ボタンがEXPバーに重ならないように上へ退避 */
 .flee-btn{
   bottom:58px!important;
   z-index:1500!important;
@@ -1725,7 +1725,7 @@ body.using-touch .tooltip.status-tooltip-modal:not(.hidden),
 }
 
 
-/* vAPP: upper panel tabs + log filters + compact side panel */
+/* v98.2: upper panel tabs + log filters + compact side panel */
 .top-panel-tabs{display:flex;gap:6px;flex:0 0 100%;width:100%;margin-top:4px;align-items:center;justify-content:flex-end;z-index:30001;}
 .top-panel-tabs button{padding:5px 10px;font-size:12px;line-height:1.15;white-space:nowrap;}
 .top-panel-tabs button.active{outline:2px solid #ffd76b;filter:brightness(1.18);}
@@ -1749,7 +1749,7 @@ body.using-touch .tooltip.status-tooltip-modal:not(.hidden),
 @media (min-width:1601px){.top-panel-tabs{display:flex!important;}}
 @media (max-width:760px){.top-panel-tabs{display:none!important;}}
 
-/* ver.APP_VERSION final spec lock */
+/* ver.99.0 final spec lock */
 .side-tabs,.mobile-menu-tabs{display:flex!important;gap:6px;width:100%;min-width:0;flex:0 0 auto;}
 .side-tabs button,.mobile-menu-tabs button{flex:1 1 0;min-width:0;min-height:36px;padding:8px 5px;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;touch-action:manipulation;}
 .side-tabs button.active,.mobile-menu-tabs button.active{outline:2px solid #ffd76b;filter:brightness(1.18);}
@@ -1776,7 +1776,7 @@ body.using-touch .tooltip.status-tooltip-modal:not(.hidden),
   .flee-btn{bottom:62px!important;}
 }
 
-/* ver.APP_VERSION final hotfix: narrow width layout recovery */
+/* ver.99.0 final hotfix: narrow width layout recovery */
 @media (max-width: 900px) and (orientation: portrait){
   :root{--mbh-topbar-h:92px;}
   html,body{width:100%!important;max-width:100%!important;overflow:hidden!important;}
@@ -1840,7 +1840,7 @@ body.using-touch .tooltip.status-tooltip-modal:not(.hidden),
 }
 
 
-/* ver.APP_VERSION layout stability */
+/* ver.99.2 layout stability */
 :root{--mbh-topbar-h:66px;}
 .topbar{height:66px!important;min-height:66px!important;overflow:visible!important;align-items:center!important;padding:8px 12px!important;position:relative;z-index:90;}
 .layout{height:calc(100dvh - 66px)!important;min-height:0!important;overflow:hidden!important;}
@@ -1866,14 +1866,14 @@ body.using-touch .tooltip.status-tooltip-modal:not(.hidden),
   .debug-panel{top:90px!important;max-height:calc(100dvh - 98px)!important;}
 }
 
-/* verAPP_VERSION debug trace visible controls */
+/* ver99.9 debug trace visible controls */
 .debug-trace-box{display:block!important;margin-top:8px!important;padding:8px!important;border:1px solid rgba(180,120,255,.65)!important;border-radius:10px!important;background:rgba(20,10,35,.88)!important;font-size:12px!important;color:#f0dcff!important;}
 .debug-trace-title{font-weight:900;color:#d8a8ff;margin-bottom:6px;}
 .debug-trace-output{display:block;white-space:pre-wrap;max-height:180px;overflow:auto;background:rgba(0,0,0,.35);padding:6px;border-radius:8px;margin-top:6px;min-height:48px;color:#eee;}
 #mbhTraceBox button{margin:2px!important;padding:7px 8px!important;}
 
 
-/* verAPP_VERSION cleanup: prevent stacked patches / duplicate overlays */
+/* ver99.13 cleanup: prevent stacked patches / duplicate overlays */
 .fixed-build-version{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;}
 #debugPanel.debug-panel{position:fixed!important;right:8px!important;top:8px!important;bottom:8px!important;max-height:calc(100dvh - 16px)!important;overflow:auto!important;z-index:9999!important;}
 #debugPanel.hidden{display:none!important;}
@@ -1887,7 +1887,7 @@ body.using-touch .tooltip.status-tooltip-modal:not(.hidden),
 }
 
 
-/* ver.APP_VERSION: menu overlay / inventory filters / panel height final UI fix */
+/* ver.99.21: menu overlay / inventory filters / panel height final UI fix */
 body.mbh-menu-overlay-open .battle-panel .expbar,
 body.mbh-menu-overlay-open .battle-panel .flee-btn{
   z-index:1!important;
@@ -2022,7 +2022,7 @@ body.mbh-menu-overlay-open .battle-panel .flee-btn{
 }
 
 
-/* ver.APP_VERSION: inventory filter / log viewport final CSS */
+/* ver.99.22: inventory filter / log viewport final CSS */
 .inventory-filter-bar{
   display:flex!important;
   flex-wrap:wrap!important;
@@ -2100,11 +2100,11 @@ body.mbh-menu-overlay-open .battle-panel .flee-btn{
   .log-filter-bar button{font-size:11px!important;padding:6px 8px!important;}
 }
 
-/* verAPP_VERSION dark saint drop slot label */
+/* ver99.24 dark saint drop slot label */
 .drop-slot-label{display:block;font-weight:900;margin-bottom:3px;color:#d9b3ff;text-shadow:0 0 8px rgba(180,100,255,.75);}
 .log-slot{font-weight:900;color:#d9b3ff;margin-right:4px;}
 
-/* ver.APP_VERSION: multiple drop notifications stack without overlap */
+/* ver.99.25: multiple drop notifications stack without overlap */
 .drop-toast-stacked{
   top:var(--drop-y,18px)!important;
   animation:dropToastStackIn 3.15s ease forwards!important;
@@ -2119,12 +2119,12 @@ body.mbh-menu-overlay-open .battle-panel .flee-btn{
   .drop-toast-stacked{max-width:calc(100vw - 20px)!important;min-width:min(260px,calc(100vw - 20px))!important;}
 }
 
-/* ver.APP_VERSION enhancement removal */
+/* ver.99.28 enhancement removal */
 .resources.hidden{display:none!important;}
 #upgradeBtn.hidden{display:none!important;}
 .drop-plus-help{margin:6px 0 10px;padding:8px 10px;border:1px solid rgba(255,255,255,.12);border-radius:10px;background:rgba(20,24,38,.72);color:#d9e4ff;font-size:12px;line-height:1.45;}
 
-/* ver.APP_VERSION: ドラゴン火炎ブレス専用の連続ダメージ表示 */
+/* ver.99.35: ドラゴン火炎ブレス専用の連続ダメージ表示 */
 .float.breath-hit{
   font-size:36px!important;
   font-weight:1000!important;
@@ -2132,12 +2132,12 @@ body.mbh-menu-overlay-open .battle-panel .flee-btn{
   animation-duration:1.45s!important;
 }
 
-/* verAPP_VERSION enemy debug stats */
+/* ver99.46 enemy debug stats */
 .enemy-debug-stats-line{font-weight:800;font-size:12px;color:#ffd27a;text-align:center;margin:4px 0 6px;text-shadow:0 1px 2px #000;}
 .enemy-debug-stats-line.hidden{display:none!important;}
 
 
-/* ver.APP_VERSION: ダメージ/回復の表示時間と配置調整 */
+/* ver.99.46: ダメージ/回復の表示時間と配置調整 */
 .float{
   animation-duration:2s!important;
   font-size:28px!important;
@@ -2166,7 +2166,7 @@ body.mbh-menu-overlay-open .battle-panel .flee-btn{
   .float.hero-heal-float{left:82%!important;}
 }
 
-/* ver.APP_VERSION: battle log viewport/padding final */
+/* ver.99.47: battle log viewport/padding final */
 .log-panel .log,#log{
   padding-bottom:2.2em!important;
   scroll-padding-bottom:2.2em!important;
@@ -2177,8 +2177,45 @@ body.mbh-menu-overlay-open .battle-panel .flee-btn{
 .log-panel{padding-bottom:.9em!important;}
 
 
-/* ver.APP_VERSION final color/log fixes */
-.float.acid,.float.reflect{color:#ff9800!important;text-shadow:0 2px 3px #000,0 0 14px #ff6d00!important;}
-.float.bleed{color:#8b0000!important;text-shadow:0 2px 3px #000,0 0 14px #5b0000!important;}
-.status-badge.bleed:not(.darkbleed){border-color:#8b0000!important;color:#ffb1a8!important;background:rgba(60,0,0,.48)!important;}
-.log{padding-bottom:2.4em!important;scroll-padding-bottom:2.4em!important;}
+/* ver.99.51: readability, legal links in compact menu, common scrollbar */
+.float.acid,
+.float.reflect{color:#ff9f1c!important;text-shadow:0 2px 3px #000,0 0 16px rgba(255,159,28,.95)!important;}
+.float.bleed{color:#8b0000!important;text-shadow:0 2px 3px #000,0 0 16px rgba(139,0,0,.95)!important;}
+
+/* 横幅が狭いメニューでもクレジット/規約/ポリシーを最下部に表示 */
+@media(max-width:1279px), (max-height:700px){
+  .side-panel.open{display:flex!important;flex-direction:column!important;overflow:hidden!important;}
+  .side-panel.open .legal-links{
+    display:flex!important;
+    flex:0 0 auto!important;
+    order:999!important;
+    width:100%!important;
+    gap:6px!important;
+    padding-top:8px!important;
+    margin-top:6px!important;
+    border-top:1px solid rgba(201,155,57,.35)!important;
+    background:linear-gradient(rgba(10,7,4,.92),rgba(0,0,0,.96))!important;
+    box-sizing:border-box!important;
+  }
+  .side-panel.open .legal-links button{
+    flex:1 1 0!important;
+    min-width:0!important;
+    padding:7px 5px!important;
+    font-size:11px!important;
+    white-space:nowrap!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+  }
+  .side-panel.open .panel.active-page{min-height:0!important;overflow:auto!important;}
+  .side-panel.open .log-panel.active-page,
+  .side-panel.open .inventory-panel.active-page{min-height:0!important;}
+  .side-panel.open .log{padding-bottom:2.6em!important;scroll-padding-bottom:2.6em!important;}
+}
+
+.log-panel .log,#log,.inventory,.monster-record-list,.inventory-action-summary{
+  scrollbar-color:#8b6628 #120b06!important;
+  scrollbar-width:thin!important;
+}
+.log-panel .log::-webkit-scrollbar,#log::-webkit-scrollbar,.inventory::-webkit-scrollbar,.monster-record-list::-webkit-scrollbar,.inventory-action-summary::-webkit-scrollbar{width:8px!important;height:8px!important;}
+.log-panel .log::-webkit-scrollbar-thumb,#log::-webkit-scrollbar-thumb,.inventory::-webkit-scrollbar-thumb,.monster-record-list::-webkit-scrollbar-thumb,.inventory-action-summary::-webkit-scrollbar-thumb{background:#8b6628!important;border-radius:8px!important;border:1px solid #2a1b0c!important;}
+.log-panel .log::-webkit-scrollbar-track,#log::-webkit-scrollbar-track,.inventory::-webkit-scrollbar-track,.monster-record-list::-webkit-scrollbar-track,.inventory-action-summary::-webkit-scrollbar-track{background:#120b06!important;}
