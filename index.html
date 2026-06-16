@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja" data-build-version="99.28" data-build-date="2026-06-15">
+<html lang="ja" data-build-version="99.29" data-build-date="2026-06-15">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -18,8 +18,8 @@
 <body>
   <div id="game">
     <header class="topbar">
-      <div class="brand">ミニブラウザヒーロー <span class="build-version">ver.99.28</span></div>
-      <div class="resources hidden"><b id="mats">0</b></div>
+      <div class="brand">ミニブラウザヒーロー <span class="build-version">ver.99.29</span></div>
+      <div class="resources"><b id="mats">0</b> 強化石</div>
       <div class="controls">
         <button id="equipToggleBtn">メニュー</button>
         <button id="debugBtn">デバッグ</button>
@@ -67,7 +67,7 @@
       <aside class="side-panel">
         <nav class="mobile-menu-tabs side-tabs" aria-label="右側タブ">
           <button type="button" data-menu-page="stats" class="active">ステータス</button>
-          <button type="button" data-menu-page="equip">装備</button>
+          <button type="button" data-menu-page="equip">装備・強化</button>
           <button type="button" data-menu-page="inventory">倉庫</button>
           <button type="button" data-menu-page="log">ログ</button>
         </nav>
@@ -90,10 +90,9 @@
         </div>
 
         <div class="panel equip-panel">
-          <h2>装備</h2>
-          <p class="drop-plus-help">強化システム廃止：装備はドロップ時に敵Lv依存の+値が付きます。</p>
+          <h2>現在装備</h2>
           <div id="equipList" class="equip-list"></div>
-          <button id="upgradeBtn" class="wide hidden" type="button">強化システムは廃止されました</button>
+          <button id="upgradeBtn" class="wide">装備を選択して強化</button>
         </div>
 
         </div>
@@ -139,7 +138,7 @@
         <button id="debugStopDot">DOTタイマー停止</button>
         <button id="debugStopDarkDance">暗黒剣舞タイマー停止</button>
         <div id="mbhTraceBox" class="debug-trace-box">
-          <div class="debug-trace-title">進行デバッグログ ver.99.28</div>
+          <div class="debug-trace-title">進行デバッグログ ver.99.29</div>
           <button id="mbhTraceMark" type="button">現在状態を記録</button>
           <button id="mbhTraceCopy" type="button">ログコピー</button>
           <button id="mbhTraceDownload" type="button">DL</button>
@@ -148,7 +147,7 @@
         </div>
         <label><input id="debugKillEnemy" type="checkbox"> 敵への攻撃で即死</label>
         <label><input id="debugKillHero" type="checkbox"> 敵からの攻撃で即死</label>
-        <div class="debug-version">Build: ver.99.28 debug</div>
+        <div class="debug-version">Build: ver.99.29 debug</div>
         <button id="debugClose">閉じる</button>
       </div>
   </div>
@@ -185,7 +184,7 @@
 
   <script>
     (function(){
-      var build = document.documentElement.dataset.buildVersion || '99.28';
+      var build = document.documentElement.dataset.buildVersion || '99.29';
       window.MINI_BROWSER_HERO_LATEST_VERSION = build;
       window.MINI_BROWSER_HERO_BUILD_VERSION = build;
       var s = document.createElement('script');
