@@ -1666,7 +1666,7 @@ body.using-touch .tooltip.status-tooltip-modal:not(.hidden),
 .flee-modal-actions{display:flex; gap:10px; justify-content:center;}
 .flee-modal-actions button{min-width:100px; min-height:44px; border-radius:12px; border:1px solid rgba(255,255,255,.22); background:#313149; color:#fff; font-weight:800;}
 .flee-modal-actions #fleeOkBtn{background:#7a2434;}
-.float.acid{color:#a8ff6a; text-shadow:0 0 8px #4cff00;}
+.float.acid{color:#ff9f1a!important; text-shadow:0 0 10px #ff6a00,0 2px 3px #000!important;}
 .status-badge.bossbuff{border-color:rgba(255,255,255,.28); background:rgba(90,55,20,.45);}
 /* v95.3 final override */
 .brand{position:relative!important;display:inline-block!important;padding-right:44px!important;}
@@ -2176,46 +2176,40 @@ body.mbh-menu-overlay-open .battle-panel .flee-btn{
 }
 .log-panel{padding-bottom:.9em!important;}
 
+/* mbh-9952-colors */
+.float.bleed{color:#8b0000!important;text-shadow:0 0 10px #3b0000,0 2px 3px #000!important;}
+.float.darkbleed{color:#7b1035!important;text-shadow:0 0 12px #3d0018,0 2px 3px #000!important;}
+.log .bleed{color:#8b0000!important;}
 
-/* ver.99.51: readability, legal links in compact menu, common scrollbar */
-.float.acid,
-.float.reflect{color:#ff9f1c!important;text-shadow:0 2px 3px #000,0 0 16px rgba(255,159,28,.95)!important;}
-.float.bleed{color:#8b0000!important;text-shadow:0 2px 3px #000,0 0 16px rgba(139,0,0,.95)!important;}
-
-/* 横幅が狭いメニューでもクレジット/規約/ポリシーを最下部に表示 */
+/* ver.99.52: status/equip effect lists + log anchor visibility */
+.effect-summary{margin-top:10px;border:1px solid #513917;background:rgba(8,6,4,.72);border-radius:6px;padding:8px;min-height:0;}
+.effect-summary h3{margin:0 0 6px;color:#ffd76b;font-size:14px;border-bottom:1px solid #513917;padding-bottom:4px;}
+.effect-summary-list{display:grid;gap:3px;max-height:150px;overflow-y:auto;overflow-x:hidden;padding-right:6px;scrollbar-color:#9d742a #111;scrollbar-width:thin;}
+.effect-summary-list::-webkit-scrollbar,.monster-record-list::-webkit-scrollbar{width:8px;}
+.effect-summary-list::-webkit-scrollbar-thumb,.monster-record-list::-webkit-scrollbar-thumb{background:#8b6628;border-radius:8px;}
+.effect-summary-list::-webkit-scrollbar-track,.monster-record-list::-webkit-scrollbar-track{background:#120b06;}
+.effect-summary-list div{display:grid;grid-template-columns:1fr auto;gap:8px;border-bottom:1px solid rgba(255,255,255,.06);padding:2px 0;font-size:12px;}
+.effect-summary-list b{color:#fff1b2;}
+.effect-summary-list .empty-effect{display:block;color:#a79267;font-size:12px;}
+.equip-best-btn{margin:0 0 8px!important;}
+.equip-effect-summary{margin-top:10px;}
+.equip-panel{display:flex!important;flex-direction:column!important;min-height:0!important;}
+.equip-panel .equip-list{flex:0 0 auto!important;}
+.equip-panel .equip-effect-summary{flex:1 1 auto!important;min-height:90px!important;overflow:hidden!important;}
+.equip-panel .effect-summary-list{max-height:220px!important;}
+.monster-records{margin-top:10px;min-height:0;}
+.monster-record-list{max-height:260px;overflow-y:auto;overflow-x:hidden;padding-right:6px;scrollbar-color:#9d742a #111;scrollbar-width:thin;}
+.monster-record-row{padding:5px 0!important;line-height:1.35!important;}
+.log-panel .log,#log{padding-bottom:2.8em!important;scroll-padding-bottom:2.8em!important;}
+.float.acid{color:#ff9f1a!important;text-shadow:0 0 10px #ff6a00,0 2px 3px #000!important;}
+.float.bleed{color:#8b0000!important;text-shadow:0 0 10px #3b0000,0 2px 3px #000!important;}
+.float.darkbleed{color:#7b1035!important;text-shadow:0 0 12px #3d0018,0 2px 3px #000!important;}
 @media(max-width:1279px), (max-height:700px){
-  .side-panel.open{display:flex!important;flex-direction:column!important;overflow:hidden!important;}
-  .side-panel.open .legal-links{
-    display:flex!important;
-    flex:0 0 auto!important;
-    order:999!important;
-    width:100%!important;
-    gap:6px!important;
-    padding-top:8px!important;
-    margin-top:6px!important;
-    border-top:1px solid rgba(201,155,57,.35)!important;
-    background:linear-gradient(rgba(10,7,4,.92),rgba(0,0,0,.96))!important;
-    box-sizing:border-box!important;
-  }
-  .side-panel.open .legal-links button{
-    flex:1 1 0!important;
-    min-width:0!important;
-    padding:7px 5px!important;
-    font-size:11px!important;
-    white-space:nowrap!important;
-    overflow:hidden!important;
-    text-overflow:ellipsis!important;
-  }
-  .side-panel.open .panel.active-page{min-height:0!important;overflow:auto!important;}
-  .side-panel.open .log-panel.active-page,
-  .side-panel.open .inventory-panel.active-page{min-height:0!important;}
-  .side-panel.open .log{padding-bottom:2.6em!important;scroll-padding-bottom:2.6em!important;}
+  .legal-links{display:flex!important;gap:6px;flex-wrap:wrap;margin-top:auto;padding-top:8px;border-top:1px solid #513917;}
+  .legal-links button{flex:1 1 auto;min-width:92px;}
 }
-
-.log-panel .log,#log,.inventory,.monster-record-list,.inventory-action-summary{
-  scrollbar-color:#8b6628 #120b06!important;
-  scrollbar-width:thin!important;
+@media(max-width:760px){
+  .effect-summary-list{max-height:130px;}
+  .monster-record-list{max-height:220px;}
+  .equip-panel .effect-summary-list{max-height:150px!important;}
 }
-.log-panel .log::-webkit-scrollbar,#log::-webkit-scrollbar,.inventory::-webkit-scrollbar,.monster-record-list::-webkit-scrollbar,.inventory-action-summary::-webkit-scrollbar{width:8px!important;height:8px!important;}
-.log-panel .log::-webkit-scrollbar-thumb,#log::-webkit-scrollbar-thumb,.inventory::-webkit-scrollbar-thumb,.monster-record-list::-webkit-scrollbar-thumb,.inventory-action-summary::-webkit-scrollbar-thumb{background:#8b6628!important;border-radius:8px!important;border:1px solid #2a1b0c!important;}
-.log-panel .log::-webkit-scrollbar-track,#log::-webkit-scrollbar-track,.inventory::-webkit-scrollbar-track,.monster-record-list::-webkit-scrollbar-track,.inventory-action-summary::-webkit-scrollbar-track{background:#120b06!important;}
