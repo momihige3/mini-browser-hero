@@ -2131,3 +2131,7 @@ body.mbh-menu-overlay-open .battle-panel .flee-btn{
   text-shadow:0 3px 4px #000,0 0 18px #ff6c23,0 0 10px #ff2600!important;
   animation-duration:1.45s!important;
 }
+
+/* ver99.45 enemy debug stats */
+.enemy-debug-stats-line{font-weight:800;font-size:12px;color:#ffd27a;text-align:center;margin:4px 0 6px;text-shadow:0 1px 2px #000;}
+.enemy-debug-stats-line.hidden{display:none!important;}

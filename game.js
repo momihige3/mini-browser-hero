@@ -1,6 +1,6 @@
 'use strict';
 
-// ver99.40: ボス表示整理・火炎ブレスタグカウント・ボスランダム出現。
+// ver99.45: ボス表示整理・火炎ブレスタグカウント・ボスランダム出現。
 // strict modeで `makeDarkArmor = function...` がReferenceErrorになり、
 // 後続パッチ全体が止まる問題を防ぐ。
 var makeDarkArmor, makeDarkGauntlets, makeDarkHelm, makeDarkBoots;
@@ -40,7 +40,7 @@ const DEATH_DANCE_CUTINS = [
 ];
 const DARK_SWORD_SAINT_CUTIN = {quote:'私を超えてみせろ。', img:'assets/cutin_dark_sword_dance.png'};
 const DARK_SWORD_TECHNIQUE_CUTIN = {quote:'', img:'assets/cutin_dark_sword_technique.png'};
-const GAME_VERSION = (window.MINI_BROWSER_HERO_LATEST_VERSION || window.MINI_BROWSER_HERO_BUILD_VERSION || document.documentElement.dataset.buildVersion || '99.40');
+const GAME_VERSION = (window.MINI_BROWSER_HERO_LATEST_VERSION || window.MINI_BROWSER_HERO_BUILD_VERSION || document.documentElement.dataset.buildVersion || '99.45');
 window.GAME_VERSION = GAME_VERSION;
 window.MINI_BROWSER_HERO_LATEST_VERSION = GAME_VERSION;
 const DARK_SWORD_SAINT = {
@@ -621,9 +621,9 @@ function processStatusDots(now){
   ensureStatusContainers(); cleanupStatuses();
   if(state.enemy && state.enemy.bossBuff === 'super_regen'){
     if(!state.enemyStatuses.bossRegenLast) state.enemyStatuses.bossRegenLast = now;
-    const ticks = Math.min(60, Math.floor((now - state.enemyStatuses.bossRegenLast)/1000));
+    const ticks = Math.min(60, Math.floor((now - state.enemyStatuses.bossRegenLast)/200));
     if(ticks > 0){
-      state.enemyStatuses.bossRegenLast += ticks*1000;
+      state.enemyStatuses.bossRegenLast += ticks*200;
       let totalHeal = 0;
       for(let i=0;i<ticks;i++){
         if(!(state.enemyHp > 0 && state.enemyHp < state.enemy.maxHp)) break;
@@ -820,12 +820,19 @@ function fleeBattle(){
   if(darkSaintBattle){
     state.winStreak = 0;
     state.forceNextDarkSwordSaint = false;
-    if(state.darkSwordSaintReturn){
+    if(state.darkSwordSaintReturn && state.darkSwordSaintReturn.milestoneDarkSaint){
+      state.enemyLevelBase = currentLevel + 1;
+      state.enemyLevelBaseDefeated = Math.max(0, Math.floor(Number(state.defeated)||0));
+      state.darkSwordSaintReturn = null;
+      log(`暗黒剣聖の試練から離脱した。試練を越え、敵レベルはLv.${currentLevel}→Lv.${state.enemyLevelBase}へ進行。`, 'danger');
+    }else if(state.darkSwordSaintReturn){
       state.enemyLevelBase = state.darkSwordSaintReturn.enemyLevelBase;
       state.enemyLevelBaseDefeated = state.darkSwordSaintReturn.enemyLevelBaseDefeated;
       state.darkSwordSaintReturn = null;
+      log('暗黒剣聖戦から離脱した。暗黒剣聖は独立レベルのため、敵の出現レベルは低下しない。', 'danger');
+    }else{
+      log('暗黒剣聖戦から離脱した。暗黒剣聖は独立レベルのため、敵の出現レベルは低下しない。', 'danger');
     }
-    log('暗黒剣聖戦から離脱した。暗黒剣聖は独立レベルのため、敵の出現レベルは低下しない。', 'danger');
     banner('暗黒剣聖から離脱');
     spawnWeakEnemyAfterEscape();
     return;
@@ -873,16 +880,26 @@ function handleHeroDeath(){
   const darkSaintDefeat = isDarkSwordSaint();
   let nextEnemyLevelBase = Math.max(1, Math.floor(defeatedEnemyLevel * 0.9));
   if(darkSaintDefeat){
-    // ver.99.40: 暗黒剣聖は独立レベル。敗北しても通常敵レベルをLv1等へ巻き戻さない。
-    if(state.darkSwordSaintReturn){
-      state.enemyLevelBase = state.darkSwordSaintReturn.enemyLevelBase;
-      state.enemyLevelBaseDefeated = state.darkSwordSaintReturn.enemyLevelBaseDefeated;
+    // ver.99.45: 100レベルごとの暗黒剣聖は、勝敗に関係なく通常敵レベル+1。
+    if(state.darkSwordSaintReturn && state.darkSwordSaintReturn.milestoneDarkSaint){
+      state.enemyLevelBase = defeatedEnemyLevel + 1;
+      state.enemyLevelBaseDefeated = Math.max(0, Math.floor(Number(state.defeated)||0));
+      state.darkSwordSaintReturn = null;
+      loseExpPercent(calcStats().effortRing ? 0 : (calcStats().humbleRing ? 0.09 : 0.25));
+      state.hp = 0;
+      const lostPct = calcStats().effortRing ? 0 : (calcStats().humbleRing ? 9 : 25);
+      log(`暗黒剣聖の試練に敗北した。経験値を${lostPct}%失ったが、敵レベルはLv.${defeatedEnemyLevel}→Lv.${state.enemyLevelBase}へ進行。`,'danger');
+    }else{
+      if(state.darkSwordSaintReturn){
+        state.enemyLevelBase = state.darkSwordSaintReturn.enemyLevelBase;
+        state.enemyLevelBaseDefeated = state.darkSwordSaintReturn.enemyLevelBaseDefeated;
+      }
+      state.darkSwordSaintReturn = null;
+      loseExpPercent(calcStats().effortRing ? 0 : (calcStats().humbleRing ? 0.09 : 0.25));
+      state.hp = 0;
+      const lostPct = calcStats().effortRing ? 0 : (calcStats().humbleRing ? 9 : 25);
+      log(`暗黒剣聖に敗北した。経験値を${lostPct}%失ったが、暗黒剣聖は独立レベルのため通常敵レベルは低下しない。`,'danger');
     }
-    state.darkSwordSaintReturn = null;
-    loseExpPercent(calcStats().effortRing ? 0 : (calcStats().humbleRing ? 0.09 : 0.25));
-    state.hp = 0;
-    const lostPct = calcStats().effortRing ? 0 : (calcStats().humbleRing ? 9 : 25);
-    log(`暗黒剣聖に敗北した。経験値を${lostPct}%失ったが、暗黒剣聖は独立レベルのため通常敵レベルは低下しない。`,'danger');
   }else{
     state.enemyLevelBase = nextEnemyLevelBase;
     state.enemyLevelBaseDefeated = state.defeated || 0;
@@ -969,7 +986,7 @@ function statusTooltipHtml(kind, target){
   if(kind === 'darktechnique') return `<b>暗黒剣技</b><br>暗黒剣聖の通常攻撃で1ダメージが20回発生すると覚醒。<br>覚醒後は通常攻撃が暗黒剣技に置き換わる。<br>暗黒剣舞の回数にはカウントしない。<br>HP回復・闇オーラ回復・暗黒の剣付与はなし。<br>攻撃速度3倍、ガード無効、防御力50%無視。<br>攻撃ごとに出血50%、暗黒出血50%。<br>現在：${state.enemyStatuses?.darkTechniqueAwakened?'覚醒中':((state.enemyStatuses?.darkOneDamageCount||0)+' / 20')}。`;
   if(kind === 'darkdance') return `<b>暗黒剣舞</b><br>発動済み：${state.enemyStatuses?.darkDanceCount||0}回 / 10回<br>次回発動率：${darkDanceChanceForNext()}%<br>暗黒剣舞回数：${state.enemyStatuses?.darkDanceCount||0} / 10<br>HP0時に発動判定。カットイン後に5秒無敵、HPをゆっくり100%まで回復、闇オーラ10、暗黒の剣+1。<br>発動時、主人公の「死線の剣舞」の発動回数をリセットする。<br>連続攻撃は10秒間、攻撃速度3倍、ガード無効、防御力50%無視。<br>攻撃ごとに出血50%、暗黒出血50%。`;
   if(kind === 'acid_body') return `<b>酸ボディ</b><br>受けた直接ダメージの10%を跳ね返す。`;
-  if(kind === 'super_regen') return `<b>超再生</b><br>毎秒最大HPの1%を回復する。<br>HP50%以下では毎秒2%回復する。`;
+  if(kind === 'super_regen') return `<b>超再生</b><br>0.2秒ごとに最大HPの1%を回復する。<br>HP50%以下では0.2秒ごとに2%回復する。`;
   if(kind === 'dragon_breath') return `<b>火炎ブレス</b><br>発動まで：あと${dragonBreathTurnsLeft()}ターン<br>ドラゴンの行動5回ごとに発動。<br>ドラゴンの現在HPの1%分の火属性攻撃を10連続で行う。<br>火軽減20%未満の場合、確定で火傷を付与する。`;
   if(kind === 'boss_common') return `<b>ボス</b><br>強大な存在。<br>時間経過で能力が変化する。`;
   if(kind === 'apex') return `<b>種族の頂点</b><br>被ダメージ50%軽減。<br>出血ダメージ50%軽減。`;
@@ -1284,7 +1301,7 @@ function makeFirstEnemy(){
 }
 
 function pickEnemy(){
-  // ver.99.40: 通常敵レベルは撃破時抽選で上昇。ボスはLv10刻み予約からランダム出現。
+  // ver.99.45: 通常敵レベルは撃破時抽選で上昇。ボスはLv10刻み予約からランダム出現。
   return {...normals[Math.floor(Math.random()*normals.length)]};
 }
 function getBossForNormal(normalId){
@@ -1292,18 +1309,26 @@ function getBossForNormal(normalId){
   return bossId ? ENEMIES.find(e=>e.id===bossId) : null;
 }
 function getEnemyTemplateById(id){
+  if(id === 'dark_sword_saint') return DARK_SWORD_SAINT;
   return ENEMIES.find(e=>e.id===id) || null;
 }
 function shouldReplaceBossWithDarkSaint(){
   return !!state.darkSwordSaintFirstEncountered && Math.random() < 0.01;
 }
 function scheduleBossAfterNormalDefeat(e){
-  // ver.99.40: 雑魚Lv10刻みで、種族ボスからランダム出現。レベルは撃破した雑魚と共通。
+  // ver.99.45: 雑魚Lv10刻みで、種族ボスからランダム出現。レベルは撃破した雑魚と共通。
   try{
     if(!e || e.type !== '雑魚') return;
     const lv = Math.max(1, Math.floor(Number(e.level)||1));
     if(lv % 10 !== 0) return;
     if(Math.floor(Number(state.lastBossScheduledLevel)||0) === lv) return;
+    if(lv % 100 === 0){
+      state.pendingBossForNext = { id: 'dark_sword_saint', level: lv, from: e.id, milestoneDarkSaint: true };
+      state.lastBossScheduledLevel = lv;
+      log(`${e.name}Lv.${lv}を制した。100レベルごとの試練として、次のボスは暗黒剣聖！`, 'danger');
+      banner('100レベルの試練！', 1800);
+      return;
+    }
     const bossPool = bosses.filter(b => b && b.type === 'ボス');
     if(!bossPool.length) return;
     const boss = bossPool[Math.floor(Math.random() * bossPool.length)];
@@ -1311,7 +1336,7 @@ function scheduleBossAfterNormalDefeat(e){
     state.lastBossScheduledLevel = lv;
     log(`${e.name}Lv.${lv}を制した。次の敵にボスLv.${lv}が現れる！`, 'danger');
   }catch(err){
-    console.error('[MBH99.40 scheduleBossAfterNormalDefeat]', err);
+    console.error('[MBH99.45 scheduleBossAfterNormalDefeat]', err);
     state.pendingBossForNext = null;
   }
 }
@@ -1322,7 +1347,7 @@ function makeScaledEnemy(base, forceLevel=null){
   if(forceLevel){
     e.level = forceLevel;
   }else{
-    // ver.99.40: 敵レベルは撃破数で自動上昇させず、撃破時の抽選/ボス撃破で更新する。
+    // ver.99.45: 敵レベルは撃破数で自動上昇させず、撃破時の抽選/ボス撃破で更新する。
     if(state.enemyLevelBase == null){
       state.enemyLevelBase = Math.max(1, Math.floor(Number(state.enemy?.level) || Number(state.level) || 1));
       state.enemyLevelBaseDefeated = Math.max(0, Math.floor(Number(state.defeated)||0));
@@ -1337,7 +1362,7 @@ function makeScaledEnemy(base, forceLevel=null){
   }
   const scaledDefeated = state.enemyLevelBase != null ? Math.max(0, (state.defeated||0) - (state.enemyLevelBaseDefeated||0)) : (state.defeated||0);
   const scale=1 + e.level*.035 + Math.floor(scaledDefeated/10)*.03;
-  // ver.99.40: 雑魚敵HP成長をLvごとに+1%複利へ調整。
+  // ver.99.45: 雑魚敵HP成長をLvごとに+1%複利へ調整。
   // 攻撃力・防御力・ボス/暗黒剣聖のHP計算は既存仕様を維持。
   const normalHpGrowth = e.type === '雑魚' ? Math.pow(1.01, Math.max(0, (Number(e.level)||1) - 1)) : 1;
   e.maxHp=Math.max(1, Math.floor(e.hp * scale * 0.1 * normalHpGrowth)); e.atk=Math.floor(e.atk*scale); e.def=Math.floor(e.def*scale);
@@ -1367,7 +1392,7 @@ function setEnemy(e){
   log(`${e.name} が現れた。${e.type==='ボス'||e.type==='裏ボス'?'ボス出現！':''}`, e.type==='ボス'||e.type==='裏ボス'?'danger':'');
 }
 function forceSpawnDarkSwordSaint(){
-  // ver99.40: 即時召喚ではなく、次の敵として暗黒剣聖を予約する
+  // ver99.45: 即時召喚ではなく、次の敵として暗黒剣聖を予約する
   state.forceNextDarkSwordSaint = true;
   state.pendingDarkSwordSaintDelay = false;
   banner('次の敵に暗黒剣聖をセット！', 1400);
@@ -1401,7 +1426,21 @@ function spawnEnemy(forceFirst=false){
     const pending = state.pendingBossForNext;
     const bossBase = getEnemyTemplateById(pending.id);
     state.pendingBossForNext = null;
-    if(bossBase && shouldReplaceBossWithDarkSaint()){
+    if(pending.id === 'dark_sword_saint'){
+      const lv = Math.max(1, Math.floor(Number(pending.level)||1));
+      state.darkSwordSaintReturn = {
+        enemyLevelBase: state.enemyLevelBase,
+        enemyLevelBaseDefeated: state.enemyLevelBaseDefeated,
+        defeated: state.defeated,
+        level: lv,
+        pendingBoss: pending,
+        milestoneDarkSaint: true
+      };
+      base = DARK_SWORD_SAINT;
+      forceLevel = lv;
+      log(`100レベルごとの試練。暗黒剣聖Lv.${lv}が立ちはだかる！`, 'danger');
+      banner('暗黒剣聖・試練！', 1800);
+    }else if(bossBase && shouldReplaceBossWithDarkSaint()){
       state.darkSwordSaintReturn = {
         enemyLevelBase: state.enemyLevelBase,
         enemyLevelBaseDefeated: state.enemyLevelBaseDefeated,
@@ -1572,7 +1611,7 @@ function enemyAttack(now){
     renderBattle();
     return;
   }
-  // ver99.40: 火の精霊・火の精霊王の通常攻撃は必ず火属性。
+  // ver99.45: 火の精霊・火の精霊王の通常攻撃は必ず火属性。
   // 以前は fire 属性敵でも55%抽選だったため、火属性攻撃にならないことがあった。
   const isPureFireAttacker = e && (e.id === 'fire_spirit' || e.id === 'fire_king');
   let element = isDarkSwordSaint() ? 'dark' : (isPureFireAttacker ? 'fire' : (e.element==='fire' && Math.random()<.55 ? 'fire':'normal'));
@@ -1651,7 +1690,7 @@ function tryDarkSwordDanceRevive(){
 
   const t = performance.now();
   state.enemyStatuses.darkDanceCount = count + 1;
-  // ver99.40: 暗黒剣舞発動時、主人公の死線の剣舞発動回数と剣舞状態を必ずリセット
+  // ver99.45: 暗黒剣舞発動時、主人公の死線の剣舞発動回数と剣舞状態を必ずリセット
   state.deathDanceBattleCount = 0;
   state.deathDanceComboCount = 0;
   state.deathDance = false;
@@ -1824,11 +1863,19 @@ function showDarkSwordTechniqueCutin(){
   playSfx('cutin');
 }
 function updateEnemyLevelProgressionOnDefeat(e){
-  // ver.99.40: 雑魚撃破は10%で敵レベル+1。ボス撃破は確定+1。
+  // ver.99.45: 雑魚撃破は10%で敵レベル+1。ボス撃破は確定+1。
   // 暗黒剣聖は通常敵進行に影響させない。
   try{
-    if(!e || e.id === 'dark_sword_saint') return;
+    if(!e) return;
     const lv = Math.max(1, Math.floor(Number(e.level) || Number(state.enemyLevelBase) || Number(state.level) || 1));
+    if(e.id === 'dark_sword_saint'){
+      if(state.darkSwordSaintReturn && state.darkSwordSaintReturn.milestoneDarkSaint){
+        state.enemyLevelBase = lv + 1;
+        state.enemyLevelBaseDefeated = Math.max(0, Math.floor(Number(state.defeated)||0));
+        log(`100レベルの試練突破！ 敵レベルがLv.${lv}→Lv.${state.enemyLevelBase}に上昇。`, 'system');
+      }
+      return;
+    }
     if(state.enemyLevelBase == null) state.enemyLevelBase = lv;
     const isBoss = e.type === 'ボス' || e.type === '裏ボス';
     if(isBoss){
@@ -1847,7 +1894,7 @@ function updateEnemyLevelProgressionOnDefeat(e){
       }
     }
   }catch(err){
-    console.error('[MBH99.40 updateEnemyLevelProgressionOnDefeat]', err);
+    console.error('[MBH99.45 updateEnemyLevelProgressionOnDefeat]', err);
   }
 }
 
@@ -1873,13 +1920,7 @@ function enemyDefeated(){
     state.darkSwordSaintLevel = Math.max(1, Math.floor(state.darkSwordSaintLevel||1)) + 1;
     state.darkSwordSaintReturn = null;
   }else{
-    if(!state.darkSwordSaintFirstEncountered && Math.max(1, Math.floor(Number(e?.level)||1)) >= 100){
-      state.forceNextDarkSwordSaint = true;
-      state.pendingBossForNext = null;
-      log('敵Lv100到達！ 次の敵に暗黒剣聖が確定出現する。','danger');
-      banner('敵Lv100到達！', 2200);
-      state.pendingDarkSwordSaintDelay = false;
-    }else{
+    {
       scheduleBossAfterNormalDefeat(e);
     }
   }
@@ -1894,7 +1935,7 @@ function enemyDefeated(){
     const makeDarkReward = () => darkPool[Math.floor(Math.random()*darkPool.length)](state.level);
     const makeLegendReward = () => makeItem(slots[Math.floor(Math.random()*slots.length)], legendary, {isBossDrop:true});
 
-    // ver99.40: 報酬枠を明示的に固定する。
+    // ver99.45: 報酬枠を明示的に固定する。
     // rewards[0] = 1枠目、rewards[1] = 2枠目、rewards[2] = 3枠目。
     // 3枠目は必ず闇装備。1〜2枠目は確率で闇装備になってもよい。
     const rewards = [
@@ -1918,7 +1959,7 @@ function enemyDefeated(){
       showDropToast(it);
     }
   }
-  // ver.99.40: 強化石ドロップは廃止。装備はドロップ時に敵Lv依存の+値が付く。
+  // ver.99.45: 強化石ドロップは廃止。装備はドロップ時に敵Lv依存の+値が付く。
   if(calcStats().masterRegen && state.hp > 0){
     const heal = Math.max(1, Math.floor(maxHp() * 0.25));
     const beforeHp = state.hp;
@@ -1931,9 +1972,14 @@ function enemyDefeated(){
   state.pendingDarkSwordSaintDelay = false;
   setTimeout(spawnEnemy,nextDelay);
 }
+function effectiveXpNext(){
+  return Math.max(40, Math.floor((Number(state.xpNext)||80) * 0.5));
+}
 function checkLevelUp(){
-  while(state.xp>=state.xpNext){
-    state.xp-=state.xpNext;
+  // ver99.45: 主人公の次Lv必要経験値を現行値の50%として扱う。
+  while(state.xp>=effectiveXpNext()){
+    const need = effectiveXpNext();
+    state.xp-=need;
     state.level++;
     state.xpNext=Math.floor(state.xpNext*1.42+40);
     state.hp=maxHp();
@@ -2676,16 +2722,40 @@ function makeDebugAccessory(slot){
 }
 
 function renderAll(){ renderBattle(); renderStats(); renderEquip(); renderInventory(); }
+function ensureEnemyDebugStatsLine(){
+  if(!els.enemyCard) return null;
+  let line = document.getElementById('enemyDebugStatsLine');
+  if(!line){
+    line = document.createElement('div');
+    line.id = 'enemyDebugStatsLine';
+    line.className = 'enemy-debug-stats-line hidden';
+    const hp = els.enemyCard.querySelector('.enemy-hp');
+    if(hp && hp.parentNode) hp.parentNode.insertBefore(line, hp);
+  }
+  return line;
+}
+function updateEnemyDebugStatsLine(){
+  const line = ensureEnemyDebugStatsLine();
+  if(!line) return;
+  const enabled = !!(state.debug && state.debug.showEnemyStats);
+  if(!enabled || !state.enemy){ line.classList.add('hidden'); line.textContent=''; return; }
+  const atk = Math.floor((Number(state.enemy.atk)||0) * (1 + darkSwordBuffCount() * 0.5));
+  const def = Math.floor(Number(state.enemy.def)||0);
+  line.textContent = `ATK：${atk.toLocaleString()}　DEF：${def.toLocaleString()}`;
+  line.classList.remove('hidden');
+}
 function renderBattle(){
   installVersionLabel();
   const mh=maxHp(); els.heroLevel.textContent=`Lv.${state.level}`; els.heroHpFill.style.width=`${Math.max(0,state.hp/mh*100)}%`; els.heroHpText.textContent=`${Math.floor(state.hp)} / ${Math.floor(mh)}`;
   if(state.enemy){ els.enemyName.textContent=state.enemy.name; if(els.enemyLevel) els.enemyLevel.textContent=`Lv.${state.enemy.level||1}`; els.enemyTag.textContent=state.enemy.type==='ボス'?'BOSS':''; els.enemyHpFill.style.width=`${Math.max(0,state.enemyHp/state.enemy.maxHp*100)}%`; els.enemyHpText.textContent=`${Math.floor(state.enemyHp)} / ${state.enemy.maxHp}`; }
+  updateEnemyDebugStatsLine();
   if(els.chests) els.chests.textContent=state.chests; els.mats.textContent=state.mats;
-  if(els.expFill){ els.expFill.style.width=`${Math.max(0,Math.min(100,state.xp/state.xpNext*100))}%`; els.expLabel.textContent=`Lv.${state.level} EXP ${state.xp} / ${state.xpNext}`; els.expGainLabel.textContent=formatExpDelta(state.lastXpGain); }
+  const need = effectiveXpNext();
+  if(els.expFill){ els.expFill.style.width=`${Math.max(0,Math.min(100,state.xp/need*100))}%`; els.expLabel.textContent=`Lv.${state.level} EXP ${state.xp} / ${need}`; els.expGainLabel.textContent=formatExpDelta(state.lastXpGain); }
   if(state.deathDance){ els.deathDanceStatus.textContent = `死線の剣舞 残り${Math.max(0, Math.ceil((state.deathDanceUntil-performance.now())/1000))}秒`; }
   renderStatusLists();
 }
-function renderStats(){ const st=calcStats(); els.statLv.textContent=state.level; els.statXp.textContent=`${state.xp} / ${state.xpNext}`; els.statXpNext.textContent=state.xpNext; els.statXpGain.textContent=formatExpDelta(state.lastXpGain); els.statAtk.textContent=Math.floor(st.atk); els.statDef.textContent=Math.floor(st.def); els.statFireRes.textContent=`${Math.round(st.fireRes*100)}%`; renderMonsterRecords(); }
+function renderStats(){ const st=calcStats(); const need=effectiveXpNext(); els.statLv.textContent=state.level; els.statXp.textContent=`${state.xp} / ${need}`; els.statXpNext.textContent=need; els.statXpGain.textContent=formatExpDelta(state.lastXpGain); els.statAtk.textContent=Math.floor(st.atk); els.statDef.textContent=Math.floor(st.def); els.statFireRes.textContent=`${Math.round(st.fireRes*100)}%`; renderMonsterRecords(); }
 function renderMonsterRecords(){
   if(!els.monsterRecords) return;
   if(!state.enemyRecords) state.enemyRecords = {};
@@ -3066,7 +3136,7 @@ function v94InstallTouchControls(){
 }
 
 init();
-// ver99.40: disable old stacked v94 menu/debug tap binding; clean patch below owns UI events.
+// ver99.45: disable old stacked v94 menu/debug tap binding; clean patch below owns UI events.
 // setTimeout(v94InstallTouchControls, 0);
 
 
@@ -3075,12 +3145,12 @@ window.addEventListener("pageshow",()=>{ if(state.mobileMuted) stopAllAudioForMu
 window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(); });
 
 
-/* ver99.40 clean stabilization patch: single source, no stacked UI injection */
+/* ver99.45 clean stabilization patch: single source, no stacked UI injection */
 (function(){
   'use strict';
-  const BUILD = '99.40';
+  const BUILD = '99.45';
   const byId = (id)=>document.getElementById(id);
-  function safe(fn){ try{ return fn && fn(); }catch(e){ console.warn('[ver99.40]', e); return null; } }
+  function safe(fn){ try{ return fn && fn(); }catch(e){ console.warn('[ver99.45]', e); return null; } }
 
   // --- version: one source only, no floating badge ---
   window.MINI_BROWSER_HERO_LATEST_VERSION = BUILD;
@@ -3179,6 +3249,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
         <button id="mbhTraceClear" type="button">消去</button>
         <pre id="mbhTraceOut" class="debug-trace-output"></pre>
       </div>
+      <label><input id="debugShowEnemyStats" type="checkbox"> 敵ATK/DEF表示</label>
       <label><input id="debugKillEnemy" type="checkbox"> 敵への攻撃で即死</label>
       <label><input id="debugKillHero" type="checkbox"> 敵からの攻撃で即死</label>
       <div class="debug-version">Build: ver.${BUILD}</div>
@@ -3226,7 +3297,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   }
 
   function bindCleanDebug(){
-    // ver99.40: debug panel must be idempotent. Clone once to remove stacked click/pointer handlers.
+    // ver99.45: debug panel must be idempotent. Clone once to remove stacked click/pointer handlers.
     let panel = byId('debugPanel');
     if(panel){
       const fresh = panel.cloneNode(false);
@@ -3247,6 +3318,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
     bindBtn('debugClearBleed', clearDots);
     bindBtn('debugStopDot', clearDots);
     bindBtn('debugStopDarkDance', stopDarkDanceTimers);
+    const showEnemyStatsBox = byId('debugShowEnemyStats'); if(showEnemyStatsBox) showEnemyStatsBox.checked = !!(state.debug && state.debug.showEnemyStats);
     bindBtn('debugClose', ()=>{ if(panel) panel.classList.add('hidden'); });
     if(panel){
       let darkGrantLock = false;
@@ -3269,7 +3341,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
         setTimeout(()=>{ bossNextLock=false; }, 180);
         return false;
       }, {capture:true});
-      panel.addEventListener('change', (e)=>{ if(e.target && e.target.id==='debugKillEnemy') state.debug.killEnemy = !!e.target.checked; if(e.target && e.target.id==='debugKillHero') state.debug.killHero = !!e.target.checked; });
+      panel.addEventListener('change', (e)=>{ if(e.target && e.target.id==='debugShowEnemyStats'){ state.debug.showEnemyStats = !!e.target.checked; safe(()=>renderBattle()); } if(e.target && e.target.id==='debugKillEnemy') state.debug.killEnemy = !!e.target.checked; if(e.target && e.target.id==='debugKillHero') state.debug.killHero = !!e.target.checked; });
     }
   }
 
@@ -3405,12 +3477,12 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   window.addEventListener('load', boot, {once:true});
 })();
 
-/* ver.99.40: audio restore - use lexical state/audio functions, not window fallback */
+/* ver.99.45: audio restore - use lexical state/audio functions, not window fallback */
 (function(){
   'use strict';
-  const BUILD='99.40';
+  const BUILD='99.45';
   const $=(id)=>document.getElementById(id);
-  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.40]', e); } }
+  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.45]', e); } }
   function setVersion(){
     window.GAME_VERSION=BUILD; window.BUILD_VERSION=BUILD;
     document.documentElement.setAttribute('data-build-version', BUILD);
@@ -3510,7 +3582,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   window.addEventListener('resize', ()=>safe(()=>applyMenu(typeof state !== 'undefined' ? !!state.uiOpen : false)));
 
 
-  /* ver.99.40: mute icon sync fix
+  /* ver.99.45: mute icon sync fix
      bindOneTap() clones top buttons, so els.muteBtn can point to a removed old node.
      Always sync els.muteBtn to the current DOM button before updating the icon. */
   const __mbhOriginalUpdateMuteButton = updateMuteButton;
@@ -3537,12 +3609,12 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 
 
 
-  /* ver.99.40: UI-only patch
+  /* ver.99.45: UI-only patch
      - hide EXP/flee behind overlay menu
      - revive inventory filters
      - keep inventory/log inside viewport with unified scrollbars
   */
-  function mbh9920Safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.40]', e); } }
+  function mbh9920Safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.45]', e); } }
   function mbh9920IsOverlay(){
     return matchMedia('(max-width: 1279px), (max-height: 700px), (pointer: coarse)').matches;
   }
@@ -3645,21 +3717,21 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   setTimeout(()=>mbh9920Safe(()=>{ mbh9920EnsureInventoryFilter(); renderInventory(); }), 300);
 
   // Ensure latest visible build number is single and clear.
-  document.documentElement.setAttribute('data-build-version','99.40');
-  document.querySelectorAll('.build-version').forEach(el=>{ el.textContent='ver.99.40'; });
-  document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent='Build: ver.99.40'; });
+  document.documentElement.setAttribute('data-build-version','99.45');
+  document.querySelectorAll('.build-version').forEach(el=>{ el.textContent='ver.99.45'; });
+  document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent='Build: ver.99.45'; });
 
   // PCでは非アクティブ時もBGMを止めない。スマホだけ従来どおり停止。
   window.__mbhPcKeepBgm = true;
 })();
 
 
-/* ver.99.40: inventory filter and log viewport final fix */
+/* ver.99.45: inventory filter and log viewport final fix */
 (function(){
   'use strict';
-  const BUILD='99.40';
+  const BUILD='99.45';
   const $=(id)=>document.getElementById(id);
-  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.40]', e); } }
+  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.45]', e); } }
   function setVersion(){
     window.GAME_VERSION=BUILD; window.BUILD_VERSION=BUILD;
     document.documentElement.setAttribute('data-build-version', BUILD);
@@ -3820,10 +3892,10 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   setTimeout(fitScrollablePanels9922,800);
 })();
 
-/* ver.99.40: mobile tap recovery only. PC mouse behavior is untouched. */
+/* ver.99.45: mobile tap recovery only. PC mouse behavior is untouched. */
 (function(){
   'use strict';
-  const BUILD = '99.40';
+  const BUILD = '99.45';
   const isMobileTapEnv = () => {
     try { return window.matchMedia('(pointer: coarse), (max-width: 760px)').matches; }
     catch(_) { return window.innerWidth <= 760; }
@@ -3896,7 +3968,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
           el.click();
         }
       } catch(err) {
-        console.warn('[MBH99.40 mobile tap]', err);
+        console.warn('[MBH99.45 mobile tap]', err);
       }
     }, 0);
   }
@@ -3914,12 +3986,12 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   window.addEventListener('load', boot, {once:true});
 })();
 
-/* ver.99.40: mobile equipment tap + mobile background audio pause only */
+/* ver.99.45: mobile equipment tap + mobile background audio pause only */
 (function(){
   'use strict';
-  const BUILD='99.40';
+  const BUILD='99.45';
   const $=(id)=>document.getElementById(id);
-  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.40]', e); } }
+  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.45]', e); } }
   function isMobileLike(){
     return !!(window.matchMedia && window.matchMedia('(pointer: coarse), (max-width: 760px)').matches) || ('ontouchstart' in window) || ((navigator.maxTouchPoints||0)>0);
   }
@@ -4031,10 +4103,10 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 })();
 
 
-/* ver.99.40: enhancement removal + enemy-level drop plus finalizer */
+/* ver.99.45: enhancement removal + enemy-level drop plus finalizer */
 (function(){
-  const BUILD='99.40';
-  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.40]', e); } }
+  const BUILD='99.45';
+  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.45]', e); } }
   safe(()=>{
     document.documentElement.setAttribute('data-build-version', BUILD);
     document.querySelectorAll('.build-version').forEach(el=>{ el.textContent='ver.'+BUILD; });
@@ -4052,11 +4124,11 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   });
 })();
 
-/* ver.99.41: do not stop BGM on ordinary outside click/blur */
+/* ver.99.45: do not stop BGM on ordinary outside click/blur */
 (function(){
   'use strict';
-  const BUILD='99.41';
-  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.41]', e); } }
+  const BUILD='99.45';
+  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.45]', e); } }
   function setVersion(){
     safe(()=>{ window.GAME_VERSION=BUILD; window.BUILD_VERSION=BUILD; });
     safe(()=>document.documentElement.setAttribute('data-build-version', BUILD));
