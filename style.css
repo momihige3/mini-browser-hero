@@ -2180,3 +2180,14 @@ body.mbh-menu-overlay-open .battle-panel .flee-btn{
 /* ver99.54 visibility fixes */
 .float.acid{color:#ff9f1a!important;text-shadow:0 2px 3px #000,0 0 14px #ff7a00!important;}
 .float.bleed{color:#8b0000!important;text-shadow:0 2px 3px #000,0 0 12px #3b0000!important;}
+
+/* ver99.55: legal footer restore and final readable damage colors */
+.float.acid{color:#ff9f1a!important;text-shadow:0 2px 3px #000,0 0 16px #ff7a00!important;}
+.float.bleed{color:#8b0000!important;text-shadow:0 2px 3px #000,0 0 14px #3b0000!important;}
+.side-panel .legal-links{display:flex!important;flex:0 0 auto!important;gap:6px!important;width:100%!important;max-width:100%!important;box-sizing:border-box!important;margin-top:8px!important;align-self:end!important;}
+.side-panel .legal-links button{flex:1 1 0!important;min-width:0!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
+@media(max-width:1279px),(max-height:700px){
+  .side-panel.open .legal-links{display:flex!important;order:999!important;margin-top:auto!important;padding-top:8px!important;border-top:1px solid rgba(201,155,57,.35)!important;}
+  .side-panel.open .panel.active-page{min-height:0!important;}
+}
+@media(max-width:760px){.side-panel.open .legal-links button{font-size:11px!important;padding:7px 5px!important;}}

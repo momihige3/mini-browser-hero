@@ -4578,3 +4578,224 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', boot, {once:true}); else setTimeout(boot,0);
   window.addEventListener('load', ()=>{ boot(); setTimeout(boot,120); setTimeout(boot,600); }, {once:true});
 })();
+
+/* ver99.55: final log viewport anchor + legal footer restore + fire breath absorb hard fix */
+(function(){
+  'use strict';
+  const BUILD = (window.APP_VERSION || '99.55');
+  const byId = (id)=>document.getElementById(id);
+  const esc = (v)=>String(v ?? '').replace(/[&<>'"]/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;' }[c]));
+  const safe = (fn)=>{ try{return fn();}catch(e){ console.error('[MBH99.55]', e); } };
+
+  function syncVersion9955(){
+    safe(()=>{ window.APP_VERSION = BUILD; window.GAME_VERSION = BUILD; window.BUILD_VERSION = BUILD; window.MINI_BROWSER_HERO_LATEST_VERSION = BUILD; window.MINI_BROWSER_HERO_BUILD_VERSION = BUILD; });
+    safe(()=>document.documentElement.setAttribute('data-build-version', BUILD));
+    safe(()=>document.querySelectorAll('.build-version').forEach(el=>{ el.textContent = 'ver.' + BUILD; }));
+    safe(()=>document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent = 'Build: ver.' + BUILD; }));
+    safe(()=>document.querySelectorAll('.debug-trace-title').forEach(el=>{ el.textContent = '進行デバッグログ ver.' + BUILD; }));
+  }
+
+  function ensureLegalFooter9955(){
+    const side = document.querySelector('.side-panel');
+    let links = document.querySelector('.legal-links');
+    if(!side || !links) return;
+    if(links.parentElement !== side) side.appendChild(links);
+    links.style.display = '';
+  }
+
+  function installCss9955(){
+    if(byId('mbh9955Css')) return;
+    const st=document.createElement('style');
+    st.id='mbh9955Css';
+    st.textContent = `
+      .float.acid{color:#ff9f1a!important;text-shadow:0 2px 3px #000,0 0 16px #ff7a00!important;}
+      .float.bleed{color:#8b0000!important;text-shadow:0 2px 3px #000,0 0 14px #3b0000!important;}
+      .side-panel .legal-links{display:flex!important;flex:0 0 auto!important;gap:6px!important;width:100%!important;max-width:100%!important;box-sizing:border-box!important;margin-top:8px!important;align-self:end!important;}
+      .side-panel .legal-links button{flex:1 1 0!important;min-width:0!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
+      @media(max-width:1279px),(max-height:700px){
+        .side-panel.open .legal-links{display:flex!important;order:999!important;margin-top:auto!important;padding-top:8px!important;border-top:1px solid rgba(201,155,57,.35)!important;}
+        .side-panel.open .panel.active-page{min-height:0!important;}
+      }
+      @media(max-width:760px){.side-panel.open .legal-links button{font-size:11px!important;padding:7px 5px!important;}}
+    `;
+    document.head.appendChild(st);
+  }
+
+  function classifyFloat9955(text, cls){
+    const t=String(text||'');
+    let c=String(cls||'damage');
+    if(t.includes('反射') || c.includes('acid')) c=(c+' acid').trim();
+    else if(t.includes('暗黒出血')) c=(c+' dark').trim();
+    else if(t.includes('出血')) c=(c.replace(/damage/g,'')+' bleed').trim();
+    return c || 'damage';
+  }
+  function patchFloats9955(){
+    if(typeof showFloat==='function' && !showFloat.__mbh9955){
+      const old=showFloat;
+      showFloat=function(text, cls='damage'){ return old(text, classifyFloat9955(text, cls)); };
+      showFloat.__mbh9955=true;
+    }
+    if(typeof showHeroFloat==='function' && !showHeroFloat.__mbh9955){
+      const old=showHeroFloat;
+      showHeroFloat=function(text, cls='damage'){ return old(text, classifyFloat9955(text, cls)); };
+      showHeroFloat.__mbh9955=true;
+    }
+  }
+
+  function ensureLogIds9955(){
+    if(typeof state==='undefined') return;
+    if(!Number.isFinite(state.nextLogId)) state.nextLogId = 1;
+    (state.log||[]).forEach(l=>{ if(!l.id) l.id = state.nextLogId++; });
+  }
+  function logClass9955(l){
+    const cls=String(l.cls||'');
+    const msg=String(l.msg||'');
+    if(cls.includes('log-item') || cls.includes('drop') || msg.includes('ドロップ') || msg.includes('入手') || msg.includes('枠目')) return 'drop';
+    if(cls.includes('danger') || cls.includes('good') || cls.includes('skilllog') || cls.includes('damage') || msg.includes('ダメージ') || msg.includes('出血') || msg.includes('火傷') || msg.includes('回復') || msg.includes('反射')) return 'damage';
+    return 'system';
+  }
+  function visibleLogs9955(){
+    const f=(state && state.logFilter) || 'all';
+    const arr=(state && state.log) || [];
+    if(f==='all') return arr;
+    return arr.filter(l=>logClass9955(l)===f);
+  }
+  function captureLogAnchor9955(el){
+    if(!el) return null;
+    const rect=el.getBoundingClientRect();
+    const rows=[...el.querySelectorAll('[data-log-id]')];
+    if(!rows.length) return {type:'scroll', scrollTop:el.scrollTop, scrollHeight:el.scrollHeight};
+    // 新しいログが上。scrollTop 0 は最新追従。
+    if(el.scrollTop <= 2) return {type:'latest'};
+    // 画面内の一番上に見えている行を固定する。
+    let best=null;
+    for(const r of rows){
+      const rr=r.getBoundingClientRect();
+      if(rr.bottom <= rect.top + 1) continue;
+      if(rr.top >= rect.bottom - 1) break;
+      best=r; break;
+    }
+    if(best){
+      const br=best.getBoundingClientRect();
+      return {type:'row', id:String(best.dataset.logId), offset:br.top - rect.top, scrollTop:el.scrollTop, scrollHeight:el.scrollHeight};
+    }
+    return {type:'scroll', scrollTop:el.scrollTop, scrollHeight:el.scrollHeight};
+  }
+  function restoreLogAnchor9955(el, anchor){
+    if(!el || !anchor) return;
+    if(anchor.type==='latest'){ el.scrollTop=0; return; }
+    if(anchor.type==='row'){
+      const target=el.querySelector(`[data-log-id="${CSS.escape(anchor.id)}"]`);
+      if(target){
+        const er=el.getBoundingClientRect();
+        const tr=target.getBoundingClientRect();
+        el.scrollTop += (tr.top - er.top) - anchor.offset;
+        return;
+      }
+    }
+    if(anchor.type==='scroll'){
+      const delta = el.scrollHeight - (anchor.scrollHeight || el.scrollHeight);
+      el.scrollTop = Math.max(0, (anchor.scrollTop||0) + delta);
+    }
+  }
+  function renderLog9955(reason='append', anchor=null){
+    const el=byId('log');
+    if(!el || typeof state==='undefined') return;
+    ensureLogIds9955();
+    const keep = anchor || (reason==='filter' ? {type:'latest'} : captureLogAnchor9955(el));
+    const rows=visibleLogs9955();
+    el.innerHTML = rows.map(l=>`<div data-log-id="${esc(l.id)}" class="${esc(l.cls||'')}">[${esc(l.time||'')}] ${l.msg||''}</div>`).join('');
+    const f=state.logFilter || 'all';
+    document.querySelectorAll('#logFilterBar button[data-log-filter]').forEach(b=>b.classList.toggle('active',(b.dataset.logFilter||'all')===f));
+    // レイアウト確定後にも2回復元。複数ログ同時追加・可変行高でも同じ行を固定する。
+    restoreLogAnchor9955(el, keep);
+    requestAnimationFrame(()=>restoreLogAnchor9955(el, keep));
+    setTimeout(()=>restoreLogAnchor9955(el, keep), 0);
+  }
+  function installLog9955(){
+    if(typeof state==='undefined') return;
+    state.logFilter = state.logFilter || 'all';
+    ensureLogIds9955();
+    const bar=byId('logFilterBar');
+    if(bar){
+      bar.innerHTML='<button type="button" data-log-filter="all">すべて</button><button type="button" data-log-filter="damage">ダメージ</button><button type="button" data-log-filter="system">システム</button><button type="button" data-log-filter="drop">ドロップ</button>';
+      bar.querySelectorAll('button[data-log-filter]').forEach(b=>{
+        const on=(e)=>{ if(e){e.preventDefault(); e.stopPropagation();} state.logFilter=b.dataset.logFilter||'all'; renderLog9955('filter',{type:'latest'}); return false; };
+        b.onclick=on; b.ontouchend=on; b.onpointerup=(e)=>{ if(e.pointerType==='mouse') return; return on(e); };
+      });
+    }
+    log = window.log = function(msg, cls='', html=false){
+      const el=byId('log');
+      const anchor=captureLogAnchor9955(el);
+      ensureLogIds9955();
+      const time=new Date().toLocaleTimeString('ja-JP',{hour12:false});
+      state.log.unshift({id:state.nextLogId++, time, msg:html?msg:esc(msg), cls, html:true});
+      state.log=state.log.slice(0,500);
+      renderLog9955('append', anchor);
+    };
+    window.renderBattleLog = renderLog9955;
+    renderLog9955('filter',{type:'latest'});
+  }
+
+  function patchDragonBreath9955(){
+    if(typeof dragonFireBreath!=='function' || dragonFireBreath.__mbh9955) return;
+    dragonFireBreath = function(){
+      if(!isDragonEnemy() || state.down || state.dragonBreathActive) return;
+      state.dragonBreathActive = true;
+      const st = calcStats();
+      const base = Math.max(1, Math.floor((state.enemyHp || state.enemy?.maxHp || 1) * 0.01));
+      let totalDmg = 0, totalHeal = 0, hit = 0, absorbedAny = false;
+      log('ドラゴンが大きく息を吸い込んだ……','danger');
+      banner('🔥 火炎ブレス！！', 1250);
+      playSfx('fire');
+      const finish = ()=>{
+        state.dragonBreathActive = false;
+        if(totalDmg > 0) log(`火炎ブレス！ 10連続火属性攻撃 合計${totalDmg}ダメージ`, 'danger');
+        if(totalHeal > 0) log(`火炎ブレスを火属性吸収！ 合計${totalHeal}回復`, 'good');
+        if(!absorbedAny && !state.down && state.hp > 0){
+          if((st.fireRes||0) >= 0.20){ log('騎士は火軽減20%以上で火傷を防いだ。','good'); }
+          else if(addBurn('hero')){ log('火軽減20%未満。火炎ブレスで騎士は火傷した。','danger'); }
+        }
+        renderBattle(); renderStatusLists();
+      };
+      const doHit = ()=>{
+        if(!isDragonEnemy() || state.down || state.hp <= 0 || hit >= 10){ finish(); return; }
+        hit += 1;
+        let dmg = Math.max(1, Math.floor(base * (1 - (st.fireRes||0))));
+        const absorbRate = Math.max(0, Number(st.fireDamageHeal)||0);
+        if(absorbRate >= 1){
+          const heal = Math.max(1, Math.floor(dmg * absorbRate));
+          state.hp = Math.min(maxHp(), state.hp + heal);
+          totalHeal += heal; absorbedAny = true;
+          showHeroBreathFloat(`+${heal.toLocaleString()}`, hit-1);
+          playSfx('fire'); renderBattle(); setTimeout(doHit, 120); return;
+        }
+        dmg = applyDarkShieldToDamage(dmg);
+        totalDmg += dmg;
+        showHeroBreathFloat(`-${dmg.toLocaleString()}`, hit - 1);
+        playSfx('fire');
+        if(state.hp - dmg <= 0){
+          if(!state.debug.killHero && tryHeroDeathDance()){ renderBattle(); finish(); return; }
+          state.hp = 0; renderBattle(); handleHeroDeath(); finish(); return;
+        }
+        state.hp = Math.max(0, state.hp - dmg);
+        if(absorbRate > 0){
+          const heal = Math.max(1, Math.floor(dmg * absorbRate));
+          state.hp = Math.min(maxHp(), state.hp + heal);
+          totalHeal += heal;
+          showHeroFloat(`火吸収 +${heal}`, 'heal');
+        }
+        renderBattle(); setTimeout(doHit, 120);
+      };
+      setTimeout(doHit, 260);
+    };
+    dragonFireBreath.__mbh9955=true;
+  }
+
+  function boot9955(){
+    syncVersion9955(); installCss9955(); ensureLegalFooter9955(); installLog9955(); patchFloats9955(); patchDragonBreath9955();
+    safe(()=>{ if(typeof patchRenderUiFinal==='function') patchRenderUiFinal(); });
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', boot9955, {once:true}); else setTimeout(boot9955,0);
+  window.addEventListener('load', ()=>{ boot9955(); setTimeout(boot9955,150); setTimeout(boot9955,800); }, {once:true});
+})();
