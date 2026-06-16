@@ -2176,7 +2176,7 @@ body.mbh-menu-overlay-open .battle-panel .flee-btn{
 }
 .log-panel{padding-bottom:.9em!important;}
 
-/* mbh-9953-static */
-.float.acid{color:#ff9f1a!important;text-shadow:0 2px 3px #000,0 0 16px #ff8c00!important;}
-.float.bleed{color:#8b0000!important;text-shadow:0 2px 3px #000,0 0 14px #5a0000!important;}
-#log{overflow-anchor:none!important;}
+
+/* ver99.54 visibility fixes */
+.float.acid{color:#ff9f1a!important;text-shadow:0 2px 3px #000,0 0 14px #ff7a00!important;}
+.float.bleed{color:#8b0000!important;text-shadow:0 2px 3px #000,0 0 12px #3b0000!important;}

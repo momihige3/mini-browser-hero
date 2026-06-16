@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja" data-build-date="2026-06-15">
+<html lang="ja">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -147,7 +147,7 @@
         </div>
         <label><input id="debugKillEnemy" type="checkbox"> 敵への攻撃で即死</label>
         <label><input id="debugKillHero" type="checkbox"> 敵からの攻撃で即死</label>
-        <div class="debug-version">Build</div>
+        <div class="debug-version">Build: ver.</div>
         <button id="debugClose">閉じる</button>
       </div>
   </div>
@@ -182,7 +182,17 @@
     </div>
   </div>
 
-  <script src="game.js"></script>
+  <script>
+    // バージョンはここ1か所だけ変更する
+    window.APP_VERSION = '99.54';
+    window.MINI_BROWSER_HERO_LATEST_VERSION = window.APP_VERSION;
+    window.MINI_BROWSER_HERO_BUILD_VERSION = window.APP_VERSION;
+    document.documentElement.dataset.buildVersion = window.APP_VERSION;
+    var s = document.createElement('script');
+    s.src = 'game.js?v=' + encodeURIComponent(window.APP_VERSION);
+    s.defer = false;
+    document.body.appendChild(s);
+  </script>
 
 
 
