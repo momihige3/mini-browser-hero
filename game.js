@@ -1,6 +1,6 @@
 'use strict';
 
-// ver99.33: ボス表示整理・火炎ブレスタグカウント・ボスランダム出現。
+// ver99.34: ボス表示整理・火炎ブレスタグカウント・ボスランダム出現。
 // strict modeで `makeDarkArmor = function...` がReferenceErrorになり、
 // 後続パッチ全体が止まる問題を防ぐ。
 var makeDarkArmor, makeDarkGauntlets, makeDarkHelm, makeDarkBoots;
@@ -40,7 +40,7 @@ const DEATH_DANCE_CUTINS = [
 ];
 const DARK_SWORD_SAINT_CUTIN = {quote:'私を超えてみせろ。', img:'assets/cutin_dark_sword_dance.png'};
 const DARK_SWORD_TECHNIQUE_CUTIN = {quote:'', img:'assets/cutin_dark_sword_technique.png'};
-const GAME_VERSION = (window.MINI_BROWSER_HERO_LATEST_VERSION || window.MINI_BROWSER_HERO_BUILD_VERSION || document.documentElement.dataset.buildVersion || '99.33');
+const GAME_VERSION = (window.MINI_BROWSER_HERO_LATEST_VERSION || window.MINI_BROWSER_HERO_BUILD_VERSION || document.documentElement.dataset.buildVersion || '99.34');
 window.GAME_VERSION = GAME_VERSION;
 window.MINI_BROWSER_HERO_LATEST_VERSION = GAME_VERSION;
 const DARK_SWORD_SAINT = {
@@ -82,7 +82,7 @@ const state = {
   level:1, xp:0, xpNext:80, chests:0, mats:3, defeated:0,
   base:{hp:520, atk:48, def:14}, hp:520, enemy:null, enemyHp:1,
   inventory:[], equip:{}, down:false, downUntil:0, deathDance:false, deathDanceUntil:0, deathDanceBattleCount:0, deathDanceCutin:false, deathDanceCutinTimer:null, deathDanceSeqTimers:[], lastHeroAttack:0, lastEnemyAttack:0,
-  log:[], debug:{killEnemy:false, killHero:false}, audio:null, masterGain:null, bgmGain:null, bgmTimer:null, bgmMode:'normal', normalBgm:null, swordDanceBgm:null, darkSwordSaintBgm:null, darkSwordSaintVoice:null, darkSwordReviveTimer:null, darkSwordComboTimers:[], darkSwordCutinActive:false, audioUnlocked:false, mobileMuted:true, menuPage:'stats', inventoryMenuItemId:null, enemyRecords:{}, forceFirstEnemy:false, bgmPausedByVisibility:false, heroStatuses:null, enemyStatuses:null, darkShieldStacks:0, dropToastTimer:null, dropToastQueueTimers:[], winStreak:0, bestWinStreak:0, forceNextDarkSwordSaint:false, pendingBossForNext:null, darkSwordSaintFirstEncountered:false, darkSwordSaintLevel:1, darkSwordSaintKills:0
+  log:[], debug:{killEnemy:false, killHero:false}, audio:null, masterGain:null, bgmGain:null, bgmTimer:null, bgmMode:'normal', normalBgm:null, swordDanceBgm:null, darkSwordSaintBgm:null, darkSwordSaintVoice:null, darkSwordReviveTimer:null, darkSwordComboTimers:[], darkSwordCutinActive:false, audioUnlocked:false, mobileMuted:true, menuPage:'stats', inventoryMenuItemId:null, enemyRecords:{}, forceFirstEnemy:false, bgmPausedByVisibility:false, heroStatuses:null, enemyStatuses:null, darkShieldStacks:0, dropToastTimer:null, dropToastQueueTimers:[], winStreak:0, bestWinStreak:0, forceNextDarkSwordSaint:false, pendingBossForNext:null, darkSwordSaintFirstEncountered:false, darkSwordSaintLevel:1, darkSwordSaintKills:0, darkSwordSaintLastLevelTrigger:0
 };
 
 const SAVE_KEY = 'mini-browser-hero-save-v36';
@@ -263,7 +263,7 @@ function saveGame(){
       chests:state.chests, mats:state.mats, defeated:state.defeated,
       hp:Math.max(1, Math.floor(state.hp||1)), base:state.base,
       inventory:state.inventory.map(cleanItem), equip:serializeEquip(), selectedEquip:state.selectedEquip,
-      volume:state.volume, mobileMuted:state.mobileMuted, debug:state.debug, enemyRecords:state.enemyRecords, enemyLevelBase:state.enemyLevelBase, enemyLevelBaseDefeated:state.enemyLevelBaseDefeated, winStreak:state.winStreak, bestWinStreak:state.bestWinStreak, forceNextDarkSwordSaint:state.forceNextDarkSwordSaint, pendingBossForNext:state.pendingBossForNext, darkSwordSaintFirstEncountered:state.darkSwordSaintFirstEncountered, darkSwordSaintLevel:state.darkSwordSaintLevel, darkSwordSaintKills:state.darkSwordSaintKills,
+      volume:state.volume, mobileMuted:state.mobileMuted, debug:state.debug, enemyRecords:state.enemyRecords, enemyLevelBase:state.enemyLevelBase, enemyLevelBaseDefeated:state.enemyLevelBaseDefeated, winStreak:state.winStreak, bestWinStreak:state.bestWinStreak, forceNextDarkSwordSaint:state.forceNextDarkSwordSaint, pendingBossForNext:state.pendingBossForNext, darkSwordSaintFirstEncountered:state.darkSwordSaintFirstEncountered, darkSwordSaintLevel:state.darkSwordSaintLevel, darkSwordSaintKills:state.darkSwordSaintKills, darkSwordSaintLastLevelTrigger:state.darkSwordSaintLastLevelTrigger,
       savedAt:Date.now()
     };
     localStorage.setItem(SAVE_KEY, JSON.stringify(data));
@@ -300,6 +300,7 @@ function loadGame(){
     state.darkSwordSaintFirstEncountered = !!data.darkSwordSaintFirstEncountered || !!data.darkSwordSaintKills || !!(data.enemyRecords && data.enemyRecords.dark_sword_saint && data.enemyRecords.dark_sword_saint.seen);
     state.darkSwordSaintLevel = Math.max(1, Math.floor(Number(data.darkSwordSaintLevel)||1));
     state.darkSwordSaintKills = Math.max(0, Math.floor(Number(data.darkSwordSaintKills)||0));
+    state.darkSwordSaintLastLevelTrigger = data.darkSwordSaintLastLevelTrigger == null ? Math.floor((Number(state.level)||1)/20) : Math.max(0, Math.floor(Number(data.darkSwordSaintLastLevelTrigger)||0));
     state.hp = Math.min(Number(data.hp)||maxHp(), maxHp());
     if(state.hp<=0) state.hp=Math.floor(maxHp()*0.5);
     sanitizeAllEquipmentDeathDanceChance();
@@ -517,14 +518,14 @@ function bossCommonDamageReduction(){
   ensureStatusContainers();
   const start = Number(state.enemyStatuses.bossBuffStart) || nowMs();
   const elapsed10 = Math.floor(Math.max(0, nowMs() - start) / 10000);
-  return Math.max(0, 0.25 - elapsed10 * 0.01);
+  return Math.max(0, 0.75 - elapsed10 * 0.01);
 }
 function bossCommonDefensePierce(){
   if(!isSpeciesBoss()) return 0;
   ensureStatusContainers();
   const start = Number(state.enemyStatuses.bossPierceStart) || nowMs();
   const elapsed30 = Math.floor(Math.max(0, nowMs() - start) / 30000);
-  return Math.min(1, 0.05 + elapsed30 * 0.01);
+  return Math.min(0.50, 0.10 + elapsed30 * 0.01);
 }
 function bossCommonStatusText(){
   return `被ダメ軽減${Math.round(bossCommonDamageReduction()*100)}% / 防御無視${Math.round(bossCommonDefensePierce()*100)}%`;
@@ -1228,7 +1229,7 @@ function makeFirstEnemy(){
 }
 
 function pickEnemy(){
-  // ver.99.33: 通常ボスはランダム抽選ではなく、各下位種族Lv10刻み撃破後に出現する。
+  // ver.99.34: 通常ボスはランダム抽選ではなく、各下位種族Lv10刻み撃破後に出現する。
   return {...normals[Math.floor(Math.random()*normals.length)]};
 }
 function getBossForNormal(normalId){
@@ -1242,7 +1243,7 @@ function shouldReplaceBossWithDarkSaint(){
   return !!state.darkSwordSaintFirstEncountered && Math.random() < 0.01;
 }
 function scheduleBossAfterNormalDefeat(e){
-  // ver.99.33: 雑魚Lv10刻みで、種族ボスからランダム出現。レベルは撃破した雑魚と共通。
+  // ver.99.34: 雑魚Lv10刻みで、種族ボスからランダム出現。レベルは撃破した雑魚と共通。
   try{
     if(!e || e.type !== '雑魚') return;
     const lv = Math.max(1, Math.floor(Number(e.level)||1));
@@ -1253,7 +1254,7 @@ function scheduleBossAfterNormalDefeat(e){
     state.pendingBossForNext = { id: boss.id, level: lv, from: e.id, randomBoss: true };
     log(`${e.name}Lv.${lv}を制した。次の敵にボスLv.${lv}が現れる！`, 'danger');
   }catch(err){
-    console.error('[MBH99.33 scheduleBossAfterNormalDefeat]', err);
+    console.error('[MBH99.34 scheduleBossAfterNormalDefeat]', err);
     state.pendingBossForNext = null;
   }
 }
@@ -1304,7 +1305,7 @@ function setEnemy(e){
   log(`${e.name} が現れた。${e.type==='ボス'||e.type==='裏ボス'?'ボス出現！':''}`, e.type==='ボス'||e.type==='裏ボス'?'danger':'');
 }
 function forceSpawnDarkSwordSaint(){
-  // ver99.33: 即時召喚ではなく、次の敵として暗黒剣聖を予約する
+  // ver99.34: 即時召喚ではなく、次の敵として暗黒剣聖を予約する
   state.forceNextDarkSwordSaint = true;
   state.pendingDarkSwordSaintDelay = false;
   banner('次の敵に暗黒剣聖をセット！', 1400);
@@ -1319,7 +1320,7 @@ function spawnEnemy(forceFirst=false){
     base = DARK_SWORD_SAINT;
     state.forceNextDarkSwordSaint = false;
     state.pendingBossForNext = null;
-    log('100連勝の気配に、暗黒剣聖が現れた。', 'danger');
+    log('成長の気配に、暗黒剣聖が現れた。', 'danger');
     banner('暗黒剣聖出現！', 1800);
   }else if(!forceFirst && state.pendingBossForNext){
     const pending = state.pendingBossForNext;
@@ -1564,7 +1565,7 @@ function tryDarkSwordDanceRevive(){
 
   const t = performance.now();
   state.enemyStatuses.darkDanceCount = count + 1;
-  // ver99.33: 暗黒剣舞発動時、主人公の死線の剣舞発動回数と剣舞状態を必ずリセット
+  // ver99.34: 暗黒剣舞発動時、主人公の死線の剣舞発動回数と剣舞状態を必ずリセット
   state.deathDanceBattleCount = 0;
   state.deathDanceComboCount = 0;
   state.deathDance = false;
@@ -1756,13 +1757,12 @@ function enemyDefeated(){
     state.darkSwordSaintKills = Math.max(0, Math.floor(state.darkSwordSaintKills||0)) + 1;
     state.darkSwordSaintLevel = Math.max(1, Math.floor(state.darkSwordSaintLevel||1)) + 1;
   }else{
-    if(!state.darkSwordSaintFirstEncountered && state.winStreak >= 100){
+    if(!state.darkSwordSaintFirstEncountered && Math.max(1, Math.floor(Number(e?.level)||1)) >= 100){
       state.forceNextDarkSwordSaint = true;
       state.pendingBossForNext = null;
-      state.winStreak = 0;
-      log('100連勝達成！ 5秒後に暗黒剣聖が確定出現する。','danger');
-      banner('100連勝達成！', 5000);
-      state.pendingDarkSwordSaintDelay = true;
+      log('敵Lv100到達！ 次の敵に暗黒剣聖が確定出現する。','danger');
+      banner('敵Lv100到達！', 2200);
+      state.pendingDarkSwordSaintDelay = false;
     }else{
       scheduleBossAfterNormalDefeat(e);
     }
@@ -1777,7 +1777,7 @@ function enemyDefeated(){
     const makeDarkReward = () => darkPool[Math.floor(Math.random()*darkPool.length)](state.level);
     const makeLegendReward = () => makeItem(slots[Math.floor(Math.random()*slots.length)], legendary, {isBossDrop:true});
 
-    // ver99.33: 報酬枠を明示的に固定する。
+    // ver99.34: 報酬枠を明示的に固定する。
     // rewards[0] = 1枠目、rewards[1] = 2枠目、rewards[2] = 3枠目。
     // 3枠目は必ず闇装備。1〜2枠目は確率で闇装備になってもよい。
     const rewards = [
@@ -1791,8 +1791,17 @@ function enemyDefeated(){
     for(let i=rewards.length-1;i>=0;i--) state.inventory.unshift(rewards[i]);
     log(`暗黒剣聖討伐報酬：1枠目=${rewards[0].name} / 2枠目=${rewards[1].name} / 3枠目=${rewards[2].name}（闇装備確定）`,'good');
     showDropSequence(rewards);
-  }else if(Math.random()<.38){ const it=makeRandomItem(e?.type==='ボス'); state.inventory.unshift(it); logItemDrop(it); showDropToast(it); }
-  // ver.99.33: 強化石ドロップは廃止。装備はドロップ時に敵Lv依存の+値が付く。
+  }else{
+    const isBossDrop = e?.type === 'ボス';
+    const dropRate = isBossDrop ? 0.50 : 0.10;
+    if(Math.random() < dropRate){
+      const it=makeRandomItem(isBossDrop);
+      state.inventory.unshift(it);
+      logItemDrop(it);
+      showDropToast(it);
+    }
+  }
+  // ver.99.34: 強化石ドロップは廃止。装備はドロップ時に敵Lv依存の+値が付く。
   if(calcStats().masterRegen && state.hp > 0){
     const heal = Math.max(1, Math.floor(maxHp() * 0.25));
     const beforeHp = state.hp;
@@ -1806,7 +1815,23 @@ function enemyDefeated(){
   setTimeout(spawnEnemy,nextDelay);
 }
 function checkLevelUp(){
-  while(state.xp>=state.xpNext){ state.xp-=state.xpNext; state.level++; state.xpNext=Math.floor(state.xpNext*1.42+40); state.hp=maxHp(); showLevelUp(); log(`LEVEL UP！ Lv.${state.level}`,'good'); }
+  while(state.xp>=state.xpNext){
+    state.xp-=state.xpNext;
+    state.level++;
+    state.xpNext=Math.floor(state.xpNext*1.42+40);
+    state.hp=maxHp();
+    showLevelUp();
+    log(`LEVEL UP！ Lv.${state.level}`,'good');
+    const levelTrigger = Math.floor((Number(state.level)||1) / 20);
+    if(state.darkSwordSaintFirstEncountered && levelTrigger > Math.max(0, Math.floor(Number(state.darkSwordSaintLastLevelTrigger)||0))){
+      state.darkSwordSaintLastLevelTrigger = levelTrigger;
+      state.forceNextDarkSwordSaint = true;
+      state.pendingBossForNext = null;
+      state.pendingDarkSwordSaintDelay = false;
+      log(`Lv.${state.level}到達。次の敵に暗黒剣聖が確定出現する。`, 'danger');
+      banner('暗黒剣聖の試練！', 1800);
+    }
+  }
 }
 function showLevelUp(){ els.levelEffect.classList.remove('hidden'); playSfx('level'); setTimeout(()=>els.levelEffect.classList.add('hidden'),1150); }
 function startDown(){
@@ -2924,7 +2949,7 @@ function v94InstallTouchControls(){
 }
 
 init();
-// ver99.33: disable old stacked v94 menu/debug tap binding; clean patch below owns UI events.
+// ver99.34: disable old stacked v94 menu/debug tap binding; clean patch below owns UI events.
 // setTimeout(v94InstallTouchControls, 0);
 
 
@@ -2933,12 +2958,12 @@ window.addEventListener("pageshow",()=>{ if(state.mobileMuted) stopAllAudioForMu
 window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(); });
 
 
-/* ver99.33 clean stabilization patch: single source, no stacked UI injection */
+/* ver99.34 clean stabilization patch: single source, no stacked UI injection */
 (function(){
   'use strict';
-  const BUILD = '99.33';
+  const BUILD = '99.34';
   const byId = (id)=>document.getElementById(id);
-  function safe(fn){ try{ return fn && fn(); }catch(e){ console.warn('[ver99.33]', e); return null; } }
+  function safe(fn){ try{ return fn && fn(); }catch(e){ console.warn('[ver99.34]', e); return null; } }
 
   // --- version: one source only, no floating badge ---
   window.MINI_BROWSER_HERO_LATEST_VERSION = BUILD;
@@ -3065,7 +3090,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   }
 
   function bindCleanDebug(){
-    // ver99.33: debug panel must be idempotent. Clone once to remove stacked click/pointer handlers.
+    // ver99.34: debug panel must be idempotent. Clone once to remove stacked click/pointer handlers.
     let panel = byId('debugPanel');
     if(panel){
       const fresh = panel.cloneNode(false);
@@ -3234,12 +3259,12 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   window.addEventListener('load', boot, {once:true});
 })();
 
-/* ver.99.33: audio restore - use lexical state/audio functions, not window fallback */
+/* ver.99.34: audio restore - use lexical state/audio functions, not window fallback */
 (function(){
   'use strict';
-  const BUILD='99.33';
+  const BUILD='99.34';
   const $=(id)=>document.getElementById(id);
-  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.33]', e); } }
+  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.34]', e); } }
   function setVersion(){
     window.GAME_VERSION=BUILD; window.BUILD_VERSION=BUILD;
     document.documentElement.setAttribute('data-build-version', BUILD);
@@ -3339,7 +3364,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   window.addEventListener('resize', ()=>safe(()=>applyMenu(typeof state !== 'undefined' ? !!state.uiOpen : false)));
 
 
-  /* ver.99.33: mute icon sync fix
+  /* ver.99.34: mute icon sync fix
      bindOneTap() clones top buttons, so els.muteBtn can point to a removed old node.
      Always sync els.muteBtn to the current DOM button before updating the icon. */
   const __mbhOriginalUpdateMuteButton = updateMuteButton;
@@ -3366,12 +3391,12 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 
 
 
-  /* ver.99.33: UI-only patch
+  /* ver.99.34: UI-only patch
      - hide EXP/flee behind overlay menu
      - revive inventory filters
      - keep inventory/log inside viewport with unified scrollbars
   */
-  function mbh9920Safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.33]', e); } }
+  function mbh9920Safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.34]', e); } }
   function mbh9920IsOverlay(){
     return matchMedia('(max-width: 1279px), (max-height: 700px), (pointer: coarse)').matches;
   }
@@ -3474,21 +3499,21 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   setTimeout(()=>mbh9920Safe(()=>{ mbh9920EnsureInventoryFilter(); renderInventory(); }), 300);
 
   // Ensure latest visible build number is single and clear.
-  document.documentElement.setAttribute('data-build-version','99.33');
-  document.querySelectorAll('.build-version').forEach(el=>{ el.textContent='ver.99.33'; });
-  document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent='Build: ver.99.33'; });
+  document.documentElement.setAttribute('data-build-version','99.34');
+  document.querySelectorAll('.build-version').forEach(el=>{ el.textContent='ver.99.34'; });
+  document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent='Build: ver.99.34'; });
 
   // PCでは非アクティブ時もBGMを止めない。スマホだけ従来どおり停止。
   window.__mbhPcKeepBgm = true;
 })();
 
 
-/* ver.99.33: inventory filter and log viewport final fix */
+/* ver.99.34: inventory filter and log viewport final fix */
 (function(){
   'use strict';
-  const BUILD='99.33';
+  const BUILD='99.34';
   const $=(id)=>document.getElementById(id);
-  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.33]', e); } }
+  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.34]', e); } }
   function setVersion(){
     window.GAME_VERSION=BUILD; window.BUILD_VERSION=BUILD;
     document.documentElement.setAttribute('data-build-version', BUILD);
@@ -3649,10 +3674,10 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   setTimeout(fitScrollablePanels9922,800);
 })();
 
-/* ver.99.33: mobile tap recovery only. PC mouse behavior is untouched. */
+/* ver.99.34: mobile tap recovery only. PC mouse behavior is untouched. */
 (function(){
   'use strict';
-  const BUILD = '99.33';
+  const BUILD = '99.34';
   const isMobileTapEnv = () => {
     try { return window.matchMedia('(pointer: coarse), (max-width: 760px)').matches; }
     catch(_) { return window.innerWidth <= 760; }
@@ -3725,7 +3750,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
           el.click();
         }
       } catch(err) {
-        console.warn('[MBH99.33 mobile tap]', err);
+        console.warn('[MBH99.34 mobile tap]', err);
       }
     }, 0);
   }
@@ -3743,12 +3768,12 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   window.addEventListener('load', boot, {once:true});
 })();
 
-/* ver.99.33: mobile equipment tap + mobile background audio pause only */
+/* ver.99.34: mobile equipment tap + mobile background audio pause only */
 (function(){
   'use strict';
-  const BUILD='99.33';
+  const BUILD='99.34';
   const $=(id)=>document.getElementById(id);
-  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.33]', e); } }
+  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.34]', e); } }
   function isMobileLike(){
     return !!(window.matchMedia && window.matchMedia('(pointer: coarse), (max-width: 760px)').matches) || ('ontouchstart' in window) || ((navigator.maxTouchPoints||0)>0);
   }
@@ -3860,10 +3885,10 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 })();
 
 
-/* ver.99.33: enhancement removal + enemy-level drop plus finalizer */
+/* ver.99.34: enhancement removal + enemy-level drop plus finalizer */
 (function(){
-  const BUILD='99.33';
-  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.33]', e); } }
+  const BUILD='99.34';
+  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.34]', e); } }
   safe(()=>{
     document.documentElement.setAttribute('data-build-version', BUILD);
     document.querySelectorAll('.build-version').forEach(el=>{ el.textContent='ver.'+BUILD; });
