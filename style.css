@@ -1666,7 +1666,7 @@ body.using-touch .tooltip.status-tooltip-modal:not(.hidden),
 .flee-modal-actions{display:flex; gap:10px; justify-content:center;}
 .flee-modal-actions button{min-width:100px; min-height:44px; border-radius:12px; border:1px solid rgba(255,255,255,.22); background:#313149; color:#fff; font-weight:800;}
 .flee-modal-actions #fleeOkBtn{background:#7a2434;}
-.float.acid{color:#ff9f1a!important; text-shadow:0 0 10px #ff6a00,0 2px 3px #000!important;}
+.float.acid{color:#a8ff6a; text-shadow:0 0 8px #4cff00;}
 .status-badge.bossbuff{border-color:rgba(255,255,255,.28); background:rgba(90,55,20,.45);}
 /* v95.3 final override */
 .brand{position:relative!important;display:inline-block!important;padding-right:44px!important;}
@@ -2176,40 +2176,7 @@ body.mbh-menu-overlay-open .battle-panel .flee-btn{
 }
 .log-panel{padding-bottom:.9em!important;}
 
-/* mbh-9952-colors */
-.float.bleed{color:#8b0000!important;text-shadow:0 0 10px #3b0000,0 2px 3px #000!important;}
-.float.darkbleed{color:#7b1035!important;text-shadow:0 0 12px #3d0018,0 2px 3px #000!important;}
-.log .bleed{color:#8b0000!important;}
-
-/* ver.99.52: status/equip effect lists + log anchor visibility */
-.effect-summary{margin-top:10px;border:1px solid #513917;background:rgba(8,6,4,.72);border-radius:6px;padding:8px;min-height:0;}
-.effect-summary h3{margin:0 0 6px;color:#ffd76b;font-size:14px;border-bottom:1px solid #513917;padding-bottom:4px;}
-.effect-summary-list{display:grid;gap:3px;max-height:150px;overflow-y:auto;overflow-x:hidden;padding-right:6px;scrollbar-color:#9d742a #111;scrollbar-width:thin;}
-.effect-summary-list::-webkit-scrollbar,.monster-record-list::-webkit-scrollbar{width:8px;}
-.effect-summary-list::-webkit-scrollbar-thumb,.monster-record-list::-webkit-scrollbar-thumb{background:#8b6628;border-radius:8px;}
-.effect-summary-list::-webkit-scrollbar-track,.monster-record-list::-webkit-scrollbar-track{background:#120b06;}
-.effect-summary-list div{display:grid;grid-template-columns:1fr auto;gap:8px;border-bottom:1px solid rgba(255,255,255,.06);padding:2px 0;font-size:12px;}
-.effect-summary-list b{color:#fff1b2;}
-.effect-summary-list .empty-effect{display:block;color:#a79267;font-size:12px;}
-.equip-best-btn{margin:0 0 8px!important;}
-.equip-effect-summary{margin-top:10px;}
-.equip-panel{display:flex!important;flex-direction:column!important;min-height:0!important;}
-.equip-panel .equip-list{flex:0 0 auto!important;}
-.equip-panel .equip-effect-summary{flex:1 1 auto!important;min-height:90px!important;overflow:hidden!important;}
-.equip-panel .effect-summary-list{max-height:220px!important;}
-.monster-records{margin-top:10px;min-height:0;}
-.monster-record-list{max-height:260px;overflow-y:auto;overflow-x:hidden;padding-right:6px;scrollbar-color:#9d742a #111;scrollbar-width:thin;}
-.monster-record-row{padding:5px 0!important;line-height:1.35!important;}
-.log-panel .log,#log{padding-bottom:2.8em!important;scroll-padding-bottom:2.8em!important;}
-.float.acid{color:#ff9f1a!important;text-shadow:0 0 10px #ff6a00,0 2px 3px #000!important;}
-.float.bleed{color:#8b0000!important;text-shadow:0 0 10px #3b0000,0 2px 3px #000!important;}
-.float.darkbleed{color:#7b1035!important;text-shadow:0 0 12px #3d0018,0 2px 3px #000!important;}
-@media(max-width:1279px), (max-height:700px){
-  .legal-links{display:flex!important;gap:6px;flex-wrap:wrap;margin-top:auto;padding-top:8px;border-top:1px solid #513917;}
-  .legal-links button{flex:1 1 auto;min-width:92px;}
-}
-@media(max-width:760px){
-  .effect-summary-list{max-height:130px;}
-  .monster-record-list{max-height:220px;}
-  .equip-panel .effect-summary-list{max-height:150px!important;}
-}
+/* mbh-9953-static */
+.float.acid{color:#ff9f1a!important;text-shadow:0 2px 3px #000,0 0 16px #ff8c00!important;}
+.float.bleed{color:#8b0000!important;text-shadow:0 2px 3px #000,0 0 14px #5a0000!important;}
+#log{overflow-anchor:none!important;}
