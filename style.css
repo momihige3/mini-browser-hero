@@ -2165,3 +2165,13 @@ body.mbh-menu-overlay-open .battle-panel .flee-btn{
   .float.hero-damage-float{left:28%!important;}
   .float.hero-heal-float{left:82%!important;}
 }
+
+/* ver.99.47: battle log viewport/padding final */
+.log-panel .log,#log{
+  padding-bottom:2.2em!important;
+  scroll-padding-bottom:2.2em!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  box-sizing:border-box!important;
+}
+.log-panel{padding-bottom:.9em!important;}

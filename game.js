@@ -4225,3 +4225,98 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', install, {once:true}); else install();
   window.addEventListener('load', install, {once:true});
 })();
+
+/* ver.99.47: battle log scroll-position preserve + lower padding fix */
+(function(){
+  'use strict';
+  const BUILD='99.47';
+  const $=(id)=>document.getElementById(id);
+  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.47]', e); } }
+  function setVersion(){
+    window.GAME_VERSION=BUILD; window.BUILD_VERSION=BUILD;
+    document.documentElement.setAttribute('data-build-version', BUILD);
+    document.querySelectorAll('[data-version],#versionText,.version-badge,.brand span').forEach(el=>{ if(el) el.textContent='ver.'+BUILD; });
+    const dv=$('debugPanel')?.querySelector('.debug-version'); if(dv) dv.textContent='Build: ver.'+BUILD;
+  }
+  function escapeLog(s){
+    return (typeof escapeHtml==='function') ? escapeHtml(s) : String(s).replace(/[&<>"']/g, ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  }
+  function classify(l){
+    const c=String(l?.cls||'').toLowerCase();
+    const m=String(l?.msg||'');
+    if(c.includes('drop') || /装備ドロップ|倉庫に追加|付与|獲得|闇装備|レジェンダリー|品質/.test(m)) return 'drop';
+    if(c.includes('damage') || c.includes('skilllog') || /ダメージ|攻撃|斬|雷撃|炎斬り|連続攻撃|剣舞|ブレス|火傷|出血|GUARD|無効|MISS/.test(m)) return 'damage';
+    return 'system';
+  }
+  function currentRows(){
+    const f=(typeof state!=='undefined' && state.logFilter) ? state.logFilter : 'all';
+    const list=(typeof state!=='undefined' && Array.isArray(state.log)) ? state.log : [];
+    return list.filter(l=>f==='all' || classify(l)===f);
+  }
+  function updateActiveFilter(){
+    const f=(typeof state!=='undefined' && state.logFilter) ? state.logFilter : 'all';
+    document.querySelectorAll('#logFilterBar button').forEach(b=>b.classList.toggle('active',(b.dataset.logFilter||'all')===f));
+  }
+  function renderLogPreserve(reason){
+    const el=$('log'); if(!el || typeof state==='undefined') return;
+    const beforeTop=el.scrollTop;
+    const beforeHeight=el.scrollHeight;
+    const nearTop=beforeTop<=4;
+    const rows=currentRows();
+    el.innerHTML=rows.map(l=>`<div class="${l.cls||''}">[${l.time}] ${l.msg}</div>`).join('');
+    updateActiveFilter();
+    requestAnimationFrame(()=>{
+      const afterHeight=el.scrollHeight;
+      if(reason==='filter'){
+        el.scrollTop=0;
+        return;
+      }
+      if(nearTop){
+        el.scrollTop=0;
+      }else{
+        // 新ログは先頭に追加されるため、増えた高さ分だけ下げて読んでいる行を固定する。
+        el.scrollTop=Math.max(0, beforeTop + (afterHeight - beforeHeight));
+      }
+    });
+  }
+  function installLog(){
+    if(typeof state==='undefined') return;
+    state.logFilter=state.logFilter||'all';
+    const bar=$('logFilterBar');
+    if(bar){
+      bar.innerHTML='<button type="button" data-log-filter="all">すべて</button><button type="button" data-log-filter="damage">ダメージ</button><button type="button" data-log-filter="system">システム</button><button type="button" data-log-filter="drop">ドロップ</button>';
+      bar.querySelectorAll('button[data-log-filter]').forEach(b=>{
+        const on=(e)=>{ e.preventDefault(); e.stopPropagation(); state.logFilter=b.dataset.logFilter||'all'; renderLogPreserve('filter'); return false; };
+        b.onclick=on;
+        b.onpointerup=(e)=>{ if(e.pointerType && e.pointerType==='mouse') return; return on(e); };
+        b.ontouchend=on;
+      });
+    }
+    log=function(msg, cls='', html=false){
+      const time=new Date().toLocaleTimeString('ja-JP',{hour12:false});
+      const safeMsg=html ? msg : escapeLog(msg);
+      state.log.unshift({time,msg:safeMsg,cls,html:true});
+      state.log=state.log.slice(0,180);
+      renderLogPreserve('append');
+    };
+    renderLogPreserve('filter');
+  }
+  function installCss(){
+    if($('mbh-9947-log-css')) return;
+    const st=document.createElement('style'); st.id='mbh-9947-log-css';
+    st.textContent=`
+      .log-panel .log,#log{
+        padding-bottom:2.2em!important;
+        scroll-padding-bottom:2.2em!important;
+        overflow-y:auto!important;
+        overflow-x:hidden!important;
+        box-sizing:border-box!important;
+      }
+      .log-panel{padding-bottom:.9em!important;}
+    `;
+    document.head.appendChild(st);
+  }
+  function boot(){ safe(setVersion); safe(installCss); safe(installLog); }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', boot, {once:true}); else setTimeout(boot,0);
+  window.addEventListener('load', boot, {once:true});
+})();
