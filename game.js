@@ -4051,3 +4051,84 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
     }
   });
 })();
+
+/* ver.99.41: do not stop BGM on ordinary outside click/blur */
+(function(){
+  'use strict';
+  const BUILD='99.41';
+  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH99.41]', e); } }
+  function setVersion(){
+    safe(()=>{ window.GAME_VERSION=BUILD; window.BUILD_VERSION=BUILD; });
+    safe(()=>document.documentElement.setAttribute('data-build-version', BUILD));
+    safe(()=>document.querySelectorAll('.build-version').forEach(el=>{ el.textContent='ver.'+BUILD; }));
+    safe(()=>document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent='Build: ver.'+BUILD; }));
+  }
+  const oldPause = (typeof pauseBgmForPageHidden === 'function') ? pauseBgmForPageHidden : null;
+  const oldResume = (typeof resumeBgmForPageVisible === 'function') ? resumeBgmForPageVisible : null;
+  let realPageHide = false;
+  function isActuallyHidden(){
+    return !!document.hidden || realPageHide;
+  }
+  function isTouchLike(){
+    return (typeof isTouchDevice === 'function' && isTouchDevice()) || matchMedia('(pointer: coarse), (max-width: 760px)').matches;
+  }
+  function directPauseAudio(){
+    safe(()=>{
+      if(typeof state === 'undefined') return;
+      state.bgmPausedByVisibility = true;
+      [state.normalBgm,state.swordDanceBgm,state.darkSwordSaintBgm,state.darkSwordSaintVoice].forEach(a=>{ try{ if(a && !a.paused) a.pause(); }catch(e){} });
+    });
+  }
+  function directResumeAudio(){
+    safe(()=>{
+      if(typeof state === 'undefined') return;
+      if(state.mobileMuted || !state.audioUnlocked) return;
+      state.bgmPausedByVisibility = false;
+      if(typeof playBgm === 'function') playBgm();
+    });
+  }
+  window.pauseBgmForPageHidden = function(){
+    // 通常のクリック/フォーカス外れでは止めない。本当に非表示/ページ離脱の時だけ停止。
+    if(!isActuallyHidden()) return;
+    if(!isTouchLike()) return;
+    if(oldPause) safe(()=>oldPause()); else directPauseAudio();
+  };
+  window.resumeBgmForPageVisible = function(){
+    if(document.hidden) return;
+    if(oldResume) safe(()=>oldResume()); else directResumeAudio();
+  };
+  function resumeIfAccidentalBlur(){
+    // 古いパッチのblur処理が先に走って止めた場合の復旧。
+    if(document.hidden || realPageHide) return;
+    directResumeAudio();
+  }
+  function install(){
+    setVersion();
+    if(oldPause){
+      safe(()=>window.removeEventListener('blur', oldPause));
+      safe(()=>window.removeEventListener('pagehide', oldPause));
+      safe(()=>document.removeEventListener('visibilitychange', oldPause));
+    }
+    if(oldResume){
+      safe(()=>window.removeEventListener('focus', oldResume));
+      safe(()=>window.removeEventListener('pageshow', oldResume));
+    }
+    document.addEventListener('visibilitychange', ()=>{
+      if(document.hidden) window.pauseBgmForPageHidden();
+      else window.resumeBgmForPageVisible();
+    }, {capture:true});
+    window.addEventListener('pagehide', ()=>{
+      realPageHide = true;
+      window.pauseBgmForPageHidden();
+      setTimeout(()=>{ realPageHide=false; }, 1000);
+    }, {capture:true});
+    window.addEventListener('pageshow', ()=>{
+      realPageHide = false;
+      window.resumeBgmForPageVisible();
+    }, {capture:true});
+    window.addEventListener('blur', ()=>setTimeout(resumeIfAccidentalBlur, 80), {capture:false});
+    window.addEventListener('focus', ()=>setTimeout(()=>window.resumeBgmForPageVisible(), 80), {capture:false});
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', install, {once:true}); else install();
+  window.addEventListener('load', install, {once:true});
+})();
