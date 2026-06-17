@@ -1694,13 +1694,10 @@ function tryDarkSwordDanceRevive(){
 
   const t = performance.now();
   state.enemyStatuses.darkDanceCount = count + 1;
-  // ver99.46: 暗黒剣舞発動時、主人公の死線の剣舞発動回数と剣舞状態を必ずリセット
+  // ver.99.59: 暗黒剣舞でリセットするのは死線の剣舞の発動回数だけ。
+  // 発動中の死線の剣舞そのものは解除しない。
   state.deathDanceBattleCount = 0;
   state.deathDanceComboCount = 0;
-  state.deathDance = false;
-  state.deathDanceUntil = 0;
-  if(els.deathAura) els.deathAura.classList.add('hidden');
-  if(els.deathDanceStatus) els.deathDanceStatus.classList.add('hidden');
   state.enemyStatuses.darkReviveStart = 0;
   state.enemyStatuses.darkRevivingUntil = t + 9000;
   state.enemyHp = 0;
@@ -1904,6 +1901,7 @@ function updateEnemyLevelProgressionOnDefeat(e){
 
 function enemyDefeated(){
   const e=state.enemy;
+  window.__mbhLastDefeatedEnemyForDrop = e;
   if(e && e.id === 'dark_sword_saint'){
     if(state.enemyStatuses){ state.enemyStatuses.darkDeadConfirmed=true; state.enemyStatuses.darkRevivingUntil=0; state.enemyStatuses.darkReviveStart=0; }
     clearDarkSwordTimers();
@@ -4574,4 +4572,289 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', boot, {once:true}); else setTimeout(boot,0);
   window.addEventListener('load', boot, {once:true});
   setInterval(()=>{ safe(syncVersion); safe(installDebugUi); safe(updateEnemyDebugStatsLineFixed); }, 1000);
+})();
+
+
+/* ver.99.59: strong/named variants, drop source, quality/luck bonuses, deathdance count-only reset補強 */
+(function(){
+  'use strict';
+  const APP_VERSION = '99.59';
+  const PREFIXES = ['狡猾な','獰猛な','蛮勇な','エリート','頂点の','原点の','キラー'];
+  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH 99.59]', e); } }
+  function syncVersion9959(){
+    safe(()=>{ window.APP_VERSION = APP_VERSION; window.GAME_VERSION = APP_VERSION; window.BUILD_VERSION = APP_VERSION; window.MINI_BROWSER_HERO_LATEST_VERSION = APP_VERSION; window.MINI_BROWSER_HERO_BUILD_VERSION = APP_VERSION; document.documentElement.dataset.buildVersion = APP_VERSION; });
+    safe(()=>{ document.querySelectorAll('.build-version,[data-version],#versionText,.version-badge').forEach(el=>{ el.textContent='ver.'+APP_VERSION; }); });
+    safe(()=>{ document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent='Build: ver.'+APP_VERSION; }); });
+    safe(()=>{ const tt=document.querySelector('#mbhTraceBox .debug-trace-title'); if(tt) tt.textContent='進行デバッグログ ver.'+APP_VERSION; });
+  }
+  function isVariantTarget(e){ return !!e && e.id !== 'dark_sword_saint' && (e.type === '雑魚' || e.type === 'ボス'); }
+  function variantLabel(v){ return v?.type === 'named' ? '異名持ち' : v?.type === 'strong' ? '強個体' : ''; }
+  function variantBonus(v){ return v?.type === 'named' ? 25 : v?.type === 'strong' ? 10 : 0; }
+  function currentDropSource(){ return window.__mbhLastDefeatedEnemyForDrop || state?.enemy || null; }
+  function randIntLocal(min,max){ min=Math.floor(min); max=Math.floor(max); return Math.floor(Math.random()*(max-min+1))+min; }
+  function pctLocal(v){ return Math.round((Number(v)||0)*100)+'%'; }
+  function sourceText(it){
+    if(!it) return '';
+    const nm = it.dropSourceName || it.dropMonsterName || '';
+    const lv = Math.max(0, Math.floor(Number(it.dropSourceLevel || it.dropMonsterLevel)||0));
+    const va = it.dropSourceVariantLabel || '';
+    if(!nm && !lv) return '';
+    return `ドロップ元：${va?va+' ':''}${nm || '不明'}${lv?` Lv.${lv}`:''}`;
+  }
+  function annotateDropSource(it, source=currentDropSource()){
+    if(!it || !source) return it;
+    const lv = Math.max(1, Math.floor(Number(source.level)||Number(source.itemLevel)||1));
+    it.dropSourceName = source.name || source.baseName || source.id || '不明';
+    it.dropMonsterName = it.dropSourceName;
+    it.dropSourceLevel = lv;
+    it.dropMonsterLevel = lv;
+    if(source.variant?.type){
+      it.dropSourceVariant = source.variant.type;
+      it.dropSourceVariantLabel = variantLabel(source.variant);
+    }
+    return it;
+  }
+  function applyIncrementalQuality(it, add){
+    add = Math.max(0, Math.floor(Number(add)||0));
+    if(!it || !add) return it;
+    it.level = Math.max(0, Math.floor(Number(it.level)||0)) + add;
+    const statMul = 1 + add * 0.04;
+    if(it.atk) it.atk = Math.max(1, Math.floor(it.atk * statMul));
+    if(it.def) it.def = Math.max(1, Math.floor(it.def * statMul));
+    if(it.hp) it.hp = Math.max(1, Math.floor(it.hp * statMul));
+    const specialAdd = add * 0.002;
+    if(it.crit) it.crit = Math.min(0.65, +(it.crit + specialAdd).toFixed(3));
+    if(it.lifeSteal) it.lifeSteal = Math.min(0.35, +(it.lifeSteal + specialAdd).toFixed(3));
+    if(it.guard) it.guard = Math.min(0.55, +(it.guard + specialAdd).toFixed(3));
+    if(it.fireRes) it.fireRes = Math.min(0.75, +(it.fireRes + specialAdd).toFixed(3));
+    if(it.fireDamageHeal) it.fireDamageHeal = Math.min(1, +(it.fireDamageHeal + specialAdd).toFixed(3));
+    if(it.fireDmg) it.fireDmg = Math.min(1.5, +(it.fireDmg + specialAdd).toFixed(3));
+    if(it.thunderDmg) it.thunderDmg = Math.min(1.5, +(it.thunderDmg + specialAdd).toFixed(3));
+    if(it.fireSkillChance) it.fireSkillChance = Math.min(0.95, +(it.fireSkillChance + specialAdd).toFixed(3));
+    if(it.thunderSkillChance) it.thunderSkillChance = Math.min(0.95, +(it.thunderSkillChance + specialAdd).toFixed(3));
+    if(it.deathDanceChance) it.deathDanceChance = Math.min(it.specialFrame === 'darkholy' ? 0.50 : 0.25, +(it.deathDanceChance + specialAdd).toFixed(3));
+    if(it.heroDarkBleedChance) it.heroDarkBleedChance = Math.min(0.50, +(it.heroDarkBleedChance + specialAdd).toFixed(3));
+    it.qualityBonusFromVariant = (Math.max(0, Math.floor(Number(it.qualityBonusFromVariant)||0)) + add);
+    return it;
+  }
+  function improveGoodOptions(it, source=currentDropSource()){
+    if(!it) return it;
+    const v = source?.variant;
+    const luck = v?.type === 'named' ? 0.45 : v?.type === 'strong' ? 0.28 : (source?.type === 'ボス' ? 0.14 : 0.06);
+    const boost = v?.type === 'named' ? 1.8 : v?.type === 'strong' ? 1.35 : 1.0;
+    const addPct = (key, val, cap)=>{ it[key] = Math.min(cap, +((Number(it[key])||0) + val).toFixed(3)); };
+    if(it.slot === '武器'){
+      if(!it.skill && Math.random() < luck && typeof randomWeaponSkill === 'function') it.skill = randomWeaponSkill(rarities.find(r=>r.id===it.rarity) || rarities[0]);
+      if(Math.random() < luck) addPct('crit', 0.03*boost, 0.65);
+      if(Math.random() < luck*0.75) addPct(Math.random()<0.5?'fireDmg':'thunderDmg', 0.08*boost, 1.5);
+      if(Math.random() < luck*0.45) addPct('deathDanceDefIgnore', 0.04*boost, 0.90);
+    }else if(it.slot === 'リング' || it.slot === 'アミュレット'){
+      if(Math.random() < luck) addPct('lifeSteal', 0.025*boost, 0.35);
+      if(Math.random() < luck) addPct('guard', 0.025*boost, 0.55);
+      if(Math.random() < luck*0.85) addPct('deathDanceChance', 0.03*boost, 0.25);
+      if(Math.random() < luck*0.55) addPct('heroDarkBleedChance', 0.025*boost, 0.50);
+      if(Math.random() < luck*0.6) addPct('fireDamageHeal', 0.10*boost, 1.0);
+    }else{
+      if(Math.random() < luck) addPct('fireRes', 0.04*boost, 0.75);
+      if(Math.random() < luck*0.75) addPct('guard', 0.02*boost, 0.55);
+      if(Math.random() < luck*0.55) addPct('fireDamageHeal', 0.12*boost, 1.0);
+      if(Math.random() < luck*0.4) addPct('thunderDmg', 0.04*boost, 1.5);
+    }
+    return it;
+  }
+  function finalizeDropItem9959(it, source=currentDropSource()){
+    if(!it) return it;
+    annotateDropSource(it, source);
+    const bonus = variantBonus(source?.variant);
+    if(bonus && !it.__variantDropBonusApplied9959){
+      applyIncrementalQuality(it, bonus);
+      it.__variantDropBonusApplied9959 = true;
+    }
+    improveGoodOptions(it, source);
+    return it;
+  }
+
+  const oldMakeScaledEnemy = (typeof makeScaledEnemy === 'function') ? makeScaledEnemy : null;
+  if(oldMakeScaledEnemy && !window.__mbhMakeScaledEnemy9959){
+    window.__mbhMakeScaledEnemy9959 = oldMakeScaledEnemy;
+    makeScaledEnemy = function(base, forceLevel=null){
+      const e = window.__mbhMakeScaledEnemy9959.apply(this, arguments);
+      if(isVariantTarget(e) && !e.variant){
+        const r = Math.random();
+        if(r < 0.05){
+          const prefix = PREFIXES[Math.floor(Math.random()*PREFIXES.length)];
+          e.baseName = e.name;
+          e.variant = {type:'named', label:'異名持ち', prefix};
+          e.name = `${prefix}${e.name}`;
+          e.maxHp = Math.max(1, Math.floor(e.maxHp * 2.0));
+          e.atk = Math.max(1, Math.floor(e.atk * 1.25));
+          e.def = Math.max(0, Math.floor(e.def * 1.10));
+        }else if(r < 0.15){
+          e.baseName = e.name;
+          e.variant = {type:'strong', label:'強個体'};
+          e.maxHp = Math.max(1, Math.floor(e.maxHp * 1.5));
+          e.atk = Math.max(1, Math.floor(e.atk * 1.10));
+        }
+      }
+      return e;
+    };
+  }
+
+  const oldProcessStatusDots = (typeof processStatusDots === 'function') ? processStatusDots : null;
+  if(oldProcessStatusDots && !window.__mbhProcessDots9959){
+    window.__mbhProcessDots9959 = oldProcessStatusDots;
+    processStatusDots = function(now){
+      const r = window.__mbhProcessDots9959.apply(this, arguments);
+      safe(()=>{
+        if(state?.enemy?.variant?.type === 'named' && state.enemyHp > 0 && state.enemyHp < state.enemy.maxHp){
+          ensureStatusContainers();
+          if(!state.enemyStatuses.namedRegenLast) state.enemyStatuses.namedRegenLast = now;
+          const ticks = Math.min(20, Math.floor((now - state.enemyStatuses.namedRegenLast)/1000));
+          if(ticks > 0){
+            state.enemyStatuses.namedRegenLast += ticks*1000;
+            const heal = Math.max(1, Math.floor(state.enemy.maxHp * 0.02 * ticks));
+            state.enemyHp = Math.min(state.enemy.maxHp, state.enemyHp + heal);
+            if(typeof showFloat === 'function') showFloat(`異名再生 +${heal.toLocaleString()}`, 'heal');
+            if(typeof renderBattle === 'function') renderBattle();
+          }
+        }
+      });
+      return r;
+    };
+  }
+
+  const oldStatusTooltipHtml = (typeof statusTooltipHtml === 'function') ? statusTooltipHtml : null;
+  if(oldStatusTooltipHtml && !window.__mbhStatusTooltip9959){
+    window.__mbhStatusTooltip9959 = oldStatusTooltipHtml;
+    statusTooltipHtml = function(kind, target){
+      if(kind === 'strong_variant') return `<b>強個体</b><br>HP1.5倍。<br>攻撃力10%アップ。<br>ドロップ品質+10。<br>良い効果が少し付きやすい。`;
+      if(kind === 'named_variant') return `<b>異名持ち</b><br>HP2倍。<br>攻撃力25%アップ。<br>防御力10%アップ。<br>毎秒最大HP2%回復。<br>ドロップ品質+25。<br>良い効果が付きやすい。`;
+      return window.__mbhStatusTooltip9959.apply(this, arguments);
+    };
+  }
+
+  const oldRenderStatusLists = (typeof renderStatusLists === 'function') ? renderStatusLists : null;
+  if(oldRenderStatusLists && !window.__mbhRenderStatus9959){
+    window.__mbhRenderStatus9959 = oldRenderStatusLists;
+    renderStatusLists = function(){
+      const r = window.__mbhRenderStatus9959.apply(this, arguments);
+      safe(()=>{
+        const list = els?.enemyStatusList;
+        const v = state?.enemy?.variant;
+        if(list && v?.type){
+          const btn = document.createElement('button');
+          btn.type='button';
+          btn.className = `status-badge ${v.type === 'named' ? 'named-variant' : 'strong-variant'}`;
+          btn.dataset.statusKind = v.type === 'named' ? 'named_variant' : 'strong_variant';
+          btn.dataset.statusTarget = 'enemy';
+          btn.textContent = v.type === 'named' ? '橙 異名持ち' : '青 強個体';
+          list.insertBefore(btn, list.firstChild);
+          if(typeof bindStatusBadgeEvents === 'function') bindStatusBadgeEvents();
+        }
+      });
+      return r;
+    };
+  }
+
+  const oldRenderBattle = (typeof renderBattle === 'function') ? renderBattle : null;
+  if(oldRenderBattle && !window.__mbhRenderBattle9959Variant){
+    window.__mbhRenderBattle9959Variant = oldRenderBattle;
+    renderBattle = function(){
+      const r = window.__mbhRenderBattle9959Variant.apply(this, arguments);
+      safe(()=>{
+        const n = els?.enemyName;
+        if(n){
+          n.classList.remove('enemy-strong-name','enemy-named-name');
+          if(state?.enemy?.variant?.type === 'strong') n.classList.add('enemy-strong-name');
+          if(state?.enemy?.variant?.type === 'named') n.classList.add('enemy-named-name');
+        }
+      });
+      return r;
+    };
+  }
+
+  const oldSetEnemy = (typeof setEnemy === 'function') ? setEnemy : null;
+  if(oldSetEnemy && !window.__mbhSetEnemy9959){
+    window.__mbhSetEnemy9959 = oldSetEnemy;
+    setEnemy = function(e){
+      const r = window.__mbhSetEnemy9959.apply(this, arguments);
+      safe(()=>{
+        if(e?.variant?.type === 'strong') log(`強個体：${e.name} が出現！`, 'danger');
+        if(e?.variant?.type === 'named') log(`異名持ち：${e.name} が出現！`, 'danger');
+      });
+      return r;
+    };
+  }
+
+  const oldMakeItem = (typeof makeItem === 'function') ? makeItem : null;
+  if(oldMakeItem && !window.__mbhMakeItem9959){
+    window.__mbhMakeItem9959 = oldMakeItem;
+    makeItem = function(slot, rarity, opts={}){
+      const it = window.__mbhMakeItem9959.apply(this, arguments);
+      const source = currentDropSource();
+      return finalizeDropItem9959(it, source);
+    };
+  }
+  const oldMakeRandomItem = (typeof makeRandomItem === 'function') ? makeRandomItem : null;
+  if(oldMakeRandomItem && !window.__mbhMakeRandomItem9959){
+    window.__mbhMakeRandomItem9959 = oldMakeRandomItem;
+    makeRandomItem = function(isBossDrop=false, levelOverride=null){
+      const it = window.__mbhMakeRandomItem9959.apply(this, arguments);
+      return finalizeDropItem9959(it, currentDropSource());
+    };
+  }
+
+  function wrapDarkMaker(name){
+    const fn = window[name] || (typeof globalThis !== 'undefined' ? globalThis[name] : null);
+    try{
+      if(typeof eval(name) === 'function'){
+        const old = eval(name);
+        if(!old.__mbh9959Wrapped){
+          const wrapped = function(){ const it = old.apply(this, arguments); return finalizeDropItem9959(it, currentDropSource()); };
+          wrapped.__mbh9959Wrapped = true;
+          eval(name + ' = wrapped');
+        }
+      }
+    }catch(e){}
+  }
+  ['makeDarkHolySword','makeDarkShield','makeDarkAmulet','makeDarkArmor','makeDarkGauntlets','makeDarkHelm','makeDarkBoots'].forEach(wrapDarkMaker);
+
+  const oldItemSummary = (typeof itemSummary === 'function') ? itemSummary : null;
+  if(oldItemSummary && !window.__mbhItemSummary9959){
+    window.__mbhItemSummary9959 = oldItemSummary;
+    itemSummary = function(it){
+      let base = window.__mbhItemSummary9959.apply(this, arguments) || '';
+      const src = sourceText(it);
+      const vb = it?.qualityBonusFromVariant ? `品質補正+${Math.floor(Number(it.qualityBonusFromVariant)||0)}` : '';
+      const extra = [src, vb].filter(Boolean).join(' / ');
+      return extra ? (base ? base + ' / ' + extra : extra) : base;
+    };
+  }
+  const oldLogItemDrop = (typeof logItemDrop === 'function') ? logItemDrop : null;
+  if(oldLogItemDrop && !window.__mbhLogItemDrop9959){
+    window.__mbhLogItemDrop9959 = oldLogItemDrop;
+    logItemDrop = function(it){
+      const r = window.__mbhLogItemDrop9959.apply(this, arguments);
+      const src = sourceText(it);
+      if(src && typeof log === 'function') log(`　└ ${src}`, 'drop');
+      return r;
+    };
+  }
+
+  function installCss9959(){
+    if(document.getElementById('mbh-9959-variant-css')) return;
+    const st=document.createElement('style'); st.id='mbh-9959-variant-css';
+    st.textContent = `
+      .enemy-strong-name{color:#55aaff!important;text-shadow:0 0 10px #116dff,0 2px 4px #000!important;}
+      .enemy-named-name{color:#ff9d2e!important;text-shadow:0 0 12px #ff6a00,0 2px 4px #000!important;}
+      .status-badge.strong-variant{border-color:#55aaff!important;color:#bfe0ff!important;background:rgba(20,70,140,.45)!important;}
+      .status-badge.named-variant{border-color:#ff9d2e!important;color:#ffd29a!important;background:rgba(145,75,10,.45)!important;}
+    `;
+    document.head.appendChild(st);
+  }
+
+  function boot9959(){ syncVersion9959(); installCss9959(); safe(()=>{ if(typeof renderAll === 'function') renderAll(); }); }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot9959, {once:true}); else setTimeout(boot9959,0);
+  window.addEventListener('load', boot9959, {once:true});
+  setInterval(syncVersion9959, 1500);
 })();
