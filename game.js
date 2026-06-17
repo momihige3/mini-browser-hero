@@ -1362,11 +1362,14 @@ function makeScaledEnemy(base, forceLevel=null){
     state.humbleEnemyFixedLevel = null;
   }
   const scaledDefeated = state.enemyLevelBase != null ? Math.max(0, (state.defeated||0) - (state.enemyLevelBaseDefeated||0)) : (state.defeated||0);
-  const scale=1 + e.level*.035 + Math.floor(scaledDefeated/10)*.03;
-  // ver.99.46: 雑魚敵HP成長をLvごとに+1%複利へ調整。
-  // 攻撃力・防御力・ボス/暗黒剣聖のHP計算は既存仕様を維持。
+  const hpScale=1 + e.level*.035 + Math.floor(scaledDefeated/10)*.03;
+  // ver.99.58: 敵ATK/DEFのレベル成長が弱すぎたため、HPとは別の成長係数へ分離。
+  // HPは既存の伸びを維持し、攻撃力・防御力だけ敵Lvに応じてしっかり伸ばす。
+  const statScale=1 + Math.max(0, (Number(e.level)||1)-1) * 0.08 + Math.floor(scaledDefeated/10)*.03;
   const normalHpGrowth = e.type === '雑魚' ? Math.pow(1.01, Math.max(0, (Number(e.level)||1) - 1)) : 1;
-  e.maxHp=Math.max(1, Math.floor(e.hp * scale * 0.1 * normalHpGrowth)); e.atk=Math.floor(e.atk*scale); e.def=Math.floor(e.def*scale);
+  e.maxHp=Math.max(1, Math.floor(e.hp * hpScale * 0.1 * normalHpGrowth));
+  e.atk=Math.max(1, Math.floor(e.atk*statScale));
+  e.def=Math.max(0, Math.floor(e.def*statScale));
   e.xp=Math.floor(e.xp*(1+e.level*.045));
   return e;
 }
@@ -1933,8 +1936,9 @@ function enemyDefeated(){
   if(e && e.id === 'dark_sword_saint'){
     const legendary = rarities.find(r=>r.id==='legendary') || rarities[rarities.length-1];
     const darkPool = [makeDarkHolySword, makeDarkShield, makeDarkAmulet, makeDarkArmor, makeDarkGauntlets, makeDarkHelm, makeDarkBoots];
-    const makeDarkReward = () => darkPool[Math.floor(Math.random()*darkPool.length)](state.level);
-    const makeLegendReward = () => makeItem(slots[Math.floor(Math.random()*slots.length)], legendary, {isBossDrop:true});
+    const defeatedLevel = Math.max(1, Math.floor(Number(e?.level) || Number(state.enemyLevelBase) || Number(state.level) || 1));
+    const makeDarkReward = () => darkPool[Math.floor(Math.random()*darkPool.length)](defeatedLevel);
+    const makeLegendReward = () => makeItem(slots[Math.floor(Math.random()*slots.length)], legendary, {isBossDrop:true, levelOverride:defeatedLevel});
 
     // ver99.46: 報酬枠を明示的に固定する。
     // rewards[0] = 1枠目、rewards[1] = 2枠目、rewards[2] = 3枠目。
@@ -1954,7 +1958,7 @@ function enemyDefeated(){
     const isBossDrop = e?.type === 'ボス';
     const dropRate = isBossDrop ? 0.50 : 0.10;
     if(Math.random() < dropRate){
-      const it=makeRandomItem(isBossDrop);
+      const it=makeRandomItem(isBossDrop, Math.max(1, Math.floor(Number(e?.level) || Number(state.enemyLevelBase) || Number(state.level) || 1)));
       state.inventory.unshift(it);
       logItemDrop(it);
       showDropToast(it);
@@ -2537,8 +2541,14 @@ function formatItemNameWithPlus(it){
   return `${it.name}+${plus}`;
 }
 
+function darkEquipLevelFromSource(levelOverride){
+  const raw = Math.max(1, Math.floor(Number(levelOverride) || Number(state?.enemy?.level) || Number(state?.darkSwordSaintLevel) || Number(state?.level) || 1));
+  // ver.99.58: 闇装備は暗黒剣聖の独立Lv1を通常敵Lv100相当として扱う。
+  // すでに通常敵Lv100以上が渡された場合はそのまま使う。
+  return raw < 100 ? raw * 100 : raw;
+}
 function makeDarkHolySword(levelOverride){
-  const lv = Math.max(1, Math.floor(levelOverride || state.level || 1));
+  const lv = darkEquipLevelFromSource(levelOverride);
   const legendary = rarities.find(r=>r.id==='legendary') || {id:'legendary', name:'レジェンダリー', mult:3.2};
   const it = makeItem('武器', legendary, {levelOverride: lv});
   it.name = '闇の聖剣';
@@ -2555,7 +2565,7 @@ function makeDarkHolySword(levelOverride){
 }
 
 function makeDarkShield(levelOverride){
-  const lv = Math.max(1, Math.floor(levelOverride || state.level || 1));
+  const lv = darkEquipLevelFromSource(levelOverride);
   const legendary = rarities.find(r=>r.id==='legendary') || {id:'legendary', name:'レジェンダリー', mult:3.2};
   const it = makeItem('盾', legendary, {levelOverride: lv});
   it.name = '闇の盾';
@@ -2568,7 +2578,7 @@ function makeDarkShield(levelOverride){
   return it;
 }
 function makeDarkAmulet(levelOverride){
-  const lv = Math.max(1, Math.floor(levelOverride || state.level || 1));
+  const lv = darkEquipLevelFromSource(levelOverride);
   const legendary = rarities.find(r=>r.id==='legendary') || {id:'legendary', name:'レジェンダリー', mult:3.2};
   const it = makeItem('アミュレット', legendary, {levelOverride: lv});
   it.name = '闇のアミュレット';
@@ -2613,10 +2623,10 @@ function rollDeathDanceDropChance(isBossDrop){
   if(r < 0.12) return randInt(1,10) / 100;
   return 0;
 }
-function makeRandomItem(isBossDrop=false){
+function makeRandomItem(isBossDrop=false, levelOverride=null){
   const slot=slots[Math.floor(Math.random()*slots.length)];
   const r=Math.random(); const rarity = r<.70?rarities[0]:r<.94?rarities[1]:rarities[2];
-  return makeItem(slot, rarity, {isBossDrop});
+  return makeItem(slot, rarity, {isBossDrop, levelOverride});
 }
 function makeItem(slot, rarity, opts={}){
   const lv=getDropEnemyLevel(opts.levelOverride);
@@ -3188,7 +3198,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 
   // --- dark equipment canonical definitions ---
   function legendary(){ return (typeof rarities !== 'undefined' && rarities.find(r=>r.id==='legendary')) || {id:'legendary', name:'レジェンダリー', mult:3.2, color:'#ffad31'}; }
-  function lv(v){ return Math.max(1, Math.floor(v || (window.state && state.level) || 1)); }
+  function lv(v){ return (typeof darkEquipLevelFromSource === 'function') ? darkEquipLevelFromSource(v) : Math.max(1, Math.floor(v || (window.state && state.level) || 1)); }
   function baseItem(slot, name, levelOverride){
     const r = legendary();
     const n = lv(levelOverride);
