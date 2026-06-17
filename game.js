@@ -5310,3 +5310,268 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   window.addEventListener('load', boot9961, {once:true});
   setInterval(()=>{ syncVersion9961(); renderEnemyLevelXp9961(); saveEnemyLevelXp9961(); }, 1500);
 })();
+
+
+/* ver.99.62: 暗黒剣聖の独立Lv表示 + 主人公必要経験値固定 */
+(function(){
+  'use strict';
+  const APP_VERSION = '99.63';
+  const HERO_XP_NEXT_FIXED = 40;
+  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH 99.63]', e); } }
+  function syncVersion9962(){
+    safe(()=>{ window.APP_VERSION = APP_VERSION; window.GAME_VERSION = APP_VERSION; window.BUILD_VERSION = APP_VERSION; window.MINI_BROWSER_HERO_LATEST_VERSION = APP_VERSION; window.MINI_BROWSER_HERO_BUILD_VERSION = APP_VERSION; document.documentElement.dataset.buildVersion = APP_VERSION; });
+    safe(()=>{ document.querySelectorAll('.build-version,[data-version],#versionText,.version-badge').forEach(el=>{ el.textContent='ver.'+APP_VERSION; }); });
+    safe(()=>{ document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent='Build: ver.'+APP_VERSION; }); });
+    safe(()=>{ const tt=document.querySelector('#mbhTraceBox .debug-trace-title'); if(tt) tt.textContent='進行デバッグログ ver.'+APP_VERSION; });
+  }
+
+  function milestoneTrialLevel9962(){
+    const r = (typeof state !== 'undefined') ? state.darkSwordSaintReturn : null;
+    if(!r || !r.milestoneDarkSaint) return 0;
+    return Math.max(1, Math.floor(Number(r.level)||Number(r.pendingBoss?.level)||Number(state.enemyLevelBase)||1));
+  }
+  function darkSaintDisplayLevel9962(){
+    return Math.max(1, Math.floor(Number(state?.darkSwordSaintLevel)||1));
+  }
+
+  // 100レベルごとの試練でも、暗黒剣聖自身は独立Lvで表示・計算する。
+  // 通常敵レベル100の試練情報は trialLevel に保持する。
+  if(typeof makeScaledEnemy === 'function' && !window.__mbhMakeScaledEnemy9962){
+    window.__mbhMakeScaledEnemy9962 = makeScaledEnemy;
+    makeScaledEnemy = function(base, forceLevel=null){
+      if(base && base.id === 'dark_sword_saint'){
+        const trial = Math.max(0, Math.floor(Number(forceLevel)||0));
+        const displayLv = darkSaintDisplayLevel9962();
+        const e = window.__mbhMakeScaledEnemy9962.call(this, base, displayLv);
+        if(trial >= 100){
+          e.trialLevel = trial;
+          e.trialLabel = `通常敵Lv.${trial}試練`;
+        }
+        e.level = displayLv;
+        return e;
+      }
+      return window.__mbhMakeScaledEnemy9962.apply(this, arguments);
+    };
+  }
+
+  // マイルストーン暗黒剣聖の勝利時は、暗黒剣聖Lvではなく試練元の通常敵Lvを+1する。
+  if(typeof updateEnemyLevelProgressionOnDefeat === 'function' && !window.__mbhUpdateEnemyLevelProgression9962){
+    window.__mbhUpdateEnemyLevelProgression9962 = updateEnemyLevelProgressionOnDefeat;
+    updateEnemyLevelProgressionOnDefeat = function(e){
+      if(e && e.id === 'dark_sword_saint' && state?.darkSwordSaintReturn?.milestoneDarkSaint){
+        const trialLv = Math.max(1, Math.floor(Number(e.trialLevel)||milestoneTrialLevel9962()||Number(state.enemyLevelBase)||1));
+        state.enemyLevelBase = trialLv + 1;
+        state.enemyLevelXp = 0;
+        state.enemyLevelBaseDefeated = Math.max(0, Math.floor(Number(state.defeated)||0));
+        try{ localStorage.setItem('mini-browser-hero-enemy-level-xp-v9961','0'); localStorage.setItem('mini-browser-hero-enemy-level-xp-v9960','0'); }catch(_e){}
+        if(typeof log === 'function') log(`100レベルの試練突破！ 敵レベルがLv.${trialLv}→Lv.${state.enemyLevelBase}に上昇。暗黒剣聖Lvは独立して成長します。`, 'system');
+        return;
+      }
+      return window.__mbhUpdateEnemyLevelProgression9962.apply(this, arguments);
+    };
+  }
+
+  // 敗北/逃走時も、マイルストーン処理は試練元通常敵Lvを基準にする。
+  function withMilestoneLevelTemporarily9962(fn, args){
+    if(!(state?.enemy?.id === 'dark_sword_saint' && state?.darkSwordSaintReturn?.milestoneDarkSaint)){
+      return fn.apply(this, args);
+    }
+    const oldLv = state.enemy.level;
+    const trialLv = Math.max(1, Math.floor(Number(state.enemy.trialLevel)||milestoneTrialLevel9962()||oldLv||1));
+    state.enemy.level = trialLv;
+    try{ return fn.apply(this, args); }
+    finally{ if(state.enemy) state.enemy.level = oldLv; }
+  }
+  if(typeof handleHeroDeath === 'function' && !window.__mbhHandleHeroDeath9962){
+    window.__mbhHandleHeroDeath9962 = handleHeroDeath;
+    handleHeroDeath = function(){ return withMilestoneLevelTemporarily9962(window.__mbhHandleHeroDeath9962, arguments); };
+  }
+  if(typeof fleeBattle === 'function' && !window.__mbhFleeBattle9962){
+    window.__mbhFleeBattle9962 = fleeBattle;
+    fleeBattle = function(){ return withMilestoneLevelTemporarily9962(window.__mbhFleeBattle9962, arguments); };
+  }
+
+  // 主人公の必要経験値を固定。レベルアップしても増加させない。
+  effectiveXpNext = function(){ return HERO_XP_NEXT_FIXED; };
+  checkLevelUp = function(){
+    while(state.xp >= HERO_XP_NEXT_FIXED){
+      state.xp -= HERO_XP_NEXT_FIXED;
+      state.level++;
+      state.xpNext = HERO_XP_NEXT_FIXED * 2; // 旧effectiveXpNext互換用。表示は固定40を使う。
+      state.hp = (typeof maxHp === 'function') ? maxHp() : state.hp;
+      if(typeof showLevelUp === 'function') showLevelUp();
+      if(typeof log === 'function') log(`LEVEL UP！ Lv.${state.level}`, 'good');
+      const levelTrigger = Math.floor((Number(state.level)||1) / 20);
+      if(state.darkSwordSaintFirstEncountered && levelTrigger > Math.max(0, Math.floor(Number(state.darkSwordSaintLastLevelTrigger)||0))){
+        state.darkSwordSaintLastLevelTrigger = levelTrigger;
+        state.forceNextDarkSwordSaint = true;
+        state.pendingBossForNext = null;
+        state.pendingDarkSwordSaintDelay = false;
+        if(typeof log === 'function') log(`Lv.${state.level}到達。次の敵に暗黒剣聖が確定出現する。`, 'danger');
+        if(typeof banner === 'function') banner('暗黒剣聖の試練！', 1800);
+      }
+    }
+  };
+
+  function boot9962(){
+    safe(()=>{ if(typeof state !== 'undefined') state.xpNext = HERO_XP_NEXT_FIXED * 2; });
+    syncVersion9962();
+    safe(()=>{ if(typeof renderAll === 'function') renderAll(); });
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot9962, {once:true}); else setTimeout(boot9962,0);
+  window.addEventListener('load', boot9962, {once:true});
+  setInterval(syncVersion9962, 1500);
+})();
+
+/* ver.99.62 hotfix: hero debug stats, dark equipment list visibility, low-level enemy HP trim */
+(function(){
+  'use strict';
+  const APP_VERSION = '99.63';
+  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH 99.63 hotfix]', e); } }
+  function esc(s){ return (typeof escapeHtml === 'function') ? escapeHtml(s) : String(s).replace(/[&<>"']/g, ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
+  function pct(v){ return Math.round((Number(v)||0)*100)+'%'; }
+  function darkEquipRows(){
+    if(typeof state === 'undefined' || !state.equip) return [];
+    const rows=[];
+    const eq=state.equip || {};
+    const hasName=(name)=>Object.values(eq).some(it=>it && it.name===name);
+    const hasFlag=(flag)=>Object.values(eq).some(it=>it && it[flag]);
+    if(hasName('闇の聖剣')) rows.push(['闇の聖剣','暗黒出血付与10% / 連続攻撃100%']);
+    if(hasName('闇の盾') || hasFlag('darkShield')) rows.push(['闇の盾','毎ターン被ダメ軽減+1%(最大50%) / 被ダメ50%回復']);
+    if(hasName('闇のアミュレット') || hasFlag('darkAmulet')) rows.push(['闇のアミュレット','死線の剣舞発動率+25% / 効果時間2倍']);
+    if(hasName('闇の鎧') || hasFlag('darkArmor')) rows.push(['闇の鎧','火軽減+10% / 火吸収+70%']);
+    if(hasName('闇の籠手') || hasFlag('darkGauntlets')) rows.push(['闇の籠手','攻撃力上昇 / 暗黒装備']);
+    if(hasName('闇の兜') || hasFlag('darkHelm')) rows.push(['闇の兜','HP・防御力上昇 / 暗黒装備']);
+    if(hasName('暗黒の靴') || hasFlag('darkBoots')) rows.push(['暗黒の靴','火吸収+50% / 暗黒装備']);
+    return rows;
+  }
+  function appendDarkRows(container){
+    if(!container) return;
+    const rows = darkEquipRows();
+    if(!rows.length) return;
+    container.querySelectorAll('.effect-row.dark-equip-row').forEach(n=>n.remove());
+    rows.forEach(([k,v])=>{
+      // 既存表示がある場合は重複させない
+      const exists=[...container.querySelectorAll('.effect-row span')].some(s=>s.textContent.trim()===k);
+      if(exists) return;
+      const div=document.createElement('div');
+      div.className='effect-row dark-equip-row';
+      div.innerHTML=`<span>${esc(k)}</span><b>${esc(v)}</b>`;
+      container.appendChild(div);
+    });
+  }
+  function updateDarkEquipOptionProperties(){
+    if(typeof state === 'undefined' || !state.equip) return;
+    Object.values(state.equip).filter(Boolean).forEach(it=>{
+      if(it.name==='闇の鎧'){
+        it.darkArmor = true;
+        it.fireRes = Math.max(Number(it.fireRes)||0, 0.10);
+        it.fireDamageHeal = Math.max(Number(it.fireDamageHeal)||0, 0.70);
+      }
+      if(it.name==='暗黒の靴'){
+        it.darkBoots = true;
+        it.fireDamageHeal = Math.max(Number(it.fireDamageHeal)||0, 0.50);
+      }
+      if(it.name==='闇の籠手') it.darkGauntlets = true;
+      if(it.name==='闇の兜') it.darkHelm = true;
+    });
+  }
+  if(typeof itemSummary === 'function' && !window.__mbhItemSummary9962Hotfix){
+    window.__mbhItemSummary9962Hotfix = itemSummary;
+    itemSummary = function(it){
+      let s = window.__mbhItemSummary9962Hotfix.apply(this, arguments) || '';
+      const add=[];
+      if(it && it.name==='闇の鎧') add.push('闇の鎧：火軽減+10% / 火吸収70%');
+      if(it && it.name==='暗黒の靴') add.push('暗黒の靴：火吸収50%');
+      if(it && it.name==='闇の籠手') add.push('闇の籠手：暗黒装備');
+      if(it && it.name==='闇の兜') add.push('闇の兜：暗黒装備');
+      if(add.length) s += (s ? ' / ' : '') + add.join(' / ');
+      return s;
+    };
+  }
+
+  function ensureHeroDebugStatsLine(){
+    let line=document.getElementById('heroDebugStatsLine');
+    const hp=document.querySelector('.hero-zone .hero-hp');
+    if(!line){
+      line=document.createElement('div');
+      line.id='heroDebugStatsLine';
+      line.className='hero-debug-stats-line hidden';
+    }
+    if(hp && line.parentNode !== hp.parentNode) hp.parentNode.insertBefore(line, hp);
+    else if(hp && line.nextSibling !== hp) hp.parentNode.insertBefore(line, hp);
+    return line;
+  }
+  function updateHeroDebugStatsLine(){
+    const line=ensureHeroDebugStatsLine();
+    if(!line) return;
+    const enabled=!!(typeof state!=='undefined' && state.debug && state.debug.showEnemyStats);
+    if(!enabled){ line.classList.add('hidden'); line.textContent=''; return; }
+    const st=(typeof calcStats==='function') ? calcStats() : {atk:0,def:0};
+    line.textContent=`ATK：${Math.floor(Number(st.atk)||0).toLocaleString()}　DEF：${Math.floor(Number(st.def)||0).toLocaleString()}`;
+    line.classList.remove('hidden');
+  }
+
+  // ver.99.63: 敵HPカーブを序盤ゆるめに再調整。
+  // Lv1だけでなくLv1～20の伸びも抑え、Lv50～100で徐々に従来想定へ近づける。
+  if(typeof makeScaledEnemy === 'function' && !window.__mbhMakeScaledEnemy9963Curve){
+    window.__mbhMakeScaledEnemy9963Curve = makeScaledEnemy;
+    makeScaledEnemy = function(base, forceLevel=null){
+      const e=window.__mbhMakeScaledEnemy9963Curve.apply(this, arguments);
+      safe(()=>{
+        if(!e || !base || e.id==='dark_sword_saint') return;
+        const lv=Math.max(1, Math.floor(Number(e.level)||1));
+        const boss=!!(e.type==='ボス' || e.type==='裏ボス');
+        const variant=e.variant?.type || e.variantType || '';
+        const hpCurve = (level, isBoss)=>{
+          if(isBoss){
+            // Lv1:0.28倍 / Lv20:1.23倍 / Lv50:5.43倍 / Lv100:16.43倍
+            if(level <= 20) return 0.28 + (level - 1) * 0.05;
+            if(level <= 50) return 1.23 + (level - 20) * 0.14;
+            if(level <= 100) return 5.43 + (level - 50) * 0.22;
+            return 16.43 + (level - 100) * 0.26;
+          }
+          // Lv1:0.14倍 / Lv20:0.615倍 / Lv50:3.015倍 / Lv100:10.015倍
+          if(level <= 20) return 0.14 + (level - 1) * 0.025;
+          if(level <= 50) return 0.615 + (level - 20) * 0.08;
+          if(level <= 100) return 3.015 + (level - 50) * 0.14;
+          return 10.015 + (level - 100) * 0.18;
+        };
+        let hp=Math.floor((Number(base.hp)||1) * hpCurve(lv, boss));
+        if(variant==='named') hp=Math.floor(hp*2.0);
+        else if(variant==='strong') hp=Math.floor(hp*1.5);
+        e.maxHp=Math.max(1,hp);
+        if(typeof state !== 'undefined' && state.enemy === e) state.enemyHp=Math.min(state.enemyHp||e.maxHp, e.maxHp);
+      });
+      return e;
+    };
+  }
+
+  function hotfixRender(){
+    safe(updateDarkEquipOptionProperties);
+    safe(()=>appendDarkRows(document.querySelector('#statusSpecialEffects .effect-scroll')));
+    safe(()=>appendDarkRows(document.querySelector('#equipEffectTotals .effect-scroll')));
+    safe(updateHeroDebugStatsLine);
+  }
+  if(typeof renderBattle === 'function' && !window.__mbhRenderBattle9962Hotfix){
+    window.__mbhRenderBattle9962Hotfix = renderBattle;
+    renderBattle = function(){ const r=window.__mbhRenderBattle9962Hotfix.apply(this, arguments); hotfixRender(); return r; };
+  }
+  if(typeof renderStats === 'function' && !window.__mbhRenderStats9962Hotfix){
+    window.__mbhRenderStats9962Hotfix = renderStats;
+    renderStats = function(){ const r=window.__mbhRenderStats9962Hotfix.apply(this, arguments); hotfixRender(); return r; };
+  }
+  if(typeof renderEquip === 'function' && !window.__mbhRenderEquip9962Hotfix){
+    window.__mbhRenderEquip9962Hotfix = renderEquip;
+    renderEquip = function(){ const r=window.__mbhRenderEquip9962Hotfix.apply(this, arguments); hotfixRender(); return r; };
+  }
+  function boot(){
+    safe(()=>{ window.APP_VERSION=APP_VERSION; window.GAME_VERSION=APP_VERSION; window.BUILD_VERSION=APP_VERSION; document.documentElement.dataset.buildVersion=APP_VERSION; });
+    safe(()=>{ document.querySelectorAll('.build-version,[data-version],#versionText,.version-badge').forEach(el=>{ el.textContent='ver.'+APP_VERSION; }); });
+    hotfixRender();
+    safe(()=>{ if(typeof renderAll==='function') renderAll(); });
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', boot, {once:true}); else setTimeout(boot,0);
+  window.addEventListener('load', boot, {once:true});
+  setInterval(hotfixRender, 1200);
+})();
