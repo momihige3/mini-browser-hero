@@ -79,7 +79,7 @@ const equipNames = {
 
 const state = {
   auto:true, selectedEquip:null, uiOpen:false, lastXpGain:0, volume:1.0,
-  level:1, xp:0, xpNext:1000, chests:0, mats:3, defeated:0,
+  level:1, xp:0, xpNext:80, chests:0, mats:3, defeated:0,
   base:{hp:520, atk:48, def:14}, hp:520, enemy:null, enemyHp:1,
   inventory:[], equip:{}, down:false, downUntil:0, deathDance:false, deathDanceUntil:0, deathDanceBattleCount:0, deathDanceCutin:false, deathDanceCutinTimer:null, deathDanceSeqTimers:[], lastHeroAttack:0, lastEnemyAttack:0,
   log:[], debug:{killEnemy:false, killHero:false}, audio:null, masterGain:null, bgmGain:null, bgmTimer:null, bgmMode:'normal', normalBgm:null, swordDanceBgm:null, darkSwordSaintBgm:null, darkSwordSaintVoice:null, darkSwordReviveTimer:null, darkSwordComboTimers:[], darkSwordCutinActive:false, audioUnlocked:false, mobileMuted:true, menuPage:'stats', inventoryMenuItemId:null, enemyRecords:{}, forceFirstEnemy:false, bgmPausedByVisibility:false, heroStatuses:null, enemyStatuses:null, darkShieldStacks:0, dropToastTimer:null, dropToastQueueTimers:[], winStreak:0, bestWinStreak:0, forceNextDarkSwordSaint:false, pendingBossForNext:null, darkSwordSaintFirstEncountered:false, darkSwordSaintLevel:1, darkSwordSaintKills:0, darkSwordSaintLastLevelTrigger:0, darkSwordSaintReturn:null, debugForcedBossNext:null
@@ -1711,7 +1711,6 @@ function tryDarkSwordDanceRevive(){
   banner('暗黒剣舞！', 1200);
   log(`暗黒剣舞発動！ カットイン後に5秒間無敵化し、HPを回復する！（${state.enemyStatuses.darkDanceCount}回目）`, 'danger');
   showDarkSwordDanceCutin();
-  setBgmMode('dark_sword_saint');
 
   state.darkSwordReviveTimer = setTimeout(()=>{
     if(!isDarkSwordSaint() || state.enemyStatuses?.darkDeadConfirmed){
@@ -1721,7 +1720,6 @@ function tryDarkSwordDanceRevive(){
     hideDeathDanceCutin();
     state.deathDanceCutin = false;
     state.darkSwordCutinActive = false;
-    setBgmMode('dark_sword_saint');
     // カットインが消えた直後から、回復待ち時間中にも暗黒剣舞の連続攻撃を開始する。
     darkSwordDanceCombo('recovering');
     const recoveryStart = performance.now();
@@ -1759,7 +1757,6 @@ function finishDarkSwordDanceRevive(){
   state.deathDanceCutin = false;
   state.darkSwordCutinActive = false;
   hideDeathDanceCutin();
-  setBgmMode('dark_sword_saint');
   renderBattle();
   renderStatusLists();
   log(`闇オーラ10、暗黒の剣+1。暗黒剣舞はガード無効・防御力50%無視！`, 'danger');
@@ -2103,7 +2100,7 @@ function endDeathDance(){
   els.deathAura.classList.add('hidden');
   els.deathDanceStatus.classList.add('hidden');
   renderStatusLists();
-  setBgmMode((isDarkSwordSaint() && !(state.enemyStatuses && state.enemyStatuses.darkDeadConfirmed)) ? 'dark_sword_saint' : 'normal');
+  setBgmMode(isDarkSwordSaint() && state.enemyHp > 0 ? 'dark_sword_saint' : 'normal');
   banner('死線の剣舞 終了');
   log('死線の剣舞が終了。','skilllog');
 }
@@ -2460,21 +2457,8 @@ function stopBgm(){
   // 旧オシレーターBGM用の停止処理。HTMLAudio BGMは止めない。
   if(state.bgmTimer){ clearInterval(state.bgmTimer); state.bgmTimer=null; }
 }
-function normalizeBgmMode(mode){
-  let m = mode || 'normal';
-  // ver.99.66: 暗黒剣聖戦では、主人公の死線の剣舞中だけ剣舞BGMを許可。
-  // 暗黒剣舞のカットイン/回復中は enemyHp が0になるため、旧判定だと通常BGMへ戻っていた。
-  // 暗黒剣聖が撃破確定していない間は normal 指定を暗黒剣聖BGMへ補正する。
-  try{
-    const darkAlive = (typeof isDarkSwordSaint === 'function' && isDarkSwordSaint())
-      && !(state.enemyStatuses && state.enemyStatuses.darkDeadConfirmed)
-      && state.enemy;
-    if(darkAlive && m === 'normal') m = 'dark_sword_saint';
-  }catch(e){}
-  return m;
-}
 function setBgmMode(mode){
-  state.bgmMode = normalizeBgmMode(mode);
+  state.bgmMode = mode || 'normal';
   if(!state.audioUnlocked || state.mobileMuted) return;
   playBgm();
 }
@@ -5331,9 +5315,9 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* ver.99.62: 暗黒剣聖の独立Lv表示 + 主人公必要経験値固定 */
 (function(){
   'use strict';
-  const APP_VERSION = '99.63';
+  const APP_VERSION = '99.62';
   const HERO_XP_NEXT_FIXED = 40;
-  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH 99.63]', e); } }
+  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH 99.62]', e); } }
   function syncVersion9962(){
     safe(()=>{ window.APP_VERSION = APP_VERSION; window.GAME_VERSION = APP_VERSION; window.BUILD_VERSION = APP_VERSION; window.MINI_BROWSER_HERO_LATEST_VERSION = APP_VERSION; window.MINI_BROWSER_HERO_BUILD_VERSION = APP_VERSION; document.documentElement.dataset.buildVersion = APP_VERSION; });
     safe(()=>{ document.querySelectorAll('.build-version,[data-version],#versionText,.version-badge').forEach(el=>{ el.textContent='ver.'+APP_VERSION; }); });
@@ -5442,8 +5426,8 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* ver.99.62 hotfix: hero debug stats, dark equipment list visibility, low-level enemy HP trim */
 (function(){
   'use strict';
-  const APP_VERSION = '99.63';
-  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH 99.63 hotfix]', e); } }
+  const APP_VERSION = '99.62';
+  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH 99.62 hotfix]', e); } }
   function esc(s){ return (typeof escapeHtml === 'function') ? escapeHtml(s) : String(s).replace(/[&<>"']/g, ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
   function pct(v){ return Math.round((Number(v)||0)*100)+'%'; }
   function darkEquipRows(){
@@ -5528,32 +5512,19 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
     line.classList.remove('hidden');
   }
 
-  // ver.99.63: 敵HPカーブを序盤ゆるめに再調整。
-  // Lv1だけでなくLv1～20の伸びも抑え、Lv50～100で徐々に従来想定へ近づける。
-  if(typeof makeScaledEnemy === 'function' && !window.__mbhMakeScaledEnemy9963Curve){
-    window.__mbhMakeScaledEnemy9963Curve = makeScaledEnemy;
+  // Lv1の敵HPが重すぎるため、序盤だけ大きく下げつつLv100付近の伸びは残す。
+  if(typeof makeScaledEnemy === 'function' && !window.__mbhMakeScaledEnemy9962Hotfix){
+    window.__mbhMakeScaledEnemy9962Hotfix = makeScaledEnemy;
     makeScaledEnemy = function(base, forceLevel=null){
-      const e=window.__mbhMakeScaledEnemy9963Curve.apply(this, arguments);
+      const e=window.__mbhMakeScaledEnemy9962Hotfix.apply(this, arguments);
       safe(()=>{
         if(!e || !base || e.id==='dark_sword_saint') return;
         const lv=Math.max(1, Math.floor(Number(e.level)||1));
         const boss=!!(e.type==='ボス' || e.type==='裏ボス');
         const variant=e.variant?.type || e.variantType || '';
-        const hpCurve = (level, isBoss)=>{
-          if(isBoss){
-            // Lv1:0.28倍 / Lv20:1.23倍 / Lv50:5.43倍 / Lv100:16.43倍
-            if(level <= 20) return 0.28 + (level - 1) * 0.05;
-            if(level <= 50) return 1.23 + (level - 20) * 0.14;
-            if(level <= 100) return 5.43 + (level - 50) * 0.22;
-            return 16.43 + (level - 100) * 0.26;
-          }
-          // Lv1:0.14倍 / Lv20:0.615倍 / Lv50:3.015倍 / Lv100:10.015倍
-          if(level <= 20) return 0.14 + (level - 1) * 0.025;
-          if(level <= 50) return 0.615 + (level - 20) * 0.08;
-          if(level <= 100) return 3.015 + (level - 50) * 0.14;
-          return 10.015 + (level - 100) * 0.18;
-        };
-        let hp=Math.floor((Number(base.hp)||1) * hpCurve(lv, boss));
+        // Lv1 雑魚: baseの約22% / Lv100 雑魚: 約10.12倍
+        // Lv1 ボス: baseの約41% / Lv100 ボス: 約16.25倍
+        let hp=Math.floor((Number(base.hp)||1) * ((boss ? 0.25 : 0.12) + lv * (boss ? 0.16 : 0.10)));
         if(variant==='named') hp=Math.floor(hp*2.0);
         else if(variant==='strong') hp=Math.floor(hp*1.5);
         e.maxHp=Math.max(1,hp);
@@ -5592,314 +5563,185 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   setInterval(hotfixRender, 1200);
 })();
 
-
-/* ver.99.64: 主人公の次Lv必要経験値を1000固定にする */
-(function(){
-  const HERO_XP_NEXT_FIXED_9964 = 1000;
-  function normalizeHeroXp9964(){
-    try{
-      if(typeof state === 'undefined') return;
-      state.xpNext = HERO_XP_NEXT_FIXED_9964;
-      state.xp = Math.max(0, Math.floor(Number(state.xp)||0));
-      state.level = Math.max(1, Math.floor(Number(state.level)||1));
-    }catch(e){ console.warn('[MBH99.64 normalizeHeroXp]', e); }
-  }
-
-  try{
-    effectiveXpNext = function(){
-      return HERO_XP_NEXT_FIXED_9964;
-    };
-  }catch(e){ console.warn('[MBH99.64 effectiveXpNext override]', e); }
-
-  try{
-    totalCurrentExp = function(){
-      normalizeHeroXp9964();
-      return Math.max(1, (Math.max(0, (Number(state.level)||1)-1) * HERO_XP_NEXT_FIXED_9964) + Math.max(0, Math.floor(Number(state.xp)||0)));
-    };
-  }catch(e){ console.warn('[MBH99.64 totalCurrentExp override]', e); }
-
-  try{
-    loseExpPercent = function(percent){
-      normalizeHeroXp9964();
-      let loss = Math.max(1, Math.floor(totalCurrentExp() * percent));
-      state.lastXpGain = -loss;
-      while(loss > 0){
-        if(state.xp >= loss){
-          state.xp -= loss;
-          loss = 0;
-        }else{
-          loss -= state.xp;
-          if(state.level <= 1){
-            state.xp = 0;
-            loss = 0;
-            break;
-          }
-          state.level -= 1;
-          state.xp = HERO_XP_NEXT_FIXED_9964;
-        }
-      }
-      state.xpNext = HERO_XP_NEXT_FIXED_9964;
-      state.hp = Math.min(state.hp, maxHp());
-    };
-  }catch(e){ console.warn('[MBH99.64 loseExpPercent override]', e); }
-
-  try{
-    checkLevelUp = function(){
-      normalizeHeroXp9964();
-      while(state.xp >= HERO_XP_NEXT_FIXED_9964){
-        state.xp -= HERO_XP_NEXT_FIXED_9964;
-        state.level += 1;
-        state.xpNext = HERO_XP_NEXT_FIXED_9964;
-        state.hp = maxHp();
-        if(typeof showLevelUp === 'function') showLevelUp();
-        if(typeof log === 'function') log(`LEVEL UP！ Lv.${state.level}`, 'good');
-        const levelTrigger = Math.floor((Number(state.level)||1) / 20);
-        if(state.darkSwordSaintFirstEncountered && levelTrigger > Math.max(0, Math.floor(Number(state.darkSwordSaintLastLevelTrigger)||0))){
-          state.darkSwordSaintLastLevelTrigger = levelTrigger;
-          state.forceNextDarkSwordSaint = true;
-          state.pendingBossForNext = null;
-          state.pendingDarkSwordSaintDelay = false;
-          if(typeof log === 'function') log(`Lv.${state.level}到達。次の敵に暗黒剣聖が確定出現する。`, 'danger');
-          if(typeof banner === 'function') banner('暗黒剣聖の試練！', 1800);
-        }
-      }
-    };
-  }catch(e){ console.warn('[MBH99.64 checkLevelUp override]', e); }
-
-  try{
-    const oldLoad = loadGame;
-    loadGame = function(){
-      const r = oldLoad.apply(this, arguments);
-      normalizeHeroXp9964();
-      return r;
-    };
-  }catch(e){ console.warn('[MBH99.64 loadGame wrap]', e); }
-
-  try{
-    const oldSave = saveGame;
-    saveGame = function(){
-      normalizeHeroXp9964();
-      return oldSave.apply(this, arguments);
-    };
-  }catch(e){ console.warn('[MBH99.64 saveGame wrap]', e); }
-
-  try{
-    const oldReset = resetUserData;
-    resetUserData = function(){
-      const r = oldReset.apply(this, arguments);
-      normalizeHeroXp9964();
-      return r;
-    };
-  }catch(e){ /* resetUserData may not exist yet */ }
-
-  try{
-    const oldRenderStats = renderStats;
-    renderStats = function(){
-      normalizeHeroXp9964();
-      return oldRenderStats.apply(this, arguments);
-    };
-  }catch(e){ console.warn('[MBH99.64 renderStats wrap]', e); }
-
-  try{
-    const oldRenderBattle = renderBattle;
-    renderBattle = function(){
-      normalizeHeroXp9964();
-      return oldRenderBattle.apply(this, arguments);
-    };
-  }catch(e){ console.warn('[MBH99.64 renderBattle wrap]', e); }
-
-  normalizeHeroXp9964();
-})();
-
-
-/* ver.99.65: 暗黒剣聖敗北時の通常敵Lv保持 + 100Lv試練の独立Lv固定 */
+/* ver.99.69: 装備名・接頭辞・説明文を実効果へ統一 */
 (function(){
   'use strict';
-  const APP_VERSION = '99.65';
-  const ENEMY_LEVEL_XP_KEYS = ['mini-browser-hero-enemy-level-xp-v9961','mini-browser-hero-enemy-level-xp-v9960'];
-  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH 99.65 dark-saint-level-fix]', e); } }
-  function n(v, fallback=0){ const x=Math.floor(Number(v)); return Number.isFinite(x) ? x : fallback; }
-  function validLevel(v){ const x=n(v,0); return x >= 1 ? x : 0; }
-  function isDark(e){ return !!e && e.id === 'dark_sword_saint'; }
-  function isMilestoneReturn(r){ return !!(r && r.milestoneDarkSaint); }
-  function currentNormalBaseFallback(){
-    const candidates = [
-      state?.darkSwordSaintReturn?.enemyLevelBase,
-      state?.lastNormalEnemyLevelBase,
-      state?.enemyLevelBase,
-      state?.enemy?.trialLevel,
-      state?.darkSwordSaintReturn?.level,
-      state?.darkSwordSaintReturn?.pendingBoss?.level,
-      state?.level
-    ];
-    for(const v of candidates){ const x=validLevel(v); if(x) return x; }
-    return 1;
+  const APP_VERSION = '99.69';
+  const DARK_FIXED_NAMES = new Set(['闇の聖剣','闇の盾','闇のアミュレット','闇の鎧','闇の籠手','闇の兜','暗黒の靴']);
+  const DARK_NAME_BY_SLOT = { '武器':'闇の聖剣', '盾':'闇の盾', 'アミュレット':'闇のアミュレット', '鎧':'闇の鎧', '腕':'闇の籠手', '兜':'闇の兜', '足':'暗黒の靴' };
+  const BASE_BY_SLOT = { '武器':'剣', '盾':'盾', '兜':'兜', '鎧':'鎧', '腕':'腕甲', '足':'ブーツ', 'リング':'リング', 'アミュレット':'アミュレット' };
+  function safe(fn){ try{ return fn(); }catch(e){ console.warn('[MBH 99.69]', e); return null; } }
+  function pct(v){ return Math.round((Number(v)||0)*100) + '%'; }
+  function num(v){ return Math.floor(Number(v)||0).toLocaleString(); }
+  function isDarkItem(it){ return !!it && (it.specialFrame === 'darkholy' || DARK_FIXED_NAMES.has(it.name)); }
+  function hasFireEffect(it){ return !!(it && ((Number(it.fireRes)||0) > 0 || (Number(it.fireDamageHeal)||0) > 0 || (Number(it.fireDmg)||0) > 0 || (Number(it.fireSkillChance)||0) > 0 || it.skill?.id === 'fire')); }
+  function hasThunderEffect(it){ return !!(it && ((Number(it.thunderDmg)||0) > 0 || (Number(it.thunderSkillChance)||0) > 0 || it.skill?.id === 'thunder')); }
+  function hasBleedEffect(it){ return !!(it && ((Number(it.heroDarkBleedChance)||0) > 0 || (Number(it.bleedChance)||0) > 0 || (Number(it.darkBleedChance)||0) > 0)); }
+  function hasUnyieldingEffect(it){ return !!(it && ((Number(it.deathDanceChance)||0) > 0 || (Number(it.deathDanceDefIgnore)||0) > 0 || it.darkAmulet || it.masterRegen)); }
+  function hasDefenseEffect(it){ return !!(it && ((Number(it.def)||0) > 0 || (Number(it.guard)||0) > 0 || it.darkShield)); }
+  function hasSpeedEffect(it){ return !!(it && ((Number(it.attackSpeed)||0) > 0 || it.skill?.id === 'multi')); }
+  function hasLifeEffect(it){ return !!(it && ((Number(it.hp)||0) > 0 || (Number(it.lifeSteal)||0) > 0 || it.masterRegen)); }
+  function darkCanonicalName(it){ return DARK_NAME_BY_SLOT[it?.slot] || it?.name || '闇装備'; }
+  function neutralName(it){
+    const slot = it?.slot || '装備';
+    if(slot === '武器') return '鉄の剣';
+    if(slot === '盾') return '守りの盾';
+    if(slot === '兜') return '革の兜';
+    if(slot === '鎧') return '旅人の鎧';
+    if(slot === '腕') return '革の腕甲';
+    if(slot === '足') return '革のブーツ';
+    if(slot === 'リング') return '銀のリング';
+    if(slot === 'アミュレット') return '勇気のアミュレット';
+    return slot;
   }
-  function currentNormalBaseDefeatedFallback(){
-    const candidates = [state?.darkSwordSaintReturn?.enemyLevelBaseDefeated, state?.lastNormalEnemyLevelBaseDefeated, state?.enemyLevelBaseDefeated, state?.defeated];
-    for(const v of candidates){ const x=n(v,-1); if(x >= 0) return x; }
-    return 0;
+  function effectPrefix(it){
+    // 効果がある時だけ接頭辞を付ける。火効果なしの火守、雷効果なしの雷鳴は絶対に出さない。
+    if(hasFireEffect(it)) return '火守';
+    if(hasThunderEffect(it)) return '雷鳴';
+    if(hasBleedEffect(it)) return '血染め';
+    if(hasUnyieldingEffect(it)) return '不屈';
+    if(hasSpeedEffect(it)) return '俊足';
+    if(hasDefenseEffect(it)) return '鉄壁';
+    if(hasLifeEffect(it)) return '生命';
+    return '';
   }
-  function getEnemyLevelXp(){ return Math.max(0, n(state?.enemyLevelXp, 0)); }
-  function saveEnemyLevelXp(v){
-    const x=Math.max(0,n(v,0));
-    if(typeof state !== 'undefined') state.enemyLevelXp = x;
-    try{ ENEMY_LEVEL_XP_KEYS.forEach(k=>localStorage.setItem(k, String(x))); }catch(_e){}
+  function canonicalName(it){
+    if(!it) return '';
+    if(it.name === '師匠のアミュレット') return '師匠のアミュレット';
+    if(isDarkItem(it)) return darkCanonicalName(it);
+    const prefix = effectPrefix(it);
+    const base = BASE_BY_SLOT[it.slot] || it.slot || '装備';
+    return prefix ? `${prefix}の${base}` : neutralName(it);
   }
-  function syncVersion9965(){
+  function sanitizeItemName9969(it){
+    if(!it) return it;
+    const before = String(it.name || '');
+    // 古い説明文・誤説明を消す。説明は itemSummary で実効果から生成する。
+    if(it.flavor && /(神秘|影響|詠唱|ブーツ|靴|兜|鎧|籠手|腕甲|リング|アミュレット)/.test(String(it.flavor))){
+      it.flavor = '';
+    }
+    const after = canonicalName(it);
+    if(after) it.name = after;
+    // 火属性効果がないのに火系名だった既存品を中立名へ戻す。
+    if(!hasFireEffect(it) && /火|炎|火守/.test(before) && /火|炎|火守/.test(String(it.name))){
+      it.name = neutralName(it);
+    }
+    // 雷効果なしの雷名も戻す。
+    if(!hasThunderEffect(it) && /雷|雷鳴/.test(before) && /雷|雷鳴/.test(String(it.name))){
+      it.name = neutralName(it);
+    }
+    return it;
+  }
+  function sanitizeAllItems9969(){
+    safe(()=>{ if(state?.equip) Object.values(state.equip).forEach(sanitizeItemName9969); });
+    safe(()=>{ if(Array.isArray(state?.inventory)) state.inventory.forEach(sanitizeItemName9969); });
+  }
+  function itemSummary9969(it){
+    if(!it) return '';
+    sanitizeItemName9969(it);
+    const arr = [];
+    if(it.itemLevel) arr.push(`ドロップLv${Math.max(1, Math.floor(Number(it.itemLevel)||1))}`);
+    arr.push(`品質+${Math.max(0, Math.floor(Number(it.level)||0))}`);
+    if(it.atk) arr.push(`攻撃力+${num(it.atk)}`);
+    if(it.def) arr.push(`防御力+${num(it.def)}`);
+    if(it.hp) arr.push(`HP+${num(it.hp)}`);
+    if(it.fireRes) arr.push(`火軽減${pct(it.fireRes)}`);
+    if(it.fireDamageHeal) arr.push(`火吸収${pct(it.fireDamageHeal)}`);
+    if(it.fireDmg) arr.push(`火ダメージ+${pct(it.fireDmg)}`);
+    if(it.fireSkillChance) arr.push(`炎斬り発動率+${pct(it.fireSkillChance)}`);
+    if(it.thunderDmg) arr.push(`雷ダメージ+${pct(it.thunderDmg)}`);
+    if(it.thunderSkillChance) arr.push(`雷撃発動率+${pct(it.thunderSkillChance)}`);
+    if(it.deathDanceChance) arr.push(`死線の剣舞発動率+${pct(it.deathDanceChance)}`);
+    if(it.deathDanceDefIgnore) arr.push(`死線の剣舞防御無視${pct(it.deathDanceDefIgnore)}`);
+    if(it.heroDarkBleedChance) arr.push(`暗黒出血付与${pct(it.heroDarkBleedChance)}`);
+    if(it.lifeSteal) arr.push(`HP吸収${pct(it.lifeSteal)}`);
+    if(it.guard) arr.push(`ガード率+${pct(it.guard)}`);
+    if(it.crit) arr.push(`会心率+${pct(it.crit)}`);
+    if(it.darkShield) arr.push('毎ターン被ダメ軽減+1%（最大50%）');
+    if(it.darkShield) arr.push('被ダメージ50%回復');
+    if(it.darkAmulet) arr.push('死線の剣舞時間2倍');
+    if(it.masterRegen){
+      const rate = (typeof masterAmuletRegenRate === 'function') ? masterAmuletRegenRate() : 0.03;
+      arr.push(`10秒ごとにHP${(rate*100).toFixed(1)}%回復`);
+      arr.push('撃破時HP25%回復');
+    }
+    if(it.skill){
+      let extra = 0;
+      if(it.skill.id === 'fire') extra = Number(it.fireSkillChance)||0;
+      if(it.skill.id === 'thunder') extra = Number(it.thunderSkillChance)||0;
+      arr.push(`武器スキル:${it.skill.name} ${pct((Number(it.skill.chance)||0)+extra)}`);
+      if(it.skill.id === 'thunder') arr.push('雷撃:防御25%無視');
+      if(it.skill.id === 'fire') arr.push('炎斬り:火傷20%');
+    }
+    // 説明文末尾に別装備名や未使用文言を出さないため、flavorは表示しない。
+    return arr.join(' / ');
+  }
+  function syncVersion9969(){
     safe(()=>{ window.APP_VERSION=APP_VERSION; window.GAME_VERSION=APP_VERSION; window.BUILD_VERSION=APP_VERSION; window.MINI_BROWSER_HERO_LATEST_VERSION=APP_VERSION; window.MINI_BROWSER_HERO_BUILD_VERSION=APP_VERSION; document.documentElement.dataset.buildVersion=APP_VERSION; });
     safe(()=>{ document.querySelectorAll('.build-version,[data-version],#versionText,.version-badge').forEach(el=>{ el.textContent='ver.'+APP_VERSION; }); });
     safe(()=>{ document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent='Build: ver.'+APP_VERSION; }); });
-    safe(()=>{ const tt=document.querySelector('#mbhTraceBox .debug-trace-title'); if(tt) tt.textContent='進行デバッグログ ver.'+APP_VERSION; });
+    safe(()=>{ const t=document.querySelector('#mbhTraceBox .debug-trace-title'); if(t) t.textContent='進行デバッグログ ver.'+APP_VERSION; });
   }
-  function rememberNormalEnemyLevel(e){
-    if(typeof state === 'undefined') return;
-    if(e && !isDark(e)){
-      const lv=validLevel(e.level) || validLevel(state.enemyLevelBase) || 1;
-      state.lastNormalEnemyLevelBase = Math.max(1, lv);
-      state.lastNormalEnemyLevelBaseDefeated = currentNormalBaseDefeatedFallback();
+  function patchDarkMakers9969(){
+    function wrap(name){
+      const old = safe(()=>eval(name));
+      if(typeof old !== 'function' || old.__mbh9969Wrapped) return;
+      const wrapped = function(){
+        const it = old.apply(this, arguments);
+        sanitizeItemName9969(it);
+        return it;
+      };
+      wrapped.__mbh9969Wrapped = true;
+      safe(()=>eval(name + ' = wrapped'));
+      safe(()=>{ window[name] = wrapped; });
+    }
+    ['makeDarkHolySword','makeDarkShield','makeDarkAmulet','makeDarkArmor','makeDarkGauntlets','makeDarkHelm','makeDarkBoots'].forEach(wrap);
+  }
+  function patchMakeItem9969(){
+    if(typeof makeItem === 'function' && !window.__mbhMakeItem9969){
+      window.__mbhMakeItem9969 = makeItem;
+      makeItem = function(){
+        const it = window.__mbhMakeItem9969.apply(this, arguments);
+        return sanitizeItemName9969(it);
+      };
+    }
+    if(typeof makeRandomItem === 'function' && !window.__mbhMakeRandomItem9969){
+      window.__mbhMakeRandomItem9969 = makeRandomItem;
+      makeRandomItem = function(){
+        const it = window.__mbhMakeRandomItem9969.apply(this, arguments);
+        return sanitizeItemName9969(it);
+      };
     }
   }
-  function prepareDarkSaintReturn(){
-    if(typeof state === 'undefined') return;
-    if(!isDark(state.enemy)) return;
-    const base=currentNormalBaseFallback();
-    const defeated=currentNormalBaseDefeatedFallback();
-    if(!state.darkSwordSaintReturn || typeof state.darkSwordSaintReturn !== 'object'){
-      state.darkSwordSaintReturn = {enemyLevelBase:base, enemyLevelBaseDefeated:defeated, defeated:state.defeated||0, level:base};
-    }else{
-      if(!validLevel(state.darkSwordSaintReturn.enemyLevelBase)) state.darkSwordSaintReturn.enemyLevelBase = base;
-      if(n(state.darkSwordSaintReturn.enemyLevelBaseDefeated,-1) < 0) state.darkSwordSaintReturn.enemyLevelBaseDefeated = defeated;
-      if(!validLevel(state.darkSwordSaintReturn.level) && state.enemy.trialLevel) state.darkSwordSaintReturn.level = state.enemy.trialLevel;
+  function patchRender9969(){
+    if(typeof itemSummary === 'function' && !window.__mbhItemSummary9969){
+      window.__mbhItemSummary9969 = itemSummary;
+      itemSummary = itemSummary9969;
+      window.itemSummary = itemSummary9969;
+    }
+    if(typeof renderInventory === 'function' && !window.__mbhRenderInventory9969){
+      window.__mbhRenderInventory9969 = renderInventory;
+      renderInventory = function(){ sanitizeAllItems9969(); return window.__mbhRenderInventory9969.apply(this, arguments); };
+    }
+    if(typeof renderEquip === 'function' && !window.__mbhRenderEquip9969){
+      window.__mbhRenderEquip9969 = renderEquip;
+      renderEquip = function(){ sanitizeAllItems9969(); return window.__mbhRenderEquip9969.apply(this, arguments); };
+    }
+    if(typeof showTip === 'function' && !window.__mbhShowTip9969){
+      window.__mbhShowTip9969 = showTip;
+      showTip = function(e,it){ sanitizeItemName9969(it); return window.__mbhShowTip9969.apply(this, arguments); };
     }
   }
-  function snapshotDarkContext(){
-    prepareDarkSaintReturn();
-    const r = state?.darkSwordSaintReturn || null;
-    const trial = validLevel(state?.enemy?.trialLevel) || validLevel(r?.level) || validLevel(r?.pendingBoss?.level) || currentNormalBaseFallback();
-    return {
-      isDark: isDark(state?.enemy),
-      milestone: isMilestoneReturn(r),
-      base: currentNormalBaseFallback(),
-      defeatedBase: currentNormalBaseDefeatedFallback(),
-      xp: getEnemyLevelXp(),
-      trial
-    };
-  }
-  function restoreAfterDarkSaint(ctx, reason){
-    if(!ctx || !ctx.isDark || typeof state === 'undefined') return;
-    if(ctx.milestone){
-      const next = Math.max(1, ctx.trial + 1);
-      state.enemyLevelBase = next;
-      state.enemyLevelBaseDefeated = Math.max(0, n(state.defeated, 0));
-      state.lastNormalEnemyLevelBase = next;
-      state.lastNormalEnemyLevelBaseDefeated = state.enemyLevelBaseDefeated;
-      saveEnemyLevelXp(0);
-      if(reason && typeof log === 'function') log(`暗黒剣聖の100Lv試練処理：通常敵Lv.${ctx.trial}→Lv.${next}。暗黒剣聖Lvは独立扱い。`, 'system');
-    }else{
-      state.enemyLevelBase = Math.max(1, ctx.base);
-      state.enemyLevelBaseDefeated = Math.max(0, ctx.defeatedBase);
-      state.lastNormalEnemyLevelBase = state.enemyLevelBase;
-      state.lastNormalEnemyLevelBaseDefeated = state.enemyLevelBaseDefeated;
-      saveEnemyLevelXp(ctx.xp);
-      if(reason && typeof log === 'function') log(`暗黒剣聖戦終了：通常敵Lv.${state.enemyLevelBase}を保持。`, 'system');
-    }
-  }
-
-  if(typeof setEnemy === 'function' && !window.__mbhSetEnemy9965){
-    window.__mbhSetEnemy9965 = setEnemy;
-    setEnemy = function(e){
-      if(isDark(e)){
-        const base=currentNormalBaseFallback();
-        const defeated=currentNormalBaseDefeatedFallback();
-        if(!state.darkSwordSaintReturn || typeof state.darkSwordSaintReturn !== 'object'){
-          state.darkSwordSaintReturn = {enemyLevelBase:base, enemyLevelBaseDefeated:defeated, defeated:state.defeated||0, level:validLevel(e.trialLevel)||base};
-        }else{
-          if(!validLevel(state.darkSwordSaintReturn.enemyLevelBase)) state.darkSwordSaintReturn.enemyLevelBase=base;
-          if(n(state.darkSwordSaintReturn.enemyLevelBaseDefeated,-1)<0) state.darkSwordSaintReturn.enemyLevelBaseDefeated=defeated;
-        }
-      }else{
-        rememberNormalEnemyLevel(e);
-      }
-      return window.__mbhSetEnemy9965.apply(this, arguments);
-    };
-  }
-
-  if(typeof makeScaledEnemy === 'function' && !window.__mbhMakeScaledEnemy9965){
-    window.__mbhMakeScaledEnemy9965 = makeScaledEnemy;
-    makeScaledEnemy = function(base, forceLevel=null){
-      if(base && base.id === 'dark_sword_saint'){
-        const trial = validLevel(forceLevel) || validLevel(state?.darkSwordSaintReturn?.level) || validLevel(state?.darkSwordSaintReturn?.pendingBoss?.level) || 0;
-        const independentLv = Math.max(1, validLevel(state?.darkSwordSaintLevel) || 1);
-        const e = window.__mbhMakeScaledEnemy9965.call(this, base, independentLv);
-        e.level = independentLv;
-        if(trial >= 1){
-          e.trialLevel = trial;
-          if(trial >= 100) e.trialLabel = `通常敵Lv.${trial}試練`;
-        }
-        return e;
-      }
-      const e = window.__mbhMakeScaledEnemy9965.apply(this, arguments);
-      rememberNormalEnemyLevel(e);
-      return e;
-    };
-  }
-
-  if(typeof updateEnemyLevelProgressionOnDefeat === 'function' && !window.__mbhUpdateEnemyLevelProgression9965){
-    window.__mbhUpdateEnemyLevelProgression9965 = updateEnemyLevelProgressionOnDefeat;
-    updateEnemyLevelProgressionOnDefeat = function(e){
-      if(isDark(e)){
-        const ctx = snapshotDarkContext();
-        if(validLevel(e.trialLevel)) ctx.trial = validLevel(e.trialLevel);
-        restoreAfterDarkSaint(ctx, 'win');
-        return;
-      }
-      const r = window.__mbhUpdateEnemyLevelProgression9965.apply(this, arguments);
-      rememberNormalEnemyLevel(e);
-      return r;
-    };
-  }
-
-  if(typeof handleHeroDeath === 'function' && !window.__mbhHandleHeroDeath9965){
-    window.__mbhHandleHeroDeath9965 = handleHeroDeath;
-    handleHeroDeath = function(){
-      const ctx = snapshotDarkContext();
-      const r = window.__mbhHandleHeroDeath9965.apply(this, arguments);
-      restoreAfterDarkSaint(ctx, 'lose');
-      return r;
-    };
-  }
-
-  if(typeof fleeBattle === 'function' && !window.__mbhFleeBattle9965){
-    window.__mbhFleeBattle9965 = fleeBattle;
-    fleeBattle = function(){
-      const ctx = snapshotDarkContext();
-      const r = window.__mbhFleeBattle9965.apply(this, arguments);
-      restoreAfterDarkSaint(ctx, 'flee');
-      return r;
-    };
-  }
-
-  if(typeof renderBattle === 'function' && !window.__mbhRenderBattle9965){
-    window.__mbhRenderBattle9965 = renderBattle;
-    renderBattle = function(){
-      const r = window.__mbhRenderBattle9965.apply(this, arguments);
-      safe(()=>{
-        if(isDark(state?.enemy) && els?.enemyLevel){
-          els.enemyLevel.textContent = `Lv.${Math.max(1, validLevel(state.enemy.level) || validLevel(state.darkSwordSaintLevel) || 1)}`;
-          if(state.enemy.trialLabel) els.enemyLevel.title = state.enemy.trialLabel;
-        }
-      });
-      return r;
-    };
-  }
-
-  function boot(){
-    syncVersion9965();
-    safe(()=>{ if(typeof state !== 'undefined' && !validLevel(state.lastNormalEnemyLevelBase)) state.lastNormalEnemyLevelBase = currentNormalBaseFallback(); });
+  function boot9969(){
+    syncVersion9969();
+    patchMakeItem9969();
+    patchDarkMakers9969();
+    patchRender9969();
+    sanitizeAllItems9969();
     safe(()=>{ if(typeof renderAll === 'function') renderAll(); });
+    safe(()=>{ if(typeof scheduleSave === 'function') scheduleSave(); });
   }
-  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true}); else setTimeout(boot,0);
-  window.addEventListener('load', boot, {once:true});
-  setInterval(syncVersion9965, 1500);
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot9969, {once:true}); else setTimeout(boot9969, 0);
+  window.addEventListener('load', boot9969, {once:true});
+  setInterval(syncVersion9969, 1500);
 })();
