@@ -1749,7 +1749,7 @@ body.using-touch .tooltip.status-tooltip-modal:not(.hidden),
 @media (min-width:1601px){.top-panel-tabs{display:flex!important;}}
 @media (max-width:760px){.top-panel-tabs{display:none!important;}}
 
-/* ver.99.0 final spec lock */
+/* ver.APP_VERSION final spec lock */
 .side-tabs,.mobile-menu-tabs{display:flex!important;gap:6px;width:100%;min-width:0;flex:0 0 auto;}
 .side-tabs button,.mobile-menu-tabs button{flex:1 1 0;min-width:0;min-height:36px;padding:8px 5px;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;touch-action:manipulation;}
 .side-tabs button.active,.mobile-menu-tabs button.active{outline:2px solid #ffd76b;filter:brightness(1.18);}
@@ -1776,7 +1776,7 @@ body.using-touch .tooltip.status-tooltip-modal:not(.hidden),
   .flee-btn{bottom:62px!important;}
 }
 
-/* ver.99.0 final hotfix: narrow width layout recovery */
+/* ver.APP_VERSION final hotfix: narrow width layout recovery */
 @media (max-width: 900px) and (orientation: portrait){
   :root{--mbh-topbar-h:92px;}
   html,body{width:100%!important;max-width:100%!important;overflow:hidden!important;}
@@ -1840,7 +1840,7 @@ body.using-touch .tooltip.status-tooltip-modal:not(.hidden),
 }
 
 
-/* ver.99.2 layout stability */
+/* ver.APP_VERSION layout stability */
 :root{--mbh-topbar-h:66px;}
 .topbar{height:66px!important;min-height:66px!important;overflow:visible!important;align-items:center!important;padding:8px 12px!important;position:relative;z-index:90;}
 .layout{height:calc(100dvh - 66px)!important;min-height:0!important;overflow:hidden!important;}
@@ -1866,14 +1866,14 @@ body.using-touch .tooltip.status-tooltip-modal:not(.hidden),
   .debug-panel{top:90px!important;max-height:calc(100dvh - 98px)!important;}
 }
 
-/* ver99.9 debug trace visible controls */
+/* ver.APP_VERSION debug trace visible controls */
 .debug-trace-box{display:block!important;margin-top:8px!important;padding:8px!important;border:1px solid rgba(180,120,255,.65)!important;border-radius:10px!important;background:rgba(20,10,35,.88)!important;font-size:12px!important;color:#f0dcff!important;}
 .debug-trace-title{font-weight:900;color:#d8a8ff;margin-bottom:6px;}
 .debug-trace-output{display:block;white-space:pre-wrap;max-height:180px;overflow:auto;background:rgba(0,0,0,.35);padding:6px;border-radius:8px;margin-top:6px;min-height:48px;color:#eee;}
 #mbhTraceBox button{margin:2px!important;padding:7px 8px!important;}
 
 
-/* ver99.13 cleanup: prevent stacked patches / duplicate overlays */
+/* ver.APP_VERSION cleanup: prevent stacked patches / duplicate overlays */
 .fixed-build-version{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;}
 #debugPanel.debug-panel{position:fixed!important;right:8px!important;top:8px!important;bottom:8px!important;max-height:calc(100dvh - 16px)!important;overflow:auto!important;z-index:9999!important;}
 #debugPanel.hidden{display:none!important;}
@@ -1887,7 +1887,7 @@ body.using-touch .tooltip.status-tooltip-modal:not(.hidden),
 }
 
 
-/* ver.99.21: menu overlay / inventory filters / panel height final UI fix */
+/* ver.APP_VERSION: menu overlay / inventory filters / panel height final UI fix */
 body.mbh-menu-overlay-open .battle-panel .expbar,
 body.mbh-menu-overlay-open .battle-panel .flee-btn{
   z-index:1!important;
@@ -2022,7 +2022,7 @@ body.mbh-menu-overlay-open .battle-panel .flee-btn{
 }
 
 
-/* ver.99.22: inventory filter / log viewport final CSS */
+/* ver.APP_VERSION: inventory filter / log viewport final CSS */
 .inventory-filter-bar{
   display:flex!important;
   flex-wrap:wrap!important;
@@ -2100,11 +2100,11 @@ body.mbh-menu-overlay-open .battle-panel .flee-btn{
   .log-filter-bar button{font-size:11px!important;padding:6px 8px!important;}
 }
 
-/* ver99.24 dark saint drop slot label */
+/* ver.APP_VERSION dark saint drop slot label */
 .drop-slot-label{display:block;font-weight:900;margin-bottom:3px;color:#d9b3ff;text-shadow:0 0 8px rgba(180,100,255,.75);}
 .log-slot{font-weight:900;color:#d9b3ff;margin-right:4px;}
 
-/* ver.99.25: multiple drop notifications stack without overlap */
+/* ver.APP_VERSION: multiple drop notifications stack without overlap */
 .drop-toast-stacked{
   top:var(--drop-y,18px)!important;
   animation:dropToastStackIn 3.15s ease forwards!important;
@@ -2119,12 +2119,12 @@ body.mbh-menu-overlay-open .battle-panel .flee-btn{
   .drop-toast-stacked{max-width:calc(100vw - 20px)!important;min-width:min(260px,calc(100vw - 20px))!important;}
 }
 
-/* ver.99.28 enhancement removal */
+/* ver.APP_VERSION enhancement removal */
 .resources.hidden{display:none!important;}
 #upgradeBtn.hidden{display:none!important;}
 .drop-plus-help{margin:6px 0 10px;padding:8px 10px;border:1px solid rgba(255,255,255,.12);border-radius:10px;background:rgba(20,24,38,.72);color:#d9e4ff;font-size:12px;line-height:1.45;}
 
-/* ver.99.35: ドラゴン火炎ブレス専用の連続ダメージ表示 */
+/* ver.APP_VERSION: ドラゴン火炎ブレス専用の連続ダメージ表示 */
 .float.breath-hit{
   font-size:36px!important;
   font-weight:1000!important;
@@ -2132,12 +2132,12 @@ body.mbh-menu-overlay-open .battle-panel .flee-btn{
   animation-duration:1.45s!important;
 }
 
-/* ver99.46 enemy debug stats */
+/* ver.APP_VERSION enemy debug stats */
 .enemy-debug-stats-line{font-weight:800;font-size:12px;color:#ffd27a;text-align:center;margin:4px 0 6px;text-shadow:0 1px 2px #000;}
 .enemy-debug-stats-line.hidden{display:none!important;}
 
 
-/* ver.99.46: ダメージ/回復の表示時間と配置調整 */
+/* ver.APP_VERSION: ダメージ/回復の表示時間と配置調整 */
 .float{
   animation-duration:2s!important;
   font-size:28px!important;
@@ -2166,7 +2166,7 @@ body.mbh-menu-overlay-open .battle-panel .flee-btn{
   .float.hero-heal-float{left:82%!important;}
 }
 
-/* ver.99.47: battle log viewport/padding final */
+/* ver.APP_VERSION: battle log viewport/padding final */
 .log-panel .log,#log{
   padding-bottom:2.2em!important;
   scroll-padding-bottom:2.2em!important;
@@ -2175,3 +2175,62 @@ body.mbh-menu-overlay-open .battle-panel .flee-btn{
   box-sizing:border-box!important;
 }
 .log-panel{padding-bottom:.9em!important;}
+
+
+/* ver.APP_VERSION: variant badge / regen float / bottom legal links fix */
+.status-badge.strong-variant,
+.status-badge.named-variant{font-weight:900!important;white-space:nowrap!important;}
+.status-badge.strong-variant{border-color:#55aaff!important;color:#bfe0ff!important;background:rgba(20,70,140,.48)!important;}
+.status-badge.named-variant{border-color:#ff9d2e!important;color:#ffd29a!important;background:rgba(145,75,10,.48)!important;}
+.enemy-card,.hero-card,.card{overflow:visible!important;}
+.enemy-card img,.hero-card img,.card img{border-radius:7px;overflow:hidden;}
+.effect-layer,.float-layer,#enemyFloats{overflow:visible!important;z-index:35!important;}
+.float.named-regen,
+.float.heal.named-regen,
+.float.enemy-heal-float.named-regen{
+  left:50%!important;
+  top:-12%!important;
+  z-index:80!important;
+  font-size:28px!important;
+  color:#72ff7a!important;
+  background:rgba(0,0,0,.72)!important;
+  border:1px solid rgba(114,255,122,.55)!important;
+  border-radius:999px!important;
+  padding:3px 10px!important;
+  text-shadow:0 2px 4px #000,0 0 12px #00ff44!important;
+  max-width:360px!important;
+  white-space:nowrap!important;
+}
+.fixed-legal-links{
+  position:fixed!important;
+  left:50%!important;
+  bottom:calc(6px + env(safe-area-inset-bottom,0px))!important;
+  transform:translateX(-50%)!important;
+  z-index:240!important;
+  display:flex!important;
+  gap:6px!important;
+  align-items:center!important;
+  justify-content:center!important;
+  padding:5px 6px!important;
+  border:1px solid rgba(201,155,57,.45)!important;
+  border-radius:10px!important;
+  background:rgba(8,6,4,.78)!important;
+  box-shadow:0 4px 18px rgba(0,0,0,.45)!important;
+  pointer-events:auto!important;
+}
+.fixed-legal-links button{
+  min-width:72px!important;
+  padding:6px 8px!important;
+  font-size:11px!important;
+  line-height:1.1!important;
+  white-space:nowrap!important;
+}
+@media(min-width:1280px) and (min-height:760px){
+  .fixed-legal-links{display:none!important;}
+}
+@media(max-width:760px), (max-height:700px){
+  .fixed-legal-links{left:8px!important;right:8px!important;bottom:calc(4px + env(safe-area-inset-bottom,0px))!important;transform:none!important;width:auto!important;}
+  .fixed-legal-links button{flex:1 1 0!important;min-width:0!important;font-size:10px!important;padding:6px 4px!important;}
+  .side-panel.open{bottom:42px!important;}
+  .debug-panel{bottom:42px!important;}
+}
