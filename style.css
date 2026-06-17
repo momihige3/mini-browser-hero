@@ -2175,22 +2175,3 @@ body.mbh-menu-overlay-open .battle-panel .flee-btn{
   box-sizing:border-box!important;
 }
 .log-panel{padding-bottom:.9em!important;}
-
-/* ver.99.62 hotfix: hero/enemy debug stat lines */
-.enemy-debug-stats-line,.hero-debug-stats-line{
-  position:relative!important;
-  z-index:85!important;
-  margin:0 0 4px!important;
-  padding:2px 6px!important;
-  border:1px solid rgba(255,215,107,.55)!important;
-  border-radius:4px!important;
-  background:rgba(0,0,0,.62)!important;
-  color:#ffe9a8!important;
-  font-size:12px!important;
-  font-weight:900!important;
-  text-align:center!important;
-  text-shadow:0 1px 2px #000!important;
-}
-.enemy-debug-stats-line.hidden,.hero-debug-stats-line.hidden{display:none!important;}
-.dark-equip-row span{color:#d6a2ff!important;}
-.dark-equip-row b{color:#f0dcff!important;}
