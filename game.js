@@ -1711,6 +1711,7 @@ function tryDarkSwordDanceRevive(){
   banner('暗黒剣舞！', 1200);
   log(`暗黒剣舞発動！ カットイン後に5秒間無敵化し、HPを回復する！（${state.enemyStatuses.darkDanceCount}回目）`, 'danger');
   showDarkSwordDanceCutin();
+  setBgmMode('dark_sword_saint');
 
   state.darkSwordReviveTimer = setTimeout(()=>{
     if(!isDarkSwordSaint() || state.enemyStatuses?.darkDeadConfirmed){
@@ -1720,6 +1721,7 @@ function tryDarkSwordDanceRevive(){
     hideDeathDanceCutin();
     state.deathDanceCutin = false;
     state.darkSwordCutinActive = false;
+    setBgmMode('dark_sword_saint');
     // カットインが消えた直後から、回復待ち時間中にも暗黒剣舞の連続攻撃を開始する。
     darkSwordDanceCombo('recovering');
     const recoveryStart = performance.now();
@@ -1757,6 +1759,7 @@ function finishDarkSwordDanceRevive(){
   state.deathDanceCutin = false;
   state.darkSwordCutinActive = false;
   hideDeathDanceCutin();
+  setBgmMode('dark_sword_saint');
   renderBattle();
   renderStatusLists();
   log(`闇オーラ10、暗黒の剣+1。暗黒剣舞はガード無効・防御力50%無視！`, 'danger');
@@ -2100,7 +2103,7 @@ function endDeathDance(){
   els.deathAura.classList.add('hidden');
   els.deathDanceStatus.classList.add('hidden');
   renderStatusLists();
-  setBgmMode(isDarkSwordSaint() && state.enemyHp > 0 ? 'dark_sword_saint' : 'normal');
+  setBgmMode((isDarkSwordSaint() && !(state.enemyStatuses && state.enemyStatuses.darkDeadConfirmed)) ? 'dark_sword_saint' : 'normal');
   banner('死線の剣舞 終了');
   log('死線の剣舞が終了。','skilllog');
 }
@@ -2457,8 +2460,21 @@ function stopBgm(){
   // 旧オシレーターBGM用の停止処理。HTMLAudio BGMは止めない。
   if(state.bgmTimer){ clearInterval(state.bgmTimer); state.bgmTimer=null; }
 }
+function normalizeBgmMode(mode){
+  let m = mode || 'normal';
+  // ver.99.66: 暗黒剣聖戦では、主人公の死線の剣舞中だけ剣舞BGMを許可。
+  // 暗黒剣舞のカットイン/回復中は enemyHp が0になるため、旧判定だと通常BGMへ戻っていた。
+  // 暗黒剣聖が撃破確定していない間は normal 指定を暗黒剣聖BGMへ補正する。
+  try{
+    const darkAlive = (typeof isDarkSwordSaint === 'function' && isDarkSwordSaint())
+      && !(state.enemyStatuses && state.enemyStatuses.darkDeadConfirmed)
+      && state.enemy;
+    if(darkAlive && m === 'normal') m = 'dark_sword_saint';
+  }catch(e){}
+  return m;
+}
 function setBgmMode(mode){
-  state.bgmMode = mode || 'normal';
+  state.bgmMode = normalizeBgmMode(mode);
   if(!state.audioUnlocked || state.mobileMuted) return;
   playBgm();
 }
