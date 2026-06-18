@@ -2301,7 +2301,7 @@ body.mbh-menu-overlay-open .battle-panel .flee-btn{
 
 
 
-/* ver.0.2.4: stable side menu and split status/equipment layout */
+/* ver.0.2.5: stable side menu and split status/equipment layout */
 html,body{overflow:hidden!important;}
 .topbar{flex:0 0 auto!important;}
 .layout{min-height:0!important;overflow:hidden!important;}
@@ -2348,4 +2348,63 @@ body.mbh-compact-menu .side-panel.open .panel.active-page{flex:1 1 auto!importan
   .hero-stats.mbh-status-split.active-page,.equip-panel.mbh-equip-split.active-page{grid-template-columns:1fr!important;grid-template-rows:auto!important;}
   .hero-stats.mbh-status-split .stat-grid,.hero-stats.mbh-status-split #statusSpecialEffects,.hero-stats.mbh-status-split .monster-records,.equip-panel.mbh-equip-split #bestEquipBtnEquip,.equip-panel.mbh-equip-split #equipList,.equip-panel.mbh-equip-split #upgradeBtn,.equip-panel.mbh-equip-split #equipEffectTotals{grid-column:1!important;grid-row:auto!important;}
   .equip-panel.mbh-equip-split #equipEffectTotals{border-left:0!important;border-top:1px solid #513917!important;padding-left:0!important;padding-top:8px!important;}
+}
+
+/* ver.0.2.5: hard final split layout + no flicker log filtering */
+.hero-stats.mbh025-status-split,
+.hero-stats.mbh025-status-split.active-page{
+  display:grid!important;
+  grid-template-columns:minmax(0,1.05fr) minmax(260px,.95fr)!important;
+  grid-template-rows:auto auto minmax(0,1fr)!important;
+  gap:10px!important;
+  align-content:stretch!important;
+  overflow:hidden!important;
+}
+.hero-stats.mbh025-status-split>h2{grid-column:1 / -1!important;grid-row:1!important;margin:0!important;}
+.hero-stats.mbh025-status-split .stat-grid{grid-column:1!important;grid-row:2!important;align-self:start!important;min-width:0!important;}
+.hero-stats.mbh025-status-split #statusSpecialEffects{grid-column:1!important;grid-row:3!important;min-height:0!important;overflow:hidden!important;display:flex!important;flex-direction:column!important;border-top:1px solid #513917!important;padding-top:8px!important;margin-top:0!important;}
+.hero-stats.mbh025-status-split #statusSpecialEffects h3{margin:0 0 6px!important;color:#ffd76b!important;font-size:14px!important;}
+.hero-stats.mbh025-status-split #statusSpecialEffects .effect-scroll{flex:1 1 auto!important;min-height:0!important;max-height:none!important;overflow-y:auto!important;}
+.hero-stats.mbh025-status-split .monster-records{grid-column:2!important;grid-row:2 / 4!important;margin:0!important;min-height:0!important;overflow:hidden!important;display:flex!important;flex-direction:column!important;border-left:1px solid #513917!important;padding-left:10px!important;}
+.hero-stats.mbh025-status-split .monster-records h3{margin:0 0 6px!important;color:#ffd76b!important;font-size:14px!important;}
+.hero-stats.mbh025-status-split .monster-record-list{flex:1 1 auto!important;min-height:0!important;max-height:none!important;overflow-y:auto!important;}
+
+.equip-panel.mbh025-equip-split,
+.equip-panel.mbh025-equip-split.active-page{
+  display:grid!important;
+  grid-template-columns:minmax(0,1.05fr) minmax(270px,.95fr)!important;
+  grid-template-rows:auto auto minmax(0,1fr) auto!important;
+  gap:10px!important;
+  align-content:stretch!important;
+  overflow:hidden!important;
+}
+.equip-panel.mbh025-equip-split>h2{grid-column:1 / -1!important;grid-row:1!important;margin:0!important;}
+.equip-panel.mbh025-equip-split #bestEquipBtnEquip{grid-column:1!important;grid-row:2!important;margin:0!important;}
+.equip-panel.mbh025-equip-split #equipList{grid-column:1!important;grid-row:3!important;min-height:0!important;overflow-y:auto!important;align-content:start!important;grid-template-columns:repeat(auto-fit,minmax(155px,1fr))!important;}
+.equip-panel.mbh025-equip-split #upgradeBtn{grid-column:1!important;grid-row:4!important;margin-top:0!important;}
+.equip-panel.mbh025-equip-split #equipEffectTotals{grid-column:2!important;grid-row:2 / 5!important;margin:0!important;min-height:0!important;overflow:hidden!important;display:flex!important;flex-direction:column!important;border-left:1px solid #513917!important;border-top:0!important;padding-left:10px!important;padding-top:0!important;}
+.equip-panel.mbh025-equip-split #equipEffectTotals h3{margin:0 0 6px!important;color:#ffd76b!important;font-size:14px!important;}
+.equip-panel.mbh025-equip-split #equipEffectTotals .effect-scroll{flex:1 1 auto!important;min-height:0!important;max-height:none!important;overflow-y:auto!important;}
+.effect-row{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;gap:6px!important;border-bottom:1px solid rgba(255,255,255,.06)!important;padding:3px 0!important;font-size:12px!important;}
+.effect-row span{min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;color:#ead7af!important;}
+.effect-row b{color:#fff!important;white-space:nowrap!important;}
+.effect-empty{color:#a9956d!important;font-size:12px!important;padding:6px 0!important;}
+
+#log div[data-log-type]{contain:content;}
+#logFilterBar button.active{outline:2px solid #ffd76b!important;filter:brightness(1.18)!important;}
+
+@media(max-width:760px){
+  .hero-stats.mbh025-status-split,
+  .hero-stats.mbh025-status-split.active-page,
+  .equip-panel.mbh025-equip-split,
+  .equip-panel.mbh025-equip-split.active-page{grid-template-columns:1fr!important;grid-template-rows:auto!important;overflow:auto!important;}
+  .hero-stats.mbh025-status-split .stat-grid,
+  .hero-stats.mbh025-status-split #statusSpecialEffects,
+  .hero-stats.mbh025-status-split .monster-records,
+  .equip-panel.mbh025-equip-split #bestEquipBtnEquip,
+  .equip-panel.mbh025-equip-split #equipList,
+  .equip-panel.mbh025-equip-split #upgradeBtn,
+  .equip-panel.mbh025-equip-split #equipEffectTotals{grid-column:1!important;grid-row:auto!important;}
+  .hero-stats.mbh025-status-split .monster-records,
+  .equip-panel.mbh025-equip-split #equipEffectTotals{border-left:0!important;border-top:1px solid #513917!important;padding-left:0!important;padding-top:8px!important;}
 }
