@@ -2359,3 +2359,145 @@ body.mbh-menu-overlay-open .battle-panel .flee-btn{
   .hero-stats>.monster-records{grid-row:auto!important;}
   .equip-panel>#equipEffectTotals,.equip-panel>.equip-effect-totals{grid-row:auto!important;}
 }
+
+/* v0.3.2 fixed menu layout / footer / split panels */
+html[data-build-version="0.3.2"] .side-panel{
+  display:flex!important;
+  flex-direction:column!important;
+  gap:10px!important;
+  min-width:0!important;
+  min-height:0!important;
+  overflow:hidden!important;
+}
+html[data-build-version="0.3.2"] .side-panel .mobile-menu-tabs{
+  flex:0 0 auto!important;
+  display:flex!important;
+  gap:6px!important;
+  width:100%!important;
+  min-width:0!important;
+}
+html[data-build-version="0.3.2"] .side-panel .mobile-menu-tabs button{
+  flex:1 1 0!important;
+  min-width:0!important;
+}
+html[data-build-version="0.3.2"] .side-panel .menu-col,
+html[data-build-version="0.3.2"] .side-panel .menu-left,
+html[data-build-version="0.3.2"] .side-panel .menu-right{
+  display:contents!important;
+}
+html[data-build-version="0.3.2"] .side-panel .panel{
+  min-width:0!important;
+  min-height:0!important;
+  overflow:hidden!important;
+}
+html[data-build-version="0.3.2"] .side-panel .panel:not(.active-page){
+  display:none!important;
+}
+html[data-build-version="0.3.2"] .side-panel .panel.active-page{
+  display:flex!important;
+  flex-direction:column!important;
+  flex:1 1 auto!important;
+  min-height:0!important;
+}
+html[data-build-version="0.3.2"] .side-panel > .legal-links.menu-footer,
+html[data-build-version="0.3.2"] .side-panel > .legal-links{
+  flex:0 0 auto!important;
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:6px!important;
+  position:relative!important;
+  left:auto!important;
+  right:auto!important;
+  bottom:auto!important;
+  top:auto!important;
+  transform:none!important;
+  width:100%!important;
+  min-height:auto!important;
+  margin:0!important;
+  padding:8px!important;
+  border:1px solid #73531f!important;
+  border-radius:6px!important;
+  background:linear-gradient(rgba(20,14,8,.96),rgba(5,5,5,.96))!important;
+  box-shadow:none!important;
+  z-index:1!important;
+}
+html[data-build-version="0.3.2"] .side-panel .panel .legal-links,
+html[data-build-version="0.3.2"] .side-panel .panel .menu-footer,
+html[data-build-version="0.3.2"] #fixedLegalLinks,
+html[data-build-version="0.3.2"] .fixed-legal-links{
+  display:none!important;
+}
+html[data-build-version="0.3.2"] .status-layout,
+html[data-build-version="0.3.2"] .equip-layout{
+  flex:1 1 auto!important;
+  min-width:0!important;
+  min-height:0!important;
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) minmax(280px,.9fr)!important;
+  gap:12px!important;
+  overflow:hidden!important;
+}
+html[data-build-version="0.3.2"] .status-left,
+html[data-build-version="0.3.2"] .status-right,
+html[data-build-version="0.3.2"] .equip-left,
+html[data-build-version="0.3.2"] .equip-right{
+  min-width:0!important;
+  min-height:0!important;
+  overflow:hidden!important;
+  display:flex!important;
+  flex-direction:column!important;
+}
+html[data-build-version="0.3.2"] .status-special-effects,
+html[data-build-version="0.3.2"] .equip-effect-totals,
+html[data-build-version="0.3.2"] .monster-records{
+  min-height:0!important;
+  overflow:hidden!important;
+  display:flex!important;
+  flex-direction:column!important;
+}
+html[data-build-version="0.3.2"] .status-special-effects{
+  flex:1 1 auto!important;
+  margin-top:10px!important;
+  border-top:1px solid #513917!important;
+  padding-top:8px!important;
+}
+html[data-build-version="0.3.2"] .monster-records,
+html[data-build-version="0.3.2"] .equip-effect-totals{
+  flex:1 1 auto!important;
+  margin-top:0!important;
+  border-left:1px solid #513917!important;
+  padding-left:10px!important;
+}
+html[data-build-version="0.3.2"] .effect-scroll,
+html[data-build-version="0.3.2"] .monster-record-list,
+html[data-build-version="0.3.2"] .equip-left .equip-list,
+html[data-build-version="0.3.2"] .inventory,
+html[data-build-version="0.3.2"] .log{
+  flex:1 1 auto!important;
+  min-height:0!important;
+  max-height:none!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+}
+html[data-build-version="0.3.2"] .inventory-panel.active-page,
+html[data-build-version="0.3.2"] .log-panel.active-page{
+  display:flex!important;
+  flex-direction:column!important;
+}
+@media(min-width:1280px) and (min-height:701px){
+  html[data-build-version="0.3.2"] .layout{grid-template-columns:minmax(820px,1fr) minmax(620px,760px)!important;}
+  html[data-build-version="0.3.2"] #equipToggleBtn{display:none!important;}
+  html[data-build-version="0.3.2"] .side-panel{display:flex!important;position:static!important;width:auto!important;background:none!important;border:0!important;box-shadow:none!important;padding:0!important;}
+}
+@media(max-width:1279px),(max-height:700px){
+  html[data-build-version="0.3.2"] #equipToggleBtn{display:inline-block!important;}
+  html[data-build-version="0.3.2"] .layout{grid-template-columns:1fr!important;}
+  html[data-build-version="0.3.2"] .side-panel{display:none!important;}
+  html[data-build-version="0.3.2"] .side-panel.open{display:flex!important;position:fixed!important;left:8px!important;right:8px!important;top:calc(var(--mbh-topbar-h,58px) + 8px)!important;bottom:8px!important;width:auto!important;max-width:calc(100vw - 16px)!important;z-index:70!important;background:rgba(0,0,0,.94)!important;padding:8px!important;border:2px solid #c99b39!important;box-shadow:0 0 35px #000!important;}
+}
+@media(max-width:640px){
+  html[data-build-version="0.3.2"] .status-layout,
+  html[data-build-version="0.3.2"] .equip-layout{grid-template-columns:1fr!important;overflow-y:auto!important;}
+  html[data-build-version="0.3.2"] .monster-records,
+  html[data-build-version="0.3.2"] .equip-effect-totals{border-left:0!important;padding-left:0!important;border-top:1px solid #513917!important;padding-top:8px!important;margin-top:8px!important;}
+}
