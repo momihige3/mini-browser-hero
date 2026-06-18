@@ -40,7 +40,7 @@ const DEATH_DANCE_CUTINS = [
 ];
 const DARK_SWORD_SAINT_CUTIN = {quote:'私を超えてみせろ。', img:'assets/cutin_dark_sword_dance.png'};
 const DARK_SWORD_TECHNIQUE_CUTIN = {quote:'', img:'assets/cutin_dark_sword_technique.png'};
-const GAME_VERSION = (window.APP_VERSION || '0.1.6');
+const GAME_VERSION = (window.APP_VERSION || '0.1.8');
 window.GAME_VERSION = GAME_VERSION;
 
 const DARK_SWORD_SAINT = {
@@ -831,7 +831,7 @@ function fleeBattle(){
     spawnWeakEnemyAfterEscape();
     return;
   }
-  const nextBase = Math.max(1, currentLevel - 5);
+  const nextBase = Math.max(1, currentLevel - 20);
   state.enemyLevelBase = nextBase;
   state.enemyLevelBaseDefeated = state.defeated || 0;
   state.winStreak = 0;
@@ -846,7 +846,7 @@ function confirmFlee(){
   if(desc){
     desc.innerHTML = isDarkSwordSaint()
       ? '暗黒剣聖は独立レベルのため、逃走しても敵の出現レベルは下がりません。<br>経験値は失いません。'
-      : '敵の出現レベルが5下がります。<br>経験値は失いません。';
+      : '敵の出現レベルが20下がります。<br>経験値は失いません。';
   }
   if(modal) modal.classList.remove('hidden');
 }
@@ -3277,6 +3277,11 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
       <div id="debugBossButtons" class="debug-grid"></div>
       <button id="debugGrantDarkSet" type="button">闇装備7種セット付与</button>
       <div id="debugGrantDarkItems" class="debug-grid"></div>
+      <button id="debugHp0Kill" type="button">HP0即撃破</button>
+      <button id="debugForceDefeated" type="button">dead/defeated即確定</button>
+      <button id="debugClearBleed" type="button">出血・暗黒出血解除</button>
+      <button id="debugStopDot" type="button">DOTタイマー停止</button>
+      <button id="debugStopDarkDance" type="button">暗黒剣舞タイマー停止</button>
       <div id="mbhTraceBox" class="debug-trace-box">
         <div class="debug-trace-title">進行デバッグログ ver.${BUILD}</div>
         <button id="mbhTraceMark" type="button">現在状態を記録</button>
@@ -3349,6 +3354,11 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
     bindBtn('debugResetData', ()=>resetUserData());
     bindBtn('debugDarkSwordSaint', forceNextDarkSaint);
     bindBtn('debugGrantDarkSet', grantDarkSet);
+    bindBtn('debugHp0Kill', ()=>{ if(state.enemy){ state.enemyHp=0; state.enemy.dead=true; state.enemy.defeated=true; safe(()=>enemyDefeated()); } });
+    bindBtn('debugForceDefeated', ()=>{ if(state.enemy){ state.enemyHp=0; state.enemy.dead=true; state.enemy.defeated=true; } safe(()=>enemyDefeated()); });
+    bindBtn('debugClearBleed', clearDots);
+    bindBtn('debugStopDot', clearDots);
+    bindBtn('debugStopDarkDance', stopDarkDanceTimers);
     const showEnemyStatsBox = byId('debugShowEnemyStats'); if(showEnemyStatsBox) showEnemyStatsBox.checked = !!(state.debug && state.debug.showEnemyStats);
     bindBtn('debugClose', ()=>{ if(panel) panel.classList.add('hidden'); });
     if(panel){
@@ -4574,7 +4584,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* ver.0.1.3: strong/named variants, drop source, quality/luck bonuses, deathdance count-only reset補強 */
 (function(){
   'use strict';
-  const APP_VERSION = '0.1.6';
+  const APP_VERSION = '0.1.8';
   const PREFIXES = ['狡猾な','獰猛な','蛮勇な','エリート','頂点の','原点の','キラー'];
   function safe(fn){ try{return fn();}catch(e){ console.error('[MBH 0.1.3]', e); } }
   function syncVersion9959(){
@@ -4710,7 +4720,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
             state.enemyStatuses.namedRegenLast += ticks*1000;
             const heal = Math.max(1, Math.floor(state.enemy.maxHp * 0.02 * ticks));
             state.enemyHp = Math.min(state.enemy.maxHp, state.enemyHp + heal);
-            if(typeof showFloat === 'function') showFloat(`+${heal.toLocaleString()}`, 'heal');
+            if(typeof showFloat === 'function') showFloat(`異名再生 +${heal.toLocaleString()}`, 'heal named-regen');
             if(typeof renderBattle === 'function') renderBattle();
           }
         }
@@ -4859,7 +4869,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* ver.0.1.3: 敵防御を軽減式へ変更、敵レベル経験値制御、Lv100までの戦闘テンポ調整 */
 (function(){
   'use strict';
-  const APP_VERSION = '0.1.6';
+  const APP_VERSION = '0.1.8';
   const ENEMY_LEVEL_XP_KEY = 'mini-browser-hero-enemy-level-xp-v9960';
   const ENEMY_LEVEL_XP_NEXT = 1000;
   function safe(fn){ try{return fn();}catch(e){ console.error('[MBH 0.1.3]', e); } }
@@ -5087,7 +5097,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* ver.0.1.3: 敵Lv経験値完全固定 + 敵攻撃を防御軽減式へ変更 */
 (function(){
   'use strict';
-  const APP_VERSION = '0.1.6';
+  const APP_VERSION = '0.1.8';
   const ENEMY_LEVEL_XP_KEY_NEW = 'mini-browser-hero-enemy-level-xp-v9961';
   const ENEMY_LEVEL_XP_KEY_OLD = 'mini-browser-hero-enemy-level-xp-v9960';
   const ENEMY_LEVEL_XP_NEXT = 1000;
@@ -5311,7 +5321,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* ver.0.1.3: 暗黒剣聖の独立Lv表示 + 主人公必要経験値固定 */
 (function(){
   'use strict';
-  const APP_VERSION = '0.1.6';
+  const APP_VERSION = '0.1.8';
   const HERO_XP_NEXT_FIXED = 40;
   function safe(fn){ try{return fn();}catch(e){ console.error('[MBH 0.1.3]', e); } }
   function syncVersion9962(){
@@ -5422,7 +5432,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* ver.0.1.3 hotfix: hero debug stats, dark equipment list visibility, low-level enemy HP trim */
 (function(){
   'use strict';
-  const APP_VERSION = '0.1.6';
+  const APP_VERSION = '0.1.8';
   function safe(fn){ try{return fn();}catch(e){ console.error('[MBH 0.1.3 hotfix]', e); } }
   function esc(s){ return (typeof escapeHtml === 'function') ? escapeHtml(s) : String(s).replace(/[&<>"']/g, ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
   function pct(v){ return Math.round((Number(v)||0)*100)+'%'; }
@@ -5562,7 +5572,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* ver.0.1.3: 装備名・接頭辞・説明文を実効果へ統一 */
 (function(){
   'use strict';
-  const APP_VERSION = '0.1.6';
+  const APP_VERSION = '0.1.8';
   const DARK_FIXED_NAMES = new Set(['闇の聖剣','闇の盾','闇のアミュレット','闇の鎧','闇の籠手','闇の兜','暗黒の靴']);
   const DARK_NAME_BY_SLOT = { '武器':'闇の聖剣', '盾':'闇の盾', 'アミュレット':'闇のアミュレット', '鎧':'闇の鎧', '腕':'闇の籠手', '兜':'闇の兜', '足':'暗黒の靴' };
   const BASE_BY_SLOT = { '武器':'剣', '盾':'盾', '兜':'兜', '鎧':'鎧', '腕':'腕甲', '足':'ブーツ', 'リング':'リング', 'アミュレット':'アミュレット' };
@@ -5746,7 +5756,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* ver.0.1.3: final XP single-source correction */
 (function(){
   'use strict';
-  const APP_VERSION = '0.1.6';
+  const APP_VERSION = '0.1.8';
   const HERO_XP_NEXT = 1000;
   function safe(fn){ try{ return fn && fn(); }catch(e){ console.warn('[MBH 0.1.3 final]', e); } }
   function syncFinalVersion(){
@@ -5813,7 +5823,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* ver.APP_VERSION: variant badge/regen float/legal links visibility final fix */
 (function(){
   'use strict';
-  const APP_VERSION = '0.1.6';
+  const APP_VERSION = '0.1.8';
   function safe(fn){ try{ return fn && fn(); }catch(e){ console.warn('[MBH variant/legal fix]', e); return null; } }
   function syncVersion012(){
     safe(()=>{ window.APP_VERSION = APP_VERSION; window.GAME_VERSION = APP_VERSION; document.documentElement.dataset.buildVersion = APP_VERSION; });
@@ -5903,7 +5913,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* ver.0.1.3: variant buff list, named regen position, legal links only inside menu, boss low-level tuning, BGM accidental-stop guard */
 (function(){
   'use strict';
-  const BUILD = (window.APP_VERSION || window.GAME_VERSION || '0.1.3');
+  const BUILD = (window.APP_VERSION || window.GAME_VERSION || '0.1.8');
   function safe(fn){ try{return fn && fn();}catch(e){ console.error('[MBH0.1.3]', e); return null; } }
   function syncVersion013(){
     window.APP_VERSION = BUILD;
@@ -6064,774 +6074,320 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 
 
 
-/* ver.0.1.6: debug enemy controls, named regen display, flee level -5 */
+/* ver.0.1.8: single version lock + definitive menu + debug controls + log/status/footer fixes */
 (function(){
   'use strict';
-  const APP_VERSION = '0.1.6';
-  function safe(fn){ try{ return fn && fn(); }catch(e){ console.error('[MBH0.1.6]', e); return null; } }
-  const byId = (id)=>document.getElementById(id);
-  function syncVersion014(){
-    safe(()=>{ window.APP_VERSION = APP_VERSION; window.GAME_VERSION = APP_VERSION; document.documentElement.dataset.buildVersion = APP_VERSION; });
-    safe(()=>{ document.querySelectorAll('.build-version,[data-version],#versionText,.version-badge').forEach(el=>{ el.textContent='ver.'+APP_VERSION; }); });
-    safe(()=>{ document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent='Build: ver.'+APP_VERSION; }); });
-    safe(()=>{ document.querySelectorAll('.debug-trace-title').forEach(el=>{ el.textContent='進行デバッグログ ver.'+APP_VERSION; }); });
+  const APP_VERSION = '0.1.8';
+  const $id = (id)=>document.getElementById(id);
+  const safe = (fn)=>{ try{ return fn && fn(); }catch(e){ console.error('[MBH0.1.8]', e); return null; } };
+
+  function syncVersion018(){
+    window.APP_VERSION = APP_VERSION;
+    window.GAME_VERSION = APP_VERSION;
+    document.documentElement.dataset.buildVersion = APP_VERSION;
+    document.querySelectorAll('.build-version,[data-version],#versionText,.version-badge').forEach(el=>{ el.textContent = 'ver.' + APP_VERSION; });
+    document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent = 'Build: ver.' + APP_VERSION; });
+    document.querySelectorAll('.debug-trace-title').forEach(el=>{ el.textContent = '進行デバッグログ ver.' + APP_VERSION; });
   }
 
-  function currentEnemyLevel014(){
-    return Math.max(1, Math.floor(Number(state?.enemyLevelBase || state?.enemy?.level || state?.level || 1) || 1));
-  }
-  function setEnemyLevel014(lv){
-    const next = Math.max(1, Math.floor(Number(lv)||1));
-    state.enemyLevelBase = next;
-    state.enemyLevelBaseDefeated = Math.max(0, Math.floor(Number(state.defeated)||0));
-    state.debugEnemyLevelOverride = next;
-    safe(()=>scheduleSave());
-    safe(()=>renderDebugLevel014());
-    if(typeof log === 'function') log(`デバッグ：敵出現レベルをLv.${next}に設定。`, 'system');
-  }
-  function addEnemyLevel014(delta){ setEnemyLevel014(currentEnemyLevel014() + delta); }
-  function toggleEnemyLevelLock014(){
-    state.debugEnemyLevelLocked = !state.debugEnemyLevelLocked;
-    if(state.debugEnemyLevelLocked) state.debugEnemyLevelOverride = currentEnemyLevel014();
-    safe(()=>scheduleSave());
-    safe(()=>renderDebugLevel014());
-    if(typeof log === 'function') log(`デバッグ：敵出現レベル固定 ${state.debugEnemyLevelLocked?'ON':'OFF'}`, 'system');
-  }
-  function renderDebugLevel014(){
-    const label = byId('debugEnemyLevelNow');
-    if(label) label.textContent = `現在設定：Lv.${currentEnemyLevel014()} / 固定：${state.debugEnemyLevelLocked?'ON':'OFF'}`;
-    const input = byId('debugEnemyLevelInput');
-    if(input && document.activeElement !== input) input.value = String(currentEnemyLevel014());
-    const lockBtn = byId('debugEnemyLevelLock');
-    if(lockBtn) lockBtn.textContent = `敵出現レベル固定 ${state.debugEnemyLevelLocked?'ON':'OFF'}`;
-  }
-
-  function forceNextVariant014(type){
-    state.debugNextVariant = type;
-    state.forceNextDarkSwordSaint = false;
-    if(typeof log === 'function') log(`デバッグ：次の敵を${type==='named'?'異名持ち':'強個体'}にセット。`, 'system');
-    safe(()=>scheduleSave());
-  }
-  function isVariantTarget014(e){
-    if(!e) return false;
-    if(e.id === 'dark_sword_saint') return false;
-    return e.type === '雑魚';
-  }
-  function applyForcedVariant014(e, type){
-    if(!isVariantTarget014(e) || !type) return e;
-    const baseName = String(e.baseName || e.name || '敵').replace(/^(紅蓮の|古の|暴食の|影踏みの|星砕きの|不死身の|雷鳴の|深淵の)/,'');
-    e.baseName = baseName;
-    if(type === 'named'){
-      const prefixes = ['紅蓮の','古の','暴食の','影踏みの','星砕きの','不死身の','雷鳴の','深淵の'];
-      const prefix = prefixes[Math.floor(Math.random()*prefixes.length)] || '異名の';
-      e.variant = {type:'named', label:'異名持ち', prefix};
-      e.variantType = 'named';
-      e.name = `${prefix}${baseName}`;
-      e.maxHp = Math.max(1, Math.floor((Number(e.maxHp)||1) * 2.0));
-      e.atk = Math.max(1, Math.floor((Number(e.atk)||1) * 1.25));
-      e.def = Math.max(0, Math.floor((Number(e.def)||0) * 1.10));
-    }else{
-      e.variant = {type:'strong', label:'強個体'};
-      e.variantType = 'strong';
-      e.name = baseName;
-      e.maxHp = Math.max(1, Math.floor((Number(e.maxHp)||1) * 1.5));
-      e.atk = Math.max(1, Math.floor((Number(e.atk)||1) * 1.10));
-    }
-    return e;
-  }
-
-  if(typeof makeScaledEnemy === 'function' && !window.__mbhMakeScaledEnemy014){
-    window.__mbhMakeScaledEnemy014 = makeScaledEnemy;
-    makeScaledEnemy = function(base, forceLevel=null){
-      const locked = !!(state && state.debugEnemyLevelLocked) && base && base.id !== 'dark_sword_saint';
-      const lockedLv = Math.max(1, Math.floor(Number(state.debugEnemyLevelOverride || state.enemyLevelBase || state.enemy?.level || state.level || 1) || 1));
-      const forcedVariant = state ? state.debugNextVariant : null;
-      let oldRandom = null;
-      if(forcedVariant){
-        oldRandom = Math.random;
-        Math.random = function(){ return 0.999999; };
+  function injectStyle018(){
+    let st = $id('mbh-018-style');
+    if(st) return;
+    st = document.createElement('style');
+    st.id = 'mbh-018-style';
+    st.textContent = `
+      html.mbh018-menu-ready .layout{grid-template-columns:1fr!important;}
+      html.mbh018-menu-ready .side-panel{display:none!important;pointer-events:none!important;}
+      html.mbh018-menu-ready .side-panel.open{
+        display:grid!important;pointer-events:auto!important;position:fixed!important;
+        left:10px!important;right:10px!important;top:68px!important;bottom:10px!important;
+        width:auto!important;min-width:0!important;z-index:70000!important;
+        background:rgba(0,0,0,.94)!important;padding:10px!important;border:2px solid #c99b39!important;
+        box-shadow:0 0 35px #000!important;grid-template-columns:minmax(250px,.9fr) minmax(340px,1.1fr)!important;
+        grid-template-rows:auto minmax(0,1fr) auto!important;gap:10px!important;overflow:hidden!important;
       }
-      let e;
-      try{
-        e = window.__mbhMakeScaledEnemy014.call(this, base, locked ? lockedLv : forceLevel);
-      }finally{
-        if(oldRandom) Math.random = oldRandom;
+      html.mbh018-menu-ready .side-panel.open .mobile-menu-tabs{display:flex!important;grid-column:1 / -1!important;}
+      html.mbh018-menu-ready .side-panel.open .legal-links{grid-column:1 / -1!important;display:flex!important;position:static!important;flex:0 0 auto!important;margin:0!important;padding:8px!important;border-top:1px solid #6d4d1a!important;background:rgba(12,8,4,.96)!important;z-index:auto!important;box-shadow:none!important;}
+      html.mbh018-menu-ready .side-panel:not(.open) .legal-links{display:none!important;}
+      html.mbh018-menu-ready .side-panel.open .menu-left{grid-column:1!important;grid-row:2!important;min-height:0!important;overflow:hidden!important;}
+      html.mbh018-menu-ready .side-panel.open .menu-right{grid-column:2!important;grid-row:2!important;min-height:0!important;overflow:hidden!important;grid-template-rows:minmax(0,1fr) 190px!important;}
+      @media(max-width:760px), (orientation:portrait){
+        html.mbh018-menu-ready .side-panel.open{grid-template-columns:1fr!important;grid-template-rows:auto minmax(0,1fr) auto!important;overflow:auto!important;-webkit-overflow-scrolling:touch!important;}
+        html.mbh018-menu-ready .side-panel.open .menu-left,html.mbh018-menu-ready .side-panel.open .menu-right{grid-column:1!important;grid-row:auto!important;display:block!important;overflow:visible!important;}
+        html.mbh018-menu-ready .side-panel.open .panel{display:none!important;}
+        html.mbh018-menu-ready .side-panel.open .panel.active-page{display:block!important;}
+        html.mbh018-menu-ready .side-panel.open .inventory-panel.active-page{display:flex!important;}
+        html.mbh018-menu-ready .side-panel.open .legal-links{grid-column:1!important;}
       }
-      if(forcedVariant && isVariantTarget014(e)){
-        applyForcedVariant014(e, forcedVariant);
-        state.debugNextVariant = null;
-        safe(()=>scheduleSave());
-        if(typeof log === 'function') log(`デバッグ：${forcedVariant==='named'?'異名持ち':'強個体'}として出現確定。`, 'system');
-      }
-      return e;
-    };
+      .mbh018-debug-row{display:grid!important;grid-template-columns:1fr 1fr!important;gap:6px!important;}
+      .mbh018-debug-row button{min-width:0!important;}
+      #statEnemyLevelXpLabel,#statEnemyLevelXp,.stat-enemy-level-xp,.enemy-level-xp-row{display:none!important;}
+    `;
+    document.head.appendChild(st);
   }
 
-  if(typeof showFloat === 'function' && !window.__mbhShowFloat014){
-    window.__mbhShowFloat014 = showFloat;
-    showFloat = function(text, cls='damage'){
-      let t = String(text || '');
-      let c = String(cls || 'damage');
-      const m = t.match(/異名再生\s*\+?([0-9,]+)/);
-      if(m){
-        t = '+' + m[1];
-        c = 'heal';
-      }
-      return window.__mbhShowFloat014.call(this, t, c);
-    };
-  }
-
-  function darkNames014(){ return ['闇の聖剣','闇の盾','闇のアミュレット','闇の鎧','闇の籠手','闇の兜','暗黒の靴']; }
-  function makeDarkByName014(name){
-    const n = Math.max(1, Math.floor(Number(state?.enemy?.level || state?.enemyLevelBase || state?.level || 1)));
-    if(name==='闇の聖剣' && typeof makeDarkHolySword==='function') return makeDarkHolySword(n);
-    if(name==='闇の盾' && typeof makeDarkShield==='function') return makeDarkShield(n);
-    if(name==='闇のアミュレット' && typeof makeDarkAmulet==='function') return makeDarkAmulet(n);
-    if(name==='闇の鎧' && typeof makeDarkArmor==='function') return makeDarkArmor(n);
-    if(name==='闇の籠手' && typeof makeDarkGauntlets==='function') return makeDarkGauntlets(n);
-    if(name==='闇の兜' && typeof makeDarkHelm==='function') return makeDarkHelm(n);
-    if(name==='暗黒の靴' && typeof makeDarkBoots==='function') return makeDarkBoots(n);
-    return null;
-  }
-  function grantDark014(name){
-    const it = makeDarkByName014(name);
-    if(!it) return;
-    state.inventory.unshift(it);
-    safe(()=>renderAll()); safe(()=>scheduleSave());
-    if(typeof log === 'function') log(`デバッグ：${name}を倉庫に追加。`, 'drop');
-  }
-  function grantDarkSet014(){
-    darkNames014().slice().reverse().forEach(n=>{ const it=makeDarkByName014(n); if(it) state.inventory.unshift(it); });
-    safe(()=>renderAll()); safe(()=>scheduleSave());
-    if(typeof log === 'function') log('デバッグ：闇装備7種を倉庫に追加。', 'drop');
-  }
-  function forceNextDarkSaint014(){
-    state.forceNextDarkSwordSaint = true;
-    state.debugForcedBossNext = null;
-    state.debugNextVariant = null;
-    safe(()=>scheduleSave());
-    if(typeof log === 'function') log('デバッグ：暗黒剣聖を次の敵にセット。', 'system');
-  }
-  function forceNextBoss014(id){
-    const boss = (typeof ENEMIES !== 'undefined' ? ENEMIES : []).find(e=>e && e.id===id);
-    if(!boss) return;
-    const lv = currentEnemyLevel014();
-    state.debugForcedBossNext = {id:boss.id, level:lv, debug:true};
-    state.pendingBossForNext = null;
-    state.forceNextDarkSwordSaint = false;
-    state.debugNextVariant = null;
-    safe(()=>scheduleSave());
-    if(typeof log === 'function') log(`デバッグ：${boss.name}Lv.${lv}を次の敵にセット。`, 'system');
-  }
-
-  function rebuildDebugPanel014(){
-    const panel = byId('debugPanel');
+  function setMenuOpen018(open){
+    const panel = (typeof els !== 'undefined' && els.sidePanel) ? els.sidePanel : document.querySelector('.side-panel');
+    const btn = $id('equipToggleBtn');
     if(!panel) return;
-    panel.innerHTML = `
-      <div class="debug-head">デバッグ</div>
-      <div class="debug-subhead">敵操作</div>
+    const flag = !!open;
+    if(typeof state !== 'undefined') state.uiOpen = flag;
+    panel.classList.toggle('open', flag);
+    panel.style.pointerEvents = flag ? 'auto' : 'none';
+    document.documentElement.classList.add('mbh018-menu-ready');
+    if(btn){
+      const compact = (typeof isSpPortrait === 'function' && isSpPortrait());
+      btn.textContent = flag ? (compact ? '×' : '閉じる') : (compact ? '☰' : 'メニュー');
+      btn.setAttribute('aria-expanded', flag ? 'true' : 'false');
+    }
+    safe(()=>{ if(flag && typeof setMenuPage === 'function') setMenuPage((state && state.menuPage) || 'stats'); });
+  }
+
+  function installMenu018(){
+    injectStyle018();
+    const old = $id('equipToggleBtn');
+    const panel = (typeof els !== 'undefined' && els.sidePanel) ? els.sidePanel : document.querySelector('.side-panel');
+    if(!old || !panel) return;
+    if(!old.__mbh018Replaced){
+      const btn = old.cloneNode(true);
+      btn.id = 'equipToggleBtn';
+      btn.__mbh018Replaced = true;
+      old.parentNode.replaceChild(btn, old);
+      if(typeof els !== 'undefined') els.equipToggleBtn = btn;
+      const toggle = (e)=>{
+        if(e){ e.preventDefault(); e.stopPropagation(); }
+        safe(()=>{ if(typeof startAudio === 'function') startAudio(); });
+        safe(()=>{ if(typeof playUiClick === 'function') playUiClick(); });
+        const isOpen = panel.classList.contains('open');
+        setMenuOpen018(!isOpen);
+        return false;
+      };
+      btn.addEventListener('click', toggle, {capture:true});
+      btn.addEventListener('pointerup', (e)=>{ if(e.pointerType && e.pointerType !== 'mouse') toggle(e); }, {capture:true, passive:false});
+      btn.addEventListener('touchend', toggle, {capture:true, passive:false});
+    }
+    setMenuOpen018(false);
+  }
+
+  function ensureLegalFooter018(){
+    const panel = (typeof els !== 'undefined' && els.sidePanel) ? els.sidePanel : document.querySelector('.side-panel');
+    if(!panel) return;
+    const fixed = $id('fixedLegalLinks');
+    if(fixed) fixed.remove();
+    let box = panel.querySelector(':scope > .legal-links') || panel.querySelector('.legal-links');
+    if(!box){
+      box = document.createElement('div');
+      box.className = 'legal-links';
+      box.setAttribute('aria-label','公開情報');
+      box.innerHTML = '<button id="creditBtn" type="button">クレジット</button><button id="termsBtn" type="button">利用規約</button><button id="privacyBtn" type="button">プライバシーポリシー</button>';
+      panel.appendChild(box);
+    }else if(box.parentElement !== panel){
+      panel.appendChild(box);
+    }
+    box.classList.remove('hidden');
+    const bind = (id,type)=>{
+      const btn = $id(id) || box.querySelector('#'+id);
+      if(!btn || btn.__mbh018Legal) return;
+      btn.__mbh018Legal = true;
+      btn.addEventListener('click', (e)=>{ e.preventDefault(); e.stopPropagation(); safe(()=>playUiClick()); safe(()=>openLegalModal(type)); }, {capture:true});
+    };
+    bind('creditBtn','credit'); bind('termsBtn','terms'); bind('privacyBtn','privacy');
+  }
+
+  function removeStatusDebug018(){
+    ['debugHp0Kill','debugForceDefeated','debugClearBleed','debugStopDot','debugStopDarkDance'].forEach(id=>{ const el=$id(id); if(el) el.remove(); });
+  }
+
+  function installDebug018(){
+    const panel = $id('debugPanel');
+    if(!panel) return;
+    removeStatusDebug018();
+    if($id('mbh018EnemyDebug')) return;
+    const box = document.createElement('div');
+    box.id = 'mbh018EnemyDebug';
+    box.className = 'mbh018-debug-box';
+    box.innerHTML = `
+      <div class="debug-head">敵操作 ver.${APP_VERSION}</div>
       <button id="debugNextStrong" type="button">次の敵を強個体</button>
       <button id="debugNextNamed" type="button">次の敵を異名持ち</button>
-      <button id="debugDarkSwordSaint" type="button">暗黒剣聖を次の敵にセット</button>
-      <div class="debug-subhead">敵出現レベル</div>
-      <div id="debugEnemyLevelNow" class="debug-note"></div>
-      <div class="debug-grid">
-        <button type="button" data-enemy-level-delta="-10">Lv -10</button>
-        <button type="button" data-enemy-level-delta="-5">Lv -5</button>
-        <button type="button" data-enemy-level-delta="5">Lv +5</button>
-        <button type="button" data-enemy-level-delta="10">Lv +10</button>
+      <div class="mbh018-debug-row">
+        <button id="debugEnemyLvMinus10" type="button">敵Lv -10</button>
+        <button id="debugEnemyLvMinus5" type="button">敵Lv -5</button>
+        <button id="debugEnemyLvPlus5" type="button">敵Lv +5</button>
+        <button id="debugEnemyLvPlus10" type="button">敵Lv +10</button>
       </div>
-      <div class="debug-level-row"><input id="debugEnemyLevelInput" type="number" min="1" step="1"><button id="debugEnemyLevelApply" type="button">Lv適用</button></div>
-      <button id="debugEnemyLevelLock" type="button">敵出現レベル固定 OFF</button>
-      <div class="debug-subhead">次のボスを指定</div>
-      <div id="debugBossButtons" class="debug-grid">
-        <button type="button" data-boss-next="slime_king">スライムキング</button>
-        <button type="button" data-boss-next="orc">オーク</button>
-        <button type="button" data-boss-next="dragon">ドラゴン</button>
-        <button type="button" data-boss-next="fire_king">火の精霊王</button>
-      </div>
-      <div class="debug-subhead">装備</div>
-      <button id="debugAddChests" type="button">装備+50</button>
-      <button id="debugGrantDarkSet" type="button">闇装備7種セット付与</button>
-      <div id="debugGrantDarkItems" class="debug-grid">${darkNames014().map(n=>`<button type="button" data-dark-grant="${n}">${n}</button>`).join('')}</div>
-      <div class="debug-subhead">その他</div>
-      <button id="debugResetData" type="button">ユーザーデータリセット</button>
-      <div id="mbhTraceBox" class="debug-trace-box">
-        <div class="debug-trace-title">進行デバッグログ ver.${APP_VERSION}</div>
-        <button id="mbhTraceMark" type="button">現在状態を記録</button>
-        <button id="mbhTraceCopy" type="button">ログコピー</button>
-        <button id="mbhTraceDownload" type="button">DL</button>
-        <button id="mbhTraceClear" type="button">消去</button>
-        <pre id="mbhTraceOut" class="debug-trace-output"></pre>
-      </div>
-      <label><input id="debugShowEnemyStats" type="checkbox"> 敵ATK/DEF表示</label>
-      <label><input id="debugKillEnemy" type="checkbox"> 敵への攻撃で即死</label>
-      <label><input id="debugKillHero" type="checkbox"> 敵からの攻撃で即死</label>
-      <div class="debug-version">Build: ver.${APP_VERSION}</div>
-      <button id="debugClose" type="button">閉じる</button>`;
-  }
-
-  function bindDebugPanel014(){
-    rebuildDebugPanel014();
-    const panel = byId('debugPanel');
-    if(!panel) return;
-    const bind = (id, fn)=>{ const b=byId(id); if(b) b.onclick=(e)=>{ e.preventDefault(); e.stopPropagation(); safe(fn); return false; }; };
-    bind('debugNextStrong', ()=>forceNextVariant014('strong'));
-    bind('debugNextNamed', ()=>forceNextVariant014('named'));
-    bind('debugDarkSwordSaint', forceNextDarkSaint014);
-    bind('debugAddChests', ()=>{ for(let i=0;i<50;i++) state.inventory.unshift(makeRandomItem()); safe(()=>renderAll()); safe(()=>scheduleSave()); if(typeof log==='function') log('デバッグ：装備を50個追加。','drop'); });
-    bind('debugGrantDarkSet', grantDarkSet014);
-    bind('debugResetData', ()=>resetUserData());
-    bind('debugEnemyLevelApply', ()=>setEnemyLevel014(byId('debugEnemyLevelInput')?.value));
-    bind('debugEnemyLevelLock', toggleEnemyLevelLock014);
-    bind('debugClose', ()=>{ panel.classList.add('hidden'); });
-    if(byId('debugShowEnemyStats')) byId('debugShowEnemyStats').checked = !!(state.debug && state.debug.showEnemyStats);
-    panel.addEventListener('click', (e)=>{
-      const deltaBtn = e.target.closest('[data-enemy-level-delta]');
-      if(deltaBtn){ e.preventDefault(); e.stopPropagation(); addEnemyLevel014(Number(deltaBtn.dataset.enemyLevelDelta)||0); return false; }
-      const darkBtn = e.target.closest('[data-dark-grant]');
-      if(darkBtn){ e.preventDefault(); e.stopPropagation(); grantDark014(darkBtn.dataset.darkGrant); return false; }
-      const bossBtn = e.target.closest('[data-boss-next]');
-      if(bossBtn){ e.preventDefault(); e.stopPropagation(); forceNextBoss014(bossBtn.dataset.bossNext); return false; }
-    }, {capture:true});
-    panel.addEventListener('change', (e)=>{
-      if(e.target && e.target.id==='debugShowEnemyStats'){ state.debug.showEnemyStats = !!e.target.checked; safe(()=>renderBattle()); safe(()=>scheduleSave()); }
-      if(e.target && e.target.id==='debugKillEnemy'){ state.debug.killEnemy = !!e.target.checked; safe(()=>scheduleSave()); }
-      if(e.target && e.target.id==='debugKillHero'){ state.debug.killHero = !!e.target.checked; safe(()=>scheduleSave()); }
-    });
-    if(typeof bindTrace === 'function') safe(()=>bindTrace());
-    renderDebugLevel014();
-  }
-
-  function boot014(){
-    syncVersion014();
-    bindDebugPanel014();
-    renderDebugLevel014();
-  }
-  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot014, {once:true}); else setTimeout(boot014, 0);
-  window.addEventListener('load', boot014, {once:true});
-  setInterval(()=>safe(()=>{ syncVersion014(); renderDebugLevel014(); }), 1000);
-})();
-
-
-/* ver.0.1.6: version display hard-lock */
-(function(){
-  'use strict';
-  const APP_VERSION = '0.1.6';
-  function syncVersion014(){
-    try{
-      window.APP_VERSION = APP_VERSION;
-      window.GAME_VERSION = APP_VERSION;
-      document.documentElement.dataset.buildVersion = APP_VERSION;
-      document.documentElement.setAttribute('data-build-version', APP_VERSION);
-      document.querySelectorAll('.build-version,[data-version],#versionText,.version-badge').forEach(el=>{ el.textContent = 'ver.' + APP_VERSION; });
-      document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent = 'Build: ver.' + APP_VERSION; });
-      const tt = document.querySelector('#mbhTraceBox .debug-trace-title');
-      if(tt) tt.textContent = '進行デバッグログ ver.' + APP_VERSION;
-    }catch(e){ console.warn('[MBH 0.1.6 version-lock]', e); }
-  }
-  syncVersion014();
-  document.addEventListener('DOMContentLoaded', syncVersion014);
-  window.addEventListener('load', syncVersion014);
-  setTimeout(syncVersion014, 0);
-  setTimeout(syncVersion014, 250);
-  setTimeout(syncVersion014, 1000);
-})();
-
-
-/* ver.0.1.6: final menu footer / log filter / status XP cleanup */
-(function(){
-  'use strict';
-  const APP_VERSION = '0.1.6';
-  const byId = (id)=>document.getElementById(id);
-  function safe(fn){ try{ return fn && fn(); }catch(e){ console.warn('[MBH0.1.6 final-fix]', e); return null; } }
-  function esc(v){ return (typeof escapeHtml === 'function') ? escapeHtml(v) : String(v).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-
-  function syncVersionFinal014(){
-    safe(()=>{
-      window.APP_VERSION = APP_VERSION;
-      window.GAME_VERSION = APP_VERSION;
-      document.documentElement.dataset.buildVersion = APP_VERSION;
-      document.documentElement.setAttribute('data-build-version', APP_VERSION);
-      document.querySelectorAll('.build-version,[data-version],#versionText,.version-badge').forEach(el=>{ el.textContent='ver.'+APP_VERSION; });
-      document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent='Build: ver.'+APP_VERSION; });
-      document.querySelectorAll('.debug-trace-title').forEach(el=>{ el.textContent='進行デバッグログ ver.'+APP_VERSION; });
-    });
-  }
-
-  function installFooterCss014(){
-    if(byId('mbh014-footer-log-status-css')) return;
-    const st = document.createElement('style');
-    st.id = 'mbh014-footer-log-status-css';
-    st.textContent = `
-      #fixedLegalLinks{display:none!important;}
-      .side-panel{min-height:0!important;}
-      .side-panel .legal-links{
-        position:static!important;
-        left:auto!important;right:auto!important;top:auto!important;bottom:auto!important;
-        transform:none!important;
-        width:100%!important;
-        margin-top:auto!important;
-        flex:0 0 auto!important;
-        box-sizing:border-box!important;
-        z-index:1!important;
-        border-top:1px solid rgba(201,155,57,.55)!important;
-        border-left:1px solid rgba(201,155,57,.35)!important;
-        border-right:1px solid rgba(201,155,57,.35)!important;
-        border-bottom:1px solid rgba(201,155,57,.35)!important;
-        background:rgba(8,6,4,.88)!important;
-      }
-      @media (min-width:761px){
-        .side-panel{display:flex!important;flex-direction:column!important;overflow:hidden!important;}
-        .side-panel .side-tabs,.side-panel .mobile-menu-tabs{flex:0 0 auto!important;}
-        .side-panel .menu-col,.side-panel .menu-left,.side-panel .menu-right{display:contents!important;}
-        .side-panel .panel.active-page{flex:1 1 auto!important;min-height:0!important;overflow:auto!important;}
-        .side-panel .inventory-panel.active-page{display:flex!important;flex-direction:column!important;}
-        .side-panel .log-panel.active-page{display:flex!important;flex-direction:column!important;}
-        .side-panel .log-panel.active-page #log{flex:1 1 auto!important;min-height:0!important;height:auto!important;}
-      }
-      @media (max-width:760px), (orientation:portrait){
-        .side-panel.open{display:flex!important;flex-direction:column!important;overflow:hidden!important;}
-        .side-panel.open .side-tabs,.side-panel.open .mobile-menu-tabs{flex:0 0 auto!important;}
-        .side-panel.open .panel.active-page{flex:1 1 auto!important;min-height:0!important;overflow:auto!important;}
-        .side-panel.open .inventory-panel.active-page{display:flex!important;flex-direction:column!important;}
-        .side-panel.open .log-panel.active-page{display:flex!important;flex-direction:column!important;}
-        .side-panel.open .log-panel.active-page #log{flex:1 1 auto!important;min-height:0!important;height:auto!important;}
-        .side-panel:not(.open) .legal-links{display:none!important;}
-      }
+      <button id="debugEnemyLvFix" type="button">敵Lv固定 OFF</button>
     `;
-    document.head.appendChild(st);
+    const anchor = $id('debugDarkSwordSaint') || panel.firstChild;
+    if(anchor && anchor.parentNode) anchor.parentNode.insertBefore(box, anchor.nextSibling); else panel.prepend(box);
+
+    function log018(msg, cls='system'){ safe(()=>log(msg, cls)); }
+    function setNext(kind){
+      if(typeof state === 'undefined') return;
+      state.debugNextEnemyVariant = kind;
+      log018(`デバッグ：次の敵を${kind === 'named' ? '異名持ち' : '強個体'}に設定。`, 'system');
+      safe(()=>scheduleSave());
+    }
+    function addLv(delta){
+      if(typeof state === 'undefined') return;
+      const before = Math.max(1, Math.floor(Number(state.enemyLevelBase || state.enemy?.level || state.level || 1)));
+      state.enemyLevelBase = Math.max(1, before + delta);
+      state.enemyLevelBaseDefeated = Math.max(0, Math.floor(Number(state.defeated)||0));
+      log018(`デバッグ：敵出現Lv ${before}→${state.enemyLevelBase}`, 'system');
+      safe(()=>renderAll()); safe(()=>scheduleSave());
+    }
+    const bind=(id,fn)=>{ const b=$id(id); if(b) b.onclick=(e)=>{ e.preventDefault(); e.stopPropagation(); safe(()=>playUiClick()); fn(); return false; }; };
+    bind('debugNextStrong',()=>setNext('strong'));
+    bind('debugNextNamed',()=>setNext('named'));
+    bind('debugEnemyLvMinus10',()=>addLv(-10));
+    bind('debugEnemyLvMinus5',()=>addLv(-5));
+    bind('debugEnemyLvPlus5',()=>addLv(5));
+    bind('debugEnemyLvPlus10',()=>addLv(10));
+    bind('debugEnemyLvFix',()=>{
+      if(typeof state === 'undefined') return;
+      state.debugEnemyLevelFixed = !state.debugEnemyLevelFixed;
+      const b=$id('debugEnemyLvFix');
+      if(b) b.textContent = `敵Lv固定 ${state.debugEnemyLevelFixed ? 'ON' : 'OFF'}`;
+      log018(`デバッグ：敵Lv固定 ${state.debugEnemyLevelFixed ? 'ON' : 'OFF'}`, 'system');
+      safe(()=>scheduleSave());
+    });
   }
 
-  function syncLegalFooter014(){
-    safe(()=>{
-      document.querySelectorAll('#fixedLegalLinks,.fixed-legal-links').forEach(el=>el.remove());
-      const panel = (typeof els !== 'undefined' && els.sidePanel) ? els.sidePanel : document.querySelector('.side-panel');
-      if(!panel) return;
-      let box = panel.querySelector(':scope > .legal-links') || panel.querySelector('.legal-links');
-      if(!box){
-        box = document.createElement('div');
-        box.className = 'legal-links';
-        box.setAttribute('aria-label','公開情報');
-        box.innerHTML = '<button id="creditBtn" type="button">クレジット</button><button id="termsBtn" type="button">利用規約</button><button id="privacyBtn" type="button">プライバシーポリシー</button>';
+  function applyVariant018(e, kind){
+    if(!e || !kind || e.id === 'dark_sword_saint') return e;
+    e.variant = { type: kind, label: kind === 'named' ? '異名持ち' : '強個体' };
+    e.variantType = kind;
+    if(kind === 'named' && !/^.+の/.test(e.name)) e.name = '異名の' + e.name;
+    return e;
+  }
+  if(typeof setEnemy === 'function' && !window.__mbh018SetEnemy){
+    window.__mbh018SetEnemy = setEnemy;
+    setEnemy = function(e){
+      safe(()=>{
+        if(typeof state !== 'undefined' && state.debugNextEnemyVariant && e && e.id !== 'dark_sword_saint'){
+          applyVariant018(e, state.debugNextEnemyVariant);
+          state.debugNextEnemyVariant = null;
+        }
+      });
+      return window.__mbh018SetEnemy.apply(this, arguments);
+    };
+  }
+  if(typeof updateEnemyLevelProgressionOnDefeat === 'function' && !window.__mbh018UpdateEnemyLevel){
+    window.__mbh018UpdateEnemyLevel = updateEnemyLevelProgressionOnDefeat;
+    updateEnemyLevelProgressionOnDefeat = function(e){
+      if(typeof state !== 'undefined' && state.debugEnemyLevelFixed){
+        const lv = Math.max(1, Math.floor(Number(state.enemyLevelBase || e?.level || 1)));
+        state.enemyLevelBase = lv;
+        state.enemyLevelBaseDefeated = Math.max(0, Math.floor(Number(state.defeated)||0));
+        return;
       }
-      if(box.parentElement !== panel) panel.appendChild(box);
-      box.classList.add('legal-links-in-menu');
-      const compact = (typeof isCompactMenuMode === 'function' ? isCompactMenuMode() : (window.innerWidth < 1280 || window.innerHeight < 760));
-      box.classList.toggle('hidden', compact && !panel.classList.contains('open'));
-      [['creditBtn','credit'],['termsBtn','terms'],['privacyBtn','privacy']].forEach(([id,type])=>{
-        const btn = box.querySelector('#'+id) || byId(id);
-        if(btn && !btn.__mbh014LegalFooter){
-          btn.__mbh014LegalFooter = true;
-          btn.addEventListener('click', (e)=>{
-            e.preventDefault(); e.stopPropagation();
-            if(typeof playUiClick === 'function') playUiClick();
-            if(typeof openLegalModal === 'function') openLegalModal(type);
-          }, {capture:true});
-        }
-      });
-    });
+      return window.__mbh018UpdateEnemyLevel.apply(this, arguments);
+    };
+  }
+  if(typeof fleeBattle === 'function' && !window.__mbh018FleeBattle){
+    window.__mbh018FleeBattle = fleeBattle;
+    fleeBattle = function(){
+      if(typeof state === 'undefined' || !state.enemy || (typeof isDarkSwordSaint === 'function' && isDarkSwordSaint())) return window.__mbh018FleeBattle.apply(this, arguments);
+      const currentLevel = Math.max(1, Math.floor(state.enemy.level || state.enemyLevelBase || state.level || 1));
+      const nextBase = state.debugEnemyLevelFixed ? currentLevel : Math.max(1, currentLevel - 5);
+      state.enemyLevelBase = nextBase;
+      state.enemyLevelBaseDefeated = state.defeated || 0;
+      state.winStreak = 0;
+      state.forceNextDarkSwordSaint = false;
+      safe(()=>log(`戦闘から離脱した。敵の出現レベルが${currentLevel}→${nextBase}に低下した。`, 'danger'));
+      safe(()=>banner('戦闘離脱'));
+      safe(()=>spawnWeakEnemyAfterEscape());
+    };
+  }
+  if(typeof confirmFlee === 'function' && !window.__mbh018ConfirmFlee){
+    window.__mbh018ConfirmFlee = confirmFlee;
+    confirmFlee = function(){
+      const modal = $id('fleeModal');
+      const desc = $id('fleeModalDesc');
+      if(desc){
+        desc.innerHTML = (typeof isDarkSwordSaint === 'function' && isDarkSwordSaint())
+          ? '暗黒剣聖は独立レベルのため、逃走しても敵の出現レベルは下がりません。<br>経験値は失いません。'
+          : '敵の出現レベルが5下がります。<br>経験値は失いません。';
+      }
+      if(modal) modal.classList.remove('hidden');
+    };
   }
 
-  function removeEnemyLevelXpFromStatus014(){
-    safe(()=>{
-      byId('statEnemyLevelXpLabel')?.remove();
-      byId('statEnemyLevelXp')?.remove();
-      document.querySelectorAll('.hero-stats .stat-grid span').forEach(span=>{
-        if(String(span.textContent||'').trim()==='敵Lv経験値'){
-          const next = span.nextElementSibling;
-          span.remove();
-          if(next && next.tagName === 'B') next.remove();
-        }
-      });
-    });
+  // 異名持ちの再生表示は通常回復と同じ「+数値」のみ。
+  if(typeof showFloat === 'function' && !window.__mbh018ShowFloat){
+    window.__mbh018ShowFloat = showFloat;
+    showFloat = function(text, cls='damage'){
+      let t = String(text || '');
+      if(t.includes('異名再生')){
+        const m = t.match(/([0-9][0-9,]*)/);
+        t = '+' + (m ? m[1] : '0');
+        cls = 'heal';
+      }
+      return window.__mbh018ShowFloat.call(this, t, cls);
+    };
   }
 
-  function classifyLogFinal014(l){
+  function classifyLog018(l){
     const c = String(l?.cls || '').toLowerCase();
-    const m = String(l?.msg || '').replace(/<[^>]*>/g,'');
-    if(c.includes('drop') || /装備ドロップ|ドロップ|倉庫に追加|闇装備7種|枠目|品質\+|レジェンダリー/.test(m)) return 'drop';
-    if(c.includes('damage') || c.includes('skilllog') || /ダメージ|攻撃|斬|雷撃|炎斬り|連続攻撃|剣舞|ブレス|火傷|出血|暗黒出血|付与|回復|吸収|GUARD|無効|MISS|反射/.test(m)) return 'damage';
+    const raw = String(l?.msg || '');
+    const m = raw.replace(/<[^>]+>/g,'');
+    if(/装備ドロップ|ドロップ|枠目|闇装備確定/.test(m)) return 'drop';
+    if(c.includes('damage') || c.includes('skilllog') || /ダメージ|攻撃|斬|雷撃|炎斬り|連続攻撃|剣舞|ブレス|火傷|出血|GUARD|無効|MISS/.test(m)) return 'damage';
     return 'system';
   }
-  function renderLogFinal014(reason='append'){
-    safe(()=>{
-      const el = byId('log');
-      if(!el || typeof state === 'undefined') return;
-      const beforeTop = el.scrollTop;
-      const beforeHeight = el.scrollHeight;
-      const nearTop = beforeTop <= 4;
-      const f = state.logFilter || 'all';
-      const rows = (state.log || []).filter(l=>f === 'all' || classifyLogFinal014(l) === f);
-      el.innerHTML = rows.map(l=>`<div class="${l.cls||''}">[${l.time}] ${l.msg}</div>`).join('');
-      document.querySelectorAll('#logFilterBar button').forEach(b=>b.classList.toggle('active',(b.dataset.logFilter||'all')===f));
-      requestAnimationFrame(()=>{
-        if(reason === 'filter') el.scrollTop = 0;
-        else if(nearTop) el.scrollTop = 0;
-        else el.scrollTop = Math.max(0, beforeTop + (el.scrollHeight - beforeHeight));
-      });
-    });
+  function renderLog018(reason='filter'){
+    const el = $id('log');
+    if(!el || typeof state === 'undefined') return;
+    const f = state.logFilter || 'all';
+    const rows = (state.log || []).filter(l=>f === 'all' || classifyLog018(l) === f);
+    el.innerHTML = rows.map(l=>`<div class="${l.cls||''}">[${l.time}] ${l.msg}</div>`).join('');
+    document.querySelectorAll('#logFilterBar button').forEach(b=>b.classList.toggle('active', (b.dataset.logFilter||'all') === f));
+    if(reason === 'filter') el.scrollTop = 0;
   }
-  function installLogFinal014(){
-    safe(()=>{
-      if(typeof state === 'undefined') return;
-      state.logFilter = state.logFilter || 'all';
-      const bar = byId('logFilterBar');
-      if(bar){
-        bar.innerHTML = '<button type="button" data-log-filter="all">すべて</button><button type="button" data-log-filter="damage">ダメージ</button><button type="button" data-log-filter="system">システム</button><button type="button" data-log-filter="drop">ドロップ</button>';
-        bar.querySelectorAll('button[data-log-filter]').forEach(b=>{
-          const on = (e)=>{ e.preventDefault(); e.stopPropagation(); state.logFilter = b.dataset.logFilter || 'all'; renderLogFinal014('filter'); return false; };
-          b.onclick = on;
-          b.onpointerup = (e)=>{ if(e.pointerType && e.pointerType === 'mouse') return; return on(e); };
-          b.ontouchend = on;
-        });
-      }
+  function installLog018(){
+    const bar = $id('logFilterBar');
+    if(typeof state !== 'undefined') state.logFilter = state.logFilter || 'all';
+    if(bar){
+      bar.innerHTML = '<button type="button" data-log-filter="all">すべて</button><button type="button" data-log-filter="damage">ダメージ</button><button type="button" data-log-filter="system">システム</button><button type="button" data-log-filter="drop">ドロップ</button>';
+      const on = (e)=>{ const b=e.target.closest('button[data-log-filter]'); if(!b) return; e.preventDefault(); e.stopPropagation(); state.logFilter=b.dataset.logFilter||'all'; renderLog018('filter'); return false; };
+      bar.onclick = on;
+      bar.onpointerup = (e)=>{ if(e.pointerType && e.pointerType === 'mouse') return; return on(e); };
+      bar.ontouchend = on;
+    }
+    if(typeof log === 'function' && !window.__mbh018LogInstalled){
+      window.__mbh018LogInstalled = true;
+      const escape = (s)=> typeof escapeHtml === 'function' ? escapeHtml(s) : String(s).replace(/[&<>"']/g, ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
       log = function(msg, cls='', html=false){
         const time = new Date().toLocaleTimeString('ja-JP',{hour12:false});
-        const safeMsg = html ? msg : esc(msg);
+        const safeMsg = html ? msg : escape(msg);
         state.log.unshift({time,msg:safeMsg,cls,html:true});
         state.log = state.log.slice(0,180);
-        renderLogFinal014('append');
+        renderLog018('append');
       };
-      renderLogFinal014('filter');
-    });
-  }
-
-  function patchRenderHooks014(){
-    if(typeof renderStats === 'function' && !window.__mbhRenderStats014Final){
-      window.__mbhRenderStats014Final = renderStats;
-      renderStats = function(){ const r = window.__mbhRenderStats014Final.apply(this, arguments); removeEnemyLevelXpFromStatus014(); return r; };
     }
-    if(typeof renderBattle === 'function' && !window.__mbhRenderBattle014Final){
-      window.__mbhRenderBattle014Final = renderBattle;
-      renderBattle = function(){ const r = window.__mbhRenderBattle014Final.apply(this, arguments); syncLegalFooter014(); removeEnemyLevelXpFromStatus014(); return r; };
-    }
-    if(typeof renderAll === 'function' && !window.__mbhRenderAll014Final){
-      window.__mbhRenderAll014Final = renderAll;
-      renderAll = function(){ const r = window.__mbhRenderAll014Final.apply(this, arguments); syncLegalFooter014(); removeEnemyLevelXpFromStatus014(); return r; };
-    }
+    renderLog018('filter');
   }
 
-  function bootFinal014(){
-    syncVersionFinal014();
-    installFooterCss014();
-    syncLegalFooter014();
-    installLogFinal014();
-    patchRenderHooks014();
-    removeEnemyLevelXpFromStatus014();
+  function cleanupStatusXp018(){
+    ['statEnemyLevelXpLabel','statEnemyLevelXp'].forEach(id=>{ const el=$id(id); if(el) el.remove(); });
+    document.querySelectorAll('.stat-grid span').forEach(sp=>{ if((sp.textContent||'').includes('敵Lv経験値')){ const nx=sp.nextElementSibling; sp.remove(); if(nx && nx.tagName) nx.remove(); } });
   }
-  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bootFinal014, {once:true}); else setTimeout(bootFinal014,0);
-  window.addEventListener('load', bootFinal014, {once:true});
-  window.addEventListener('resize', ()=>setTimeout(syncLegalFooter014, 50));
-  setInterval(()=>safe(()=>{ syncVersionFinal014(); syncLegalFooter014(); removeEnemyLevelXpFromStatus014(); renderLogFinal014('refresh'); }), 1200);
-})();
-
-
-/* ver.0.1.6: menu must start closed and open only by button */
-(function(){
-  'use strict';
-  const APP_VERSION='0.1.6';
-  const byId=(id)=>document.getElementById(id);
-  const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.warn('[MBH0.1.6]', e); return null; } };
-
-  function syncVersion015(){
-    safe(()=>{
-      window.APP_VERSION=APP_VERSION;
-      window.GAME_VERSION=APP_VERSION;
-      document.documentElement.dataset.buildVersion=APP_VERSION;
-      document.documentElement.setAttribute('data-build-version', APP_VERSION);
-      document.querySelectorAll('.build-version,[data-version],#versionText,.version-badge').forEach(el=>{ el.textContent='ver.'+APP_VERSION; });
-      document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent='Build: ver.'+APP_VERSION; });
-      document.querySelectorAll('.debug-trace-title').forEach(el=>{ el.textContent='進行デバッグログ ver.'+APP_VERSION; });
-    });
+  if(typeof renderStats === 'function' && !window.__mbh018RenderStats){
+    window.__mbh018RenderStats = renderStats;
+    renderStats = function(){ const r=window.__mbh018RenderStats.apply(this, arguments); safe(cleanupStatusXp018); return r; };
   }
 
-  function installMenuClosedCss015(){
-    if(byId('mbh015-menu-closed-css')) return;
-    const st=document.createElement('style');
-    st.id='mbh015-menu-closed-css';
-    st.textContent=`
-      /* メニューは全画面幅で初期非表示。押した時だけ表示 */
-      .side-panel:not(.open){display:none!important;pointer-events:none!important;}
-      .side-panel.open{display:flex!important;pointer-events:auto!important;}
-      #equipToggleBtn,#debugBtn,#muteBtn{pointer-events:auto!important;touch-action:manipulation!important;}
-      .side-panel:not(.open) .legal-links{display:none!important;}
-      .side-panel.open .legal-links{display:flex!important;}
-    `;
-    document.head.appendChild(st);
+  function boot018(){
+    syncVersion018();
+    injectStyle018();
+    ensureLegalFooter018();
+    installMenu018();
+    installDebug018();
+    installLog018();
+    cleanupStatusXp018();
   }
-
-  function applyClosedMenu015(open){
-    const side=document.querySelector('.side-panel');
-    const btn=byId('equipToggleBtn');
-    if(!side) return;
-    const isOpen=!!open;
-    side.classList.toggle('open', isOpen);
-    side.style.display=isOpen ? 'flex' : 'none';
-    side.style.pointerEvents=isOpen ? 'auto' : 'none';
-    if(typeof state !== 'undefined') state.uiOpen=isOpen;
-    if(btn) btn.textContent=isOpen ? '閉じる' : 'メニュー';
-    safe(()=>{ if(typeof syncLegalFooter014==='function') syncLegalFooter014(); });
-  }
-
-  function toggleMenu015(e){
-    if(e){ e.preventDefault(); e.stopPropagation(); if(e.stopImmediatePropagation) e.stopImmediatePropagation(); }
-    const side=document.querySelector('.side-panel');
-    const next=!(side && side.classList.contains('open'));
-    applyClosedMenu015(next);
-    safe(()=>{ if(typeof startAudio==='function') startAudio(); });
-    safe(()=>{ if(typeof playUiClick==='function') playUiClick(); });
-    return false;
-  }
-
-  function bindMenuButton015(){
-    const old=byId('equipToggleBtn');
-    if(!old || old.__mbh015Bound) return;
-    const fresh=old.cloneNode(true);
-    fresh.__mbh015Bound=true;
-    old.parentNode.replaceChild(fresh, old);
-    ['click','pointerup','touchend'].forEach(type=>{
-      fresh.addEventListener(type, toggleMenu015, {capture:true, passive:false});
-    });
-  }
-
-  function forceInitialClosed015(){
-    installMenuClosedCss015();
-    syncVersion015();
-    bindMenuButton015();
-    applyClosedMenu015(false);
-  }
-
-  function boot015(){
-    forceInitialClosed015();
-    setTimeout(forceInitialClosed015, 100);
-    setTimeout(forceInitialClosed015, 700);
-  }
-
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', boot015, {once:true}); else boot015();
-  window.addEventListener('load', boot015, {once:true});
-  window.addEventListener('resize', ()=>setTimeout(()=>applyClosedMenu015(typeof state !== 'undefined' ? !!state.uiOpen : false), 50));
-  window.__mbhApplyMenuClosed015=applyClosedMenu015;
-})();
-
-/* ver.0.1.6: menu button click/tap recovery */
-(function(){
-  'use strict';
-  const APP_VERSION='0.1.6';
-  const byId=(id)=>document.getElementById(id);
-  const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.warn('[MBH0.1.6 menu]', e); return null; } };
-  let userToggled=false;
-
-  function syncVersion016(){
-    safe(()=>{
-      window.APP_VERSION=APP_VERSION;
-      window.GAME_VERSION=APP_VERSION;
-      document.documentElement.dataset.buildVersion=APP_VERSION;
-      document.documentElement.setAttribute('data-build-version', APP_VERSION);
-      document.querySelectorAll('.build-version,[data-version],#versionText,.version-badge').forEach(el=>{ el.textContent='ver.'+APP_VERSION; });
-      document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent='Build: ver.'+APP_VERSION; });
-      document.querySelectorAll('.debug-trace-title').forEach(el=>{ el.textContent='進行デバッグログ ver.'+APP_VERSION; });
-    });
-  }
-
-  function installCss016(){
-    if(byId('mbh016-menu-css')) return;
-    const st=document.createElement('style');
-    st.id='mbh016-menu-css';
-    st.textContent=`
-      .side-panel.mbh-menu-closed{display:none!important;pointer-events:none!important;}
-      .side-panel.open{display:flex!important;pointer-events:auto!important;}
-      #equipToggleBtn{pointer-events:auto!important;touch-action:manipulation!important;position:relative!important;z-index:10050!important;}
-      #debugBtn,#muteBtn{pointer-events:auto!important;touch-action:manipulation!important;position:relative!important;z-index:10040!important;}
-      .side-panel.mbh-menu-closed .legal-links{display:none!important;}
-      .side-panel.open .legal-links{display:flex!important;}
-    `;
-    document.head.appendChild(st);
-  }
-
-  function setMenu016(open){
-    const side=document.querySelector('.side-panel');
-    const btn=byId('equipToggleBtn');
-    if(!side) return;
-    const isOpen=!!open;
-    side.classList.toggle('open', isOpen);
-    side.classList.toggle('mbh-menu-closed', !isOpen);
-    side.style.display=isOpen ? 'flex' : 'none';
-    side.style.pointerEvents=isOpen ? 'auto' : 'none';
-    if(typeof state !== 'undefined') state.uiOpen=isOpen;
-    if(btn){
-      btn.textContent=isOpen ? '閉じる' : 'メニュー';
-      btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-    }
-    safe(()=>{ if(typeof syncLegalFooter014==='function') syncLegalFooter014(); });
-  }
-
-  function toggleMenu016(e){
-    if(e){
-      try{ e.preventDefault(); }catch(_){}
-      try{ e.stopPropagation(); }catch(_){}
-    }
-    userToggled=true;
-    const side=document.querySelector('.side-panel');
-    const open=!(side && side.classList.contains('open'));
-    setMenu016(open);
-    safe(()=>{ if(typeof startAudio==='function') startAudio(); });
-    safe(()=>{ if(typeof playUiClick==='function') playUiClick(); });
-    return false;
-  }
-
-  function bindButton016(){
-    const old=byId('equipToggleBtn');
-    if(!old) return;
-    const currentOpen=!!document.querySelector('.side-panel.open');
-    const btn=old.cloneNode(true); // 0.1.5のstopImmediatePropagation付きリスナーを完全除去
-    old.parentNode.replaceChild(btn, old);
-    btn.addEventListener('click', toggleMenu016, {capture:true, passive:false});
-    btn.addEventListener('pointerup', toggleMenu016, {capture:true, passive:false});
-    btn.addEventListener('touchend', toggleMenu016, {capture:true, passive:false});
-    btn.textContent=currentOpen ? '閉じる' : 'メニュー';
-    btn.setAttribute('aria-expanded', currentOpen ? 'true' : 'false');
-  }
-
-  function boot016(initial=false){
-    installCss016();
-    syncVersion016();
-    bindButton016();
-    const side=document.querySelector('.side-panel');
-    const shouldOpen = userToggled ? !!(side && side.classList.contains('open')) : false;
-    setMenu016(shouldOpen);
-    safe(()=>{ window.__mbhApplyMenu016=setMenu016; });
-  }
-
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', ()=>boot016(true), {once:true});
-  else boot016(true);
-  window.addEventListener('load', ()=>boot016(false), {once:true});
-  // 0.1.5の遅延クローズが終わった後、ボタン操作を復旧する。開閉状態はユーザー操作後なら維持する。
-  setTimeout(()=>boot016(false), 120);
-  setTimeout(()=>boot016(false), 820);
-})();
-
-
-/* ver.0.1.7: definitive menu controller - closed on boot, opens only by button */
-(function(){
-  'use strict';
-  const APP_VERSION='0.1.7';
-  const byId=(id)=>document.getElementById(id);
-  const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.warn('[MBH0.1.7 menu]', e); return null; } };
-  let desiredOpen=false;
-  let booted=false;
-
-  function syncVersion017(){
-    safe(()=>{
-      window.APP_VERSION=APP_VERSION;
-      window.GAME_VERSION=APP_VERSION;
-      document.documentElement.dataset.buildVersion=APP_VERSION;
-      document.documentElement.setAttribute('data-build-version', APP_VERSION);
-      document.querySelectorAll('.build-version,[data-version],#versionText,.version-badge').forEach(el=>{ el.textContent='ver.'+APP_VERSION; });
-      document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent='Build: ver.'+APP_VERSION; });
-      document.querySelectorAll('.debug-trace-title').forEach(el=>{ el.textContent='進行デバッグログ ver.'+APP_VERSION; });
-    });
-  }
-
-  function removeBrokenMenuStyles017(){
-    ['mbh015-menu-closed-css','mbh016-menu-css'].forEach(id=>{ const el=byId(id); if(el) el.remove(); });
-  }
-
-  function installCss017(){
-    removeBrokenMenuStyles017();
-    if(byId('mbh017-menu-css')) return;
-    const st=document.createElement('style');
-    st.id='mbh017-menu-css';
-    st.textContent=`
-      body.mbh-menu-ready .side-panel:not(.open){display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;}
-      body.mbh-menu-ready .side-panel.open{
-        display:flex!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;
-        position:fixed!important;right:12px!important;top:64px!important;bottom:12px!important;
-        width:min(440px,calc(100vw - 24px))!important;max-width:calc(100vw - 24px)!important;
-        z-index:9999!important;overflow:auto!important;
-      }
-      @media (min-width: 1280px){
-        body.mbh-menu-ready .side-panel.open{width:min(720px,calc(100vw - 24px))!important;}
-      }
-      #equipToggleBtn{pointer-events:auto!important;touch-action:manipulation!important;position:relative!important;z-index:10050!important;}
-      #debugBtn,#muteBtn{pointer-events:auto!important;touch-action:manipulation!important;position:relative!important;z-index:10040!important;}
-      body.mbh-menu-ready .side-panel:not(.open) .legal-links{display:none!important;}
-      body.mbh-menu-ready .side-panel.open .legal-links{display:flex!important;}
-    `;
-    document.head.appendChild(st);
-  }
-
-  function setMenu017(open){
-    desiredOpen=!!open;
-    const side=document.querySelector('.side-panel');
-    const btn=byId('equipToggleBtn');
-    if(!side) return;
-    document.body.classList.add('mbh-menu-ready');
-    side.classList.toggle('open', desiredOpen);
-    side.classList.toggle('mbh-menu-closed', !desiredOpen);
-    side.style.setProperty('display', desiredOpen ? 'flex' : 'none', 'important');
-    side.style.setProperty('visibility', desiredOpen ? 'visible' : 'hidden', 'important');
-    side.style.setProperty('opacity', desiredOpen ? '1' : '0', 'important');
-    side.style.setProperty('pointer-events', desiredOpen ? 'auto' : 'none', 'important');
-    if(desiredOpen){
-      side.style.setProperty('position','fixed','important');
-      side.style.setProperty('right','12px','important');
-      side.style.setProperty('top','64px','important');
-      side.style.setProperty('bottom','12px','important');
-      side.style.setProperty('z-index','9999','important');
-      side.style.setProperty('overflow','auto','important');
-    }
-    if(typeof state !== 'undefined') state.uiOpen=desiredOpen;
-    if(btn){
-      btn.textContent=desiredOpen ? '閉じる' : 'メニュー';
-      btn.setAttribute('aria-expanded', desiredOpen ? 'true' : 'false');
-      btn.style.pointerEvents='auto';
-    }
-    safe(()=>{ if(typeof setMenuPage==='function') setMenuPage((typeof state!=='undefined' && state.menuPage) ? state.menuPage : 'stats'); });
-    safe(()=>{ if(typeof syncLegalFooter014==='function') syncLegalFooter014(); });
-  }
-
-  function toggleMenu017(e){
-    if(e){
-      try{ e.preventDefault(); }catch(_){}
-      try{ e.stopPropagation(); }catch(_){}
-      try{ e.stopImmediatePropagation(); }catch(_){}
-    }
-    setMenu017(!desiredOpen);
-    safe(()=>{ if(typeof startAudio==='function') startAudio(); });
-    safe(()=>{ if(typeof playUiClick==='function') playUiClick(); });
-    return false;
-  }
-
-  function bindButton017(){
-    const btn=byId('equipToggleBtn');
-    if(!btn || btn.__mbh017Bound) return;
-    btn.__mbh017Bound=true;
-    btn.onclick=null;
-    btn.onpointerup=null;
-    btn.ontouchend=null;
-    ['click','pointerup','touchend'].forEach(type=>{
-      btn.addEventListener(type, toggleMenu017, {capture:true, passive:false});
-    });
-  }
-
-  function boot017(){
-    installCss017();
-    syncVersion017();
-    bindButton017();
-    if(!booted){
-      booted=true;
-      desiredOpen=false;
-    }
-    setMenu017(desiredOpen);
-  }
-
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', boot017, {once:true}); else boot017();
-  window.addEventListener('load', boot017, {once:true});
-  window.addEventListener('resize', ()=>setTimeout(()=>setMenu017(desiredOpen), 30));
-  // 古い0.1.5/0.1.6の遅延処理に負けないよう、現在の意図した開閉状態だけを維持する。
-  setTimeout(boot017, 150);
-  setTimeout(boot017, 900);
-  setInterval(()=>{ syncVersion017(); bindButton017(); setMenu017(desiredOpen); }, 1200);
-  window.__mbhSetMenu017=setMenu017;
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot018, {once:true}); else setTimeout(boot018,0);
+  window.addEventListener('load', boot018, {once:true});
+  window.addEventListener('resize', ()=>setTimeout(()=>safe(()=>{ setMenuOpen018(false); ensureLegalFooter018(); }), 60));
+  setInterval(()=>safe(()=>{ syncVersion018(); ensureLegalFooter018(); cleanupStatusXp018(); }), 250);
 })();

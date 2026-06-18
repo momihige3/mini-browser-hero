@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja" data-build-version="0.1.5" data-build-date="2026-06-18">
+<html lang="ja" data-build-version="0.1.8" data-build-date="2026-06-18">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -18,7 +18,7 @@
 <body>
   <div id="game">
     <header class="topbar">
-      <div class="brand">ミニブラウザヒーロー <span class="build-version">ver.0.1.5</span></div>
+      <div class="brand">ミニブラウザヒーロー <span class="build-version">ver.0.1.8</span></div>
       <div class="resources"><b id="mats">0</b> 強化石</div>
       <div class="controls">
         <button id="equipToggleBtn">メニュー</button>
@@ -138,7 +138,7 @@
         <button id="debugStopDot">DOTタイマー停止</button>
         <button id="debugStopDarkDance">暗黒剣舞タイマー停止</button>
         <div id="mbhTraceBox" class="debug-trace-box">
-          <div class="debug-trace-title">進行デバッグログ ver.0.1.5</div>
+          <div class="debug-trace-title">進行デバッグログ ver.0.1.8</div>
           <button id="mbhTraceMark" type="button">現在状態を記録</button>
           <button id="mbhTraceCopy" type="button">ログコピー</button>
           <button id="mbhTraceDownload" type="button">DL</button>
@@ -147,7 +147,7 @@
         </div>
         <label><input id="debugKillEnemy" type="checkbox"> 敵への攻撃で即死</label>
         <label><input id="debugKillHero" type="checkbox"> 敵からの攻撃で即死</label>
-        <div class="debug-version">Build: ver.0.1.5 debug</div>
+        <div class="debug-version">Build: ver.0.1.8 debug</div>
         <button id="debugClose">閉じる</button>
       </div>
   </div>
@@ -174,7 +174,7 @@
     <div class="flee-modal-backdrop"></div>
     <div class="flee-modal-card">
       <h2 id="fleeModalTitle">戦闘から離脱しますか？</h2>
-      <p id="fleeModalDesc">敵の出現レベルが5下がります。<br>経験値は失いません。</p>
+      <p id="fleeModalDesc">敵の出現レベルが20下がります。<br>経験値は失いません。</p>
       <div class="flee-modal-actions">
         <button id="fleeCancelBtn" type="button">キャンセル</button>
         <button id="fleeOkBtn" type="button">逃走する</button>
@@ -184,7 +184,7 @@
 
   <script>
     (function(){
-      var build = document.documentElement.dataset.buildVersion || '0.1.5';      var s = document.createElement('script');
+      var build = document.documentElement.dataset.buildVersion || '0.1.8';      var s = document.createElement('script');
       s.src = 'game.js?v=' + encodeURIComponent(build);
       s.defer = false;
       document.body.appendChild(s);
