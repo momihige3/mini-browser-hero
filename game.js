@@ -6337,3 +6337,191 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   setTimeout(syncVersion014, 250);
   setTimeout(syncVersion014, 1000);
 })();
+
+
+/* ver.0.1.4: final menu footer / log filter / status XP cleanup */
+(function(){
+  'use strict';
+  const APP_VERSION = '0.1.4';
+  const byId = (id)=>document.getElementById(id);
+  function safe(fn){ try{ return fn && fn(); }catch(e){ console.warn('[MBH0.1.4 final-fix]', e); return null; } }
+  function esc(v){ return (typeof escapeHtml === 'function') ? escapeHtml(v) : String(v).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+  function syncVersionFinal014(){
+    safe(()=>{
+      window.APP_VERSION = APP_VERSION;
+      window.GAME_VERSION = APP_VERSION;
+      document.documentElement.dataset.buildVersion = APP_VERSION;
+      document.documentElement.setAttribute('data-build-version', APP_VERSION);
+      document.querySelectorAll('.build-version,[data-version],#versionText,.version-badge').forEach(el=>{ el.textContent='ver.'+APP_VERSION; });
+      document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent='Build: ver.'+APP_VERSION; });
+      document.querySelectorAll('.debug-trace-title').forEach(el=>{ el.textContent='進行デバッグログ ver.'+APP_VERSION; });
+    });
+  }
+
+  function installFooterCss014(){
+    if(byId('mbh014-footer-log-status-css')) return;
+    const st = document.createElement('style');
+    st.id = 'mbh014-footer-log-status-css';
+    st.textContent = `
+      #fixedLegalLinks{display:none!important;}
+      .side-panel{min-height:0!important;}
+      .side-panel .legal-links{
+        position:static!important;
+        left:auto!important;right:auto!important;top:auto!important;bottom:auto!important;
+        transform:none!important;
+        width:100%!important;
+        margin-top:auto!important;
+        flex:0 0 auto!important;
+        box-sizing:border-box!important;
+        z-index:1!important;
+        border-top:1px solid rgba(201,155,57,.55)!important;
+        border-left:1px solid rgba(201,155,57,.35)!important;
+        border-right:1px solid rgba(201,155,57,.35)!important;
+        border-bottom:1px solid rgba(201,155,57,.35)!important;
+        background:rgba(8,6,4,.88)!important;
+      }
+      @media (min-width:761px){
+        .side-panel{display:flex!important;flex-direction:column!important;overflow:hidden!important;}
+        .side-panel .side-tabs,.side-panel .mobile-menu-tabs{flex:0 0 auto!important;}
+        .side-panel .menu-col,.side-panel .menu-left,.side-panel .menu-right{display:contents!important;}
+        .side-panel .panel.active-page{flex:1 1 auto!important;min-height:0!important;overflow:auto!important;}
+        .side-panel .inventory-panel.active-page{display:flex!important;flex-direction:column!important;}
+        .side-panel .log-panel.active-page{display:flex!important;flex-direction:column!important;}
+        .side-panel .log-panel.active-page #log{flex:1 1 auto!important;min-height:0!important;height:auto!important;}
+      }
+      @media (max-width:760px), (orientation:portrait){
+        .side-panel.open{display:flex!important;flex-direction:column!important;overflow:hidden!important;}
+        .side-panel.open .side-tabs,.side-panel.open .mobile-menu-tabs{flex:0 0 auto!important;}
+        .side-panel.open .panel.active-page{flex:1 1 auto!important;min-height:0!important;overflow:auto!important;}
+        .side-panel.open .inventory-panel.active-page{display:flex!important;flex-direction:column!important;}
+        .side-panel.open .log-panel.active-page{display:flex!important;flex-direction:column!important;}
+        .side-panel.open .log-panel.active-page #log{flex:1 1 auto!important;min-height:0!important;height:auto!important;}
+        .side-panel:not(.open) .legal-links{display:none!important;}
+      }
+    `;
+    document.head.appendChild(st);
+  }
+
+  function syncLegalFooter014(){
+    safe(()=>{
+      document.querySelectorAll('#fixedLegalLinks,.fixed-legal-links').forEach(el=>el.remove());
+      const panel = (typeof els !== 'undefined' && els.sidePanel) ? els.sidePanel : document.querySelector('.side-panel');
+      if(!panel) return;
+      let box = panel.querySelector(':scope > .legal-links') || panel.querySelector('.legal-links');
+      if(!box){
+        box = document.createElement('div');
+        box.className = 'legal-links';
+        box.setAttribute('aria-label','公開情報');
+        box.innerHTML = '<button id="creditBtn" type="button">クレジット</button><button id="termsBtn" type="button">利用規約</button><button id="privacyBtn" type="button">プライバシーポリシー</button>';
+      }
+      if(box.parentElement !== panel) panel.appendChild(box);
+      box.classList.add('legal-links-in-menu');
+      const compact = (typeof isCompactMenuMode === 'function' ? isCompactMenuMode() : (window.innerWidth < 1280 || window.innerHeight < 760));
+      box.classList.toggle('hidden', compact && !panel.classList.contains('open'));
+      [['creditBtn','credit'],['termsBtn','terms'],['privacyBtn','privacy']].forEach(([id,type])=>{
+        const btn = box.querySelector('#'+id) || byId(id);
+        if(btn && !btn.__mbh014LegalFooter){
+          btn.__mbh014LegalFooter = true;
+          btn.addEventListener('click', (e)=>{
+            e.preventDefault(); e.stopPropagation();
+            if(typeof playUiClick === 'function') playUiClick();
+            if(typeof openLegalModal === 'function') openLegalModal(type);
+          }, {capture:true});
+        }
+      });
+    });
+  }
+
+  function removeEnemyLevelXpFromStatus014(){
+    safe(()=>{
+      byId('statEnemyLevelXpLabel')?.remove();
+      byId('statEnemyLevelXp')?.remove();
+      document.querySelectorAll('.hero-stats .stat-grid span').forEach(span=>{
+        if(String(span.textContent||'').trim()==='敵Lv経験値'){
+          const next = span.nextElementSibling;
+          span.remove();
+          if(next && next.tagName === 'B') next.remove();
+        }
+      });
+    });
+  }
+
+  function classifyLogFinal014(l){
+    const c = String(l?.cls || '').toLowerCase();
+    const m = String(l?.msg || '').replace(/<[^>]*>/g,'');
+    if(c.includes('drop') || /装備ドロップ|ドロップ|倉庫に追加|闇装備7種|枠目|品質\+|レジェンダリー/.test(m)) return 'drop';
+    if(c.includes('damage') || c.includes('skilllog') || /ダメージ|攻撃|斬|雷撃|炎斬り|連続攻撃|剣舞|ブレス|火傷|出血|暗黒出血|付与|回復|吸収|GUARD|無効|MISS|反射/.test(m)) return 'damage';
+    return 'system';
+  }
+  function renderLogFinal014(reason='append'){
+    safe(()=>{
+      const el = byId('log');
+      if(!el || typeof state === 'undefined') return;
+      const beforeTop = el.scrollTop;
+      const beforeHeight = el.scrollHeight;
+      const nearTop = beforeTop <= 4;
+      const f = state.logFilter || 'all';
+      const rows = (state.log || []).filter(l=>f === 'all' || classifyLogFinal014(l) === f);
+      el.innerHTML = rows.map(l=>`<div class="${l.cls||''}">[${l.time}] ${l.msg}</div>`).join('');
+      document.querySelectorAll('#logFilterBar button').forEach(b=>b.classList.toggle('active',(b.dataset.logFilter||'all')===f));
+      requestAnimationFrame(()=>{
+        if(reason === 'filter') el.scrollTop = 0;
+        else if(nearTop) el.scrollTop = 0;
+        else el.scrollTop = Math.max(0, beforeTop + (el.scrollHeight - beforeHeight));
+      });
+    });
+  }
+  function installLogFinal014(){
+    safe(()=>{
+      if(typeof state === 'undefined') return;
+      state.logFilter = state.logFilter || 'all';
+      const bar = byId('logFilterBar');
+      if(bar){
+        bar.innerHTML = '<button type="button" data-log-filter="all">すべて</button><button type="button" data-log-filter="damage">ダメージ</button><button type="button" data-log-filter="system">システム</button><button type="button" data-log-filter="drop">ドロップ</button>';
+        bar.querySelectorAll('button[data-log-filter]').forEach(b=>{
+          const on = (e)=>{ e.preventDefault(); e.stopPropagation(); state.logFilter = b.dataset.logFilter || 'all'; renderLogFinal014('filter'); return false; };
+          b.onclick = on;
+          b.onpointerup = (e)=>{ if(e.pointerType && e.pointerType === 'mouse') return; return on(e); };
+          b.ontouchend = on;
+        });
+      }
+      log = function(msg, cls='', html=false){
+        const time = new Date().toLocaleTimeString('ja-JP',{hour12:false});
+        const safeMsg = html ? msg : esc(msg);
+        state.log.unshift({time,msg:safeMsg,cls,html:true});
+        state.log = state.log.slice(0,180);
+        renderLogFinal014('append');
+      };
+      renderLogFinal014('filter');
+    });
+  }
+
+  function patchRenderHooks014(){
+    if(typeof renderStats === 'function' && !window.__mbhRenderStats014Final){
+      window.__mbhRenderStats014Final = renderStats;
+      renderStats = function(){ const r = window.__mbhRenderStats014Final.apply(this, arguments); removeEnemyLevelXpFromStatus014(); return r; };
+    }
+    if(typeof renderBattle === 'function' && !window.__mbhRenderBattle014Final){
+      window.__mbhRenderBattle014Final = renderBattle;
+      renderBattle = function(){ const r = window.__mbhRenderBattle014Final.apply(this, arguments); syncLegalFooter014(); removeEnemyLevelXpFromStatus014(); return r; };
+    }
+    if(typeof renderAll === 'function' && !window.__mbhRenderAll014Final){
+      window.__mbhRenderAll014Final = renderAll;
+      renderAll = function(){ const r = window.__mbhRenderAll014Final.apply(this, arguments); syncLegalFooter014(); removeEnemyLevelXpFromStatus014(); return r; };
+    }
+  }
+
+  function bootFinal014(){
+    syncVersionFinal014();
+    installFooterCss014();
+    syncLegalFooter014();
+    installLogFinal014();
+    patchRenderHooks014();
+    removeEnemyLevelXpFromStatus014();
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bootFinal014, {once:true}); else setTimeout(bootFinal014,0);
+  window.addEventListener('load', bootFinal014, {once:true});
+  window.addEventListener('resize', ()=>setTimeout(syncLegalFooter014, 50));
+  setInterval(()=>safe(()=>{ syncVersionFinal014(); syncLegalFooter014(); removeEnemyLevelXpFromStatus014(); renderLogFinal014('refresh'); }), 1200);
+})();
