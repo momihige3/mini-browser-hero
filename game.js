@@ -40,7 +40,7 @@ const DEATH_DANCE_CUTINS = [
 ];
 const DARK_SWORD_SAINT_CUTIN = {quote:'私を超えてみせろ。', img:'assets/cutin_dark_sword_dance.png'};
 const DARK_SWORD_TECHNIQUE_CUTIN = {quote:'', img:'assets/cutin_dark_sword_technique.png'};
-const GAME_VERSION = (window.APP_VERSION || '0.2.1');
+const GAME_VERSION = (window.APP_VERSION || '0.2.2');
 window.GAME_VERSION = GAME_VERSION;
 
 const DARK_SWORD_SAINT = {
@@ -4584,7 +4584,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* ver.0.1.3: strong/named variants, drop source, quality/luck bonuses, deathdance count-only reset補強 */
 (function(){
   'use strict';
-  const APP_VERSION = '0.2.1';
+  const APP_VERSION = '0.2.2';
   const PREFIXES = ['狡猾な','獰猛な','蛮勇な','エリート','頂点の','原点の','キラー'];
   function safe(fn){ try{return fn();}catch(e){ console.error('[MBH 0.1.3]', e); } }
   function syncVersion9959(){
@@ -4869,7 +4869,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* ver.0.1.3: 敵防御を軽減式へ変更、敵レベル経験値制御、Lv100までの戦闘テンポ調整 */
 (function(){
   'use strict';
-  const APP_VERSION = '0.2.1';
+  const APP_VERSION = '0.2.2';
   const ENEMY_LEVEL_XP_KEY = 'mini-browser-hero-enemy-level-xp-v9960';
   const ENEMY_LEVEL_XP_NEXT = 1000;
   function safe(fn){ try{return fn();}catch(e){ console.error('[MBH 0.1.3]', e); } }
@@ -5097,7 +5097,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* ver.0.1.3: 敵Lv経験値完全固定 + 敵攻撃を防御軽減式へ変更 */
 (function(){
   'use strict';
-  const APP_VERSION = '0.2.1';
+  const APP_VERSION = '0.2.2';
   const ENEMY_LEVEL_XP_KEY_NEW = 'mini-browser-hero-enemy-level-xp-v9961';
   const ENEMY_LEVEL_XP_KEY_OLD = 'mini-browser-hero-enemy-level-xp-v9960';
   const ENEMY_LEVEL_XP_NEXT = 1000;
@@ -5321,7 +5321,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* ver.0.1.3: 暗黒剣聖の独立Lv表示 + 主人公必要経験値固定 */
 (function(){
   'use strict';
-  const APP_VERSION = '0.2.1';
+  const APP_VERSION = '0.2.2';
   const HERO_XP_NEXT_FIXED = 40;
   function safe(fn){ try{return fn();}catch(e){ console.error('[MBH 0.1.3]', e); } }
   function syncVersion9962(){
@@ -5432,7 +5432,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* ver.0.1.3 hotfix: hero debug stats, dark equipment list visibility, low-level enemy HP trim */
 (function(){
   'use strict';
-  const APP_VERSION = '0.2.1';
+  const APP_VERSION = '0.2.2';
   function safe(fn){ try{return fn();}catch(e){ console.error('[MBH 0.1.3 hotfix]', e); } }
   function esc(s){ return (typeof escapeHtml === 'function') ? escapeHtml(s) : String(s).replace(/[&<>"']/g, ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
   function pct(v){ return Math.round((Number(v)||0)*100)+'%'; }
@@ -5572,7 +5572,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* ver.0.1.3: 装備名・接頭辞・説明文を実効果へ統一 */
 (function(){
   'use strict';
-  const APP_VERSION = '0.2.1';
+  const APP_VERSION = '0.2.2';
   const DARK_FIXED_NAMES = new Set(['闇の聖剣','闇の盾','闇のアミュレット','闇の鎧','闇の籠手','闇の兜','暗黒の靴']);
   const DARK_NAME_BY_SLOT = { '武器':'闇の聖剣', '盾':'闇の盾', 'アミュレット':'闇のアミュレット', '鎧':'闇の鎧', '腕':'闇の籠手', '兜':'闇の兜', '足':'暗黒の靴' };
   const BASE_BY_SLOT = { '武器':'剣', '盾':'盾', '兜':'兜', '鎧':'鎧', '腕':'腕甲', '足':'ブーツ', 'リング':'リング', 'アミュレット':'アミュレット' };
@@ -5756,7 +5756,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* ver.0.1.3: final XP single-source correction */
 (function(){
   'use strict';
-  const APP_VERSION = '0.2.1';
+  const APP_VERSION = '0.2.2';
   const HERO_XP_NEXT = 1000;
   function safe(fn){ try{ return fn && fn(); }catch(e){ console.warn('[MBH 0.1.3 final]', e); } }
   function syncFinalVersion(){
@@ -5823,7 +5823,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* ver.APP_VERSION: variant badge/regen float/legal links visibility final fix */
 (function(){
   'use strict';
-  const APP_VERSION = '0.2.1';
+  const APP_VERSION = '0.2.2';
   function safe(fn){ try{ return fn && fn(); }catch(e){ console.warn('[MBH variant/legal fix]', e); return null; } }
   function syncVersion012(){
     safe(()=>{ window.APP_VERSION = APP_VERSION; window.GAME_VERSION = APP_VERSION; document.documentElement.dataset.buildVersion = APP_VERSION; });
@@ -5913,7 +5913,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* ver.0.1.3: variant buff list, named regen position, legal links only inside menu, boss low-level tuning, BGM accidental-stop guard */
 (function(){
   'use strict';
-  const BUILD = (window.APP_VERSION || window.GAME_VERSION || '0.2.1');
+  const BUILD = (window.APP_VERSION || window.GAME_VERSION || '0.2.2');
   function safe(fn){ try{return fn && fn();}catch(e){ console.error('[MBH0.1.3]', e); return null; } }
   function syncVersion013(){
     window.APP_VERSION = BUILD;
@@ -6073,507 +6073,18 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 })();
 
 
-
-/* ver.0.2.1: single version lock + definitive menu + debug controls + log/status/footer fixes */
+/* ver.0.2.2: stable responsive side panel + non-flicker flagged logs + wide tab layouts */
 (function(){
   'use strict';
-  const APP_VERSION = '0.2.1';
+  const APP_VERSION = '0.2.2';
   const $id = (id)=>document.getElementById(id);
-  const safe = (fn)=>{ try{ return fn && fn(); }catch(e){ console.error('[MBH0.1.9]', e); return null; } };
-
-  function syncVersion018(){
-    window.APP_VERSION = APP_VERSION;
-    window.GAME_VERSION = APP_VERSION;
-    document.documentElement.dataset.buildVersion = APP_VERSION;
-    document.querySelectorAll('.build-version,[data-version],#versionText,.version-badge').forEach(el=>{ el.textContent = 'ver.' + APP_VERSION; });
-    document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent = 'Build: ver.' + APP_VERSION; });
-    document.querySelectorAll('.debug-trace-title').forEach(el=>{ el.textContent = '進行デバッグログ ver.' + APP_VERSION; });
-  }
-
-  function injectStyle018(){
-    let st = $id('mbh-018-style');
-    if(st) return;
-    st = document.createElement('style');
-    st.id = 'mbh-018-style';
-    st.textContent = `
-      html.mbh018-menu-ready .layout{grid-template-columns:1fr!important;}
-      html.mbh018-menu-ready .side-panel{display:none!important;pointer-events:none!important;}
-      html.mbh018-menu-ready .side-panel.open{
-        display:grid!important;pointer-events:auto!important;position:fixed!important;
-        left:10px!important;right:10px!important;top:68px!important;bottom:10px!important;
-        width:auto!important;min-width:0!important;z-index:70000!important;
-        background:rgba(0,0,0,.94)!important;padding:10px!important;border:2px solid #c99b39!important;
-        box-shadow:0 0 35px #000!important;grid-template-columns:minmax(250px,.9fr) minmax(340px,1.1fr)!important;
-        grid-template-rows:auto minmax(0,1fr) auto!important;gap:10px!important;overflow:hidden!important;
-      }
-      html.mbh018-menu-ready .side-panel.open .mobile-menu-tabs{display:flex!important;grid-column:1 / -1!important;}
-      html.mbh018-menu-ready .side-panel.open .legal-links{grid-column:1 / -1!important;display:flex!important;position:static!important;flex:0 0 auto!important;margin:0!important;padding:8px!important;border-top:1px solid #6d4d1a!important;background:rgba(12,8,4,.96)!important;z-index:auto!important;box-shadow:none!important;}
-      html.mbh018-menu-ready .side-panel:not(.open) .legal-links{display:none!important;}
-      html.mbh018-menu-ready .side-panel.open .menu-left{grid-column:1!important;grid-row:2!important;min-height:0!important;overflow:hidden!important;}
-      html.mbh018-menu-ready .side-panel.open .menu-right{grid-column:2!important;grid-row:2!important;min-height:0!important;overflow:hidden!important;grid-template-rows:minmax(0,1fr) 190px!important;}
-      @media(max-width:760px), (orientation:portrait){
-        html.mbh018-menu-ready .side-panel.open{grid-template-columns:1fr!important;grid-template-rows:auto minmax(0,1fr) auto!important;overflow:auto!important;-webkit-overflow-scrolling:touch!important;}
-        html.mbh018-menu-ready .side-panel.open .menu-left,html.mbh018-menu-ready .side-panel.open .menu-right{grid-column:1!important;grid-row:auto!important;display:block!important;overflow:visible!important;}
-        html.mbh018-menu-ready .side-panel.open .panel{display:none!important;}
-        html.mbh018-menu-ready .side-panel.open .panel.active-page{display:block!important;}
-        html.mbh018-menu-ready .side-panel.open .inventory-panel.active-page{display:flex!important;}
-        html.mbh018-menu-ready .side-panel.open .legal-links{grid-column:1!important;}
-      }
-      .mbh018-debug-row{display:grid!important;grid-template-columns:1fr 1fr!important;gap:6px!important;}
-      .mbh018-debug-row button{min-width:0!important;}
-      #statEnemyLevelXpLabel,#statEnemyLevelXp,.stat-enemy-level-xp,.enemy-level-xp-row{display:none!important;}
-    `;
-    document.head.appendChild(st);
-  }
-
-  function setMenuOpen018(open){
-    const panel = (typeof els !== 'undefined' && els.sidePanel) ? els.sidePanel : document.querySelector('.side-panel');
-    const btn = $id('equipToggleBtn');
-    if(!panel) return;
-    const flag = !!open;
-    if(typeof state !== 'undefined') state.uiOpen = flag;
-    panel.classList.toggle('open', flag);
-    panel.style.pointerEvents = flag ? 'auto' : 'none';
-    document.documentElement.classList.add('mbh018-menu-ready');
-    if(btn){
-      const compact = (typeof isSpPortrait === 'function' && isSpPortrait());
-      btn.textContent = flag ? (compact ? '×' : '閉じる') : (compact ? '☰' : 'メニュー');
-      btn.setAttribute('aria-expanded', flag ? 'true' : 'false');
-    }
-    safe(()=>{ if(flag && typeof setMenuPage === 'function') setMenuPage((state && state.menuPage) || 'stats'); });
-  }
-
-  function installMenu018(){
-    injectStyle018();
-    const old = $id('equipToggleBtn');
-    const panel = (typeof els !== 'undefined' && els.sidePanel) ? els.sidePanel : document.querySelector('.side-panel');
-    if(!old || !panel) return;
-    if(!old.__mbh018Replaced){
-      const btn = old.cloneNode(true);
-      btn.id = 'equipToggleBtn';
-      btn.__mbh018Replaced = true;
-      old.parentNode.replaceChild(btn, old);
-      if(typeof els !== 'undefined') els.equipToggleBtn = btn;
-      const toggle = (e)=>{
-        if(e){ e.preventDefault(); e.stopPropagation(); }
-        safe(()=>{ if(typeof startAudio === 'function') startAudio(); });
-        safe(()=>{ if(typeof playUiClick === 'function') playUiClick(); });
-        const isOpen = panel.classList.contains('open');
-        setMenuOpen018(!isOpen);
-        return false;
-      };
-      btn.addEventListener('click', toggle, {capture:true});
-      btn.addEventListener('pointerup', (e)=>{ if(e.pointerType && e.pointerType !== 'mouse') toggle(e); }, {capture:true, passive:false});
-      btn.addEventListener('touchend', toggle, {capture:true, passive:false});
-    }
-    setMenuOpen018(false);
-  }
-
-  function ensureLegalFooter018(){
-    const panel = (typeof els !== 'undefined' && els.sidePanel) ? els.sidePanel : document.querySelector('.side-panel');
-    if(!panel) return;
-    const fixed = $id('fixedLegalLinks');
-    if(fixed) fixed.remove();
-    let box = panel.querySelector(':scope > .legal-links') || panel.querySelector('.legal-links');
-    if(!box){
-      box = document.createElement('div');
-      box.className = 'legal-links';
-      box.setAttribute('aria-label','公開情報');
-      box.innerHTML = '<button id="creditBtn" type="button">クレジット</button><button id="termsBtn" type="button">利用規約</button><button id="privacyBtn" type="button">プライバシーポリシー</button>';
-      panel.appendChild(box);
-    }else if(box.parentElement !== panel){
-      panel.appendChild(box);
-    }
-    box.classList.remove('hidden');
-    const bind = (id,type)=>{
-      const btn = $id(id) || box.querySelector('#'+id);
-      if(!btn || btn.__mbh018Legal) return;
-      btn.__mbh018Legal = true;
-      btn.addEventListener('click', (e)=>{ e.preventDefault(); e.stopPropagation(); safe(()=>playUiClick()); safe(()=>openLegalModal(type)); }, {capture:true});
-    };
-    bind('creditBtn','credit'); bind('termsBtn','terms'); bind('privacyBtn','privacy');
-  }
-
-  function removeStatusDebug018(){
-    ['debugHp0Kill','debugForceDefeated','debugClearBleed','debugStopDot','debugStopDarkDance'].forEach(id=>{ const el=$id(id); if(el) el.remove(); });
-  }
-
-  function installDebug018(){
-    const panel = $id('debugPanel');
-    if(!panel) return;
-    removeStatusDebug018();
-    if($id('mbh018EnemyDebug')) return;
-    const box = document.createElement('div');
-    box.id = 'mbh018EnemyDebug';
-    box.className = 'mbh018-debug-box';
-    box.innerHTML = `
-      <div class="debug-head">敵操作 ver.${APP_VERSION}</div>
-      <button id="debugNextStrong" type="button">次の敵を強個体</button>
-      <button id="debugNextNamed" type="button">次の敵を異名持ち</button>
-      <div class="mbh018-debug-row">
-        <button id="debugEnemyLvMinus10" type="button">敵Lv -10</button>
-        <button id="debugEnemyLvMinus5" type="button">敵Lv -5</button>
-        <button id="debugEnemyLvPlus5" type="button">敵Lv +5</button>
-        <button id="debugEnemyLvPlus10" type="button">敵Lv +10</button>
-      </div>
-      <button id="debugEnemyLvFix" type="button">敵Lv固定 OFF</button>
-    `;
-    const anchor = $id('debugDarkSwordSaint') || panel.firstChild;
-    if(anchor && anchor.parentNode) anchor.parentNode.insertBefore(box, anchor.nextSibling); else panel.prepend(box);
-
-    function log018(msg, cls='system'){ safe(()=>log(msg, cls)); }
-    function setNext(kind){
-      if(typeof state === 'undefined') return;
-      state.debugNextEnemyVariant = kind;
-      log018(`デバッグ：次の敵を${kind === 'named' ? '異名持ち' : '強個体'}に設定。`, 'system');
-      safe(()=>scheduleSave());
-    }
-    function addLv(delta){
-      if(typeof state === 'undefined') return;
-      const before = Math.max(1, Math.floor(Number(state.enemyLevelBase || state.enemy?.level || state.level || 1)));
-      state.enemyLevelBase = Math.max(1, before + delta);
-      state.enemyLevelBaseDefeated = Math.max(0, Math.floor(Number(state.defeated)||0));
-      log018(`デバッグ：敵出現Lv ${before}→${state.enemyLevelBase}`, 'system');
-      safe(()=>renderAll()); safe(()=>scheduleSave());
-    }
-    const bind=(id,fn)=>{ const b=$id(id); if(b) b.onclick=(e)=>{ e.preventDefault(); e.stopPropagation(); safe(()=>playUiClick()); fn(); return false; }; };
-    bind('debugNextStrong',()=>setNext('strong'));
-    bind('debugNextNamed',()=>setNext('named'));
-    bind('debugEnemyLvMinus10',()=>addLv(-10));
-    bind('debugEnemyLvMinus5',()=>addLv(-5));
-    bind('debugEnemyLvPlus5',()=>addLv(5));
-    bind('debugEnemyLvPlus10',()=>addLv(10));
-    bind('debugEnemyLvFix',()=>{
-      if(typeof state === 'undefined') return;
-      state.debugEnemyLevelFixed = !state.debugEnemyLevelFixed;
-      const b=$id('debugEnemyLvFix');
-      if(b) b.textContent = `敵Lv固定 ${state.debugEnemyLevelFixed ? 'ON' : 'OFF'}`;
-      log018(`デバッグ：敵Lv固定 ${state.debugEnemyLevelFixed ? 'ON' : 'OFF'}`, 'system');
-      safe(()=>scheduleSave());
-    });
-  }
-
-  function applyVariant018(e, kind){
-    if(!e || !kind || e.id === 'dark_sword_saint') return e;
-    e.variant = { type: kind, label: kind === 'named' ? '異名持ち' : '強個体' };
-    e.variantType = kind;
-    if(kind === 'named' && !/^.+の/.test(e.name)) e.name = '異名の' + e.name;
-    return e;
-  }
-  if(typeof setEnemy === 'function' && !window.__mbh018SetEnemy){
-    window.__mbh018SetEnemy = setEnemy;
-    setEnemy = function(e){
-      safe(()=>{
-        if(typeof state !== 'undefined' && state.debugNextEnemyVariant && e && e.id !== 'dark_sword_saint'){
-          applyVariant018(e, state.debugNextEnemyVariant);
-          state.debugNextEnemyVariant = null;
-        }
-      });
-      return window.__mbh018SetEnemy.apply(this, arguments);
-    };
-  }
-  if(typeof updateEnemyLevelProgressionOnDefeat === 'function' && !window.__mbh018UpdateEnemyLevel){
-    window.__mbh018UpdateEnemyLevel = updateEnemyLevelProgressionOnDefeat;
-    updateEnemyLevelProgressionOnDefeat = function(e){
-      if(typeof state !== 'undefined' && state.debugEnemyLevelFixed){
-        const lv = Math.max(1, Math.floor(Number(state.enemyLevelBase || e?.level || 1)));
-        state.enemyLevelBase = lv;
-        state.enemyLevelBaseDefeated = Math.max(0, Math.floor(Number(state.defeated)||0));
-        return;
-      }
-      return window.__mbh018UpdateEnemyLevel.apply(this, arguments);
-    };
-  }
-  if(typeof fleeBattle === 'function' && !window.__mbh018FleeBattle){
-    window.__mbh018FleeBattle = fleeBattle;
-    fleeBattle = function(){
-      if(typeof state === 'undefined' || !state.enemy || (typeof isDarkSwordSaint === 'function' && isDarkSwordSaint())) return window.__mbh018FleeBattle.apply(this, arguments);
-      const currentLevel = Math.max(1, Math.floor(state.enemy.level || state.enemyLevelBase || state.level || 1));
-      const nextBase = state.debugEnemyLevelFixed ? currentLevel : Math.max(1, currentLevel - 5);
-      state.enemyLevelBase = nextBase;
-      state.enemyLevelBaseDefeated = state.defeated || 0;
-      state.winStreak = 0;
-      state.forceNextDarkSwordSaint = false;
-      safe(()=>log(`戦闘から離脱した。敵の出現レベルが${currentLevel}→${nextBase}に低下した。`, 'danger'));
-      safe(()=>banner('戦闘離脱'));
-      safe(()=>spawnWeakEnemyAfterEscape());
-    };
-  }
-  if(typeof confirmFlee === 'function' && !window.__mbh018ConfirmFlee){
-    window.__mbh018ConfirmFlee = confirmFlee;
-    confirmFlee = function(){
-      const modal = $id('fleeModal');
-      const desc = $id('fleeModalDesc');
-      if(desc){
-        desc.innerHTML = (typeof isDarkSwordSaint === 'function' && isDarkSwordSaint())
-          ? '暗黒剣聖は独立レベルのため、逃走しても敵の出現レベルは下がりません。<br>経験値は失いません。'
-          : '敵の出現レベルが5下がります。<br>経験値は失いません。';
-      }
-      if(modal) modal.classList.remove('hidden');
-    };
-  }
-
-  // 異名持ちの再生表示は通常回復と同じ「+数値」のみ。
-  if(typeof showFloat === 'function' && !window.__mbh018ShowFloat){
-    window.__mbh018ShowFloat = showFloat;
-    showFloat = function(text, cls='damage'){
-      let t = String(text || '');
-      if(t.includes('異名再生')){
-        const m = t.match(/([0-9][0-9,]*)/);
-        t = '+' + (m ? m[1] : '0');
-        cls = 'heal';
-      }
-      return window.__mbh018ShowFloat.call(this, t, cls);
-    };
-  }
-
-  function classifyLog018(l){
-    const c = String(l?.cls || '').toLowerCase();
-    const raw = String(l?.msg || '');
-    const m = raw.replace(/<[^>]+>/g,'');
-    if(/装備ドロップ|ドロップ|枠目|闇装備確定/.test(m)) return 'drop';
-    if(c.includes('damage') || c.includes('skilllog') || /ダメージ|攻撃|斬|雷撃|炎斬り|連続攻撃|剣舞|ブレス|火傷|出血|GUARD|無効|MISS/.test(m)) return 'damage';
-    return 'system';
-  }
-  function renderLog018(reason='filter'){
-    const el = $id('log');
-    if(!el || typeof state === 'undefined') return;
-    const f = state.logFilter || 'all';
-    const rows = (state.log || []).filter(l=>f === 'all' || classifyLog018(l) === f);
-    el.innerHTML = rows.map(l=>`<div class="${l.cls||''}">[${l.time}] ${l.msg}</div>`).join('');
-    document.querySelectorAll('#logFilterBar button').forEach(b=>b.classList.toggle('active', (b.dataset.logFilter||'all') === f));
-    if(reason === 'filter') el.scrollTop = 0;
-  }
-  function installLog018(){
-    const bar = $id('logFilterBar');
-    if(typeof state !== 'undefined') state.logFilter = state.logFilter || 'all';
-    if(bar){
-      bar.innerHTML = '<button type="button" data-log-filter="all">すべて</button><button type="button" data-log-filter="damage">ダメージ</button><button type="button" data-log-filter="system">システム</button><button type="button" data-log-filter="drop">ドロップ</button>';
-      const on = (e)=>{ const b=e.target.closest('button[data-log-filter]'); if(!b) return; e.preventDefault(); e.stopPropagation(); state.logFilter=b.dataset.logFilter||'all'; renderLog018('filter'); return false; };
-      bar.onclick = on;
-      bar.onpointerup = (e)=>{ if(e.pointerType && e.pointerType === 'mouse') return; return on(e); };
-      bar.ontouchend = on;
-    }
-    if(typeof log === 'function' && !window.__mbh018LogInstalled){
-      window.__mbh018LogInstalled = true;
-      const escape = (s)=> typeof escapeHtml === 'function' ? escapeHtml(s) : String(s).replace(/[&<>"']/g, ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
-      log = function(msg, cls='', html=false){
-        const time = new Date().toLocaleTimeString('ja-JP',{hour12:false});
-        const safeMsg = html ? msg : escape(msg);
-        state.log.unshift({time,msg:safeMsg,cls,html:true});
-        state.log = state.log.slice(0,180);
-        renderLog018('append');
-      };
-    }
-    renderLog018('filter');
-  }
-
-  function cleanupStatusXp018(){
-    ['statEnemyLevelXpLabel','statEnemyLevelXp'].forEach(id=>{ const el=$id(id); if(el) el.remove(); });
-    document.querySelectorAll('.stat-grid span').forEach(sp=>{ if((sp.textContent||'').includes('敵Lv経験値')){ const nx=sp.nextElementSibling; sp.remove(); if(nx && nx.tagName) nx.remove(); } });
-  }
-  if(typeof renderStats === 'function' && !window.__mbh018RenderStats){
-    window.__mbh018RenderStats = renderStats;
-    renderStats = function(){ const r=window.__mbh018RenderStats.apply(this, arguments); safe(cleanupStatusXp018); return r; };
-  }
-
-  function boot018(){
-    syncVersion018();
-    injectStyle018();
-    ensureLegalFooter018();
-    installMenu018();
-    installDebug018();
-    installLog018();
-    cleanupStatusXp018();
-  }
-  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot018, {once:true}); else setTimeout(boot018,0);
-  window.addEventListener('load', boot018, {once:true});
-  window.addEventListener('resize', ()=>setTimeout(()=>safe(()=>{ setMenuOpen018(false); ensureLegalFooter018(); }), 60));
-  setInterval(()=>safe(()=>{ syncVersion018(); ensureLegalFooter018(); cleanupStatusXp018(); }), 250);
-})();
-
-
-/* ver.0.2.1: menu tab position + equip effects scroll + strict log filter fix */
-(function(){
-  'use strict';
-  const APP_VERSION = '0.2.1';
-  const $id = (id)=>document.getElementById(id);
-  const safe = (fn)=>{ try{ return fn && fn(); }catch(e){ console.error('[MBH0.1.9]', e); return null; } };
-
-  function syncVersion019(){
-    window.APP_VERSION = APP_VERSION;
-    window.GAME_VERSION = APP_VERSION;
-    document.documentElement.dataset.buildVersion = APP_VERSION;
-    document.documentElement.dataset.mbhVersion = APP_VERSION;
-    document.querySelectorAll('.build-version,[data-version],#versionText,.version-badge').forEach(el=>{ el.textContent = 'ver.' + APP_VERSION; });
-    document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent = 'Build: ver.' + APP_VERSION; });
-    document.querySelectorAll('.debug-trace-title').forEach(el=>{ el.textContent = '進行デバッグログ ver.' + APP_VERSION; });
-  }
-
-  function injectStyle019(){
-    let st=$id('mbh-019-style');
-    if(st) return;
-    st=document.createElement('style');
-    st.id='mbh-019-style';
-    st.textContent = `
-      html.mbh018-menu-ready .side-panel.open,
-      html.mbh019-menu-ready .side-panel.open{
-        grid-template-rows:auto minmax(0,1fr) auto!important;
-      }
-      html.mbh018-menu-ready .side-panel.open .mobile-menu-tabs,
-      html.mbh019-menu-ready .side-panel.open .mobile-menu-tabs{
-        grid-column:1 / -1!important;
-        grid-row:1!important;
-        order:-999!important;
-        display:flex!important;
-        position:sticky!important;
-        top:0!important;
-        z-index:20!important;
-        align-self:start!important;
-        margin:0 0 8px!important;
-        background:rgba(12,8,4,.98)!important;
-        border-bottom:1px solid rgba(255,215,107,.35)!important;
-        padding-bottom:6px!important;
-      }
-      html.mbh018-menu-ready .side-panel.open .menu-left,
-      html.mbh019-menu-ready .side-panel.open .menu-left,
-      html.mbh018-menu-ready .side-panel.open .menu-right,
-      html.mbh019-menu-ready .side-panel.open .menu-right{
-        min-height:0!important;
-        overflow:auto!important;
-        -webkit-overflow-scrolling:touch!important;
-      }
-      html.mbh018-menu-ready .side-panel.open .panel,
-      html.mbh019-menu-ready .side-panel.open .panel{
-        min-height:0!important;
-        overflow:auto!important;
-      }
-      html.mbh018-menu-ready .side-panel.open .equip-panel,
-      html.mbh019-menu-ready .side-panel.open .equip-panel{
-        display:flex!important;
-        flex-direction:column!important;
-        min-height:0!important;
-        overflow:auto!important;
-        padding-bottom:12px!important;
-      }
-      html.mbh018-menu-ready .side-panel.open #equipList,
-      html.mbh019-menu-ready .side-panel.open #equipList{
-        flex:0 0 auto!important;
-      }
-      html.mbh018-menu-ready .side-panel.open #equipEffectTotals,
-      html.mbh019-menu-ready .side-panel.open #equipEffectTotals{
-        flex:1 1 auto!important;
-        min-height:120px!important;
-        max-height:none!important;
-        overflow:visible!important;
-      }
-      html.mbh018-menu-ready .side-panel.open #equipEffectTotals .effect-scroll,
-      html.mbh019-menu-ready .side-panel.open #equipEffectTotals .effect-scroll{
-        max-height:none!important;
-        min-height:80px!important;
-        overflow:visible!important;
-        padding-bottom:10px!important;
-      }
-      @media(max-width:760px), (orientation:portrait){
-        html.mbh018-menu-ready .side-panel.open .mobile-menu-tabs,
-        html.mbh019-menu-ready .side-panel.open .mobile-menu-tabs{
-          grid-column:1!important;
-          grid-row:1!important;
-          flex-wrap:wrap!important;
-        }
-        html.mbh018-menu-ready .side-panel.open .menu-left,
-        html.mbh019-menu-ready .side-panel.open .menu-left,
-        html.mbh018-menu-ready .side-panel.open .menu-right,
-        html.mbh019-menu-ready .side-panel.open .menu-right{
-          overflow:visible!important;
-        }
-        html.mbh018-menu-ready .side-panel.open .panel.active-page,
-        html.mbh019-menu-ready .side-panel.open .panel.active-page{
-          overflow:visible!important;
-        }
-      }
-    `;
-    document.head.appendChild(st);
-    document.documentElement.classList.add('mbh019-menu-ready');
-  }
-
-  function plainLogMsg(l){
-    return String(l && l.msg != null ? l.msg : '').replace(/<[^>]*>/g,'').replace(/&nbsp;/g,' ').trim();
-  }
-  function classifyLog019(l){
-    const c = String(l && l.cls || '').toLowerCase();
-    const html = String(l && l.msg != null ? l.msg : '');
-    const m = plainLogMsg(l);
-    // ドロップは装備入手だけ。出血・火傷・回復・攻撃ログを巻き込まない。
-    if(/log-item|log-rarity|drop-slot-label/.test(html) || /装備ドロップ|暗黒剣聖討伐報酬|闇装備確定|\d枠目/.test(m)) return 'drop';
-    // 回復表示・吸収もバトル中の数値なのでダメージ側に寄せる。
-    if(c.includes('damage') || c.includes('skilllog') || /ダメージ|被ダメ|回復|吸収|再生|出血|暗黒出血|火傷|攻撃|斬|雷撃|炎斬り|連続攻撃|大攻撃|剣舞|剣技|ブレス|GUARD|無効|MISS|反射|\+[0-9０-９]/.test(m)) return 'damage';
-    return 'system';
-  }
-  function renderLog019(reason='filter'){
-    const el=$id('log');
-    if(!el || typeof state === 'undefined') return;
-    const f=state.logFilter || 'all';
-    const beforeBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
-    const rows=(state.log || []).filter(l=>f === 'all' || classifyLog019(l) === f);
-    el.innerHTML = rows.map(l=>`<div class="${l.cls||''}">[${l.time}] ${l.msg}</div>`).join('');
-    document.querySelectorAll('#logFilterBar button').forEach(b=>b.classList.toggle('active',(b.dataset.logFilter||'all')===f));
-    if(reason === 'filter') el.scrollTop = 0;
-    else if(beforeBottom < 8) el.scrollTop = el.scrollHeight;
-  }
-  function installLog019(){
-    const bar=$id('logFilterBar');
-    if(typeof state !== 'undefined') state.logFilter = state.logFilter || 'all';
-    if(bar){
-      bar.innerHTML='<button type="button" data-log-filter="all">すべて</button><button type="button" data-log-filter="damage">ダメージ</button><button type="button" data-log-filter="system">システム</button><button type="button" data-log-filter="drop">ドロップ</button>';
-      const on=(e)=>{ const b=e.target.closest('button[data-log-filter]'); if(!b) return; e.preventDefault(); e.stopPropagation(); state.logFilter=b.dataset.logFilter||'all'; renderLog019('filter'); return false; };
-      bar.onclick=on;
-      bar.onpointerup=(e)=>{ if(e.pointerType && e.pointerType==='mouse') return; return on(e); };
-      bar.ontouchend=on;
-    }
-    if(typeof log === 'function' && !window.__mbh019LogInstalled){
-      window.__mbh019LogInstalled = true;
-      const escape=(s)=> typeof escapeHtml === 'function' ? escapeHtml(s) : String(s).replace(/[&<>"']/g, ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
-      log = function(msg, cls='', html=false){
-        const time=new Date().toLocaleTimeString('ja-JP',{hour12:false});
-        const safeMsg=html ? msg : escape(msg);
-        state.log.unshift({time,msg:safeMsg,cls,html:true});
-        state.log=state.log.slice(0,180);
-        renderLog019('append');
-      };
-    }
-    renderLog019('filter');
-  }
-
-  function keepTabsOnTop019(){
-    const panel = (typeof els !== 'undefined' && els.sidePanel) ? els.sidePanel : document.querySelector('.side-panel');
-    const tabs = panel && panel.querySelector('.mobile-menu-tabs');
-    if(panel && tabs && tabs.parentElement === panel && panel.firstElementChild !== tabs){
-      panel.insertBefore(tabs, panel.firstElementChild);
-    }
-  }
-  function boot019(){
-    syncVersion019();
-    injectStyle019();
-    keepTabsOnTop019();
-    installLog019();
-  }
-  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot019, {once:true}); else setTimeout(boot019,0);
-  window.addEventListener('load', boot019, {once:true});
-  window.addEventListener('resize', ()=>setTimeout(()=>safe(()=>{ injectStyle019(); keepTabsOnTop019(); }), 60));
-  setInterval(()=>safe(()=>{ syncVersion019(); keepTabsOnTop019(); }), 400);
-})();
-
-
-/* ver.0.2.1: layout rebuild + strict log categories + sell exp preview */
-(function(){
-  'use strict';
-  const APP_VERSION = '0.2.1';
-  const $id = (id)=>document.getElementById(id);
-  const safe = (fn)=>{ try{ return fn && fn(); }catch(e){ console.error('[MBH0.2.1]', e); return null; } };
+  const safe = (fn)=>{ try{ return fn && fn(); }catch(e){ console.error('[MBH0.2.2]', e); return null; } };
   const esc = (s)=> typeof escapeHtml === 'function' ? escapeHtml(s) : String(s).replace(/[&<>"']/g, ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 
-  function syncVersion020(){
+  function isWide(){ return window.matchMedia('(min-width:1280px) and (orientation:landscape)').matches; }
+  function activePage(){ return (typeof state !== 'undefined' && state.menuPage) ? state.menuPage : 'stats'; }
+
+  function syncVersion(){
     window.APP_VERSION = APP_VERSION;
     window.GAME_VERSION = APP_VERSION;
     document.documentElement.dataset.buildVersion = APP_VERSION;
@@ -6583,337 +6094,127 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
     document.querySelectorAll('.debug-trace-title').forEach(el=>{ el.textContent = '進行デバッグログ ver.' + APP_VERSION; });
   }
 
-  function injectStyle020(){
-    let st=$id('mbh-020-style');
+  function installStyle(){
+    let st=$id('mbh-022-style');
     if(st) return;
     st=document.createElement('style');
-    st.id='mbh-020-style';
+    st.id='mbh-022-style';
     st.textContent = `
-      html.mbh020-ready #equipToggleBtn,
-      html.mbh020-ready #debugBtn,
-      html.mbh020-ready #muteBtn{display:inline-flex!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;}
-      html.mbh020-ready .topbar .controls{display:flex!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;gap:8px!important;align-items:center!important;flex-wrap:wrap!important;}
+      html.mbh022-ready body{overflow-x:hidden!important;}
+      html.mbh022-ready .topbar{align-items:center!important;gap:10px!important;min-height:52px!important;}
+      html.mbh022-ready .topbar .controls{display:flex!important;align-items:center!important;justify-content:flex-end!important;gap:8px!important;flex-wrap:wrap!important;align-self:center!important;}
+      html.mbh022-ready #equipToggleBtn,html.mbh022-ready #debugBtn,html.mbh022-ready #muteBtn{align-self:center!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;min-height:34px!important;height:34px!important;line-height:1!important;margin:0!important;vertical-align:middle!important;white-space:nowrap!important;}
+      html.mbh022-ready #equipToggleBtn{min-width:82px!important;}
+      html.mbh022-ready .side-panel{box-sizing:border-box!important;}
+      html.mbh022-ready .side-panel .mobile-menu-tabs{gap:6px!important;align-items:center!important;}
+      html.mbh022-ready .side-panel .mobile-menu-tabs button{min-height:32px!important;line-height:1.1!important;}
+      html.mbh022-ready .side-panel .panel{min-height:0!important;}
+      html.mbh022-ready .side-panel .legal-links{position:static!important;margin:0!important;padding:8px!important;border-top:1px solid rgba(255,215,107,.35)!important;background:rgba(12,8,4,.96)!important;box-shadow:none!important;z-index:1!important;}
+      html.mbh022-ready #statusEffectTotals022,html.mbh022-ready #equipEffectTotalsSide{border:1px solid rgba(255,215,107,.28)!important;border-radius:10px!important;padding:8px!important;background:rgba(12,8,4,.34)!important;min-height:0!important;}
+      html.mbh022-ready #statusEffectTotals022 h3,html.mbh022-ready #equipEffectTotalsSide h3{margin:0 0 8px!important;font-size:14px!important;color:#ffd76b!important;}
+      html.mbh022-ready .effect-scroll{display:grid!important;gap:4px!important;align-content:start!important;min-height:0!important;overflow:auto!important;}
+      html.mbh022-ready .effect-row{display:flex!important;justify-content:space-between!important;gap:8px!important;border-bottom:1px solid rgba(255,255,255,.08)!important;padding:3px 0!important;font-size:12px!important;}
+      html.mbh022-ready .effect-row span{opacity:.86!important;}
+      html.mbh022-ready .effect-row b{text-align:right!important;color:#fff6c7!important;}
+      html.mbh022-ready .muted{opacity:.7!important;font-size:12px!important;}
+      html.mbh022-ready #sellExpPreview022{font-size:12px!important;color:#ffd76b!important;margin-top:4px!important;width:100%!important;text-align:right!important;}
+      html.mbh022-ready .log-filter-bar{flex:0 0 auto!important;}
+      html.mbh022-ready #log{min-height:0!important;overflow:auto!important;}
 
-      html.mbh020-ready .side-panel{display:none!important;pointer-events:none!important;visibility:hidden!important;}
-      html.mbh020-ready .side-panel.open{
-        display:grid!important;visibility:visible!important;pointer-events:auto!important;
-        position:fixed!important;z-index:9000!important;top:62px!important;right:10px!important;bottom:10px!important;
-        width:min(980px,calc(100vw - 20px))!important;max-width:calc(100vw - 20px)!important;
-        grid-template-columns:minmax(0,1fr) minmax(280px,.92fr)!important;grid-template-rows:auto minmax(0,1fr) auto!important;
-        gap:10px!important;overflow:hidden!important;padding:10px!important;box-sizing:border-box!important;
-        background:rgba(12,8,4,.98)!important;border:1px solid rgba(255,215,107,.45)!important;border-radius:14px!important;
-        box-shadow:0 18px 50px rgba(0,0,0,.65)!important;
+      @media (min-width:1280px) and (orientation:landscape){
+        html.mbh022-ready #equipToggleBtn{display:none!important;}
+        html.mbh022-ready .layout{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(500px,35vw)!important;gap:12px!important;align-items:stretch!important;min-height:0!important;}
+        html.mbh022-ready .battle-panel{min-width:0!important;}
+        html.mbh022-ready .side-panel{display:grid!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;position:static!important;inset:auto!important;z-index:auto!important;width:auto!important;max-width:none!important;height:calc(100vh - 74px)!important;grid-column:2!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;grid-template-rows:auto minmax(0,1fr) auto!important;gap:10px!important;overflow:hidden!important;padding:10px!important;border-radius:14px!important;transform:none!important;}
+        html.mbh022-ready .side-panel.open{display:grid!important;position:static!important;}
+        html.mbh022-ready .side-panel .mobile-menu-tabs{grid-column:1/-1!important;grid-row:1!important;display:flex!important;position:static!important;top:auto!important;margin:0!important;padding:0 0 8px!important;background:transparent!important;flex-wrap:wrap!important;overflow:visible!important;}
+        html.mbh022-ready .side-panel .menu-left{grid-column:1!important;grid-row:2!important;display:block!important;min-height:0!important;overflow:auto!important;}
+        html.mbh022-ready .side-panel .menu-right{grid-column:2!important;grid-row:2!important;display:block!important;min-height:0!important;overflow:auto!important;}
+        html.mbh022-ready .side-panel .legal-links{grid-column:1/-1!important;grid-row:3!important;display:flex!important;}
+        html.mbh022-ready .side-panel .panel{display:none!important;overflow:auto!important;}
+        html.mbh022-ready .side-panel .panel.active-page{display:block!important;}
+        html.mbh022-ready .side-panel .hero-stats.active-page{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;grid-template-rows:auto minmax(0,1fr)!important;gap:10px!important;height:100%!important;overflow:hidden!important;}
+        html.mbh022-ready .side-panel .hero-stats.active-page h2{grid-column:1/-1!important;margin:0!important;}
+        html.mbh022-ready .side-panel .hero-stats.active-page .stat-grid{grid-column:1!important;grid-row:2!important;min-height:0!important;align-self:start!important;}
+        html.mbh022-ready .side-panel .hero-stats.active-page .monster-records{grid-column:2!important;grid-row:2 / span 2!important;min-height:0!important;height:100%!important;overflow:auto!important;margin-top:0!important;}
+        html.mbh022-ready #statusEffectTotals022{grid-column:1!important;grid-row:3!important;display:flex!important;flex-direction:column!important;min-height:120px!important;height:auto!important;overflow:hidden!important;}
+        html.mbh022-ready #statusEffectTotals022 .effect-scroll{flex:1 1 auto!important;}
+        html.mbh022-ready .side-panel .equip-panel.active-page{grid-column:1/-1!important;display:grid!important;grid-template-columns:minmax(0,1fr) minmax(260px,.85fr)!important;grid-template-rows:auto minmax(0,1fr)!important;gap:10px!important;height:100%!important;overflow:hidden!important;}
+        html.mbh022-ready .side-panel .equip-panel.active-page h2{grid-column:1/-1!important;grid-row:1!important;margin:0!important;}
+        html.mbh022-ready .side-panel .equip-panel.active-page #equipList{grid-column:1!important;grid-row:2!important;min-height:0!important;overflow:auto!important;}
+        html.mbh022-ready .side-panel .equip-panel.active-page #equipEffectTotalsSide{grid-column:2!important;grid-row:2!important;display:flex!important;flex-direction:column!important;overflow:hidden!important;}
+        html.mbh022-ready #equipEffectTotalsSide .effect-scroll{flex:1 1 auto!important;}
+        html.mbh022-ready .side-panel .inventory-panel.active-page,html.mbh022-ready .side-panel .log-panel.active-page{grid-column:1/-1!important;width:100%!important;height:100%!important;display:flex!important;flex-direction:column!important;min-height:0!important;overflow:hidden!important;}
+        html.mbh022-ready .side-panel .inventory-panel.active-page #inventory,html.mbh022-ready .side-panel .log-panel.active-page #log{flex:1 1 auto!important;min-height:0!important;}
+        html.mbh022-ready .inventory-actions{width:100%!important;}
       }
-      html.mbh020-ready .side-panel.open .mobile-menu-tabs{grid-column:1/-1!important;grid-row:1!important;display:flex!important;position:sticky!important;top:0!important;z-index:3!important;gap:6px!important;flex-wrap:wrap!important;margin:0!important;padding:0 0 8px!important;background:rgba(12,8,4,.98)!important;}
-      html.mbh020-ready .side-panel.open .menu-left{grid-column:1!important;grid-row:2!important;min-height:0!important;overflow:auto!important;-webkit-overflow-scrolling:touch!important;display:block!important;}
-      html.mbh020-ready .side-panel.open .menu-right{grid-column:2!important;grid-row:2!important;min-height:0!important;overflow:auto!important;-webkit-overflow-scrolling:touch!important;display:block!important;}
-      html.mbh020-ready .side-panel.open .legal-links{grid-column:1/-1!important;grid-row:3!important;display:flex!important;position:static!important;margin:0!important;padding:8px!important;border-top:1px solid rgba(255,215,107,.35)!important;background:rgba(12,8,4,.96)!important;box-shadow:none!important;z-index:1!important;}
-      html.mbh020-ready .side-panel:not(.open) .legal-links{display:none!important;}
 
-      html.mbh020-ready .side-panel.open .panel{display:none!important;min-height:0!important;overflow:auto!important;}
-      html.mbh020-ready .side-panel.open .panel.active-page{display:block!important;}
-      html.mbh020-ready .side-panel.open .inventory-panel.active-page{display:flex!important;flex-direction:column!important;}
-      html.mbh020-ready .side-panel.open .hero-stats.active-page{padding-bottom:10px!important;}
-      html.mbh020-ready .side-panel.open .hero-stats.active-page + .equip-panel{display:none!important;}
-      html.mbh020-ready .side-panel.open .equip-panel.active-page{display:block!important;}
-      html.mbh020-ready .side-panel.open .equip-panel.active-page #equipEffectTotals{display:none!important;}
-      html.mbh020-ready #equipEffectTotalsSide{display:none;}
-      html.mbh020-ready .side-panel.open .equip-panel.active-page ~ #equipEffectTotalsSide,
-      html.mbh020-ready .side-panel.open #equipEffectTotalsSide.active{display:block!important;}
-      html.mbh020-ready #equipEffectTotalsSide{border:1px solid rgba(255,215,107,.28);border-radius:12px;padding:10px;background:rgba(0,0,0,.18);}
-      html.mbh020-ready #equipEffectTotalsSide h3{margin:0 0 8px;font-size:14px;color:#ffd86b;}
-      html.mbh020-ready #equipEffectTotalsSide .effect-scroll{max-height:none!important;overflow:visible!important;padding-right:4px;}
-      html.mbh020-ready .effect-row{display:grid;grid-template-columns:1fr auto;gap:8px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:13px;}
-      html.mbh020-ready .sell-xp-preview{font-size:12px;color:#ffd86b;margin-left:6px;white-space:nowrap;}
-      html.mbh020-ready #sellSelectedBtn{min-width:150px;}
-
-      @media(max-width:760px),(orientation:portrait){
-        html.mbh020-ready .side-panel.open{left:8px!important;right:8px!important;top:54px!important;bottom:8px!important;width:auto!important;grid-template-columns:1fr!important;grid-template-rows:auto minmax(0,1fr) auto!important;overflow:auto!important;}
-        html.mbh020-ready .side-panel.open .menu-left,html.mbh020-ready .side-panel.open .menu-right{grid-column:1!important;grid-row:2!important;overflow:visible!important;}
-        html.mbh020-ready .side-panel.open .menu-right{display:block!important;}
-        html.mbh020-ready .side-panel.open .panel{display:none!important;}
-        html.mbh020-ready .side-panel.open .panel.active-page{display:block!important;}
-        html.mbh020-ready .side-panel.open .inventory-panel.active-page{display:flex!important;}
-        html.mbh020-ready .side-panel.open #equipEffectTotalsSide.active{display:block!important;margin-top:10px!important;}
+      @media (max-width:1279px), (orientation:portrait){
+        html.mbh022-ready #equipToggleBtn{display:inline-flex!important;}
+        html.mbh022-ready .side-panel{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;}
+        html.mbh022-ready .side-panel.open{display:grid!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;position:fixed!important;z-index:9000!important;left:8px!important;right:8px!important;top:58px!important;bottom:8px!important;width:auto!important;grid-template-columns:1fr!important;grid-template-rows:auto minmax(0,1fr) auto!important;gap:10px!important;overflow:hidden!important;padding:10px!important;transform:none!important;}
+        html.mbh022-ready .side-panel.open .mobile-menu-tabs{grid-column:1!important;grid-row:1!important;display:flex!important;position:static!important;top:auto!important;z-index:3!important;background:rgba(12,8,4,.98)!important;padding:0 0 8px!important;flex-wrap:wrap!important;}
+        html.mbh022-ready .side-panel.open .menu-left,html.mbh022-ready .side-panel.open .menu-right{grid-column:1!important;grid-row:2!important;display:block!important;min-height:0!important;overflow:auto!important;}
+        html.mbh022-ready .side-panel.open .legal-links{grid-column:1!important;grid-row:3!important;display:flex!important;}
+        html.mbh022-ready .side-panel.open .panel{display:none!important;}
+        html.mbh022-ready .side-panel.open .panel.active-page{display:block!important;}
+        html.mbh022-ready .side-panel.open .inventory-panel.active-page,html.mbh022-ready .side-panel.open .log-panel.active-page{display:flex!important;flex-direction:column!important;height:100%!important;min-height:0!important;}
+        html.mbh022-ready .side-panel.open .inventory-panel.active-page #inventory,html.mbh022-ready .side-panel.open .log-panel.active-page #log{flex:1 1 auto!important;min-height:0!important;}
+        html.mbh022-ready .side-panel.open .hero-stats.active-page .monster-records{display:block!important;}
+        html.mbh022-ready .side-panel.open #statusEffectTotals022,html.mbh022-ready .side-panel.open #equipEffectTotalsSide{display:block!important;margin-top:10px!important;}
       }
     `;
     document.head.appendChild(st);
-    document.documentElement.classList.add('mbh020-ready');
   }
 
-  function activePage(){ return (typeof state !== 'undefined' && state.menuPage) ? state.menuPage : 'stats'; }
-  function normalizeMenu020(){
+  function normalizeMenu(){
     const panel = (typeof els !== 'undefined' && els.sidePanel) ? els.sidePanel : document.querySelector('.side-panel');
     const btn = $id('equipToggleBtn');
     if(!panel) return;
-    panel.classList.toggle('open', !!(typeof state !== 'undefined' && state.uiOpen));
-    if(btn){ btn.textContent = (typeof state !== 'undefined' && state.uiOpen) ? '×' : 'メニュー'; btn.style.pointerEvents='auto'; }
+    document.documentElement.classList.add('mbh022-ready');
+    document.documentElement.classList.remove('mbh018-menu-ready','mbh019-menu-ready','mbh020-ready','mbh021-ready');
+    const wide = isWide();
+    if(typeof state !== 'undefined'){
+      if(wide) state.uiOpen = true;
+      else state.uiOpen = !!state.uiOpen;
+    }
+    panel.classList.toggle('open', wide || !!(typeof state !== 'undefined' && state.uiOpen));
+    if(btn){ btn.textContent = 'メニュー'; btn.setAttribute('aria-expanded', (!wide && !!(typeof state !== 'undefined' && state.uiOpen)) ? 'true' : 'false'); }
     const p = activePage();
     document.querySelectorAll('.mobile-menu-tabs button').forEach(b=>b.classList.toggle('active',(b.dataset.menuPage||'stats')===p));
     document.querySelectorAll('.side-panel .panel').forEach(x=>x.classList.remove('active-page'));
     const map={stats:'.hero-stats', equip:'.equip-panel', inventory:'.inventory-panel', log:'.log-panel'};
     const target=panel.querySelector(map[p] || map.stats);
     if(target) target.classList.add('active-page');
-    renderEquipSideTotals020();
+    renderStatusEffects();
+    renderEquipSideTotals();
   }
-  function installMenu020(){
-    const panel = (typeof els !== 'undefined' && els.sidePanel) ? els.sidePanel : document.querySelector('.side-panel');
+
+  function installMenu(){
     const btn = $id('equipToggleBtn');
-    if(!panel || !btn) return;
-    if(typeof state !== 'undefined' && state.uiOpen == null) state.uiOpen=false;
-    const toggle = (e)=>{ if(e){ e.preventDefault(); e.stopPropagation(); } if(typeof state !== 'undefined') state.uiOpen = !state.uiOpen; normalizeMenu020(); if(typeof playUiClick==='function') safe(playUiClick); return false; };
-    btn.onclick=toggle; btn.onpointerup=(e)=>{ if(e.pointerType==='mouse') return; return toggle(e); }; btn.ontouchend=toggle;
-    document.querySelectorAll('.mobile-menu-tabs button').forEach(b=>{
-      const on=(e)=>{ if(e){ e.preventDefault(); e.stopPropagation(); } if(typeof state !== 'undefined') state.menuPage=b.dataset.menuPage||'stats'; normalizeMenu020(); if(typeof playUiClick==='function') safe(playUiClick); return false; };
-      b.onclick=on; b.onpointerup=(e)=>{ if(e.pointerType==='mouse') return; return on(e); }; b.ontouchend=on;
+    if(btn){
+      const newBtn = btn.cloneNode(true);
+      btn.parentNode.replaceChild(newBtn, btn);
+      newBtn.id='equipToggleBtn';
+      newBtn.textContent='メニュー';
+      if(typeof els !== 'undefined') els.equipToggleBtn = newBtn;
+      const toggle=(e)=>{ if(e){ e.preventDefault(); e.stopPropagation(); } if(!isWide() && typeof state !== 'undefined') state.uiOpen = !state.uiOpen; normalizeMenu(); if(typeof playUiClick==='function') safe(playUiClick); return false; };
+      newBtn.addEventListener('click', toggle, {passive:false});
+      newBtn.addEventListener('touchend', toggle, {passive:false});
+      newBtn.addEventListener('pointerup', (e)=>{ if(e.pointerType && e.pointerType !== 'mouse') toggle(e); }, {passive:false});
+    }
+    document.querySelectorAll('.mobile-menu-tabs button').forEach(old=>{
+      const b=old.cloneNode(true);
+      old.parentNode.replaceChild(b, old);
+      const on=(e)=>{ if(e){ e.preventDefault(); e.stopPropagation(); } if(typeof state !== 'undefined') state.menuPage=b.dataset.menuPage||'stats'; normalizeMenu(); if(typeof playUiClick==='function') safe(playUiClick); return false; };
+      b.addEventListener('click', on, {passive:false});
+      b.addEventListener('touchend', on, {passive:false});
+      b.addEventListener('pointerup', (e)=>{ if(e.pointerType && e.pointerType !== 'mouse') on(e); }, {passive:false});
     });
-    normalizeMenu020();
+    normalizeMenu();
   }
 
-  function equipmentTotals020(){
-    const totals={};
-    const add=(k,label,v,fmt='num')=>{ if(!v) return; if(!totals[k]) totals[k]={label,value:0,fmt}; totals[k].value += Number(v)||0; };
-    if(typeof state === 'undefined') return [];
-    Object.values(state.equip||{}).filter(Boolean).forEach(it=>{
-      add('atk','攻撃力',it.atk); add('def','防御力',it.def); add('hp','HP',it.hp);
-      add('fireRes','火軽減',it.fireRes,'pct'); add('fireDmg','火ダメージ',it.fireDmg,'pct'); add('fireSkillChance','炎斬り率',it.fireSkillChance,'pct'); add('fireDamageHeal','火被ダメ回復',it.fireDamageHeal,'pct');
-      add('thunderDmg','雷ダメージ',it.thunderDmg,'pct'); add('thunderSkillChance','雷撃率',it.thunderSkillChance,'pct');
-      add('deathDanceChance','死線の剣舞率',it.deathDanceChance,'pct'); add('deathDanceDefIgnore','剣舞時防御無視',it.deathDanceDefIgnore,'pct'); add('heroDarkBleedChance','暗黒出血付与',it.heroDarkBleedChance,'pct');
-      add('lifeSteal','吸収',it.lifeSteal,'pct'); add('guard','GUARD',it.guard,'pct'); add('crit','会心',it.crit,'pct');
-      if(it.darkShield) add('darkShield','闇の盾',1,'flag'); if(it.darkAmulet) add('darkAmulet','闇のアミュレット',1,'flag'); if(it.masterRegen) add('masterRegen','師匠のアミュレット',1,'flag');
-    });
-    return Object.values(totals);
-  }
-  function renderEquipSideTotals020(){
-    const panel = document.querySelector('.side-panel'); if(!panel) return;
-    let box=$id('equipEffectTotalsSide');
-    if(!box){ box=document.createElement('div'); box.id='equipEffectTotalsSide'; box.innerHTML='<h3>装備効果合計</h3><div class="effect-scroll"></div>'; const mr=panel.querySelector('.menu-right'); (mr||panel).appendChild(box); }
-    const active = activePage()==='equip' && !!(typeof state !== 'undefined' && state.uiOpen);
-    box.classList.toggle('active', active);
-    const body=box.querySelector('.effect-scroll'); if(!body) return;
-    const rows=equipmentTotals020();
-    if(!rows.length){ body.innerHTML='<div class="muted">装備効果なし</div>'; return; }
-    body.innerHTML=rows.map(r=>{
-      let v = r.fmt==='pct' ? `${Math.round(r.value*100)}%` : r.fmt==='flag' ? '有効' : Math.floor(r.value).toLocaleString();
-      return `<div class="effect-row"><span>${esc(r.label)}</span><b>${esc(v)}</b></div>`;
-    }).join('');
-  }
-
-  function selectedSellRarities020(){
-    const a=[]; if($id('sellNormalChk')?.checked) a.push('normal'); if($id('sellRareChk')?.checked) a.push('rare'); if($id('sellLegendaryChk')?.checked) a.push('legendary'); return a;
-  }
-  function installSellPreview020(){
-    if(typeof updateSellButtonState === 'function' && !window.__mbh020SellPreview){
-      window.__mbh020SellPreview = updateSellButtonState;
-      updateSellButtonState = function(){
-        const btn=$id('sellSelectedBtn');
-        const targets=selectedSellRarities020();
-        const items=(typeof state!=='undefined' ? (state.inventory||[]) : []).filter(it=>targets.includes(it.rarity) && !it.unsellable);
-        const xp=items.reduce((sum,it)=>sum + (typeof sellExpValue==='function' ? sellExpValue(it) : 0),0);
-        if(btn){ btn.disabled=targets.length===0; btn.textContent=`経験値化 (${items.length} / +${xp.toLocaleString()})`; btn.title=`獲得予定経験値：${xp.toLocaleString()}`; }
-        return null;
-      };
-    }
-    ['sellNormalChk','sellRareChk','sellLegendaryChk'].forEach(id=>{ const el=$id(id); if(el) el.onchange=()=>{ if(typeof updateSellButtonState==='function') updateSellButtonState(); }; });
-    if(typeof updateSellButtonState==='function') updateSellButtonState();
-  }
-
-  function plain020(l){ return String(l && l.msg != null ? l.msg : '').replace(/<[^>]*>/g,'').replace(/&nbsp;/g,' ').trim(); }
-  function classify020(l){
-    const c=String(l && l.cls || '').toLowerCase();
-    const html=String(l && l.msg != null ? l.msg : '');
-    const m=plain020(l);
-    if(l && l.cat) return l.cat;
-    if(/log-item|log-rarity|drop-slot-label/.test(html) || /装備ドロップ|暗黒剣聖討伐報酬|闇装備確定|ドロップ元|品質|強個体|異名持ち|\d枠目/.test(m)) return 'drop';
-    if(/経験値|LEVEL UP|Lv\.|敵レベル|ゲーム開始|デバッグ|ユーザーデータ|戦闘離脱|敗北|討伐報酬/.test(m)) return 'system';
-    if(c.includes('skilllog') || c.includes('damage') || /ダメージ|被ダメ|回復|吸収|再生|出血|暗黒出血|火傷|攻撃|斬|雷撃|炎斬り|連続攻撃|大攻撃|剣舞|剣技|ブレス|GUARD|無効|MISS|反射|\+[0-9０-９]/.test(m)) return 'damage';
-    if(c.includes('good') || c.includes('danger')) return 'system';
-    return 'system';
-  }
-  function inferCat020(msg, cls='', html=false){ return classify020({msg: html?String(msg):esc(msg), cls}); }
-  function renderLog020(reason='filter'){
-    const el=$id('log'); if(!el || typeof state === 'undefined') return;
-    const f=state.logFilter || 'all';
-    const beforeBottom=el.scrollHeight - el.scrollTop - el.clientHeight;
-    const rows=(state.log||[]).filter(l=>f==='all' || classify020(l)===f);
-    el.innerHTML=rows.map(l=>`<div class="${l.cls||''}">[${l.time}] ${l.msg}</div>`).join('');
-    document.querySelectorAll('#logFilterBar button').forEach(b=>b.classList.toggle('active',(b.dataset.logFilter||'all')===f));
-    if(reason==='filter') el.scrollTop=0; else if(beforeBottom<8) el.scrollTop=el.scrollHeight;
-  }
-  function installLog020(){
-    if(typeof state !== 'undefined') state.logFilter=state.logFilter||'all';
-    const bar=$id('logFilterBar');
-    if(bar){
-      bar.innerHTML='<button type="button" data-log-filter="all">すべて</button><button type="button" data-log-filter="damage">ダメージ</button><button type="button" data-log-filter="system">システム</button><button type="button" data-log-filter="drop">ドロップ</button>';
-      const on=(e)=>{ const b=e.target.closest('button[data-log-filter]'); if(!b) return; e.preventDefault(); e.stopPropagation(); state.logFilter=b.dataset.logFilter||'all'; renderLog020('filter'); return false; };
-      bar.onclick=on; bar.onpointerup=(e)=>{ if(e.pointerType==='mouse') return; return on(e); }; bar.ontouchend=on;
-    }
-    if(typeof log === 'function' && !window.__mbh020LogInstalled){
-      window.__mbh020LogInstalled=true;
-      log=function(msg, cls='', html=false){
-        const time=new Date().toLocaleTimeString('ja-JP',{hour12:false});
-        const safeMsg=html ? msg : esc(msg);
-        const cat=inferCat020(msg, cls, html);
-        state.log.unshift({time,msg:safeMsg,cls,html:true,cat});
-        state.log=state.log.slice(0,220);
-        renderLog020('append');
-      };
-    }
-    if(typeof state !== 'undefined' && Array.isArray(state.log)) state.log.forEach(l=>{ if(!l.cat) l.cat=classify020(l); });
-    renderLog020('filter');
-  }
-
-  function patchRender020(){
-    if(typeof renderStats === 'function' && !window.__mbh020RenderStats){
-      window.__mbh020RenderStats=renderStats;
-      renderStats=function(){ const r=window.__mbh020RenderStats.apply(this, arguments); normalizeMenu020(); return r; };
-    }
-    if(typeof renderEquip === 'function' && !window.__mbh020RenderEquip){
-      window.__mbh020RenderEquip=renderEquip;
-      renderEquip=function(){ const r=window.__mbh020RenderEquip.apply(this, arguments); renderEquipSideTotals020(); return r; };
-    }
-    if(typeof renderInventory === 'function' && !window.__mbh020RenderInv){
-      window.__mbh020RenderInv=renderInventory;
-      renderInventory=function(){ const r=window.__mbh020RenderInv.apply(this, arguments); installSellPreview020(); return r; };
-    }
-  }
-
-  function boot020(){
-    syncVersion020(); injectStyle020(); patchRender020(); installMenu020(); installSellPreview020(); installLog020(); normalizeMenu020(); renderEquipSideTotals020();
-  }
-  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot020, {once:true}); else setTimeout(boot020,0);
-  window.addEventListener('load', boot020, {once:true});
-  window.addEventListener('resize', ()=>setTimeout(()=>safe(()=>{ injectStyle020(); normalizeMenu020(); }), 60));
-  setInterval(()=>safe(()=>{ syncVersion020(); normalizeMenu020(); installSellPreview020(); }), 120);
-})();
-
-
-/* ver.0.2.1: large-screen fixed side panel + stable log category flags + menu layout rebuild */
-(function(){
-  'use strict';
-  const APP_VERSION = '0.2.1';
-  const $id = (id)=>document.getElementById(id);
-  const safe = (fn)=>{ try{ return fn && fn(); }catch(e){ console.error('[MBH0.2.1]', e); return null; } };
-  const esc = (s)=> typeof escapeHtml === 'function' ? escapeHtml(s) : String(s).replace(/[&<>"']/g, ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
-
-  function syncVersion021(){
-    window.APP_VERSION = APP_VERSION;
-    window.GAME_VERSION = APP_VERSION;
-    document.documentElement.dataset.buildVersion = APP_VERSION;
-    document.documentElement.dataset.mbhVersion = APP_VERSION;
-    document.querySelectorAll('.build-version,[data-version],#versionText,.version-badge').forEach(el=>{ el.textContent = 'ver.' + APP_VERSION; });
-    document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent = 'Build: ver.' + APP_VERSION; });
-    document.querySelectorAll('.debug-trace-title').forEach(el=>{ el.textContent = '進行デバッグログ ver.' + APP_VERSION; });
-  }
-
-  function isLarge021(){ return window.matchMedia('(min-width:1280px) and (orientation:landscape)').matches; }
-  function activePage021(){ return (typeof state !== 'undefined' && state.menuPage) ? state.menuPage : 'stats'; }
-
-  function injectStyle021(){
-    let st=$id('mbh-021-style');
-    if(st) return;
-    st=document.createElement('style');
-    st.id='mbh-021-style';
-    st.textContent = `
-      html.mbh021-ready .topbar{align-items:center!important;}
-      html.mbh021-ready .topbar .controls{display:flex!important;align-items:center!important;justify-content:flex-end!important;gap:8px!important;flex-wrap:wrap!important;align-self:center!important;}
-      html.mbh021-ready #equipToggleBtn,html.mbh021-ready #debugBtn,html.mbh021-ready #muteBtn{align-self:center!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;min-height:34px!important;line-height:1!important;margin-top:0!important;margin-bottom:0!important;vertical-align:middle!important;}
-      html.mbh021-ready #equipToggleBtn{min-width:76px!important;}
-
-      html.mbh021-ready .side-panel{box-sizing:border-box!important;}
-      html.mbh021-ready .side-panel .mobile-menu-tabs{display:flex!important;gap:6px!important;flex-wrap:wrap!important;align-items:center!important;}
-      html.mbh021-ready .side-panel .panel{min-height:0!important;}
-      html.mbh021-ready .side-panel .legal-links{display:flex!important;position:static!important;margin:0!important;padding:8px!important;border-top:1px solid rgba(255,215,107,.35)!important;background:rgba(12,8,4,.96)!important;box-shadow:none!important;z-index:1!important;}
-      html.mbh021-ready .side-panel:not(.open) .legal-links{display:none!important;}
-
-      @media (min-width:1280px) and (orientation:landscape){
-        html.mbh021-ready #equipToggleBtn{display:none!important;}
-        html.mbh021-ready .layout{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(460px,34vw)!important;gap:12px!important;align-items:stretch!important;}
-        html.mbh021-ready .battle-panel{min-width:0!important;}
-        html.mbh021-ready .side-panel,html.mbh020-ready.mbh021-ready .side-panel,html.mbh018-menu-ready.mbh021-ready .side-panel{
-          display:grid!important;visibility:visible!important;pointer-events:auto!important;position:static!important;inset:auto!important;z-index:auto!important;width:auto!important;max-width:none!important;height:calc(100vh - 76px)!important;
-          grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;grid-template-rows:auto minmax(0,1fr) auto!important;gap:10px!important;overflow:hidden!important;padding:10px!important;border-radius:14px!important;
-        }
-        html.mbh021-ready .side-panel{grid-column:2!important;}
-        html.mbh021-ready .side-panel .mobile-menu-tabs{grid-column:1/-1!important;grid-row:1!important;position:static!important;top:auto!important;margin:0!important;padding:0 0 8px!important;background:transparent!important;}
-        html.mbh021-ready .side-panel .menu-left{grid-column:1!important;grid-row:2!important;display:block!important;min-height:0!important;overflow:auto!important;}
-        html.mbh021-ready .side-panel .menu-right{grid-column:2!important;grid-row:2!important;display:block!important;min-height:0!important;overflow:auto!important;}
-        html.mbh021-ready .side-panel .legal-links{grid-column:1/-1!important;grid-row:3!important;display:flex!important;}
-        html.mbh021-ready .side-panel .panel{display:none!important;overflow:auto!important;}
-        html.mbh021-ready .side-panel .panel.active-page{display:block!important;}
-        html.mbh021-ready .side-panel .inventory-panel.active-page,html.mbh021-ready .side-panel .log-panel.active-page{grid-column:1/-1!important;width:100%!important;display:flex!important;flex-direction:column!important;min-height:0!important;}
-        html.mbh021-ready .side-panel .inventory-panel.active-page #inventory,html.mbh021-ready .side-panel .log-panel.active-page #log{flex:1 1 auto!important;min-height:0!important;}
-        html.mbh021-ready .side-panel .hero-stats.active-page{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;grid-template-rows:auto minmax(0,1fr)!important;gap:10px!important;overflow:hidden!important;}
-        html.mbh021-ready .side-panel .hero-stats.active-page .stat-grid{grid-column:1!important;grid-row:1!important;min-height:0!important;}
-        html.mbh021-ready .side-panel .hero-stats.active-page .monster-records{grid-column:2!important;grid-row:1 / span 2!important;min-height:0!important;overflow:auto!important;margin-top:0!important;}
-        html.mbh021-ready #statusEffectTotals021{grid-column:1!important;grid-row:2!important;min-height:0!important;overflow:auto!important;display:flex!important;flex-direction:column!important;}
-        html.mbh021-ready .side-panel .hero-stats.active-page + .equip-panel{display:none!important;}
-        html.mbh021-ready .side-panel .equip-panel.active-page{grid-column:1/-1!important;display:grid!important;grid-template-columns:minmax(0,1fr) minmax(260px,.8fr)!important;gap:10px!important;overflow:hidden!important;}
-        html.mbh021-ready .side-panel .equip-panel.active-page h2{grid-column:1/-1!important;margin-bottom:0!important;}
-        html.mbh021-ready .side-panel .equip-panel.active-page #equipList{grid-column:1!important;min-height:0!important;overflow:auto!important;}
-        html.mbh021-ready .side-panel .equip-panel.active-page #equipEffectTotalsSide{grid-column:2!important;display:block!important;min-height:0!important;overflow:auto!important;}
-      }
-
-      @media (max-width:1279px), (orientation:portrait){
-        html.mbh021-ready #equipToggleBtn{display:inline-flex!important;}
-        html.mbh021-ready .side-panel{display:none!important;visibility:hidden!important;pointer-events:none!important;}
-        html.mbh021-ready .side-panel.open{display:grid!important;visibility:visible!important;pointer-events:auto!important;position:fixed!important;z-index:9000!important;left:8px!important;right:8px!important;top:54px!important;bottom:8px!important;width:auto!important;grid-template-columns:1fr!important;grid-template-rows:auto minmax(0,1fr) auto!important;gap:10px!important;overflow:auto!important;padding:10px!important;}
-        html.mbh021-ready .side-panel.open .mobile-menu-tabs{grid-column:1!important;grid-row:1!important;position:sticky!important;top:0!important;z-index:3!important;background:rgba(12,8,4,.98)!important;padding-bottom:8px!important;}
-        html.mbh021-ready .side-panel.open .menu-left,html.mbh021-ready .side-panel.open .menu-right{grid-column:1!important;grid-row:2!important;display:block!important;overflow:visible!important;}
-        html.mbh021-ready .side-panel.open .legal-links{grid-column:1!important;grid-row:3!important;display:flex!important;}
-        html.mbh021-ready .side-panel.open .panel{display:none!important;}
-        html.mbh021-ready .side-panel.open .panel.active-page{display:block!important;}
-        html.mbh021-ready .side-panel.open .inventory-panel.active-page,html.mbh021-ready .side-panel.open .log-panel.active-page{display:flex!important;flex-direction:column!important;}
-        html.mbh021-ready .side-panel.open #equipEffectTotalsSide.active{display:block!important;margin-top:10px!important;}
-      }
-
-      html.mbh021-ready #statusEffectTotals021,html.mbh021-ready #equipEffectTotalsSide{border:1px solid rgba(255,215,107,.28)!important;border-radius:12px!important;padding:10px!important;background:rgba(0,0,0,.18)!important;box-sizing:border-box!important;}
-      html.mbh021-ready #statusEffectTotals021 h3,html.mbh021-ready #equipEffectTotalsSide h3{margin:0 0 8px!important;font-size:14px!important;color:#ffd86b!important;}
-      html.mbh021-ready .effect-row{display:grid!important;grid-template-columns:1fr auto!important;gap:8px!important;padding:4px 0!important;border-bottom:1px solid rgba(255,255,255,.06)!important;font-size:13px!important;}
-      html.mbh021-ready .log-panel.active-page{width:100%!important;}
-      html.mbh021-ready #log{width:100%!important;box-sizing:border-box!important;}
-    `;
-    document.head.appendChild(st);
-    document.documentElement.classList.add('mbh021-ready');
-  }
-
-  function normalizeMenu021(){
-    const panel = (typeof els !== 'undefined' && els.sidePanel) ? els.sidePanel : document.querySelector('.side-panel');
-    const btn = $id('equipToggleBtn');
-    if(!panel) return;
-    if(isLarge021()){
-      if(typeof state !== 'undefined') state.uiOpen = false;
-      panel.classList.add('open');
-      panel.classList.remove('hidden');
-    }else{
-      panel.classList.toggle('open', !!(typeof state !== 'undefined' && state.uiOpen));
-    }
-    if(btn){ btn.textContent = 'メニュー'; btn.style.pointerEvents='auto'; }
-    const p = activePage021();
-    document.querySelectorAll('.mobile-menu-tabs button').forEach(b=>b.classList.toggle('active',(b.dataset.menuPage||'stats')===p));
-    document.querySelectorAll('.side-panel .panel').forEach(x=>x.classList.remove('active-page'));
-    const map={stats:'.hero-stats', equip:'.equip-panel', inventory:'.inventory-panel', log:'.log-panel'};
-    const target=panel.querySelector(map[p] || map.stats);
-    if(target) target.classList.add('active-page');
-    renderStatusEffects021();
-    renderEquipSideTotals021();
-  }
-
-  function installMenu021(){
-    const panel = (typeof els !== 'undefined' && els.sidePanel) ? els.sidePanel : document.querySelector('.side-panel');
-    const btn = $id('equipToggleBtn');
-    if(panel && btn){
-      const toggle = (e)=>{ if(e){ e.preventDefault(); e.stopPropagation(); } if(!isLarge021() && typeof state !== 'undefined') state.uiOpen = !state.uiOpen; normalizeMenu021(); if(typeof playUiClick==='function') safe(playUiClick); return false; };
-      btn.onclick=toggle; btn.onpointerup=(e)=>{ if(e.pointerType==='mouse') return; return toggle(e); }; btn.ontouchend=toggle;
-    }
-    document.querySelectorAll('.mobile-menu-tabs button').forEach(b=>{
-      const on=(e)=>{ if(e){ e.preventDefault(); e.stopPropagation(); } if(typeof state !== 'undefined') state.menuPage=b.dataset.menuPage||'stats'; normalizeMenu021(); if(typeof playUiClick==='function') safe(playUiClick); return false; };
-      b.onclick=on; b.onpointerup=(e)=>{ if(e.pointerType==='mouse') return; return on(e); }; b.ontouchend=on;
-    });
-    normalizeMenu021();
-  }
-
-  function statRows021(){
+  function statRows(){
     if(typeof calcStats !== 'function') return [];
     const st=calcStats();
     const rows=[];
@@ -6935,16 +6236,16 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
     add('師匠のアミュレット', '有効', st.masterRegen);
     return rows;
   }
-  function renderStatusEffects021(){
+  function renderStatusEffects(){
     const stats=document.querySelector('.hero-stats'); if(!stats) return;
-    let box=$id('statusEffectTotals021');
-    if(!box){ box=document.createElement('div'); box.id='statusEffectTotals021'; box.innerHTML='<h3>特殊効果</h3><div class="effect-scroll"></div>'; const grid=stats.querySelector('.stat-grid'); if(grid && grid.parentNode) grid.parentNode.insertBefore(box, grid.nextSibling); else stats.appendChild(box); }
+    let box=$id('statusEffectTotals022');
+    if(!box){ box=document.createElement('div'); box.id='statusEffectTotals022'; box.innerHTML='<h3>特殊効果</h3><div class="effect-scroll"></div>'; const grid=stats.querySelector('.stat-grid'); if(grid && grid.parentNode) grid.parentNode.insertBefore(box, grid.nextSibling); else stats.appendChild(box); }
     const body=box.querySelector('.effect-scroll'); if(!body) return;
-    const rows=statRows021();
+    const rows=statRows();
     body.innerHTML = rows.length ? rows.map(r=>`<div class="effect-row"><span>${esc(r.label)}</span><b>${esc(r.val)}</b></div>`).join('') : '<div class="muted">特殊効果なし</div>';
   }
 
-  function equipmentTotals021(){
+  function equipmentTotals(){
     const totals={}; const add=(k,label,v,fmt='num')=>{ if(!v) return; if(!totals[k]) totals[k]={label,value:0,fmt}; totals[k].value += Number(v)||0; };
     if(typeof state === 'undefined') return [];
     Object.values(state.equip||{}).filter(Boolean).forEach(it=>{
@@ -6957,68 +6258,91 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
     });
     return Object.values(totals);
   }
-  function renderEquipSideTotals021(){
+  function renderEquipSideTotals(){
     const panel=document.querySelector('.side-panel'); if(!panel) return;
     let box=$id('equipEffectTotalsSide');
     if(!box){ box=document.createElement('div'); box.id='equipEffectTotalsSide'; box.innerHTML='<h3>装備効果合計</h3><div class="effect-scroll"></div>'; }
     const equipPanel=panel.querySelector('.equip-panel');
     if(equipPanel && box.parentNode !== equipPanel) equipPanel.appendChild(box);
-    const active = activePage021()==='equip' && (isLarge021() || !!(typeof state !== 'undefined' && state.uiOpen));
+    const active = activePage()==='equip' && (isWide() || !!(typeof state !== 'undefined' && state.uiOpen));
     box.classList.toggle('active', active);
     const body=box.querySelector('.effect-scroll'); if(!body) return;
-    const rows=equipmentTotals021();
+    const rows=equipmentTotals();
     body.innerHTML = rows.length ? rows.map(r=>{ const v=r.fmt==='pct' ? `${Math.round(r.value*100)}%` : r.fmt==='flag' ? '有効' : Math.floor(r.value).toLocaleString(); return `<div class="effect-row"><span>${esc(r.label)}</span><b>${esc(v)}</b></div>`; }).join('') : '<div class="muted">装備効果なし</div>';
   }
 
-  function plain021(l){ return String(l && l.msg != null ? l.msg : '').replace(/<[^>]*>/g,'').replace(/&nbsp;/g,' ').trim(); }
-  function classify021(l){
-    if(l && l.cat) return l.cat;
-    const c=String(l && l.cls || '').toLowerCase();
-    const html=String(l && l.msg != null ? l.msg : '');
-    const m=plain021(l);
-    if(/装備ドロップ|ドロップ元|log-item|log-rarity|drop-slot-label|闇装備確定|品質\+|\d枠目/.test(html) || /装備ドロップ|ドロップ元|闇装備確定|品質\+|\d枠目/.test(m)) return 'drop';
-    if(/ダメージ|被ダメ|回復|吸収|再生|出血|暗黒出血|火傷|攻撃|斬|雷撃|炎斬り|連続攻撃|大攻撃|剣舞|剣技|ブレス|GUARD|無効|MISS|反射|CRIT|\+[0-9０-９]/.test(m) || c.includes('skilllog') || c.includes('damage')) return 'damage';
+  function installSellPreview(){
+    const box=document.querySelector('.sell-box'); if(!box || $id('sellExpPreview022')) return;
+    const div=document.createElement('div'); div.id='sellExpPreview022'; div.textContent='獲得予定経験値：0'; box.appendChild(div);
+  }
+  function selectedSellRarities022(){
+    const a=[]; if($id('sellNormalChk')?.checked) a.push('normal'); if($id('sellRareChk')?.checked) a.push('rare'); if($id('sellLegendaryChk')?.checked) a.push('legendary'); return a;
+  }
+  function updateSellPreview(){
+    installSellPreview();
+    const div=$id('sellExpPreview022'); if(!div || typeof state === 'undefined') return;
+    const targets=selectedSellRarities022();
+    const items=(state.inventory||[]).filter(it=>targets.includes(it.rarity) && !it.unsellable);
+    const xp=items.reduce((s,it)=>s+(typeof sellExpValue==='function'?sellExpValue(it):0),0);
+    div.textContent=`獲得予定経験値：${xp.toLocaleString()}`;
+  }
+
+  function stripHtml(s){ const tmp=document.createElement('div'); tmp.innerHTML=String(s||''); return (tmp.textContent||tmp.innerText||'').trim(); }
+  function classifyLogEntry(entry){
+    if(entry && entry.cat) return entry.cat;
+    const cls=String(entry?.cls||'').toLowerCase();
+    const raw=String(entry?.msg??'');
+    const text=stripHtml(raw);
+    if(/装備ドロップ|ドロップ元|ドロップ：|暗黒剣聖討伐報酬|log-item|log-rarity|drop-slot-label|闇装備確定|品質\+|\d枠目/.test(raw) || /装備ドロップ|ドロップ元|ドロップ：|暗黒剣聖討伐報酬|闇装備確定|品質\+|\d枠目/.test(text)) return 'drop';
+    if(/経験値|LEVEL UP|Lv\.|敵レベル|ゲーム開始|デバッグ|ユーザーデータ|リセット|出現|現れた|撃破！|討伐|戦闘離脱|敗北|試練|Build|ver\./.test(text)) return 'system';
+    if(/ダメージ|被ダメ|回復|吸収|再生|出血|暗黒出血|火傷|攻撃|斬|雷撃|炎斬り|連続攻撃|大攻撃|剣舞|剣技|ブレス|GUARD|無効|MISS|反射|CRIT|吸収 \+|\+[0-9０-９]/.test(text) || cls.includes('skilllog') || cls.includes('damage') || cls.includes('danger')) return 'damage';
+    if(cls.includes('good')) return 'system';
     return 'system';
   }
-  function inferCat021(msg, cls='', html=false){ return classify021({msg: html?String(msg):esc(msg), cls}); }
-  function renderLog021(reason='filter'){
+  function inferCat(msg, cls='', html=false){ return classifyLogEntry({msg: html ? String(msg) : esc(msg), cls}); }
+  function renderLog(reason='append'){
     const el=$id('log'); if(!el || typeof state === 'undefined') return;
     const f=state.logFilter || 'all';
     const atBottom=(el.scrollHeight - el.scrollTop - el.clientHeight) < 8;
-    const rows=(state.log||[]).filter(l=>f==='all' || classify021(l)===f);
-    el.innerHTML=rows.map(l=>`<div class="${esc(l.cls||'')}" data-log-cat="${esc(classify021(l))}">[${esc(l.time||'')}] ${l.msg}</div>`).join('');
+    const list=(state.log||[]).filter(l=>f==='all' || classifyLogEntry(l)===f);
+    el.innerHTML=list.map(l=>`<div class="${esc(l.cls||'')}" data-log-cat="${esc(classifyLogEntry(l))}">[${esc(l.time||'')}] ${l.msg}</div>`).join('');
     document.querySelectorAll('#logFilterBar button').forEach(b=>b.classList.toggle('active',(b.dataset.logFilter||'all')===f));
     if(reason==='filter') el.scrollTop=0; else if(atBottom) el.scrollTop=el.scrollHeight;
   }
-  function installLog021(){
+  function installLog(){
     if(typeof state !== 'undefined') state.logFilter=state.logFilter||'all';
     const bar=$id('logFilterBar');
     if(bar){
       bar.innerHTML='<button type="button" data-log-filter="all">すべて</button><button type="button" data-log-filter="damage">ダメージ</button><button type="button" data-log-filter="system">システム</button><button type="button" data-log-filter="drop">ドロップ</button>';
-      const on=(e)=>{ const b=e.target.closest('button[data-log-filter]'); if(!b) return; e.preventDefault(); e.stopPropagation(); state.logFilter=b.dataset.logFilter||'all'; renderLog021('filter'); return false; };
-      bar.onclick=on; bar.onpointerup=(e)=>{ if(e.pointerType==='mouse') return; return on(e); }; bar.ontouchend=on;
+      const on=(e)=>{ const b=e.target.closest('button[data-log-filter]'); if(!b) return; e.preventDefault(); e.stopPropagation(); state.logFilter=b.dataset.logFilter||'all'; renderLog('filter'); return false; };
+      bar.addEventListener('click', on, {passive:false});
+      bar.addEventListener('touchend', on, {passive:false});
+      bar.addEventListener('pointerup', (e)=>{ if(e.pointerType && e.pointerType !== 'mouse') on(e); }, {passive:false});
     }
-    log=function(msg, cls='', html=false){
+    window.log = log = function(msg, cls='', html=false){
       const time=new Date().toLocaleTimeString('ja-JP',{hour12:false});
       const safeMsg=html ? msg : esc(msg);
-      const cat=inferCat021(msg, cls, html);
+      const cat=inferCat(msg, cls, html);
       state.log.unshift({time,msg:safeMsg,cls,html:true,cat});
-      state.log=state.log.slice(0,260);
-      renderLog021('append');
+      state.log=state.log.slice(0,300);
+      renderLog('append');
     };
-    if(typeof state !== 'undefined' && Array.isArray(state.log)) state.log.forEach(l=>{ l.cat=classify021(l); });
-    renderLog021('filter');
+    if(typeof state !== 'undefined' && Array.isArray(state.log)) state.log.forEach(l=>{ l.cat=classifyLogEntry(l); });
+    renderLog('filter');
   }
 
-  function patchRender021(){
-    if(typeof renderStats === 'function' && !window.__mbh021RenderStats){ window.__mbh021RenderStats=renderStats; renderStats=function(){ const r=window.__mbh021RenderStats.apply(this, arguments); renderStatusEffects021(); normalizeMenu021(); return r; }; }
-    if(typeof renderEquip === 'function' && !window.__mbh021RenderEquip){ window.__mbh021RenderEquip=renderEquip; renderEquip=function(){ const r=window.__mbh021RenderEquip.apply(this, arguments); renderEquipSideTotals021(); normalizeMenu021(); return r; }; }
-    if(typeof renderInventory === 'function' && !window.__mbh021RenderInv){ window.__mbh021RenderInv=renderInventory; renderInventory=function(){ const r=window.__mbh021RenderInv.apply(this, arguments); normalizeMenu021(); return r; }; }
+  function patchRenders(){
+    if(typeof renderStats === 'function' && !window.__mbh022RenderStats){ window.__mbh022RenderStats=renderStats; renderStats=function(){ const r=window.__mbh022RenderStats.apply(this, arguments); renderStatusEffects(); normalizeMenu(); return r; }; }
+    if(typeof renderEquip === 'function' && !window.__mbh022RenderEquip){ window.__mbh022RenderEquip=renderEquip; renderEquip=function(){ const r=window.__mbh022RenderEquip.apply(this, arguments); renderEquipSideTotals(); normalizeMenu(); return r; }; }
+    if(typeof renderInventory === 'function' && !window.__mbh022RenderInv){ window.__mbh022RenderInv=renderInventory; renderInventory=function(){ const r=window.__mbh022RenderInv.apply(this, arguments); updateSellPreview(); normalizeMenu(); return r; }; }
+    if(typeof updateSellButtonState === 'function' && !window.__mbh022SellState){ window.__mbh022SellState=updateSellButtonState; updateSellButtonState=function(){ const r=window.__mbh022SellState.apply(this, arguments); updateSellPreview(); return r; }; }
   }
 
-  function boot021(){ syncVersion021(); injectStyle021(); patchRender021(); installMenu021(); installLog021(); renderStatusEffects021(); renderEquipSideTotals021(); normalizeMenu021(); }
-  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot021, {once:true}); else setTimeout(boot021,0);
-  window.addEventListener('load', boot021, {once:true});
-  window.addEventListener('resize', ()=>setTimeout(()=>safe(()=>{ injectStyle021(); normalizeMenu021(); renderLog021('filter'); }), 60));
-  setInterval(()=>safe(()=>{ syncVersion021(); normalizeMenu021(); renderLog021('tick'); }), 80);
+  function boot(){
+    syncVersion(); installStyle(); patchRenders(); installMenu(); installLog(); installSellPreview(); updateSellPreview(); renderStatusEffects(); renderEquipSideTotals(); normalizeMenu();
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true}); else setTimeout(boot,0);
+  window.addEventListener('load', boot, {once:true});
+  window.addEventListener('resize', ()=>setTimeout(()=>safe(()=>{ syncVersion(); normalizeMenu(); renderLog('filter'); }), 80));
 })();
+
