@@ -40,7 +40,7 @@ const DEATH_DANCE_CUTINS = [
 ];
 const DARK_SWORD_SAINT_CUTIN = {quote:'私を超えてみせろ。', img:'assets/cutin_dark_sword_dance.png'};
 const DARK_SWORD_TECHNIQUE_CUTIN = {quote:'', img:'assets/cutin_dark_sword_technique.png'};
-const GAME_VERSION = (window.APP_VERSION || '0.1.8');
+const GAME_VERSION = (window.APP_VERSION || '0.1.9');
 window.GAME_VERSION = GAME_VERSION;
 
 const DARK_SWORD_SAINT = {
@@ -4584,7 +4584,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* ver.0.1.3: strong/named variants, drop source, quality/luck bonuses, deathdance count-only reset補強 */
 (function(){
   'use strict';
-  const APP_VERSION = '0.1.8';
+  const APP_VERSION = '0.1.9';
   const PREFIXES = ['狡猾な','獰猛な','蛮勇な','エリート','頂点の','原点の','キラー'];
   function safe(fn){ try{return fn();}catch(e){ console.error('[MBH 0.1.3]', e); } }
   function syncVersion9959(){
@@ -4869,7 +4869,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* ver.0.1.3: 敵防御を軽減式へ変更、敵レベル経験値制御、Lv100までの戦闘テンポ調整 */
 (function(){
   'use strict';
-  const APP_VERSION = '0.1.8';
+  const APP_VERSION = '0.1.9';
   const ENEMY_LEVEL_XP_KEY = 'mini-browser-hero-enemy-level-xp-v9960';
   const ENEMY_LEVEL_XP_NEXT = 1000;
   function safe(fn){ try{return fn();}catch(e){ console.error('[MBH 0.1.3]', e); } }
@@ -5097,7 +5097,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* ver.0.1.3: 敵Lv経験値完全固定 + 敵攻撃を防御軽減式へ変更 */
 (function(){
   'use strict';
-  const APP_VERSION = '0.1.8';
+  const APP_VERSION = '0.1.9';
   const ENEMY_LEVEL_XP_KEY_NEW = 'mini-browser-hero-enemy-level-xp-v9961';
   const ENEMY_LEVEL_XP_KEY_OLD = 'mini-browser-hero-enemy-level-xp-v9960';
   const ENEMY_LEVEL_XP_NEXT = 1000;
@@ -5321,7 +5321,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* ver.0.1.3: 暗黒剣聖の独立Lv表示 + 主人公必要経験値固定 */
 (function(){
   'use strict';
-  const APP_VERSION = '0.1.8';
+  const APP_VERSION = '0.1.9';
   const HERO_XP_NEXT_FIXED = 40;
   function safe(fn){ try{return fn();}catch(e){ console.error('[MBH 0.1.3]', e); } }
   function syncVersion9962(){
@@ -5432,7 +5432,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* ver.0.1.3 hotfix: hero debug stats, dark equipment list visibility, low-level enemy HP trim */
 (function(){
   'use strict';
-  const APP_VERSION = '0.1.8';
+  const APP_VERSION = '0.1.9';
   function safe(fn){ try{return fn();}catch(e){ console.error('[MBH 0.1.3 hotfix]', e); } }
   function esc(s){ return (typeof escapeHtml === 'function') ? escapeHtml(s) : String(s).replace(/[&<>"']/g, ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
   function pct(v){ return Math.round((Number(v)||0)*100)+'%'; }
@@ -5572,7 +5572,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* ver.0.1.3: 装備名・接頭辞・説明文を実効果へ統一 */
 (function(){
   'use strict';
-  const APP_VERSION = '0.1.8';
+  const APP_VERSION = '0.1.9';
   const DARK_FIXED_NAMES = new Set(['闇の聖剣','闇の盾','闇のアミュレット','闇の鎧','闇の籠手','闇の兜','暗黒の靴']);
   const DARK_NAME_BY_SLOT = { '武器':'闇の聖剣', '盾':'闇の盾', 'アミュレット':'闇のアミュレット', '鎧':'闇の鎧', '腕':'闇の籠手', '兜':'闇の兜', '足':'暗黒の靴' };
   const BASE_BY_SLOT = { '武器':'剣', '盾':'盾', '兜':'兜', '鎧':'鎧', '腕':'腕甲', '足':'ブーツ', 'リング':'リング', 'アミュレット':'アミュレット' };
@@ -5756,7 +5756,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* ver.0.1.3: final XP single-source correction */
 (function(){
   'use strict';
-  const APP_VERSION = '0.1.8';
+  const APP_VERSION = '0.1.9';
   const HERO_XP_NEXT = 1000;
   function safe(fn){ try{ return fn && fn(); }catch(e){ console.warn('[MBH 0.1.3 final]', e); } }
   function syncFinalVersion(){
@@ -5823,7 +5823,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* ver.APP_VERSION: variant badge/regen float/legal links visibility final fix */
 (function(){
   'use strict';
-  const APP_VERSION = '0.1.8';
+  const APP_VERSION = '0.1.9';
   function safe(fn){ try{ return fn && fn(); }catch(e){ console.warn('[MBH variant/legal fix]', e); return null; } }
   function syncVersion012(){
     safe(()=>{ window.APP_VERSION = APP_VERSION; window.GAME_VERSION = APP_VERSION; document.documentElement.dataset.buildVersion = APP_VERSION; });
@@ -5913,7 +5913,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* ver.0.1.3: variant buff list, named regen position, legal links only inside menu, boss low-level tuning, BGM accidental-stop guard */
 (function(){
   'use strict';
-  const BUILD = (window.APP_VERSION || window.GAME_VERSION || '0.1.8');
+  const BUILD = (window.APP_VERSION || window.GAME_VERSION || '0.1.9');
   function safe(fn){ try{return fn && fn();}catch(e){ console.error('[MBH0.1.3]', e); return null; } }
   function syncVersion013(){
     window.APP_VERSION = BUILD;
@@ -6074,12 +6074,12 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 
 
 
-/* ver.0.1.8: single version lock + definitive menu + debug controls + log/status/footer fixes */
+/* ver.0.1.9: single version lock + definitive menu + debug controls + log/status/footer fixes */
 (function(){
   'use strict';
-  const APP_VERSION = '0.1.8';
+  const APP_VERSION = '0.1.9';
   const $id = (id)=>document.getElementById(id);
-  const safe = (fn)=>{ try{ return fn && fn(); }catch(e){ console.error('[MBH0.1.8]', e); return null; } };
+  const safe = (fn)=>{ try{ return fn && fn(); }catch(e){ console.error('[MBH0.1.9]', e); return null; } };
 
   function syncVersion018(){
     window.APP_VERSION = APP_VERSION;
@@ -6390,4 +6390,176 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   window.addEventListener('load', boot018, {once:true});
   window.addEventListener('resize', ()=>setTimeout(()=>safe(()=>{ setMenuOpen018(false); ensureLegalFooter018(); }), 60));
   setInterval(()=>safe(()=>{ syncVersion018(); ensureLegalFooter018(); cleanupStatusXp018(); }), 250);
+})();
+
+
+/* ver.0.1.9: menu tab position + equip effects scroll + strict log filter fix */
+(function(){
+  'use strict';
+  const APP_VERSION = '0.1.9';
+  const $id = (id)=>document.getElementById(id);
+  const safe = (fn)=>{ try{ return fn && fn(); }catch(e){ console.error('[MBH0.1.9]', e); return null; } };
+
+  function syncVersion019(){
+    window.APP_VERSION = APP_VERSION;
+    window.GAME_VERSION = APP_VERSION;
+    document.documentElement.dataset.buildVersion = APP_VERSION;
+    document.documentElement.dataset.mbhVersion = APP_VERSION;
+    document.querySelectorAll('.build-version,[data-version],#versionText,.version-badge').forEach(el=>{ el.textContent = 'ver.' + APP_VERSION; });
+    document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent = 'Build: ver.' + APP_VERSION; });
+    document.querySelectorAll('.debug-trace-title').forEach(el=>{ el.textContent = '進行デバッグログ ver.' + APP_VERSION; });
+  }
+
+  function injectStyle019(){
+    let st=$id('mbh-019-style');
+    if(st) return;
+    st=document.createElement('style');
+    st.id='mbh-019-style';
+    st.textContent = `
+      html.mbh018-menu-ready .side-panel.open,
+      html.mbh019-menu-ready .side-panel.open{
+        grid-template-rows:auto minmax(0,1fr) auto!important;
+      }
+      html.mbh018-menu-ready .side-panel.open .mobile-menu-tabs,
+      html.mbh019-menu-ready .side-panel.open .mobile-menu-tabs{
+        grid-column:1 / -1!important;
+        grid-row:1!important;
+        order:-999!important;
+        display:flex!important;
+        position:sticky!important;
+        top:0!important;
+        z-index:20!important;
+        align-self:start!important;
+        margin:0 0 8px!important;
+        background:rgba(12,8,4,.98)!important;
+        border-bottom:1px solid rgba(255,215,107,.35)!important;
+        padding-bottom:6px!important;
+      }
+      html.mbh018-menu-ready .side-panel.open .menu-left,
+      html.mbh019-menu-ready .side-panel.open .menu-left,
+      html.mbh018-menu-ready .side-panel.open .menu-right,
+      html.mbh019-menu-ready .side-panel.open .menu-right{
+        min-height:0!important;
+        overflow:auto!important;
+        -webkit-overflow-scrolling:touch!important;
+      }
+      html.mbh018-menu-ready .side-panel.open .panel,
+      html.mbh019-menu-ready .side-panel.open .panel{
+        min-height:0!important;
+        overflow:auto!important;
+      }
+      html.mbh018-menu-ready .side-panel.open .equip-panel,
+      html.mbh019-menu-ready .side-panel.open .equip-panel{
+        display:flex!important;
+        flex-direction:column!important;
+        min-height:0!important;
+        overflow:auto!important;
+        padding-bottom:12px!important;
+      }
+      html.mbh018-menu-ready .side-panel.open #equipList,
+      html.mbh019-menu-ready .side-panel.open #equipList{
+        flex:0 0 auto!important;
+      }
+      html.mbh018-menu-ready .side-panel.open #equipEffectTotals,
+      html.mbh019-menu-ready .side-panel.open #equipEffectTotals{
+        flex:1 1 auto!important;
+        min-height:120px!important;
+        max-height:none!important;
+        overflow:visible!important;
+      }
+      html.mbh018-menu-ready .side-panel.open #equipEffectTotals .effect-scroll,
+      html.mbh019-menu-ready .side-panel.open #equipEffectTotals .effect-scroll{
+        max-height:none!important;
+        min-height:80px!important;
+        overflow:visible!important;
+        padding-bottom:10px!important;
+      }
+      @media(max-width:760px), (orientation:portrait){
+        html.mbh018-menu-ready .side-panel.open .mobile-menu-tabs,
+        html.mbh019-menu-ready .side-panel.open .mobile-menu-tabs{
+          grid-column:1!important;
+          grid-row:1!important;
+          flex-wrap:wrap!important;
+        }
+        html.mbh018-menu-ready .side-panel.open .menu-left,
+        html.mbh019-menu-ready .side-panel.open .menu-left,
+        html.mbh018-menu-ready .side-panel.open .menu-right,
+        html.mbh019-menu-ready .side-panel.open .menu-right{
+          overflow:visible!important;
+        }
+        html.mbh018-menu-ready .side-panel.open .panel.active-page,
+        html.mbh019-menu-ready .side-panel.open .panel.active-page{
+          overflow:visible!important;
+        }
+      }
+    `;
+    document.head.appendChild(st);
+    document.documentElement.classList.add('mbh019-menu-ready');
+  }
+
+  function plainLogMsg(l){
+    return String(l && l.msg != null ? l.msg : '').replace(/<[^>]*>/g,'').replace(/&nbsp;/g,' ').trim();
+  }
+  function classifyLog019(l){
+    const c = String(l && l.cls || '').toLowerCase();
+    const html = String(l && l.msg != null ? l.msg : '');
+    const m = plainLogMsg(l);
+    // ドロップは装備入手だけ。出血・火傷・回復・攻撃ログを巻き込まない。
+    if(/log-item|log-rarity|drop-slot-label/.test(html) || /装備ドロップ|暗黒剣聖討伐報酬|闇装備確定|\d枠目/.test(m)) return 'drop';
+    // 回復表示・吸収もバトル中の数値なのでダメージ側に寄せる。
+    if(c.includes('damage') || c.includes('skilllog') || /ダメージ|被ダメ|回復|吸収|再生|出血|暗黒出血|火傷|攻撃|斬|雷撃|炎斬り|連続攻撃|大攻撃|剣舞|剣技|ブレス|GUARD|無効|MISS|反射|\+[0-9０-９]/.test(m)) return 'damage';
+    return 'system';
+  }
+  function renderLog019(reason='filter'){
+    const el=$id('log');
+    if(!el || typeof state === 'undefined') return;
+    const f=state.logFilter || 'all';
+    const beforeBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    const rows=(state.log || []).filter(l=>f === 'all' || classifyLog019(l) === f);
+    el.innerHTML = rows.map(l=>`<div class="${l.cls||''}">[${l.time}] ${l.msg}</div>`).join('');
+    document.querySelectorAll('#logFilterBar button').forEach(b=>b.classList.toggle('active',(b.dataset.logFilter||'all')===f));
+    if(reason === 'filter') el.scrollTop = 0;
+    else if(beforeBottom < 8) el.scrollTop = el.scrollHeight;
+  }
+  function installLog019(){
+    const bar=$id('logFilterBar');
+    if(typeof state !== 'undefined') state.logFilter = state.logFilter || 'all';
+    if(bar){
+      bar.innerHTML='<button type="button" data-log-filter="all">すべて</button><button type="button" data-log-filter="damage">ダメージ</button><button type="button" data-log-filter="system">システム</button><button type="button" data-log-filter="drop">ドロップ</button>';
+      const on=(e)=>{ const b=e.target.closest('button[data-log-filter]'); if(!b) return; e.preventDefault(); e.stopPropagation(); state.logFilter=b.dataset.logFilter||'all'; renderLog019('filter'); return false; };
+      bar.onclick=on;
+      bar.onpointerup=(e)=>{ if(e.pointerType && e.pointerType==='mouse') return; return on(e); };
+      bar.ontouchend=on;
+    }
+    if(typeof log === 'function' && !window.__mbh019LogInstalled){
+      window.__mbh019LogInstalled = true;
+      const escape=(s)=> typeof escapeHtml === 'function' ? escapeHtml(s) : String(s).replace(/[&<>"']/g, ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+      log = function(msg, cls='', html=false){
+        const time=new Date().toLocaleTimeString('ja-JP',{hour12:false});
+        const safeMsg=html ? msg : escape(msg);
+        state.log.unshift({time,msg:safeMsg,cls,html:true});
+        state.log=state.log.slice(0,180);
+        renderLog019('append');
+      };
+    }
+    renderLog019('filter');
+  }
+
+  function keepTabsOnTop019(){
+    const panel = (typeof els !== 'undefined' && els.sidePanel) ? els.sidePanel : document.querySelector('.side-panel');
+    const tabs = panel && panel.querySelector('.mobile-menu-tabs');
+    if(panel && tabs && tabs.parentElement === panel && panel.firstElementChild !== tabs){
+      panel.insertBefore(tabs, panel.firstElementChild);
+    }
+  }
+  function boot019(){
+    syncVersion019();
+    injectStyle019();
+    keepTabsOnTop019();
+    installLog019();
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot019, {once:true}); else setTimeout(boot019,0);
+  window.addEventListener('load', boot019, {once:true});
+  window.addEventListener('resize', ()=>setTimeout(()=>safe(()=>{ injectStyle019(); keepTabsOnTop019(); }), 60));
+  setInterval(()=>safe(()=>{ syncVersion019(); keepTabsOnTop019(); renderLog019('tick'); }), 400);
 })();
