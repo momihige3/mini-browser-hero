@@ -2308,3 +2308,54 @@ body.mbh-menu-overlay-open .battle-panel .flee-btn{
 .mbh-debug-enemy-level{font-size:12px;color:#f7ead0;}
 .mbh-debug-enemy-buttons{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;}
 .mbh-debug-enemy-buttons button{padding:6px 4px!important;font-size:12px!important;}
+
+
+/* ver.0.2.9: stable menu split, legal footer, status/equip split final override */
+:root{--mbh-legal-h:44px;}
+#fixedLegalLinks,.fixed-legal-links{display:none!important;}
+@media (min-width:1280px) and (min-height:701px){
+  #equipToggleBtn{display:none!important;}
+  .layout{display:grid!important;grid-template-columns:minmax(820px,1fr) minmax(620px,var(--mbh-side-w,760px))!important;height:calc(100vh - 58px)!important;overflow:hidden!important;}
+  .side-panel{position:static!important;display:grid!important;grid-template-columns:minmax(250px,.9fr) minmax(360px,1.1fr)!important;grid-template-rows:minmax(0,1fr)!important;gap:10px!important;width:auto!important;height:100%!important;max-height:calc(100vh - 78px)!important;padding:0!important;border:0!important;background:none!important;box-shadow:none!important;overflow:hidden!important;pointer-events:auto!important;}
+  .side-panel .mobile-menu-tabs{display:none!important;}
+  .side-panel .menu-left{display:grid!important;grid-column:1!important;grid-row:1!important;grid-template-rows:minmax(0,1fr) minmax(0,1fr)!important;gap:10px!important;min-height:0!important;overflow:hidden!important;}
+  .side-panel .menu-right{display:grid!important;grid-column:2!important;grid-row:1!important;grid-template-rows:minmax(0,1fr) minmax(130px,220px) auto!important;gap:10px!important;min-height:0!important;overflow:hidden!important;}
+  .side-panel .panel{display:block!important;position:static!important;grid-column:auto!important;grid-row:auto!important;min-height:0!important;overflow:hidden!important;}
+  .side-panel .inventory-panel,.side-panel .log-panel{display:flex!important;flex-direction:column!important;}
+  .side-panel .inventory{flex:1 1 auto!important;min-height:0!important;max-height:none!important;overflow-y:auto!important;}
+  .side-panel .log{flex:1 1 auto!important;height:auto!important;min-height:0!important;max-height:none!important;overflow-y:auto!important;}
+}
+@media (max-width:1279px), (max-height:700px){
+  #equipToggleBtn{display:inline-flex!important;align-items:center!important;justify-content:center!important;}
+  .layout{grid-template-columns:1fr!important;overflow:hidden!important;}
+  .side-panel{display:none!important;position:fixed!important;left:8px!important;right:8px!important;top:calc(var(--mbh-topbar-h,58px) + 8px)!important;bottom:8px!important;width:auto!important;max-width:calc(100vw - 16px)!important;z-index:90!important;background:rgba(0,0,0,.96)!important;border:2px solid #c99b39!important;box-shadow:0 0 35px #000!important;padding:8px!important;overflow:hidden!important;pointer-events:none!important;}
+  .side-panel.open{display:grid!important;grid-template-columns:1fr!important;grid-template-rows:auto minmax(0,1fr) auto!important;gap:8px!important;pointer-events:auto!important;}
+  .side-panel.open .mobile-menu-tabs{display:flex!important;grid-row:1!important;flex:0 0 auto!important;}
+  .side-panel.open .menu-left,.side-panel.open .menu-right{display:contents!important;}
+  .side-panel.open .panel{display:none!important;min-height:0!important;overflow:hidden!important;}
+  .side-panel.open .panel.active-page{display:block!important;grid-row:2!important;height:100%!important;max-height:100%!important;}
+  .side-panel.open .inventory-panel.active-page,.side-panel.open .log-panel.active-page{display:flex!important;flex-direction:column!important;}
+  .side-panel.open .inventory,.side-panel.open .log{flex:1 1 auto!important;min-height:0!important;max-height:none!important;overflow-y:auto!important;}
+}
+.side-panel .legal-links{grid-row:auto!important;grid-column:auto!important;position:static!important;display:flex!important;gap:6px!important;align-items:center!important;justify-content:center!important;margin-top:0!important;padding:8px 6px calc(8px + env(safe-area-inset-bottom,0px))!important;border-top:1px solid rgba(201,155,57,.35)!important;background:linear-gradient(180deg,rgba(10,9,12,.72),rgba(10,9,12,.96))!important;z-index:5!important;pointer-events:auto!important;flex:0 0 auto!important;min-height:var(--mbh-legal-h)!important;}
+.side-panel .legal-links button{flex:1 1 0!important;min-width:0!important;padding:7px 5px!important;font-size:11px!important;line-height:1.1!important;white-space:nowrap!important;}
+.side-panel .inventory-panel .legal-links,.side-panel .log-panel .legal-links,.side-panel .hero-stats .legal-links,.side-panel .equip-panel .legal-links{display:none!important;}
+.hero-stats{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;grid-template-rows:auto auto minmax(0,1fr)!important;gap:8px 12px!important;min-height:0!important;overflow:hidden!important;}
+.hero-stats>h2{grid-column:1 / -1!important;grid-row:1!important;}
+.hero-stats>.stat-grid{grid-column:1!important;grid-row:2!important;align-self:start!important;}
+.hero-stats>#statusSpecialEffects,.hero-stats>.status-special-effects{grid-column:1!important;grid-row:3!important;min-height:0!important;overflow:hidden!important;margin-top:0!important;border-top:1px solid #513917!important;padding-top:8px!important;}
+.hero-stats>.monster-records{grid-column:2!important;grid-row:2 / 4!important;min-height:0!important;overflow:hidden!important;margin-top:0!important;display:flex!important;flex-direction:column!important;}
+.hero-stats>.monster-records .monster-record-list{flex:1 1 auto!important;min-height:0!important;max-height:none!important;overflow-y:auto!important;}
+.equip-panel{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;grid-template-rows:auto auto minmax(0,1fr) auto!important;gap:8px 12px!important;min-height:0!important;overflow:hidden!important;}
+.equip-panel>h2{grid-column:1 / -1!important;grid-row:1!important;}
+.equip-panel>#bestEquipBtnEquip,.equip-panel>.best-equip-in-equip{grid-column:1!important;grid-row:2!important;margin:0!important;}
+.equip-panel>#equipList,.equip-panel>.equip-list{grid-column:1!important;grid-row:3!important;min-height:0!important;overflow-y:auto!important;align-content:start!important;}
+.equip-panel>#upgradeBtn{grid-column:1!important;grid-row:4!important;}
+.equip-panel>#equipEffectTotals,.equip-panel>.equip-effect-totals{grid-column:2!important;grid-row:2 / 5!important;min-height:0!important;overflow:hidden!important;margin-top:0!important;border-top:0!important;padding-top:0!important;display:flex!important;flex-direction:column!important;}
+.equip-panel>#equipEffectTotals .effect-scroll,.equip-panel>.equip-effect-totals .effect-scroll,.hero-stats .status-special-effects .effect-scroll{flex:1 1 auto!important;min-height:0!important;max-height:none!important;overflow-y:auto!important;}
+@media (max-width:760px){
+  .hero-stats,.equip-panel{grid-template-columns:1fr!important;grid-template-rows:auto!important;overflow:auto!important;}
+  .hero-stats>*,.equip-panel>*{grid-column:1!important;grid-row:auto!important;}
+  .hero-stats>.monster-records{grid-row:auto!important;}
+  .equip-panel>#equipEffectTotals,.equip-panel>.equip-effect-totals{grid-row:auto!important;}
+}
