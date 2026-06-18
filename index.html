@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja" data-build-version="0.3.0" data-build-date="2026-06-18">
+<html lang="ja" data-build-version="0.3.1" data-build-date="2026-06-15">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -18,7 +18,7 @@
 <body>
   <div id="game">
     <header class="topbar">
-      <div class="brand">ミニブラウザヒーロー <span class="build-version">ver.0.3.0</span></div>
+      <div class="brand">ミニブラウザヒーロー <span class="build-version">ver.0.3.1</span></div>
       <div class="resources"><b id="mats">0</b> 強化石</div>
       <div class="controls">
         <button id="equipToggleBtn">メニュー</button>
@@ -67,56 +67,36 @@
       <aside class="side-panel">
         <nav class="mobile-menu-tabs side-tabs" aria-label="右側タブ">
           <button type="button" data-menu-page="stats" class="active">ステータス</button>
-          <button type="button" data-menu-page="equip">装備</button>
+          <button type="button" data-menu-page="equip">装備・強化</button>
           <button type="button" data-menu-page="inventory">倉庫</button>
           <button type="button" data-menu-page="log">ログ</button>
         </nav>
-
-        <div class="panel hero-stats active-page">
+        <div class="menu-col menu-left">
+        <div class="panel hero-stats">
           <h2>ステータス</h2>
-          <div class="status-layout mbh-fixed-two-col">
-            <div class="status-left">
-              <div class="stat-grid">
-                <span>Lv</span><b id="statLv">1</b>
-                <span>現在Lv経験値</span><b id="statXp">0 / 1000</b>
-                <span>次Lv必要</span><b id="statXpNext">1000</b>
-                <span>獲得経験値</span><b id="statXpGain">0</b>
-                <span>攻撃力</span><b id="statAtk">42</b>
-                <span>防御力</span><b id="statDef">12</b>
-                <span>火軽減</span><b id="statFireRes">0%</b>
-              </div>
-              <div id="statusSpecialEffects" class="status-special-effects">
-                <h3>特殊効果</h3>
-                <div class="effect-scroll"></div>
-              </div>
+          <div class="stat-grid">
+            <span>Lv</span><b id="statLv">1</b>
+            <span>現在Lv経験値</span><b id="statXp">0 / 1000</b>
+            <span>次Lv必要</span><b id="statXpNext">1000</b>
+            <span>獲得経験値</span><b id="statXpGain">0</b>
+            <span>攻撃力</span><b id="statAtk">42</b>
+            <span>防御力</span><b id="statDef">12</b>
+            <span>火軽減</span><b id="statFireRes">0%</b>
             </div>
-            <div class="status-right">
-              <div class="monster-records">
-                <h3>モンスター討伐記録</h3>
-                <div id="monsterRecords" class="monster-record-list"></div>
-              </div>
-            </div>
+          <div class="monster-records">
+            <h3>モンスター討伐記録</h3>
+            <div id="monsterRecords" class="monster-record-list"></div>
           </div>
         </div>
 
         <div class="panel equip-panel">
-          <h2>装備</h2>
-          <div class="equip-layout mbh-fixed-two-col">
-            <div class="equip-left">
-              <p class="equip-note">装備はドロップ時に敵Lv依存の品質+値が付きます。高いほど品質の最低値・最大値が上がります。</p>
-              <button id="bestEquipBtnEquip" class="wide best-equip-in-equip" type="button">最強装備</button>
-              <div id="equipList" class="equip-list"></div>
-              <button id="upgradeBtn" class="wide hidden" type="button">装備を選択して強化</button>
-            </div>
-            <div class="equip-right">
-              <div id="equipEffectTotals" class="equip-effect-totals">
-                <h3>装備効果合計</h3>
-                <div class="effect-scroll"></div>
-              </div>
-            </div>
-          </div>
+          <h2>現在装備</h2>
+          <div id="equipList" class="equip-list"></div>
+          <button id="upgradeBtn" class="wide">装備を選択して強化</button>
         </div>
 
+        </div>
+        <div class="menu-col menu-right">
         <div class="panel inventory-panel">
           <h2>倉庫</h2>
           <div class="inventory-actions">
@@ -134,19 +114,14 @@
 
         <div class="panel log-panel">
           <h2>バトルログ</h2>
-          <div id="logFilterBar" class="log-filter-bar">
-            <button type="button" data-log-filter="all" class="active">すべて</button>
-            <button type="button" data-log-filter="damage">ダメージ</button>
-            <button type="button" data-log-filter="system">システム</button>
-            <button type="button" data-log-filter="drop">ドロップ</button>
-          </div>
+          <div id="logFilterBar" class="log-filter-bar"><button type="button" data-log-filter="all" class="active">すべて</button><button type="button" data-log-filter="damage">ダメージ</button><button type="button" data-log-filter="system">システム</button><button type="button" data-log-filter="drop">ドロップ</button></div>
           <div id="log" class="log"></div>
         </div>
-
-        <div class="legal-links menu-footer" aria-label="公開情報">
+        <div class="legal-links" aria-label="公開情報">
           <button id="creditBtn" type="button">クレジット</button>
           <button id="termsBtn" type="button">利用規約</button>
           <button id="privacyBtn" type="button">プライバシーポリシー</button>
+        </div>
         </div>
       </aside>
     </main>
@@ -157,15 +132,8 @@
         <button id="debugDarkSwordSaint">暗黒剣聖召喚</button>
         <button id="debugGrantDarkSet">闇装備7種セット付与</button>
         <div id="debugGrantDarkItems" class="debug-grid"></div>
-        <div class="debug-subhead">敵操作</div>
-        <button id="debugNextStrong" type="button">次の敵を強個体</button>
-        <button id="debugNextNamed" type="button">次の敵を異名持ち</button>
-        <button id="debugEnemyLvMinus10" type="button">敵Lv -10</button>
-        <button id="debugEnemyLvMinus5" type="button">敵Lv -5</button>
-        <button id="debugEnemyLvPlus5" type="button">敵Lv +5</button>
-        <button id="debugEnemyLvPlus10" type="button">敵Lv +10</button>
         <div id="mbhTraceBox" class="debug-trace-box">
-          <div class="debug-trace-title">進行デバッグログ ver.0.3.0</div>
+          <div class="debug-trace-title">進行デバッグログ ver.0.3.1</div>
           <button id="mbhTraceMark" type="button">現在状態を記録</button>
           <button id="mbhTraceCopy" type="button">ログコピー</button>
           <button id="mbhTraceDownload" type="button">DL</button>
@@ -174,7 +142,7 @@
         </div>
         <label><input id="debugKillEnemy" type="checkbox"> 敵への攻撃で即死</label>
         <label><input id="debugKillHero" type="checkbox"> 敵からの攻撃で即死</label>
-        <div class="debug-version">Build: ver.0.3.0 debug</div>
+        <div class="debug-version">Build: ver.0.3.1 debug</div>
         <button id="debugClose">閉じる</button>
       </div>
   </div>
@@ -211,7 +179,9 @@
 
   <script>
     (function(){
-      var build = document.documentElement.dataset.buildVersion || '0.3.0';      var s = document.createElement('script');
+      var build = document.documentElement.dataset.buildVersion || '0.3.1';
+      window.APP_VERSION = build;
+      window.GAME_VERSION = build;      var s = document.createElement('script');
       s.src = 'game.js?v=' + encodeURIComponent(build);
       s.defer = false;
       document.body.appendChild(s);
