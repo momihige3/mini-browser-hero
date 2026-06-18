@@ -6710,3 +6710,128 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   setTimeout(()=>boot016(false), 120);
   setTimeout(()=>boot016(false), 820);
 })();
+
+
+/* ver.0.1.7: definitive menu controller - closed on boot, opens only by button */
+(function(){
+  'use strict';
+  const APP_VERSION='0.1.7';
+  const byId=(id)=>document.getElementById(id);
+  const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.warn('[MBH0.1.7 menu]', e); return null; } };
+  let desiredOpen=false;
+  let booted=false;
+
+  function syncVersion017(){
+    safe(()=>{
+      window.APP_VERSION=APP_VERSION;
+      window.GAME_VERSION=APP_VERSION;
+      document.documentElement.dataset.buildVersion=APP_VERSION;
+      document.documentElement.setAttribute('data-build-version', APP_VERSION);
+      document.querySelectorAll('.build-version,[data-version],#versionText,.version-badge').forEach(el=>{ el.textContent='ver.'+APP_VERSION; });
+      document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent='Build: ver.'+APP_VERSION; });
+      document.querySelectorAll('.debug-trace-title').forEach(el=>{ el.textContent='進行デバッグログ ver.'+APP_VERSION; });
+    });
+  }
+
+  function removeBrokenMenuStyles017(){
+    ['mbh015-menu-closed-css','mbh016-menu-css'].forEach(id=>{ const el=byId(id); if(el) el.remove(); });
+  }
+
+  function installCss017(){
+    removeBrokenMenuStyles017();
+    if(byId('mbh017-menu-css')) return;
+    const st=document.createElement('style');
+    st.id='mbh017-menu-css';
+    st.textContent=`
+      body.mbh-menu-ready .side-panel:not(.open){display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;}
+      body.mbh-menu-ready .side-panel.open{
+        display:flex!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;
+        position:fixed!important;right:12px!important;top:64px!important;bottom:12px!important;
+        width:min(440px,calc(100vw - 24px))!important;max-width:calc(100vw - 24px)!important;
+        z-index:9999!important;overflow:auto!important;
+      }
+      @media (min-width: 1280px){
+        body.mbh-menu-ready .side-panel.open{width:min(720px,calc(100vw - 24px))!important;}
+      }
+      #equipToggleBtn{pointer-events:auto!important;touch-action:manipulation!important;position:relative!important;z-index:10050!important;}
+      #debugBtn,#muteBtn{pointer-events:auto!important;touch-action:manipulation!important;position:relative!important;z-index:10040!important;}
+      body.mbh-menu-ready .side-panel:not(.open) .legal-links{display:none!important;}
+      body.mbh-menu-ready .side-panel.open .legal-links{display:flex!important;}
+    `;
+    document.head.appendChild(st);
+  }
+
+  function setMenu017(open){
+    desiredOpen=!!open;
+    const side=document.querySelector('.side-panel');
+    const btn=byId('equipToggleBtn');
+    if(!side) return;
+    document.body.classList.add('mbh-menu-ready');
+    side.classList.toggle('open', desiredOpen);
+    side.classList.toggle('mbh-menu-closed', !desiredOpen);
+    side.style.setProperty('display', desiredOpen ? 'flex' : 'none', 'important');
+    side.style.setProperty('visibility', desiredOpen ? 'visible' : 'hidden', 'important');
+    side.style.setProperty('opacity', desiredOpen ? '1' : '0', 'important');
+    side.style.setProperty('pointer-events', desiredOpen ? 'auto' : 'none', 'important');
+    if(desiredOpen){
+      side.style.setProperty('position','fixed','important');
+      side.style.setProperty('right','12px','important');
+      side.style.setProperty('top','64px','important');
+      side.style.setProperty('bottom','12px','important');
+      side.style.setProperty('z-index','9999','important');
+      side.style.setProperty('overflow','auto','important');
+    }
+    if(typeof state !== 'undefined') state.uiOpen=desiredOpen;
+    if(btn){
+      btn.textContent=desiredOpen ? '閉じる' : 'メニュー';
+      btn.setAttribute('aria-expanded', desiredOpen ? 'true' : 'false');
+      btn.style.pointerEvents='auto';
+    }
+    safe(()=>{ if(typeof setMenuPage==='function') setMenuPage((typeof state!=='undefined' && state.menuPage) ? state.menuPage : 'stats'); });
+    safe(()=>{ if(typeof syncLegalFooter014==='function') syncLegalFooter014(); });
+  }
+
+  function toggleMenu017(e){
+    if(e){
+      try{ e.preventDefault(); }catch(_){}
+      try{ e.stopPropagation(); }catch(_){}
+      try{ e.stopImmediatePropagation(); }catch(_){}
+    }
+    setMenu017(!desiredOpen);
+    safe(()=>{ if(typeof startAudio==='function') startAudio(); });
+    safe(()=>{ if(typeof playUiClick==='function') playUiClick(); });
+    return false;
+  }
+
+  function bindButton017(){
+    const btn=byId('equipToggleBtn');
+    if(!btn || btn.__mbh017Bound) return;
+    btn.__mbh017Bound=true;
+    btn.onclick=null;
+    btn.onpointerup=null;
+    btn.ontouchend=null;
+    ['click','pointerup','touchend'].forEach(type=>{
+      btn.addEventListener(type, toggleMenu017, {capture:true, passive:false});
+    });
+  }
+
+  function boot017(){
+    installCss017();
+    syncVersion017();
+    bindButton017();
+    if(!booted){
+      booted=true;
+      desiredOpen=false;
+    }
+    setMenu017(desiredOpen);
+  }
+
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', boot017, {once:true}); else boot017();
+  window.addEventListener('load', boot017, {once:true});
+  window.addEventListener('resize', ()=>setTimeout(()=>setMenu017(desiredOpen), 30));
+  // 古い0.1.5/0.1.6の遅延処理に負けないよう、現在の意図した開閉状態だけを維持する。
+  setTimeout(boot017, 150);
+  setTimeout(boot017, 900);
+  setInterval(()=>{ syncVersion017(); bindButton017(); setMenu017(desiredOpen); }, 1200);
+  window.__mbhSetMenu017=setMenu017;
+})();
