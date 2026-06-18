@@ -40,7 +40,7 @@ const DEATH_DANCE_CUTINS = [
 ];
 const DARK_SWORD_SAINT_CUTIN = {quote:'私を超えてみせろ。', img:'assets/cutin_dark_sword_dance.png'};
 const DARK_SWORD_TECHNIQUE_CUTIN = {quote:'', img:'assets/cutin_dark_sword_technique.png'};
-const GAME_VERSION = (window.APP_VERSION || '0.1.3');
+const GAME_VERSION = (window.APP_VERSION || '0.1.4');
 window.GAME_VERSION = GAME_VERSION;
 
 const DARK_SWORD_SAINT = {
@@ -831,7 +831,7 @@ function fleeBattle(){
     spawnWeakEnemyAfterEscape();
     return;
   }
-  const nextBase = Math.max(1, currentLevel - 20);
+  const nextBase = Math.max(1, currentLevel - 5);
   state.enemyLevelBase = nextBase;
   state.enemyLevelBaseDefeated = state.defeated || 0;
   state.winStreak = 0;
@@ -846,7 +846,7 @@ function confirmFlee(){
   if(desc){
     desc.innerHTML = isDarkSwordSaint()
       ? '暗黒剣聖は独立レベルのため、逃走しても敵の出現レベルは下がりません。<br>経験値は失いません。'
-      : '敵の出現レベルが20下がります。<br>経験値は失いません。';
+      : '敵の出現レベルが5下がります。<br>経験値は失いません。';
   }
   if(modal) modal.classList.remove('hidden');
 }
@@ -3277,11 +3277,6 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
       <div id="debugBossButtons" class="debug-grid"></div>
       <button id="debugGrantDarkSet" type="button">闇装備7種セット付与</button>
       <div id="debugGrantDarkItems" class="debug-grid"></div>
-      <button id="debugHp0Kill" type="button">HP0即撃破</button>
-      <button id="debugForceDefeated" type="button">dead/defeated即確定</button>
-      <button id="debugClearBleed" type="button">出血・暗黒出血解除</button>
-      <button id="debugStopDot" type="button">DOTタイマー停止</button>
-      <button id="debugStopDarkDance" type="button">暗黒剣舞タイマー停止</button>
       <div id="mbhTraceBox" class="debug-trace-box">
         <div class="debug-trace-title">進行デバッグログ ver.${BUILD}</div>
         <button id="mbhTraceMark" type="button">現在状態を記録</button>
@@ -3354,11 +3349,6 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
     bindBtn('debugResetData', ()=>resetUserData());
     bindBtn('debugDarkSwordSaint', forceNextDarkSaint);
     bindBtn('debugGrantDarkSet', grantDarkSet);
-    bindBtn('debugHp0Kill', ()=>{ if(state.enemy){ state.enemyHp=0; state.enemy.dead=true; state.enemy.defeated=true; safe(()=>enemyDefeated()); } });
-    bindBtn('debugForceDefeated', ()=>{ if(state.enemy){ state.enemyHp=0; state.enemy.dead=true; state.enemy.defeated=true; } safe(()=>enemyDefeated()); });
-    bindBtn('debugClearBleed', clearDots);
-    bindBtn('debugStopDot', clearDots);
-    bindBtn('debugStopDarkDance', stopDarkDanceTimers);
     const showEnemyStatsBox = byId('debugShowEnemyStats'); if(showEnemyStatsBox) showEnemyStatsBox.checked = !!(state.debug && state.debug.showEnemyStats);
     bindBtn('debugClose', ()=>{ if(panel) panel.classList.add('hidden'); });
     if(panel){
@@ -4720,7 +4710,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
             state.enemyStatuses.namedRegenLast += ticks*1000;
             const heal = Math.max(1, Math.floor(state.enemy.maxHp * 0.02 * ticks));
             state.enemyHp = Math.min(state.enemy.maxHp, state.enemyHp + heal);
-            if(typeof showFloat === 'function') showFloat(`異名再生 +${heal.toLocaleString()}`, 'heal named-regen');
+            if(typeof showFloat === 'function') showFloat(`+${heal.toLocaleString()}`, 'heal');
             if(typeof renderBattle === 'function') renderBattle();
           }
         }
@@ -6072,3 +6062,253 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   setInterval(()=>safe(()=>{ syncVersion013(); syncLegalLinks013(); ensureVariantBadge013(); }), 1200);
 })();
 
+
+
+/* ver.0.1.4: debug enemy controls, named regen display, flee level -5 */
+(function(){
+  'use strict';
+  const APP_VERSION = '0.1.4';
+  function safe(fn){ try{ return fn && fn(); }catch(e){ console.error('[MBH0.1.4]', e); return null; } }
+  const byId = (id)=>document.getElementById(id);
+  function syncVersion014(){
+    safe(()=>{ window.APP_VERSION = APP_VERSION; window.GAME_VERSION = APP_VERSION; document.documentElement.dataset.buildVersion = APP_VERSION; });
+    safe(()=>{ document.querySelectorAll('.build-version,[data-version],#versionText,.version-badge').forEach(el=>{ el.textContent='ver.'+APP_VERSION; }); });
+    safe(()=>{ document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent='Build: ver.'+APP_VERSION; }); });
+    safe(()=>{ document.querySelectorAll('.debug-trace-title').forEach(el=>{ el.textContent='進行デバッグログ ver.'+APP_VERSION; }); });
+  }
+
+  function currentEnemyLevel014(){
+    return Math.max(1, Math.floor(Number(state?.enemyLevelBase || state?.enemy?.level || state?.level || 1) || 1));
+  }
+  function setEnemyLevel014(lv){
+    const next = Math.max(1, Math.floor(Number(lv)||1));
+    state.enemyLevelBase = next;
+    state.enemyLevelBaseDefeated = Math.max(0, Math.floor(Number(state.defeated)||0));
+    state.debugEnemyLevelOverride = next;
+    safe(()=>scheduleSave());
+    safe(()=>renderDebugLevel014());
+    if(typeof log === 'function') log(`デバッグ：敵出現レベルをLv.${next}に設定。`, 'system');
+  }
+  function addEnemyLevel014(delta){ setEnemyLevel014(currentEnemyLevel014() + delta); }
+  function toggleEnemyLevelLock014(){
+    state.debugEnemyLevelLocked = !state.debugEnemyLevelLocked;
+    if(state.debugEnemyLevelLocked) state.debugEnemyLevelOverride = currentEnemyLevel014();
+    safe(()=>scheduleSave());
+    safe(()=>renderDebugLevel014());
+    if(typeof log === 'function') log(`デバッグ：敵出現レベル固定 ${state.debugEnemyLevelLocked?'ON':'OFF'}`, 'system');
+  }
+  function renderDebugLevel014(){
+    const label = byId('debugEnemyLevelNow');
+    if(label) label.textContent = `現在設定：Lv.${currentEnemyLevel014()} / 固定：${state.debugEnemyLevelLocked?'ON':'OFF'}`;
+    const input = byId('debugEnemyLevelInput');
+    if(input && document.activeElement !== input) input.value = String(currentEnemyLevel014());
+    const lockBtn = byId('debugEnemyLevelLock');
+    if(lockBtn) lockBtn.textContent = `敵出現レベル固定 ${state.debugEnemyLevelLocked?'ON':'OFF'}`;
+  }
+
+  function forceNextVariant014(type){
+    state.debugNextVariant = type;
+    state.forceNextDarkSwordSaint = false;
+    if(typeof log === 'function') log(`デバッグ：次の敵を${type==='named'?'異名持ち':'強個体'}にセット。`, 'system');
+    safe(()=>scheduleSave());
+  }
+  function isVariantTarget014(e){
+    if(!e) return false;
+    if(e.id === 'dark_sword_saint') return false;
+    return e.type === '雑魚';
+  }
+  function applyForcedVariant014(e, type){
+    if(!isVariantTarget014(e) || !type) return e;
+    const baseName = String(e.baseName || e.name || '敵').replace(/^(紅蓮の|古の|暴食の|影踏みの|星砕きの|不死身の|雷鳴の|深淵の)/,'');
+    e.baseName = baseName;
+    if(type === 'named'){
+      const prefixes = ['紅蓮の','古の','暴食の','影踏みの','星砕きの','不死身の','雷鳴の','深淵の'];
+      const prefix = prefixes[Math.floor(Math.random()*prefixes.length)] || '異名の';
+      e.variant = {type:'named', label:'異名持ち', prefix};
+      e.variantType = 'named';
+      e.name = `${prefix}${baseName}`;
+      e.maxHp = Math.max(1, Math.floor((Number(e.maxHp)||1) * 2.0));
+      e.atk = Math.max(1, Math.floor((Number(e.atk)||1) * 1.25));
+      e.def = Math.max(0, Math.floor((Number(e.def)||0) * 1.10));
+    }else{
+      e.variant = {type:'strong', label:'強個体'};
+      e.variantType = 'strong';
+      e.name = baseName;
+      e.maxHp = Math.max(1, Math.floor((Number(e.maxHp)||1) * 1.5));
+      e.atk = Math.max(1, Math.floor((Number(e.atk)||1) * 1.10));
+    }
+    return e;
+  }
+
+  if(typeof makeScaledEnemy === 'function' && !window.__mbhMakeScaledEnemy014){
+    window.__mbhMakeScaledEnemy014 = makeScaledEnemy;
+    makeScaledEnemy = function(base, forceLevel=null){
+      const locked = !!(state && state.debugEnemyLevelLocked) && base && base.id !== 'dark_sword_saint';
+      const lockedLv = Math.max(1, Math.floor(Number(state.debugEnemyLevelOverride || state.enemyLevelBase || state.enemy?.level || state.level || 1) || 1));
+      const forcedVariant = state ? state.debugNextVariant : null;
+      let oldRandom = null;
+      if(forcedVariant){
+        oldRandom = Math.random;
+        Math.random = function(){ return 0.999999; };
+      }
+      let e;
+      try{
+        e = window.__mbhMakeScaledEnemy014.call(this, base, locked ? lockedLv : forceLevel);
+      }finally{
+        if(oldRandom) Math.random = oldRandom;
+      }
+      if(forcedVariant && isVariantTarget014(e)){
+        applyForcedVariant014(e, forcedVariant);
+        state.debugNextVariant = null;
+        safe(()=>scheduleSave());
+        if(typeof log === 'function') log(`デバッグ：${forcedVariant==='named'?'異名持ち':'強個体'}として出現確定。`, 'system');
+      }
+      return e;
+    };
+  }
+
+  if(typeof showFloat === 'function' && !window.__mbhShowFloat014){
+    window.__mbhShowFloat014 = showFloat;
+    showFloat = function(text, cls='damage'){
+      let t = String(text || '');
+      let c = String(cls || 'damage');
+      const m = t.match(/異名再生\s*\+?([0-9,]+)/);
+      if(m){
+        t = '+' + m[1];
+        c = 'heal';
+      }
+      return window.__mbhShowFloat014.call(this, t, c);
+    };
+  }
+
+  function darkNames014(){ return ['闇の聖剣','闇の盾','闇のアミュレット','闇の鎧','闇の籠手','闇の兜','暗黒の靴']; }
+  function makeDarkByName014(name){
+    const n = Math.max(1, Math.floor(Number(state?.enemy?.level || state?.enemyLevelBase || state?.level || 1)));
+    if(name==='闇の聖剣' && typeof makeDarkHolySword==='function') return makeDarkHolySword(n);
+    if(name==='闇の盾' && typeof makeDarkShield==='function') return makeDarkShield(n);
+    if(name==='闇のアミュレット' && typeof makeDarkAmulet==='function') return makeDarkAmulet(n);
+    if(name==='闇の鎧' && typeof makeDarkArmor==='function') return makeDarkArmor(n);
+    if(name==='闇の籠手' && typeof makeDarkGauntlets==='function') return makeDarkGauntlets(n);
+    if(name==='闇の兜' && typeof makeDarkHelm==='function') return makeDarkHelm(n);
+    if(name==='暗黒の靴' && typeof makeDarkBoots==='function') return makeDarkBoots(n);
+    return null;
+  }
+  function grantDark014(name){
+    const it = makeDarkByName014(name);
+    if(!it) return;
+    state.inventory.unshift(it);
+    safe(()=>renderAll()); safe(()=>scheduleSave());
+    if(typeof log === 'function') log(`デバッグ：${name}を倉庫に追加。`, 'drop');
+  }
+  function grantDarkSet014(){
+    darkNames014().slice().reverse().forEach(n=>{ const it=makeDarkByName014(n); if(it) state.inventory.unshift(it); });
+    safe(()=>renderAll()); safe(()=>scheduleSave());
+    if(typeof log === 'function') log('デバッグ：闇装備7種を倉庫に追加。', 'drop');
+  }
+  function forceNextDarkSaint014(){
+    state.forceNextDarkSwordSaint = true;
+    state.debugForcedBossNext = null;
+    state.debugNextVariant = null;
+    safe(()=>scheduleSave());
+    if(typeof log === 'function') log('デバッグ：暗黒剣聖を次の敵にセット。', 'system');
+  }
+  function forceNextBoss014(id){
+    const boss = (typeof ENEMIES !== 'undefined' ? ENEMIES : []).find(e=>e && e.id===id);
+    if(!boss) return;
+    const lv = currentEnemyLevel014();
+    state.debugForcedBossNext = {id:boss.id, level:lv, debug:true};
+    state.pendingBossForNext = null;
+    state.forceNextDarkSwordSaint = false;
+    state.debugNextVariant = null;
+    safe(()=>scheduleSave());
+    if(typeof log === 'function') log(`デバッグ：${boss.name}Lv.${lv}を次の敵にセット。`, 'system');
+  }
+
+  function rebuildDebugPanel014(){
+    const panel = byId('debugPanel');
+    if(!panel) return;
+    panel.innerHTML = `
+      <div class="debug-head">デバッグ</div>
+      <div class="debug-subhead">敵操作</div>
+      <button id="debugNextStrong" type="button">次の敵を強個体</button>
+      <button id="debugNextNamed" type="button">次の敵を異名持ち</button>
+      <button id="debugDarkSwordSaint" type="button">暗黒剣聖を次の敵にセット</button>
+      <div class="debug-subhead">敵出現レベル</div>
+      <div id="debugEnemyLevelNow" class="debug-note"></div>
+      <div class="debug-grid">
+        <button type="button" data-enemy-level-delta="-10">Lv -10</button>
+        <button type="button" data-enemy-level-delta="-5">Lv -5</button>
+        <button type="button" data-enemy-level-delta="5">Lv +5</button>
+        <button type="button" data-enemy-level-delta="10">Lv +10</button>
+      </div>
+      <div class="debug-level-row"><input id="debugEnemyLevelInput" type="number" min="1" step="1"><button id="debugEnemyLevelApply" type="button">Lv適用</button></div>
+      <button id="debugEnemyLevelLock" type="button">敵出現レベル固定 OFF</button>
+      <div class="debug-subhead">次のボスを指定</div>
+      <div id="debugBossButtons" class="debug-grid">
+        <button type="button" data-boss-next="slime_king">スライムキング</button>
+        <button type="button" data-boss-next="orc">オーク</button>
+        <button type="button" data-boss-next="dragon">ドラゴン</button>
+        <button type="button" data-boss-next="fire_king">火の精霊王</button>
+      </div>
+      <div class="debug-subhead">装備</div>
+      <button id="debugAddChests" type="button">装備+50</button>
+      <button id="debugGrantDarkSet" type="button">闇装備7種セット付与</button>
+      <div id="debugGrantDarkItems" class="debug-grid">${darkNames014().map(n=>`<button type="button" data-dark-grant="${n}">${n}</button>`).join('')}</div>
+      <div class="debug-subhead">その他</div>
+      <button id="debugResetData" type="button">ユーザーデータリセット</button>
+      <div id="mbhTraceBox" class="debug-trace-box">
+        <div class="debug-trace-title">進行デバッグログ ver.${APP_VERSION}</div>
+        <button id="mbhTraceMark" type="button">現在状態を記録</button>
+        <button id="mbhTraceCopy" type="button">ログコピー</button>
+        <button id="mbhTraceDownload" type="button">DL</button>
+        <button id="mbhTraceClear" type="button">消去</button>
+        <pre id="mbhTraceOut" class="debug-trace-output"></pre>
+      </div>
+      <label><input id="debugShowEnemyStats" type="checkbox"> 敵ATK/DEF表示</label>
+      <label><input id="debugKillEnemy" type="checkbox"> 敵への攻撃で即死</label>
+      <label><input id="debugKillHero" type="checkbox"> 敵からの攻撃で即死</label>
+      <div class="debug-version">Build: ver.${APP_VERSION}</div>
+      <button id="debugClose" type="button">閉じる</button>`;
+  }
+
+  function bindDebugPanel014(){
+    rebuildDebugPanel014();
+    const panel = byId('debugPanel');
+    if(!panel) return;
+    const bind = (id, fn)=>{ const b=byId(id); if(b) b.onclick=(e)=>{ e.preventDefault(); e.stopPropagation(); safe(fn); return false; }; };
+    bind('debugNextStrong', ()=>forceNextVariant014('strong'));
+    bind('debugNextNamed', ()=>forceNextVariant014('named'));
+    bind('debugDarkSwordSaint', forceNextDarkSaint014);
+    bind('debugAddChests', ()=>{ for(let i=0;i<50;i++) state.inventory.unshift(makeRandomItem()); safe(()=>renderAll()); safe(()=>scheduleSave()); if(typeof log==='function') log('デバッグ：装備を50個追加。','drop'); });
+    bind('debugGrantDarkSet', grantDarkSet014);
+    bind('debugResetData', ()=>resetUserData());
+    bind('debugEnemyLevelApply', ()=>setEnemyLevel014(byId('debugEnemyLevelInput')?.value));
+    bind('debugEnemyLevelLock', toggleEnemyLevelLock014);
+    bind('debugClose', ()=>{ panel.classList.add('hidden'); });
+    if(byId('debugShowEnemyStats')) byId('debugShowEnemyStats').checked = !!(state.debug && state.debug.showEnemyStats);
+    panel.addEventListener('click', (e)=>{
+      const deltaBtn = e.target.closest('[data-enemy-level-delta]');
+      if(deltaBtn){ e.preventDefault(); e.stopPropagation(); addEnemyLevel014(Number(deltaBtn.dataset.enemyLevelDelta)||0); return false; }
+      const darkBtn = e.target.closest('[data-dark-grant]');
+      if(darkBtn){ e.preventDefault(); e.stopPropagation(); grantDark014(darkBtn.dataset.darkGrant); return false; }
+      const bossBtn = e.target.closest('[data-boss-next]');
+      if(bossBtn){ e.preventDefault(); e.stopPropagation(); forceNextBoss014(bossBtn.dataset.bossNext); return false; }
+    }, {capture:true});
+    panel.addEventListener('change', (e)=>{
+      if(e.target && e.target.id==='debugShowEnemyStats'){ state.debug.showEnemyStats = !!e.target.checked; safe(()=>renderBattle()); safe(()=>scheduleSave()); }
+      if(e.target && e.target.id==='debugKillEnemy'){ state.debug.killEnemy = !!e.target.checked; safe(()=>scheduleSave()); }
+      if(e.target && e.target.id==='debugKillHero'){ state.debug.killHero = !!e.target.checked; safe(()=>scheduleSave()); }
+    });
+    if(typeof bindTrace === 'function') safe(()=>bindTrace());
+    renderDebugLevel014();
+  }
+
+  function boot014(){
+    syncVersion014();
+    bindDebugPanel014();
+    renderDebugLevel014();
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot014, {once:true}); else setTimeout(boot014, 0);
+  window.addEventListener('load', boot014, {once:true});
+  setInterval(()=>safe(()=>{ syncVersion014(); renderDebugLevel014(); }), 1000);
+})();

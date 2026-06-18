@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja" data-build-version="0.1.3" data-build-date="2026-06-15">
+<html lang="ja" data-build-version="0.1.4" data-build-date="2026-06-15">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -18,7 +18,7 @@
 <body>
   <div id="game">
     <header class="topbar">
-      <div class="brand">ミニブラウザヒーロー <span class="build-version">ver.0.1.3</span></div>
+      <div class="brand">ミニブラウザヒーロー <span class="build-version">ver.0.1.4</span></div>
       <div class="resources"><b id="mats">0</b> 強化石</div>
       <div class="controls">
         <button id="equipToggleBtn">メニュー</button>
@@ -127,28 +127,39 @@
     </main>
       <div id="debugPanel" class="debug-panel hidden">
         <div class="debug-head">デバッグ</div>
-        <button id="debugAddChests">装備+50</button>
-        <button id="debugResetData">ユーザーデータリセット</button>
-        <button id="debugDarkSwordSaint">暗黒剣聖召喚</button>
-        <button id="debugGrantDarkSet">闇装備7種セット付与</button>
+        <div class="debug-subhead">敵操作</div>
+        <button id="debugNextStrong" type="button">次の敵を強個体</button>
+        <button id="debugNextNamed" type="button">次の敵を異名持ち</button>
+        <button id="debugDarkSwordSaint" type="button">暗黒剣聖を次の敵にセット</button>
+        <div class="debug-subhead">敵出現レベル</div>
+        <div id="debugEnemyLevelNow" class="debug-note"></div>
+        <div class="debug-grid">
+          <button type="button" data-enemy-level-delta="-10">Lv -10</button>
+          <button type="button" data-enemy-level-delta="-5">Lv -5</button>
+          <button type="button" data-enemy-level-delta="5">Lv +5</button>
+          <button type="button" data-enemy-level-delta="10">Lv +10</button>
+        </div>
+        <div class="debug-level-row"><input id="debugEnemyLevelInput" type="number" min="1" step="1"><button id="debugEnemyLevelApply" type="button">Lv適用</button></div>
+        <button id="debugEnemyLevelLock" type="button">敵出現レベル固定 OFF</button>
+        <div class="debug-subhead">装備</div>
+        <button id="debugAddChests" type="button">装備+50</button>
+        <button id="debugGrantDarkSet" type="button">闇装備7種セット付与</button>
         <div id="debugGrantDarkItems" class="debug-grid"></div>
-        <button id="debugHp0Kill">HP0即撃破</button>
-        <button id="debugForceDefeated">dead/defeated即確定</button>
-        <button id="debugClearBleed">出血・暗黒出血解除</button>
-        <button id="debugStopDot">DOTタイマー停止</button>
-        <button id="debugStopDarkDance">暗黒剣舞タイマー停止</button>
+        <div class="debug-subhead">その他</div>
+        <button id="debugResetData" type="button">ユーザーデータリセット</button>
         <div id="mbhTraceBox" class="debug-trace-box">
-          <div class="debug-trace-title">進行デバッグログ ver.0.1.3</div>
+          <div class="debug-trace-title">進行デバッグログ ver.0.1.4</div>
           <button id="mbhTraceMark" type="button">現在状態を記録</button>
           <button id="mbhTraceCopy" type="button">ログコピー</button>
           <button id="mbhTraceDownload" type="button">DL</button>
           <button id="mbhTraceClear" type="button">消去</button>
           <pre id="mbhTraceOut" class="debug-trace-output"></pre>
         </div>
+        <label><input id="debugShowEnemyStats" type="checkbox"> 敵ATK/DEF表示</label>
         <label><input id="debugKillEnemy" type="checkbox"> 敵への攻撃で即死</label>
         <label><input id="debugKillHero" type="checkbox"> 敵からの攻撃で即死</label>
-        <div class="debug-version">Build: ver.0.1.3 debug</div>
-        <button id="debugClose">閉じる</button>
+        <div class="debug-version">Build: ver.0.1.4</div>
+        <button id="debugClose" type="button">閉じる</button>
       </div>
   </div>
 
@@ -174,7 +185,7 @@
     <div class="flee-modal-backdrop"></div>
     <div class="flee-modal-card">
       <h2 id="fleeModalTitle">戦闘から離脱しますか？</h2>
-      <p id="fleeModalDesc">敵の出現レベルが20下がります。<br>経験値は失いません。</p>
+      <p id="fleeModalDesc">敵の出現レベルが5下がります。<br>経験値は失いません。</p>
       <div class="flee-modal-actions">
         <button id="fleeCancelBtn" type="button">キャンセル</button>
         <button id="fleeOkBtn" type="button">逃走する</button>
@@ -184,7 +195,7 @@
 
   <script>
     (function(){
-      var build = document.documentElement.dataset.buildVersion || '0.1.3';      var s = document.createElement('script');
+      var build = document.documentElement.dataset.buildVersion || '0.1.4';      var s = document.createElement('script');
       s.src = 'game.js?v=' + encodeURIComponent(build);
       s.defer = false;
       document.body.appendChild(s);
