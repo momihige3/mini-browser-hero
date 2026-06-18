@@ -2570,3 +2570,5 @@ html[data-build-version="0.3.3"] .monster-record-list{
   overflow-y:auto!important;
   min-height:0!important;
 }
+
+/* ver.0.3.5 marker: final layout is injected by game.js to avoid old CSS rollback conflicts. */

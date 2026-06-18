@@ -6796,3 +6796,262 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', boot034, {once:true}); else boot034();
   window.addEventListener('load', boot034, {once:true});
 })();
+
+/* ver.0.3.5: final stable menu/footer/effects/log/sell-exp lock */
+(function(){
+  'use strict';
+  const BUILD='0.3.5';
+  const $=(s,r=document)=>r.querySelector(s);
+  const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+  const byId=(id)=>document.getElementById(id);
+  const esc=(v)=>String(v ?? '').replace(/[&<>\"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[ch]));
+  const safe=(fn)=>{ try{return fn();}catch(e){ console.error('[MBH 0.3.5]', e); } };
+  const compact=()=>window.matchMedia('(max-width:1279px), (max-height:700px)').matches;
+
+  function syncVersion035(){
+    window.APP_VERSION=BUILD; window.GAME_VERSION=BUILD;
+    document.documentElement.dataset.buildVersion=BUILD;
+    document.documentElement.setAttribute('data-build-version', BUILD);
+    $$('.build-version').forEach(el=>{ el.textContent='ver.'+BUILD; });
+    $$('.debug-version').forEach(el=>{ el.textContent='Build: ver.'+BUILD+' debug'; });
+    $$('.debug-trace-title').forEach(el=>{ el.textContent='進行デバッグログ ver.'+BUILD; });
+  }
+
+  function installCss035(){
+    if(byId('mbh035-css')) return;
+    const st=document.createElement('style'); st.id='mbh035-css';
+    st.textContent=`
+      .side-panel{min-height:0!important;overflow:hidden!important;display:flex!important;flex-direction:column!important;gap:10px!important;}
+      .side-panel>.mobile-menu-tabs{flex:0 0 auto!important;}
+      .side-panel>.menu-main{flex:1 1 auto!important;min-height:0!important;display:grid!important;grid-template-columns:minmax(260px,.9fr) minmax(360px,1.1fr)!important;gap:10px!important;overflow:hidden!important;}
+      .side-panel>.menu-main>.menu-col{min-height:0!important;overflow:hidden!important;display:grid!important;gap:10px!important;}
+      .side-panel>.menu-main>.menu-left{grid-template-rows:minmax(0,1fr) minmax(0,1fr)!important;}
+      .side-panel>.menu-main>.menu-right{grid-template-rows:minmax(0,1fr) minmax(150px,210px)!important;}
+      .side-panel>.menu-footer{flex:0 0 auto!important;display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px!important;position:relative!important;z-index:3!important;width:100%!important;margin:0!important;padding:8px!important;border:1px solid #73531f!important;border-radius:6px!important;background:linear-gradient(rgba(20,14,8,.98),rgba(5,5,5,.98))!important;box-shadow:0 -8px 18px rgba(0,0,0,.35)!important;}
+      .side-panel>.menu-footer button{min-width:0!important;white-space:nowrap!important;}
+      .side-panel .panel{min-height:0!important;overflow:hidden!important;}
+      .hero-stats,.equip-panel{display:flex!important;flex-direction:column!important;}
+      .status-layout,.equip-layout{flex:1 1 auto!important;min-height:0!important;display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;gap:10px!important;overflow:hidden!important;}
+      .status-left,.status-right,.equip-left,.equip-right{min-height:0!important;overflow:hidden!important;display:flex!important;flex-direction:column!important;gap:8px!important;}
+      .status-left .stat-grid{flex:0 0 auto!important;}
+      .status-special-effects,.monster-records,.equip-effect-totals{flex:1 1 auto!important;min-height:0!important;overflow:hidden!important;border:1px solid #513917!important;border-radius:6px!important;background:rgba(0,0,0,.18)!important;padding:8px!important;}
+      .status-special-effects h3,.monster-records h3,.equip-effect-totals h3{margin:0 0 6px!important;color:#ffd76b!important;font-size:14px!important;}
+      .effect-scroll,.monster-record-list{min-height:0!important;overflow:auto!important;max-height:100%!important;padding-right:4px!important;}
+      .equip-left #equipList{flex:1 1 auto!important;min-height:0!important;overflow:auto!important;}
+      .equip-panel .equip-actions-fixed{display:grid!important;grid-template-columns:1fr 1fr!important;gap:6px!important;flex:0 0 auto!important;}
+      .inventory-panel{display:flex!important;flex-direction:column!important;}
+      .inventory{flex:1 1 auto!important;min-height:0!important;}
+      .log-panel{display:flex!important;flex-direction:column!important;}
+      .log{flex:1 1 auto!important;min-height:0!important;height:auto!important;}
+      .panel .legal-links,.panel .menu-footer,#fixedLegalLinks,.fixed-legal-links{display:none!important;}
+      .effect-row{display:flex!important;justify-content:space-between!important;gap:8px!important;border-bottom:1px solid rgba(255,255,255,.06)!important;padding:2px 0!important;font-size:12px!important;}
+      .effect-row b{color:#fff!important;text-align:right!important;}
+      @media(min-width:1280px) and (min-height:701px){
+        #equipToggleBtn{display:none!important;}
+        .layout{grid-template-columns:minmax(820px,1fr) minmax(640px,780px)!important;}
+        .side-panel{position:static!important;width:auto!important;background:none!important;border:0!important;padding:0!important;box-shadow:none!important;}
+        .side-panel>.mobile-menu-tabs{display:flex!important;}
+      }
+      @media(max-width:1279px),(max-height:700px){
+        #equipToggleBtn{display:inline-block!important;}
+        .side-panel{display:none!important;position:fixed!important;left:8px!important;right:8px!important;top:calc(var(--mbh-topbar-h,58px) + 8px)!important;bottom:8px!important;width:auto!important;z-index:70!important;background:rgba(0,0,0,.94)!important;border:2px solid #c99b39!important;padding:8px!important;box-shadow:0 0 35px #000!important;}
+        .side-panel.open{display:flex!important;}
+        .side-panel>.mobile-menu-tabs{display:flex!important;}
+      }
+      @media(max-width:760px){
+        .side-panel>.menu-main{grid-template-columns:1fr!important;overflow:auto!important;}
+        .side-panel>.menu-main>.menu-col{display:contents!important;}
+        .side-panel .panel{display:none!important;overflow:auto!important;}
+        .side-panel .panel.active-page{display:flex!important;}
+        .status-layout,.equip-layout{grid-template-columns:1fr!important;}
+        .side-panel>.menu-footer{grid-template-columns:1fr!important;}
+      }
+    `;
+    document.head.appendChild(st);
+  }
+
+  function ensureMenuMain035(){
+    const panel=$('.side-panel'); if(!panel) return null;
+    let main=$(':scope > .menu-main', panel);
+    if(!main){
+      main=document.createElement('div'); main.className='menu-main';
+      const left=$(':scope > .menu-left', panel) || $('.menu-left', panel);
+      const right=$(':scope > .menu-right', panel) || $('.menu-right', panel);
+      const tabs=$(':scope > .mobile-menu-tabs', panel);
+      if(tabs && tabs.nextSibling) panel.insertBefore(main, tabs.nextSibling); else panel.insertBefore(main, panel.firstChild);
+      if(left) main.appendChild(left);
+      if(right) main.appendChild(right);
+    }
+    return main;
+  }
+
+  function ensureFooter035(){
+    const panel=$('.side-panel'); if(!panel) return;
+    ensureMenuMain035();
+    $$('#fixedLegalLinks,.fixed-legal-links').forEach(x=>x.remove());
+    $$('.side-panel .panel .legal-links,.side-panel .panel .menu-footer').forEach(x=>x.remove());
+    let legal=$(':scope > .menu-footer', panel) || $(':scope > .legal-links', panel) || $('.legal-links');
+    if(!legal){
+      legal=document.createElement('div');
+      legal.innerHTML='<button id="creditBtn" type="button">クレジット</button><button id="termsBtn" type="button">利用規約</button><button id="privacyBtn" type="button">プライバシーポリシー</button>';
+    }
+    legal.className='legal-links menu-footer';
+    legal.setAttribute('aria-label','公開情報');
+    legal.classList.remove('hidden');
+    legal.style.display='grid';
+    if(legal.parentElement!==panel) panel.appendChild(legal);
+    if(panel.lastElementChild!==legal) panel.appendChild(legal);
+    const bind=(id,type)=>{ const b=byId(id); if(!b) return; b.onclick=(e)=>{ e.preventDefault(); e.stopPropagation(); safe(()=>{ if(typeof playUiClick==='function') playUiClick(); }); safe(()=>{ if(typeof openLegalModal==='function') openLegalModal(type); }); return false; }; };
+    bind('creditBtn','credit'); bind('termsBtn','terms'); bind('privacyBtn','privacy');
+  }
+
+  function row(label, value){ return `<div class="effect-row"><span>${esc(label)}</span><b>${esc(value)}</b></div>`; }
+  function pct(v,d=0){ return Math.round((Number(v)||0)*1000)/10 + '%'; }
+  function statusRows035(){
+    const rows=[]; let st={}; safe(()=>{ if(typeof calcStats==='function') st=calcStats()||{}; });
+    if(st.fireRes) rows.push(['火軽減', pct(st.fireRes)]);
+    if(st.fireDmg) rows.push(['火属性強化', pct(st.fireDmg)]);
+    if(st.fireDamageHeal) rows.push(['火被ダメ回復', pct(st.fireDamageHeal)]);
+    if(st.thunderDmg) rows.push(['雷属性強化', pct(st.thunderDmg)]);
+    if(st.deathDanceChance) rows.push(['死線の剣舞率', pct(st.deathDanceChance)]);
+    if(st.deathDanceDefIgnore) rows.push(['剣舞防御無視', pct(st.deathDanceDefIgnore)]);
+    if(st.heroDarkBleedChance) rows.push(['暗黒出血付与', pct(st.heroDarkBleedChance)]);
+    if(st.lifeSteal) rows.push(['吸血', pct(st.lifeSteal)]);
+    if(st.guard) rows.push(['ガード', pct(st.guard)]);
+    if(st.crit) rows.push(['会心', pct(st.crit)]);
+    const eq=(typeof state!=='undefined' && state.equip) ? Object.values(state.equip).filter(Boolean) : [];
+    const has=(name)=>eq.some(it=>String(it.name||'').includes(name));
+    if(eq.some(it=>it.darkShield)) rows.push(['闇の盾', '被ダメ軽減/半分回復']);
+    if(eq.some(it=>it.darkAmulet)) rows.push(['闇のアミュレット', '剣舞時間2倍']);
+    if(has('闇の兜')) rows.push(['闇の兜', '出血解除/剣舞中無効']);
+    if(has('闇の籠手')) rows.push(['闇の籠手', '剣舞回数+2']);
+    if(has('闇の鎧')) rows.push(['闇の鎧', '軽減/自動回復']);
+    if(has('闇の靴')) rows.push(['闇の靴', '回避強化']);
+    if(eq.some(it=>it.masterRegen)) rows.push(['師匠のアミュレット', '自動回復/撃破回復']);
+    return rows;
+  }
+  function equipRows035(){
+    const rows=[]; let st={}; safe(()=>{ if(typeof calcStats==='function') st=calcStats()||{}; });
+    rows.push(['HP', Math.floor(st.hp||0)]); rows.push(['攻撃力', Math.floor(st.atk||0)]); rows.push(['防御力', Math.floor(st.def||0)]);
+    if(st.fireRes) rows.push(['火軽減', pct(st.fireRes)]);
+    if(st.fireDmg) rows.push(['火属性強化', pct(st.fireDmg)]);
+    if(st.fireDamageHeal) rows.push(['火被ダメ回復', pct(st.fireDamageHeal)]);
+    if(st.thunderDmg) rows.push(['雷属性強化', pct(st.thunderDmg)]);
+    if(st.deathDanceChance) rows.push(['死線の剣舞率', pct(st.deathDanceChance)]);
+    if(st.heroDarkBleedChance) rows.push(['暗黒出血付与', pct(st.heroDarkBleedChance)]);
+    if(st.lifeSteal) rows.push(['吸血', pct(st.lifeSteal)]);
+    if(st.guard) rows.push(['ガード', pct(st.guard)]);
+    if(st.crit) rows.push(['会心', pct(st.crit)]);
+    return rows;
+  }
+  function fillRows(box, rows, empty){ box.innerHTML=(rows&&rows.length?rows.map(r=>row(r[0],r[1])).join(''):`<div class="effect-row"><span>${esc(empty)}</span><b>-</b></div>`); }
+
+  function ensureStatusLayout035(){
+    const hero=$('.hero-stats'); if(!hero) return;
+    let layout=$(':scope > .status-layout', hero); let left=layout&&$('.status-left',layout); let right=layout&&$('.status-right',layout);
+    if(!layout){ layout=document.createElement('div'); layout.className='status-layout'; left=document.createElement('div'); left.className='status-left'; right=document.createElement('div'); right.className='status-right'; layout.append(left,right); hero.appendChild(layout); }
+    const h2=$(':scope > h2', hero); const grid=$('.stat-grid', hero); const records=$('.monster-records', hero);
+    let special=byId('statusSpecialEffects') || $('.status-special-effects', hero);
+    if(!special){ special=document.createElement('div'); special.id='statusSpecialEffects'; special.className='status-special-effects'; special.innerHTML='<h3>特殊効果</h3><div class="effect-scroll"></div>'; }
+    if(h2 && h2.parentElement!==left) left.insertBefore(h2,left.firstChild);
+    if(grid && grid.parentElement!==left) left.appendChild(grid);
+    if(special.parentElement!==left) left.appendChild(special);
+    if(records && records.parentElement!==right) right.appendChild(records);
+    $$('.hero-stats .status-special-effects,.hero-stats #statusSpecialEffects').forEach(x=>{ if(x!==special) x.remove(); });
+    const box=$('.effect-scroll', special); if(box) fillRows(box,statusRows035(),'特殊効果なし');
+  }
+
+  function ensureEquipLayout035(){
+    const equip=$('.equip-panel'); if(!equip) return;
+    let layout=$(':scope > .equip-layout', equip); let left=layout&&$('.equip-left',layout); let right=layout&&$('.equip-right',layout);
+    if(!layout){ layout=document.createElement('div'); layout.className='equip-layout'; left=document.createElement('div'); left.className='equip-left'; right=document.createElement('div'); right.className='equip-right'; layout.append(left,right); equip.appendChild(layout); }
+    const h2=$(':scope > h2', equip); const list=byId('equipList'); const upgrade=byId('upgradeBtn');
+    let actions=$('.equip-actions-fixed', left); if(!actions){ actions=document.createElement('div'); actions.className='equip-actions-fixed'; }
+    let best=byId('bestEquipBtnEquip'); if(!best){ best=document.createElement('button'); best.id='bestEquipBtnEquip'; best.type='button'; best.textContent='最強装備'; }
+    best.onclick=(e)=>{ e.preventDefault(); e.stopPropagation(); safe(()=>{ if(typeof playUiClick==='function') playUiClick(); }); safe(()=>{ if(typeof bestEquip==='function') bestEquip(); }); return false; };
+    let totals=byId('equipEffectTotals') || $('.equip-effect-totals', equip);
+    if(!totals){ totals=document.createElement('div'); totals.id='equipEffectTotals'; totals.className='equip-effect-totals'; totals.innerHTML='<h3>装備効果合計</h3><div class="effect-scroll"></div>'; }
+    if(h2 && h2.parentElement!==left) left.insertBefore(h2,left.firstChild);
+    if(list && list.parentElement!==left) left.appendChild(list);
+    if(actions.parentElement!==left) left.appendChild(actions);
+    if(best.parentElement!==actions) actions.appendChild(best);
+    if(upgrade && upgrade.parentElement!==actions) actions.appendChild(upgrade);
+    if(totals.parentElement!==right) right.appendChild(totals);
+    $$('.equip-panel .equip-effect-totals,.equip-panel #equipEffectTotals').forEach(x=>{ if(x!==totals) x.remove(); });
+    const box=$('.effect-scroll', totals); if(box) fillRows(box,equipRows035(),'装備効果なし');
+  }
+
+  function installMenu035(){
+    const old=byId('equipToggleBtn'); const panel=$('.side-panel'); if(!old||!panel) return;
+    if(!window.__mbh035MenuButton){
+      const btn=old.cloneNode(true); old.parentNode.replaceChild(btn, old); window.__mbh035MenuButton=btn;
+      safe(()=>{ if(typeof els!=='undefined') els.equipToggleBtn=btn; });
+      window.__mbh035MenuOpen=false;
+      const toggle=(e)=>{ e.preventDefault(); e.stopPropagation(); if(!compact()){ window.__mbh035MenuOpen=false; return false; } window.__mbh035MenuOpen=!window.__mbh035MenuOpen; applyMenu035(); safe(()=>{ if(typeof playUiClick==='function') playUiClick(); }); return false; };
+      btn.onclick=toggle; btn.addEventListener('click',toggle,true); btn.addEventListener('touchend',toggle,{capture:true,passive:false});
+    }
+    applyMenu035();
+  }
+  function applyMenu035(){
+    const panel=$('.side-panel'); const btn=window.__mbh035MenuButton||byId('equipToggleBtn'); if(!panel||!btn) return;
+    if(compact()){
+      btn.style.display='inline-block';
+      panel.classList.toggle('open', !!window.__mbh035MenuOpen);
+      btn.textContent='メニュー';
+      safe(()=>{ if(typeof state!=='undefined') state.uiOpen=!!window.__mbh035MenuOpen; });
+    }else{
+      btn.style.display='none'; panel.classList.remove('open'); btn.textContent='メニュー';
+      safe(()=>{ if(typeof state!=='undefined') state.uiOpen=false; });
+    }
+  }
+
+  function classify035(msg, cls){
+    const c=String(cls||'').toLowerCase(); const text=String(msg||'').replace(/<[^>]*>/g,'');
+    if(/装備ドロップ|をドロップ|ドロップ元|枠目|闇装備確定|討伐報酬|獲得装備/.test(text) || c.includes('drop')) return 'drop';
+    if(/火属性を吸収|吸収 \+|被回復|被ダメ回復|HP[^\n]*回復|回復|出血を付与|出血した|暗黒出血|火傷|ダメージ|攻撃|斬|雷撃|炎斬り|連続攻撃|剣舞|ブレス|GUARD|反射|無効|MISS|酸ボディ/.test(text)) return 'damage';
+    if(c.includes('damage') || c.includes('skilllog') || c.includes('danger')) return 'damage';
+    return 'system';
+  }
+  function renderLog035(reason='append'){
+    if(typeof state==='undefined') return; const el=byId('log'); if(!el) return;
+    if(!state.logFilter) state.logFilter='all';
+    (state.log||[]).forEach(l=>{ l.type=classify035(l.msg,l.cls); });
+    const f=state.logFilter; const beforeTop=el.scrollTop,beforeHeight=el.scrollHeight,nearBottom=beforeTop+el.clientHeight>=beforeHeight-8;
+    const rows=(state.log||[]).filter(l=>f==='all'||l.type===f);
+    el.innerHTML=rows.map(l=>`<div class="${esc(l.cls||'')}" data-log-type="${esc(l.type||'system')}">[${esc(l.time||'')}] ${l.msg||''}</div>`).join('');
+    $$('#logFilterBar button').forEach(b=>b.classList.toggle('active',(b.dataset.logFilter||'all')===f));
+    requestAnimationFrame(()=>{ if(reason==='filter') el.scrollTop=0; else if(nearBottom) el.scrollTop=el.scrollHeight; else el.scrollTop=Math.max(0,beforeTop+(el.scrollHeight-beforeHeight)); });
+  }
+  function installLog035(){
+    if(typeof state==='undefined') return; state.logFilter=state.logFilter||'all';
+    const bar=byId('logFilterBar'); if(bar && !bar.__mbh035){ bar.__mbh035=true; bar.innerHTML='<button type="button" data-log-filter="all">すべて</button><button type="button" data-log-filter="damage">ダメージ</button><button type="button" data-log-filter="system">システム</button><button type="button" data-log-filter="drop">ドロップ</button>'; $$('#logFilterBar button').forEach(b=>{ const on=(e)=>{ e.preventDefault(); e.stopPropagation(); state.logFilter=b.dataset.logFilter||'all'; renderLog035('filter'); return false; }; b.onclick=on; b.ontouchend=on; b.onpointerup=(e)=>{ if(e.pointerType==='mouse') return; return on(e); }; }); }
+    log=function(msg, cls='', html=false){ const time=new Date().toLocaleTimeString('ja-JP',{hour12:false}); const safeMsg=html?String(msg):esc(msg); const type=classify035(safeMsg,cls); state.log.unshift({time,msg:safeMsg,cls,html:true,type}); state.log=state.log.slice(0,220); renderLog035('append'); };
+    renderLog035('filter');
+  }
+
+  function sellExpValue035(it){ const base=it?.rarity==='legendary'?5:(it?.rarity==='rare'?3:1); const plus=Math.max(0,Math.floor(Number(it?.level)||0)); return base+plus; }
+  function installSell035(){
+    safe(()=>{ sellExpValue=sellExpValue035; window.sellExpValue=sellExpValue035; });
+    safe(()=>{
+      updateSellButtonState=function(){
+        const btn=byId('sellSelectedBtn'); if(!btn || typeof state==='undefined') return;
+        const targets=[]; if(byId('sellNormalChk')?.checked) targets.push('normal'); if(byId('sellRareChk')?.checked) targets.push('rare'); if(byId('sellLegendaryChk')?.checked) targets.push('legendary');
+        const items=(state.inventory||[]).filter(it=>targets.includes(it.rarity)&&!it.unsellable);
+        const xp=items.reduce((s,it)=>s+sellExpValue035(it),0);
+        btn.disabled=targets.length===0;
+        btn.textContent=`経験値化 (${items.length}) +${xp}`;
+      };
+      window.updateSellButtonState=updateSellButtonState;
+      updateSellButtonState();
+    });
+  }
+
+  function removeBadDebug035(){ ['debugHp0Kill','debugForceDefeated','debugClearBleed','debugStopDot','debugStopDarkDance'].forEach(id=>byId(id)?.remove()); }
+  function ensureAll035(){ syncVersion035(); installCss035(); ensureMenuMain035(); ensureFooter035(); ensureStatusLayout035(); ensureEquipLayout035(); installMenu035(); applyMenu035(); installLog035(); installSell035(); removeBadDebug035(); }
+  function boot035(){ ensureAll035(); setTimeout(ensureAll035,80); setTimeout(ensureAll035,400); }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', boot035, {once:true}); else setTimeout(boot035,0);
+  window.addEventListener('load', boot035, {once:true});
+  window.addEventListener('resize', ()=>setTimeout(()=>{ applyMenu035(); ensureStatusLayout035(); ensureEquipLayout035(); },40));
+  setInterval(()=>safe(()=>{ syncVersion035(); ensureFooter035(); ensureStatusLayout035(); ensureEquipLayout035(); applyMenu035(); installSell035(); if(typeof state!=='undefined' && Array.isArray(state.log)) state.log.forEach(l=>{l.type=classify035(l.msg,l.cls);}); }), 300);
+  safe(()=>{ window.mbh035Check=()=>({build:document.documentElement.dataset.buildVersion, menuOpen:$('.side-panel')?.classList.contains('open')||false, footerParent:$('.menu-footer')?.parentElement?.className||'', footerInPanel:!!$('.panel .legal-links,.panel .menu-footer'), statusSplit:!!$('.status-layout .status-left')&&!!$('.status-layout .status-right'), equipSplit:!!$('.equip-layout .equip-left')&&!!$('.equip-layout .equip-right'), bestEquip:!!byId('bestEquipBtnEquip'), badDebug:['debugHp0Kill','debugForceDefeated','debugClearBleed','debugStopDot','debugStopDarkDance'].filter(id=>!!byId(id)), badLogs:typeof state!=='undefined'?(state.log||[]).filter(l=>/(火属性を吸収|被回復|出血を付与|出血した)/.test(String(l.msg||''))&&l.type!=='damage').length:null}); });
+})();
