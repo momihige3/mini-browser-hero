@@ -40,7 +40,7 @@ const DEATH_DANCE_CUTINS = [
 ];
 const DARK_SWORD_SAINT_CUTIN = {quote:'私を超えてみせろ。', img:'assets/cutin_dark_sword_dance.png'};
 const DARK_SWORD_TECHNIQUE_CUTIN = {quote:'', img:'assets/cutin_dark_sword_technique.png'};
-const GAME_VERSION = (window.APP_VERSION || '0.2.0');
+const GAME_VERSION = (window.APP_VERSION || '0.2.1');
 window.GAME_VERSION = GAME_VERSION;
 
 const DARK_SWORD_SAINT = {
@@ -4584,7 +4584,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* ver.0.1.3: strong/named variants, drop source, quality/luck bonuses, deathdance count-only reset補強 */
 (function(){
   'use strict';
-  const APP_VERSION = '0.2.0';
+  const APP_VERSION = '0.2.1';
   const PREFIXES = ['狡猾な','獰猛な','蛮勇な','エリート','頂点の','原点の','キラー'];
   function safe(fn){ try{return fn();}catch(e){ console.error('[MBH 0.1.3]', e); } }
   function syncVersion9959(){
@@ -4869,7 +4869,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* ver.0.1.3: 敵防御を軽減式へ変更、敵レベル経験値制御、Lv100までの戦闘テンポ調整 */
 (function(){
   'use strict';
-  const APP_VERSION = '0.2.0';
+  const APP_VERSION = '0.2.1';
   const ENEMY_LEVEL_XP_KEY = 'mini-browser-hero-enemy-level-xp-v9960';
   const ENEMY_LEVEL_XP_NEXT = 1000;
   function safe(fn){ try{return fn();}catch(e){ console.error('[MBH 0.1.3]', e); } }
@@ -5097,7 +5097,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* ver.0.1.3: 敵Lv経験値完全固定 + 敵攻撃を防御軽減式へ変更 */
 (function(){
   'use strict';
-  const APP_VERSION = '0.2.0';
+  const APP_VERSION = '0.2.1';
   const ENEMY_LEVEL_XP_KEY_NEW = 'mini-browser-hero-enemy-level-xp-v9961';
   const ENEMY_LEVEL_XP_KEY_OLD = 'mini-browser-hero-enemy-level-xp-v9960';
   const ENEMY_LEVEL_XP_NEXT = 1000;
@@ -5321,7 +5321,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* ver.0.1.3: 暗黒剣聖の独立Lv表示 + 主人公必要経験値固定 */
 (function(){
   'use strict';
-  const APP_VERSION = '0.2.0';
+  const APP_VERSION = '0.2.1';
   const HERO_XP_NEXT_FIXED = 40;
   function safe(fn){ try{return fn();}catch(e){ console.error('[MBH 0.1.3]', e); } }
   function syncVersion9962(){
@@ -5432,7 +5432,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* ver.0.1.3 hotfix: hero debug stats, dark equipment list visibility, low-level enemy HP trim */
 (function(){
   'use strict';
-  const APP_VERSION = '0.2.0';
+  const APP_VERSION = '0.2.1';
   function safe(fn){ try{return fn();}catch(e){ console.error('[MBH 0.1.3 hotfix]', e); } }
   function esc(s){ return (typeof escapeHtml === 'function') ? escapeHtml(s) : String(s).replace(/[&<>"']/g, ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
   function pct(v){ return Math.round((Number(v)||0)*100)+'%'; }
@@ -5572,7 +5572,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* ver.0.1.3: 装備名・接頭辞・説明文を実効果へ統一 */
 (function(){
   'use strict';
-  const APP_VERSION = '0.2.0';
+  const APP_VERSION = '0.2.1';
   const DARK_FIXED_NAMES = new Set(['闇の聖剣','闇の盾','闇のアミュレット','闇の鎧','闇の籠手','闇の兜','暗黒の靴']);
   const DARK_NAME_BY_SLOT = { '武器':'闇の聖剣', '盾':'闇の盾', 'アミュレット':'闇のアミュレット', '鎧':'闇の鎧', '腕':'闇の籠手', '兜':'闇の兜', '足':'暗黒の靴' };
   const BASE_BY_SLOT = { '武器':'剣', '盾':'盾', '兜':'兜', '鎧':'鎧', '腕':'腕甲', '足':'ブーツ', 'リング':'リング', 'アミュレット':'アミュレット' };
@@ -5756,7 +5756,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* ver.0.1.3: final XP single-source correction */
 (function(){
   'use strict';
-  const APP_VERSION = '0.2.0';
+  const APP_VERSION = '0.2.1';
   const HERO_XP_NEXT = 1000;
   function safe(fn){ try{ return fn && fn(); }catch(e){ console.warn('[MBH 0.1.3 final]', e); } }
   function syncFinalVersion(){
@@ -5823,7 +5823,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* ver.APP_VERSION: variant badge/regen float/legal links visibility final fix */
 (function(){
   'use strict';
-  const APP_VERSION = '0.2.0';
+  const APP_VERSION = '0.2.1';
   function safe(fn){ try{ return fn && fn(); }catch(e){ console.warn('[MBH variant/legal fix]', e); return null; } }
   function syncVersion012(){
     safe(()=>{ window.APP_VERSION = APP_VERSION; window.GAME_VERSION = APP_VERSION; document.documentElement.dataset.buildVersion = APP_VERSION; });
@@ -5913,7 +5913,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* ver.0.1.3: variant buff list, named regen position, legal links only inside menu, boss low-level tuning, BGM accidental-stop guard */
 (function(){
   'use strict';
-  const BUILD = (window.APP_VERSION || window.GAME_VERSION || '0.2.0');
+  const BUILD = (window.APP_VERSION || window.GAME_VERSION || '0.2.1');
   function safe(fn){ try{return fn && fn();}catch(e){ console.error('[MBH0.1.3]', e); return null; } }
   function syncVersion013(){
     window.APP_VERSION = BUILD;
@@ -6074,10 +6074,10 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 
 
 
-/* ver.0.2.0: single version lock + definitive menu + debug controls + log/status/footer fixes */
+/* ver.0.2.1: single version lock + definitive menu + debug controls + log/status/footer fixes */
 (function(){
   'use strict';
-  const APP_VERSION = '0.2.0';
+  const APP_VERSION = '0.2.1';
   const $id = (id)=>document.getElementById(id);
   const safe = (fn)=>{ try{ return fn && fn(); }catch(e){ console.error('[MBH0.1.9]', e); return null; } };
 
@@ -6393,10 +6393,10 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 })();
 
 
-/* ver.0.2.0: menu tab position + equip effects scroll + strict log filter fix */
+/* ver.0.2.1: menu tab position + equip effects scroll + strict log filter fix */
 (function(){
   'use strict';
-  const APP_VERSION = '0.2.0';
+  const APP_VERSION = '0.2.1';
   const $id = (id)=>document.getElementById(id);
   const safe = (fn)=>{ try{ return fn && fn(); }catch(e){ console.error('[MBH0.1.9]', e); return null; } };
 
@@ -6561,16 +6561,16 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot019, {once:true}); else setTimeout(boot019,0);
   window.addEventListener('load', boot019, {once:true});
   window.addEventListener('resize', ()=>setTimeout(()=>safe(()=>{ injectStyle019(); keepTabsOnTop019(); }), 60));
-  setInterval(()=>safe(()=>{ syncVersion019(); keepTabsOnTop019(); renderLog019('tick'); }), 400);
+  setInterval(()=>safe(()=>{ syncVersion019(); keepTabsOnTop019(); }), 400);
 })();
 
 
-/* ver.0.2.0: layout rebuild + strict log categories + sell exp preview */
+/* ver.0.2.1: layout rebuild + strict log categories + sell exp preview */
 (function(){
   'use strict';
-  const APP_VERSION = '0.2.0';
+  const APP_VERSION = '0.2.1';
   const $id = (id)=>document.getElementById(id);
-  const safe = (fn)=>{ try{ return fn && fn(); }catch(e){ console.error('[MBH0.2.0]', e); return null; } };
+  const safe = (fn)=>{ try{ return fn && fn(); }catch(e){ console.error('[MBH0.2.1]', e); return null; } };
   const esc = (s)=> typeof escapeHtml === 'function' ? escapeHtml(s) : String(s).replace(/[&<>"']/g, ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 
   function syncVersion020(){
@@ -6784,5 +6784,241 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot020, {once:true}); else setTimeout(boot020,0);
   window.addEventListener('load', boot020, {once:true});
   window.addEventListener('resize', ()=>setTimeout(()=>safe(()=>{ injectStyle020(); normalizeMenu020(); }), 60));
-  setInterval(()=>safe(()=>{ syncVersion020(); normalizeMenu020(); installSellPreview020(); renderLog020('tick'); }), 120);
+  setInterval(()=>safe(()=>{ syncVersion020(); normalizeMenu020(); installSellPreview020(); }), 120);
+})();
+
+
+/* ver.0.2.1: large-screen fixed side panel + stable log category flags + menu layout rebuild */
+(function(){
+  'use strict';
+  const APP_VERSION = '0.2.1';
+  const $id = (id)=>document.getElementById(id);
+  const safe = (fn)=>{ try{ return fn && fn(); }catch(e){ console.error('[MBH0.2.1]', e); return null; } };
+  const esc = (s)=> typeof escapeHtml === 'function' ? escapeHtml(s) : String(s).replace(/[&<>"']/g, ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+
+  function syncVersion021(){
+    window.APP_VERSION = APP_VERSION;
+    window.GAME_VERSION = APP_VERSION;
+    document.documentElement.dataset.buildVersion = APP_VERSION;
+    document.documentElement.dataset.mbhVersion = APP_VERSION;
+    document.querySelectorAll('.build-version,[data-version],#versionText,.version-badge').forEach(el=>{ el.textContent = 'ver.' + APP_VERSION; });
+    document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent = 'Build: ver.' + APP_VERSION; });
+    document.querySelectorAll('.debug-trace-title').forEach(el=>{ el.textContent = '進行デバッグログ ver.' + APP_VERSION; });
+  }
+
+  function isLarge021(){ return window.matchMedia('(min-width:1280px) and (orientation:landscape)').matches; }
+  function activePage021(){ return (typeof state !== 'undefined' && state.menuPage) ? state.menuPage : 'stats'; }
+
+  function injectStyle021(){
+    let st=$id('mbh-021-style');
+    if(st) return;
+    st=document.createElement('style');
+    st.id='mbh-021-style';
+    st.textContent = `
+      html.mbh021-ready .topbar{align-items:center!important;}
+      html.mbh021-ready .topbar .controls{display:flex!important;align-items:center!important;justify-content:flex-end!important;gap:8px!important;flex-wrap:wrap!important;align-self:center!important;}
+      html.mbh021-ready #equipToggleBtn,html.mbh021-ready #debugBtn,html.mbh021-ready #muteBtn{align-self:center!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;min-height:34px!important;line-height:1!important;margin-top:0!important;margin-bottom:0!important;vertical-align:middle!important;}
+      html.mbh021-ready #equipToggleBtn{min-width:76px!important;}
+
+      html.mbh021-ready .side-panel{box-sizing:border-box!important;}
+      html.mbh021-ready .side-panel .mobile-menu-tabs{display:flex!important;gap:6px!important;flex-wrap:wrap!important;align-items:center!important;}
+      html.mbh021-ready .side-panel .panel{min-height:0!important;}
+      html.mbh021-ready .side-panel .legal-links{display:flex!important;position:static!important;margin:0!important;padding:8px!important;border-top:1px solid rgba(255,215,107,.35)!important;background:rgba(12,8,4,.96)!important;box-shadow:none!important;z-index:1!important;}
+      html.mbh021-ready .side-panel:not(.open) .legal-links{display:none!important;}
+
+      @media (min-width:1280px) and (orientation:landscape){
+        html.mbh021-ready #equipToggleBtn{display:none!important;}
+        html.mbh021-ready .layout{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(460px,34vw)!important;gap:12px!important;align-items:stretch!important;}
+        html.mbh021-ready .battle-panel{min-width:0!important;}
+        html.mbh021-ready .side-panel,html.mbh020-ready.mbh021-ready .side-panel,html.mbh018-menu-ready.mbh021-ready .side-panel{
+          display:grid!important;visibility:visible!important;pointer-events:auto!important;position:static!important;inset:auto!important;z-index:auto!important;width:auto!important;max-width:none!important;height:calc(100vh - 76px)!important;
+          grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;grid-template-rows:auto minmax(0,1fr) auto!important;gap:10px!important;overflow:hidden!important;padding:10px!important;border-radius:14px!important;
+        }
+        html.mbh021-ready .side-panel{grid-column:2!important;}
+        html.mbh021-ready .side-panel .mobile-menu-tabs{grid-column:1/-1!important;grid-row:1!important;position:static!important;top:auto!important;margin:0!important;padding:0 0 8px!important;background:transparent!important;}
+        html.mbh021-ready .side-panel .menu-left{grid-column:1!important;grid-row:2!important;display:block!important;min-height:0!important;overflow:auto!important;}
+        html.mbh021-ready .side-panel .menu-right{grid-column:2!important;grid-row:2!important;display:block!important;min-height:0!important;overflow:auto!important;}
+        html.mbh021-ready .side-panel .legal-links{grid-column:1/-1!important;grid-row:3!important;display:flex!important;}
+        html.mbh021-ready .side-panel .panel{display:none!important;overflow:auto!important;}
+        html.mbh021-ready .side-panel .panel.active-page{display:block!important;}
+        html.mbh021-ready .side-panel .inventory-panel.active-page,html.mbh021-ready .side-panel .log-panel.active-page{grid-column:1/-1!important;width:100%!important;display:flex!important;flex-direction:column!important;min-height:0!important;}
+        html.mbh021-ready .side-panel .inventory-panel.active-page #inventory,html.mbh021-ready .side-panel .log-panel.active-page #log{flex:1 1 auto!important;min-height:0!important;}
+        html.mbh021-ready .side-panel .hero-stats.active-page{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;grid-template-rows:auto minmax(0,1fr)!important;gap:10px!important;overflow:hidden!important;}
+        html.mbh021-ready .side-panel .hero-stats.active-page .stat-grid{grid-column:1!important;grid-row:1!important;min-height:0!important;}
+        html.mbh021-ready .side-panel .hero-stats.active-page .monster-records{grid-column:2!important;grid-row:1 / span 2!important;min-height:0!important;overflow:auto!important;margin-top:0!important;}
+        html.mbh021-ready #statusEffectTotals021{grid-column:1!important;grid-row:2!important;min-height:0!important;overflow:auto!important;display:flex!important;flex-direction:column!important;}
+        html.mbh021-ready .side-panel .hero-stats.active-page + .equip-panel{display:none!important;}
+        html.mbh021-ready .side-panel .equip-panel.active-page{grid-column:1/-1!important;display:grid!important;grid-template-columns:minmax(0,1fr) minmax(260px,.8fr)!important;gap:10px!important;overflow:hidden!important;}
+        html.mbh021-ready .side-panel .equip-panel.active-page h2{grid-column:1/-1!important;margin-bottom:0!important;}
+        html.mbh021-ready .side-panel .equip-panel.active-page #equipList{grid-column:1!important;min-height:0!important;overflow:auto!important;}
+        html.mbh021-ready .side-panel .equip-panel.active-page #equipEffectTotalsSide{grid-column:2!important;display:block!important;min-height:0!important;overflow:auto!important;}
+      }
+
+      @media (max-width:1279px), (orientation:portrait){
+        html.mbh021-ready #equipToggleBtn{display:inline-flex!important;}
+        html.mbh021-ready .side-panel{display:none!important;visibility:hidden!important;pointer-events:none!important;}
+        html.mbh021-ready .side-panel.open{display:grid!important;visibility:visible!important;pointer-events:auto!important;position:fixed!important;z-index:9000!important;left:8px!important;right:8px!important;top:54px!important;bottom:8px!important;width:auto!important;grid-template-columns:1fr!important;grid-template-rows:auto minmax(0,1fr) auto!important;gap:10px!important;overflow:auto!important;padding:10px!important;}
+        html.mbh021-ready .side-panel.open .mobile-menu-tabs{grid-column:1!important;grid-row:1!important;position:sticky!important;top:0!important;z-index:3!important;background:rgba(12,8,4,.98)!important;padding-bottom:8px!important;}
+        html.mbh021-ready .side-panel.open .menu-left,html.mbh021-ready .side-panel.open .menu-right{grid-column:1!important;grid-row:2!important;display:block!important;overflow:visible!important;}
+        html.mbh021-ready .side-panel.open .legal-links{grid-column:1!important;grid-row:3!important;display:flex!important;}
+        html.mbh021-ready .side-panel.open .panel{display:none!important;}
+        html.mbh021-ready .side-panel.open .panel.active-page{display:block!important;}
+        html.mbh021-ready .side-panel.open .inventory-panel.active-page,html.mbh021-ready .side-panel.open .log-panel.active-page{display:flex!important;flex-direction:column!important;}
+        html.mbh021-ready .side-panel.open #equipEffectTotalsSide.active{display:block!important;margin-top:10px!important;}
+      }
+
+      html.mbh021-ready #statusEffectTotals021,html.mbh021-ready #equipEffectTotalsSide{border:1px solid rgba(255,215,107,.28)!important;border-radius:12px!important;padding:10px!important;background:rgba(0,0,0,.18)!important;box-sizing:border-box!important;}
+      html.mbh021-ready #statusEffectTotals021 h3,html.mbh021-ready #equipEffectTotalsSide h3{margin:0 0 8px!important;font-size:14px!important;color:#ffd86b!important;}
+      html.mbh021-ready .effect-row{display:grid!important;grid-template-columns:1fr auto!important;gap:8px!important;padding:4px 0!important;border-bottom:1px solid rgba(255,255,255,.06)!important;font-size:13px!important;}
+      html.mbh021-ready .log-panel.active-page{width:100%!important;}
+      html.mbh021-ready #log{width:100%!important;box-sizing:border-box!important;}
+    `;
+    document.head.appendChild(st);
+    document.documentElement.classList.add('mbh021-ready');
+  }
+
+  function normalizeMenu021(){
+    const panel = (typeof els !== 'undefined' && els.sidePanel) ? els.sidePanel : document.querySelector('.side-panel');
+    const btn = $id('equipToggleBtn');
+    if(!panel) return;
+    if(isLarge021()){
+      if(typeof state !== 'undefined') state.uiOpen = false;
+      panel.classList.add('open');
+      panel.classList.remove('hidden');
+    }else{
+      panel.classList.toggle('open', !!(typeof state !== 'undefined' && state.uiOpen));
+    }
+    if(btn){ btn.textContent = 'メニュー'; btn.style.pointerEvents='auto'; }
+    const p = activePage021();
+    document.querySelectorAll('.mobile-menu-tabs button').forEach(b=>b.classList.toggle('active',(b.dataset.menuPage||'stats')===p));
+    document.querySelectorAll('.side-panel .panel').forEach(x=>x.classList.remove('active-page'));
+    const map={stats:'.hero-stats', equip:'.equip-panel', inventory:'.inventory-panel', log:'.log-panel'};
+    const target=panel.querySelector(map[p] || map.stats);
+    if(target) target.classList.add('active-page');
+    renderStatusEffects021();
+    renderEquipSideTotals021();
+  }
+
+  function installMenu021(){
+    const panel = (typeof els !== 'undefined' && els.sidePanel) ? els.sidePanel : document.querySelector('.side-panel');
+    const btn = $id('equipToggleBtn');
+    if(panel && btn){
+      const toggle = (e)=>{ if(e){ e.preventDefault(); e.stopPropagation(); } if(!isLarge021() && typeof state !== 'undefined') state.uiOpen = !state.uiOpen; normalizeMenu021(); if(typeof playUiClick==='function') safe(playUiClick); return false; };
+      btn.onclick=toggle; btn.onpointerup=(e)=>{ if(e.pointerType==='mouse') return; return toggle(e); }; btn.ontouchend=toggle;
+    }
+    document.querySelectorAll('.mobile-menu-tabs button').forEach(b=>{
+      const on=(e)=>{ if(e){ e.preventDefault(); e.stopPropagation(); } if(typeof state !== 'undefined') state.menuPage=b.dataset.menuPage||'stats'; normalizeMenu021(); if(typeof playUiClick==='function') safe(playUiClick); return false; };
+      b.onclick=on; b.onpointerup=(e)=>{ if(e.pointerType==='mouse') return; return on(e); }; b.ontouchend=on;
+    });
+    normalizeMenu021();
+  }
+
+  function statRows021(){
+    if(typeof calcStats !== 'function') return [];
+    const st=calcStats();
+    const rows=[];
+    const add=(label,val,show=true)=>{ if(show) rows.push({label,val}); };
+    add('火軽減', Math.round((st.fireRes||0)*100)+'%', st.fireRes);
+    add('火ダメージ', '+'+Math.round((st.fireDmg||0)*100)+'%', st.fireDmg);
+    add('炎斬り率', '+'+Math.round((st.fireSkillChance||0)*100)+'%', st.fireSkillChance);
+    add('火被ダメ回復', Math.round((st.fireDamageHeal||0)*100)+'%', st.fireDamageHeal);
+    add('雷ダメージ', '+'+Math.round((st.thunderDmg||0)*100)+'%', st.thunderDmg);
+    add('雷撃率', '+'+Math.round((st.thunderSkillChance||0)*100)+'%', st.thunderSkillChance);
+    add('死線の剣舞率', Math.round((st.deathDanceChance||0)*100)+'%', st.deathDanceChance);
+    add('剣舞防御無視', Math.round((st.deathDanceDefIgnore||0)*100)+'%', st.deathDanceDefIgnore);
+    add('暗黒出血付与', Math.round((st.heroDarkBleedChance||0)*100)+'%', st.heroDarkBleedChance);
+    add('吸収', Math.round((st.lifeSteal||0)*100)+'%', st.lifeSteal);
+    add('GUARD', Math.round((st.guard||0)*100)+'%', st.guard);
+    add('会心', Math.round((st.crit||0)*100)+'%', st.crit);
+    add('闇の盾', '有効', st.darkShield);
+    add('闇のアミュレット', '有効', st.darkAmulet);
+    add('師匠のアミュレット', '有効', st.masterRegen);
+    return rows;
+  }
+  function renderStatusEffects021(){
+    const stats=document.querySelector('.hero-stats'); if(!stats) return;
+    let box=$id('statusEffectTotals021');
+    if(!box){ box=document.createElement('div'); box.id='statusEffectTotals021'; box.innerHTML='<h3>特殊効果</h3><div class="effect-scroll"></div>'; const grid=stats.querySelector('.stat-grid'); if(grid && grid.parentNode) grid.parentNode.insertBefore(box, grid.nextSibling); else stats.appendChild(box); }
+    const body=box.querySelector('.effect-scroll'); if(!body) return;
+    const rows=statRows021();
+    body.innerHTML = rows.length ? rows.map(r=>`<div class="effect-row"><span>${esc(r.label)}</span><b>${esc(r.val)}</b></div>`).join('') : '<div class="muted">特殊効果なし</div>';
+  }
+
+  function equipmentTotals021(){
+    const totals={}; const add=(k,label,v,fmt='num')=>{ if(!v) return; if(!totals[k]) totals[k]={label,value:0,fmt}; totals[k].value += Number(v)||0; };
+    if(typeof state === 'undefined') return [];
+    Object.values(state.equip||{}).filter(Boolean).forEach(it=>{
+      add('atk','攻撃力',it.atk); add('def','防御力',it.def); add('hp','HP',it.hp);
+      add('fireRes','火軽減',it.fireRes,'pct'); add('fireDmg','火ダメージ',it.fireDmg,'pct'); add('fireSkillChance','炎斬り率',it.fireSkillChance,'pct'); add('fireDamageHeal','火被ダメ回復',it.fireDamageHeal,'pct');
+      add('thunderDmg','雷ダメージ',it.thunderDmg,'pct'); add('thunderSkillChance','雷撃率',it.thunderSkillChance,'pct');
+      add('deathDanceChance','死線の剣舞率',it.deathDanceChance,'pct'); add('deathDanceDefIgnore','剣舞時防御無視',it.deathDanceDefIgnore,'pct'); add('heroDarkBleedChance','暗黒出血付与',it.heroDarkBleedChance,'pct');
+      add('lifeSteal','吸収',it.lifeSteal,'pct'); add('guard','GUARD',it.guard,'pct'); add('crit','会心',it.crit,'pct');
+      if(it.darkShield) add('darkShield','闇の盾',1,'flag'); if(it.darkAmulet) add('darkAmulet','闇のアミュレット',1,'flag'); if(it.masterRegen) add('masterRegen','師匠のアミュレット',1,'flag');
+    });
+    return Object.values(totals);
+  }
+  function renderEquipSideTotals021(){
+    const panel=document.querySelector('.side-panel'); if(!panel) return;
+    let box=$id('equipEffectTotalsSide');
+    if(!box){ box=document.createElement('div'); box.id='equipEffectTotalsSide'; box.innerHTML='<h3>装備効果合計</h3><div class="effect-scroll"></div>'; }
+    const equipPanel=panel.querySelector('.equip-panel');
+    if(equipPanel && box.parentNode !== equipPanel) equipPanel.appendChild(box);
+    const active = activePage021()==='equip' && (isLarge021() || !!(typeof state !== 'undefined' && state.uiOpen));
+    box.classList.toggle('active', active);
+    const body=box.querySelector('.effect-scroll'); if(!body) return;
+    const rows=equipmentTotals021();
+    body.innerHTML = rows.length ? rows.map(r=>{ const v=r.fmt==='pct' ? `${Math.round(r.value*100)}%` : r.fmt==='flag' ? '有効' : Math.floor(r.value).toLocaleString(); return `<div class="effect-row"><span>${esc(r.label)}</span><b>${esc(v)}</b></div>`; }).join('') : '<div class="muted">装備効果なし</div>';
+  }
+
+  function plain021(l){ return String(l && l.msg != null ? l.msg : '').replace(/<[^>]*>/g,'').replace(/&nbsp;/g,' ').trim(); }
+  function classify021(l){
+    if(l && l.cat) return l.cat;
+    const c=String(l && l.cls || '').toLowerCase();
+    const html=String(l && l.msg != null ? l.msg : '');
+    const m=plain021(l);
+    if(/装備ドロップ|ドロップ元|log-item|log-rarity|drop-slot-label|闇装備確定|品質\+|\d枠目/.test(html) || /装備ドロップ|ドロップ元|闇装備確定|品質\+|\d枠目/.test(m)) return 'drop';
+    if(/ダメージ|被ダメ|回復|吸収|再生|出血|暗黒出血|火傷|攻撃|斬|雷撃|炎斬り|連続攻撃|大攻撃|剣舞|剣技|ブレス|GUARD|無効|MISS|反射|CRIT|\+[0-9０-９]/.test(m) || c.includes('skilllog') || c.includes('damage')) return 'damage';
+    return 'system';
+  }
+  function inferCat021(msg, cls='', html=false){ return classify021({msg: html?String(msg):esc(msg), cls}); }
+  function renderLog021(reason='filter'){
+    const el=$id('log'); if(!el || typeof state === 'undefined') return;
+    const f=state.logFilter || 'all';
+    const atBottom=(el.scrollHeight - el.scrollTop - el.clientHeight) < 8;
+    const rows=(state.log||[]).filter(l=>f==='all' || classify021(l)===f);
+    el.innerHTML=rows.map(l=>`<div class="${esc(l.cls||'')}" data-log-cat="${esc(classify021(l))}">[${esc(l.time||'')}] ${l.msg}</div>`).join('');
+    document.querySelectorAll('#logFilterBar button').forEach(b=>b.classList.toggle('active',(b.dataset.logFilter||'all')===f));
+    if(reason==='filter') el.scrollTop=0; else if(atBottom) el.scrollTop=el.scrollHeight;
+  }
+  function installLog021(){
+    if(typeof state !== 'undefined') state.logFilter=state.logFilter||'all';
+    const bar=$id('logFilterBar');
+    if(bar){
+      bar.innerHTML='<button type="button" data-log-filter="all">すべて</button><button type="button" data-log-filter="damage">ダメージ</button><button type="button" data-log-filter="system">システム</button><button type="button" data-log-filter="drop">ドロップ</button>';
+      const on=(e)=>{ const b=e.target.closest('button[data-log-filter]'); if(!b) return; e.preventDefault(); e.stopPropagation(); state.logFilter=b.dataset.logFilter||'all'; renderLog021('filter'); return false; };
+      bar.onclick=on; bar.onpointerup=(e)=>{ if(e.pointerType==='mouse') return; return on(e); }; bar.ontouchend=on;
+    }
+    log=function(msg, cls='', html=false){
+      const time=new Date().toLocaleTimeString('ja-JP',{hour12:false});
+      const safeMsg=html ? msg : esc(msg);
+      const cat=inferCat021(msg, cls, html);
+      state.log.unshift({time,msg:safeMsg,cls,html:true,cat});
+      state.log=state.log.slice(0,260);
+      renderLog021('append');
+    };
+    if(typeof state !== 'undefined' && Array.isArray(state.log)) state.log.forEach(l=>{ l.cat=classify021(l); });
+    renderLog021('filter');
+  }
+
+  function patchRender021(){
+    if(typeof renderStats === 'function' && !window.__mbh021RenderStats){ window.__mbh021RenderStats=renderStats; renderStats=function(){ const r=window.__mbh021RenderStats.apply(this, arguments); renderStatusEffects021(); normalizeMenu021(); return r; }; }
+    if(typeof renderEquip === 'function' && !window.__mbh021RenderEquip){ window.__mbh021RenderEquip=renderEquip; renderEquip=function(){ const r=window.__mbh021RenderEquip.apply(this, arguments); renderEquipSideTotals021(); normalizeMenu021(); return r; }; }
+    if(typeof renderInventory === 'function' && !window.__mbh021RenderInv){ window.__mbh021RenderInv=renderInventory; renderInventory=function(){ const r=window.__mbh021RenderInv.apply(this, arguments); normalizeMenu021(); return r; }; }
+  }
+
+  function boot021(){ syncVersion021(); injectStyle021(); patchRender021(); installMenu021(); installLog021(); renderStatusEffects021(); renderEquipSideTotals021(); normalizeMenu021(); }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot021, {once:true}); else setTimeout(boot021,0);
+  window.addEventListener('load', boot021, {once:true});
+  window.addEventListener('resize', ()=>setTimeout(()=>safe(()=>{ injectStyle021(); normalizeMenu021(); renderLog021('filter'); }), 60));
+  setInterval(()=>safe(()=>{ syncVersion021(); normalizeMenu021(); renderLog021('tick'); }), 80);
 })();
