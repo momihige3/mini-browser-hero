@@ -2301,7 +2301,7 @@ body.mbh-menu-overlay-open .battle-panel .flee-btn{
 
 
 
-/* ver.0.2.5: stable side menu and split status/equipment layout */
+/* ver.0.2.6: stable side menu and split status/equipment layout */
 html,body{overflow:hidden!important;}
 .topbar{flex:0 0 auto!important;}
 .layout{min-height:0!important;overflow:hidden!important;}
@@ -2350,7 +2350,7 @@ body.mbh-compact-menu .side-panel.open .panel.active-page{flex:1 1 auto!importan
   .equip-panel.mbh-equip-split #equipEffectTotals{border-left:0!important;border-top:1px solid #513917!important;padding-left:0!important;padding-top:8px!important;}
 }
 
-/* ver.0.2.5: hard final split layout + no flicker log filtering */
+/* ver.0.2.6: hard final split layout + no flicker log filtering */
 .hero-stats.mbh025-status-split,
 .hero-stats.mbh025-status-split.active-page{
   display:grid!important;
@@ -2407,4 +2407,72 @@ body.mbh-compact-menu .side-panel.open .panel.active-page{flex:1 1 auto!importan
   .equip-panel.mbh025-equip-split #equipEffectTotals{grid-column:1!important;grid-row:auto!important;}
   .hero-stats.mbh025-status-split .monster-records,
   .equip-panel.mbh025-equip-split #equipEffectTotals{border-left:0!important;border-top:1px solid #513917!important;padding-left:0!important;padding-top:8px!important;}
+}
+
+
+/* ver.0.2.6: hard split layout overrides */
+.hero-stats.mbh026-status-layout,
+.hero-stats.mbh026-status-layout.active-page{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) minmax(280px,.95fr)!important;
+  grid-template-rows:minmax(0,1fr)!important;
+  gap:10px!important;
+  overflow:hidden!important;
+  align-items:stretch!important;
+}
+.hero-stats.mbh026-status-layout>.mbh026-status-left,
+.hero-stats.mbh026-status-layout>.mbh026-status-right{
+  min-width:0!important;
+  min-height:0!important;
+  overflow:hidden!important;
+  display:flex!important;
+  flex-direction:column!important;
+}
+.hero-stats.mbh026-status-layout>.mbh026-status-left{grid-column:1!important;grid-row:1!important;}
+.hero-stats.mbh026-status-layout>.mbh026-status-right{grid-column:2!important;grid-row:1!important;border-left:1px solid #513917!important;padding-left:10px!important;}
+.hero-stats.mbh026-status-layout .stat-grid{flex:0 0 auto!important;display:grid!important;grid-template-columns:1fr auto!important;}
+.hero-stats.mbh026-status-layout #statusSpecialEffects{flex:1 1 auto!important;min-height:0!important;margin-top:10px!important;border-top:1px solid #513917!important;padding-top:8px!important;display:flex!important;flex-direction:column!important;overflow:hidden!important;}
+.hero-stats.mbh026-status-layout #statusSpecialEffects .effect-scroll{flex:1 1 auto!important;min-height:0!important;overflow-y:auto!important;}
+.hero-stats.mbh026-status-layout .monster-records{flex:1 1 auto!important;min-height:0!important;margin-top:0!important;display:flex!important;flex-direction:column!important;overflow:hidden!important;}
+.hero-stats.mbh026-status-layout .monster-record-list{flex:1 1 auto!important;min-height:0!important;max-height:none!important;overflow-y:auto!important;}
+.equip-panel.mbh026-equip-layout,
+.equip-panel.mbh026-equip-layout.active-page{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) minmax(280px,.9fr)!important;
+  grid-template-rows:minmax(0,1fr)!important;
+  gap:10px!important;
+  overflow:hidden!important;
+  align-items:stretch!important;
+}
+.equip-panel.mbh026-equip-layout>.mbh026-equip-left,
+.equip-panel.mbh026-equip-layout>.mbh026-equip-right{
+  min-width:0!important;
+  min-height:0!important;
+  overflow:hidden!important;
+  display:flex!important;
+  flex-direction:column!important;
+}
+.equip-panel.mbh026-equip-layout>.mbh026-equip-left{grid-column:1!important;grid-row:1!important;}
+.equip-panel.mbh026-equip-layout>.mbh026-equip-right{grid-column:2!important;grid-row:1!important;border-left:1px solid #513917!important;padding-left:10px!important;}
+.equip-panel.mbh026-equip-layout #equipList{flex:1 1 auto!important;min-height:0!important;overflow-y:auto!important;display:grid!important;grid-template-columns:repeat(auto-fit,minmax(155px,1fr))!important;align-content:start!important;}
+.equip-panel.mbh026-equip-layout #upgradeBtn{flex:0 0 auto!important;}
+.equip-panel.mbh026-equip-layout #equipEffectTotals{flex:1 1 auto!important;min-height:0!important;margin:0!important;border:0!important;padding:0!important;display:flex!important;flex-direction:column!important;overflow:hidden!important;}
+.equip-panel.mbh026-equip-layout #equipEffectTotals .effect-scroll{flex:1 1 auto!important;min-height:0!important;overflow-y:auto!important;}
+.effect-row{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;gap:6px!important;border-bottom:1px solid rgba(255,255,255,.06)!important;padding:3px 0!important;font-size:12px!important;}
+.effect-row span{min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;color:#ead7af!important;}
+.effect-row b{color:#fff!important;white-space:nowrap!important;}
+.effect-empty{color:#a9956d!important;font-size:12px!important;padding:6px 0!important;}
+.debug-enemy-level-box{border:1px solid #533914!important;background:rgba(0,0,0,.22)!important;padding:7px!important;display:grid!important;grid-template-columns:1fr 1fr!important;gap:6px!important;}
+.debug-enemy-level-box .debug-section-title{grid-column:1 / -1!important;font-weight:900!important;color:#ffd76b!important;font-size:13px!important;}
+@media(max-width:760px){
+  .hero-stats.mbh026-status-layout,
+  .hero-stats.mbh026-status-layout.active-page,
+  .equip-panel.mbh026-equip-layout,
+  .equip-panel.mbh026-equip-layout.active-page{grid-template-columns:1fr!important;overflow:auto!important;}
+  .hero-stats.mbh026-status-layout>.mbh026-status-left,
+  .hero-stats.mbh026-status-layout>.mbh026-status-right,
+  .equip-panel.mbh026-equip-layout>.mbh026-equip-left,
+  .equip-panel.mbh026-equip-layout>.mbh026-equip-right{grid-column:1!important;grid-row:auto!important;overflow:visible!important;}
+  .hero-stats.mbh026-status-layout>.mbh026-status-right,
+  .equip-panel.mbh026-equip-layout>.mbh026-equip-right{border-left:0!important;border-top:1px solid #513917!important;padding-left:0!important;padding-top:8px!important;}
 }
