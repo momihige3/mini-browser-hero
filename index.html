@@ -1,169 +1,212 @@
-<!DOCTYPE html>
-
-<html data-build-date="2026-06-18" data-build-version="0.2.7" lang="ja">
+<!doctype html>
+<html lang="ja" data-build-version="0.2.8" data-build-date="2026-06-15">
 <head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1" name="viewport"/>
-<title>ミニブラウザヒーロー</title>
-<link href="style.css" rel="stylesheet"/>
-<!-- Cloudflare Web Analytics -->
-<script data-cf-beacon='{"token":"f48e7088e55c41f4a0a6044f8bf3531b"}' defer="" src="https://static.cloudflareinsights.com/beacon.min.js"></script>
-<!-- End Cloudflare Web Analytics -->
-<link href="favicon.ico" rel="icon"/>
-<link href="apple-touch-icon.png" rel="apple-touch-icon"/>
-<link as="image" href="assets/enemy_dark_sword_saint.png" rel="preload"/>
-<link as="image" href="assets/cutin_dark_sword_dance.png" rel="preload"/>
-<link as="image" href="assets/cutin_dark_sword_technique.png" rel="preload"/>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ミニブラウザヒーロー</title>
+  <link rel="stylesheet" href="style.css" />
+
+    <!-- Cloudflare Web Analytics -->
+    <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token":"f48e7088e55c41f4a0a6044f8bf3531b"}'></script>
+    <!-- End Cloudflare Web Analytics -->
+  <link rel="icon" href="favicon.ico">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="preload" as="image" href="assets/enemy_dark_sword_saint.png">
+  <link rel="preload" as="image" href="assets/cutin_dark_sword_dance.png">
+  <link rel="preload" as="image" href="assets/cutin_dark_sword_technique.png">
 </head>
 <body>
-<div id="game">
-<header class="topbar">
-<div class="brand">ミニブラウザヒーロー <span class="build-version">ver.0.2.7</span></div>
-<div class="resources"><b id="mats">0</b> 強化石</div>
-<div class="controls">
-<button id="equipToggleBtn">メニュー</button>
-<button id="debugBtn">デバッグ</button>
-<button aria-pressed="true" class="mute-btn" id="muteBtn" type="button">🔇 ミュート</button>
-<label class="volume-control">音量 <input id="volumeSlider" max="200" min="0" step="1" type="range" value="100"/><span id="volumeText">100%</span></label>
-</div>
-</header>
-<main class="layout">
-<section class="battle-panel">
-<div class="battle-bg"></div>
-<div class="battle-vignette"></div>
-<div class="level-effect hidden" id="levelEffect"><img src="assets/fx_levelup.png"/><span>LEVEL UP!</span></div>
-<div class="center-banner hidden" id="centerBanner"></div>
-<div class="drop-toast hidden" id="dropToast"></div>
-<div class="audio-hint hidden" id="audioHint">クリックで音声ON</div>
-<div class="enemy-zone">
-<div class="name-line"><span id="enemyName">スライム</span><span class="enemy-level" id="enemyLevel">Lv.1</span><b id="enemyTag"></b></div>
-<div class="hpbar enemy-hp"><div id="enemyHpFill"></div><span id="enemyHpText"></span></div>
-<div class="card enemy-card" id="enemyCard">
-<img alt="敵" id="enemyImg" src="assets/enemy_slime.jpg">
-<div class="card-flash"></div>
-<div class="effect-layer" id="enemyEffectLayer"></div>
-<div class="float-layer" id="enemyFloats"></div>
-</img></div>
-<div aria-label="敵の状態" class="status-list" id="enemyStatusList"></div>
-</div>
-<div class="hero-zone">
-<div class="name-line"><span>騎士</span><em class="dance-status hidden" id="deathDanceStatus">死線の剣舞 残り10秒</em><b id="heroLevel">Lv.1</b></div>
-<div class="hpbar hero-hp"><div id="heroHpFill"></div><span id="heroHpText"></span></div>
-<div class="card hero-card" id="heroCard">
-<img alt="主人公" src="assets/hero_card.jpg"/>
-<div class="death-aura hidden" id="deathAura"></div>
-<div class="down-overlay hidden" id="downOverlay"><div class="down-text">DOWN...</div><strong id="downCount">5</strong></div>
-<div class="card-flash"></div>
-</div>
-<div aria-label="主人公の状態" class="status-list" id="heroStatusList"></div>
-</div>
-<div class="expbar"><div id="expFill"></div><span id="expLabel">Lv.1 EXP 0 / 1000</span><b id="expGainLabel">+0</b></div>
-<button aria-label="逃走" class="flee-btn" id="fleeBtn" type="button">🏃</button>
-</section>
-<aside class="side-panel">
-<nav aria-label="右側タブ" class="mobile-menu-tabs side-tabs">
-<button class="active" data-menu-page="stats" type="button">ステータス</button>
-<button data-menu-page="equip" type="button">装備・強化</button>
-<button data-menu-page="inventory" type="button">倉庫</button>
-<button data-menu-page="log" type="button">ログ</button>
-</nav>
-<div class="menu-col menu-left">
-<div class="panel hero-stats mbh027-status-panel"><div class="mbh027-status-grid"><div class="mbh027-status-left"><h2>ステータス・特殊効果</h2><div class="stat-grid">
-<span>Lv</span><b id="statLv">1</b>
-<span>現在Lv経験値</span><b id="statXp">0 / 1000</b>
-<span>次Lv必要</span><b id="statXpNext">1000</b>
-<span>獲得経験値</span><b id="statXpGain">0</b>
-<span>攻撃力</span><b id="statAtk">42</b>
-<span>防御力</span><b id="statDef">12</b>
-<span>火軽減</span><b id="statFireRes">0%</b>
-</div><div class="status-special-effects" id="statusSpecialEffects"><h3>特殊効果</h3><div class="effect-scroll"><div class="effect-empty">特殊効果なし</div></div></div></div><div class="mbh027-status-right"><div class="monster-records">
-<h3>モンスター討伐記録</h3>
-<div class="monster-record-list" id="monsterRecords"></div>
-</div></div></div></div>
-<div class="panel equip-panel mbh027-equip-panel"><div class="mbh027-equip-grid"><div class="mbh027-equip-left"><h2>装備</h2><div class="equip-list" id="equipList"></div><button class="wide" id="upgradeBtn">装備を選択して強化</button></div><div class="mbh027-equip-right"><div class="equip-effect-totals" id="equipEffectTotals"><h3>装備効果合計</h3><div class="effect-scroll"><div class="effect-empty">装備効果なし</div></div></div></div></div></div>
-</div>
-<div class="menu-col menu-right">
-<div class="panel inventory-panel">
-<h2>倉庫</h2>
-<div class="inventory-actions">
-<button id="bestEquipBtn">最強装備</button>
-<div class="sell-box">
-<button id="sellSelectedBtn">経験値化</button>
-<label><input checked="" id="sellNormalChk" type="checkbox"/>ノーマル</label>
-<label><input id="sellRareChk" type="checkbox"/>レア</label>
-<label><input id="sellLegendaryChk" type="checkbox"/>レジェンダリー</label>
-</div>
-</div>
-<div class="inventory" id="inventory"></div>
-<div class="tooltip hidden" id="tooltip"></div>
-</div>
-<div class="panel log-panel">
-<h2>バトルログ</h2>
-<div class="log-filter-bar" id="logFilterBar"><button class="active" data-log-filter="all" type="button">すべて</button><button data-log-filter="damage" type="button">ダメージ</button><button data-log-filter="system" type="button">システム</button><button data-log-filter="drop" type="button">ドロップ</button></div>
-<div class="log" id="log"></div>
-</div>
-<div aria-label="公開情報" class="legal-links">
-<button id="creditBtn" type="button">クレジット</button>
-<button id="termsBtn" type="button">利用規約</button>
-<button id="privacyBtn" type="button">プライバシーポリシー</button>
-</div>
-</div>
-</aside>
-</main>
-<div class="debug-panel hidden" id="debugPanel">
-<div class="debug-head">デバッグ</div>
-<button id="debugAddChests">装備+50</button>
-<button id="debugResetData">ユーザーデータリセット</button>
-<button id="debugDarkSwordSaint">暗黒剣聖召喚</button>
-<div class="debug-grid debug-enemy-level-box" id="debugEnemyLevelBox027"><div class="debug-section-title">敵出現レベル調整</div><button data-enemy-level-delta="-10" type="button">敵Lv -10</button><button data-enemy-level-delta="-5" type="button">敵Lv -5</button><button data-enemy-level-delta="5" type="button">敵Lv +5</button><button data-enemy-level-delta="10" type="button">敵Lv +10</button></div><button id="debugGrantDarkSet">闇装備7種セット付与</button>
-<div class="debug-grid" id="debugGrantDarkItems"></div>
-<div class="debug-trace-box" id="mbhTraceBox">
-<div class="debug-trace-title">進行デバッグログ ver.0.2.7</div>
-<button id="mbhTraceMark" type="button">現在状態を記録</button>
-<button id="mbhTraceCopy" type="button">ログコピー</button>
-<button id="mbhTraceDownload" type="button">DL</button>
-<button id="mbhTraceClear" type="button">消去</button>
-<pre class="debug-trace-output" id="mbhTraceOut"></pre>
-</div>
-<label><input id="debugKillEnemy" type="checkbox"/> 敵への攻撃で即死</label>
-<label><input id="debugKillHero" type="checkbox"/> 敵からの攻撃で即死</label>
-<div class="debug-version">Build: ver.0.2.7 debug</div>
-<button id="debugClose">閉じる</button>
-</div>
-</div>
-<div aria-labelledby="legalModalTitle" aria-modal="true" class="legal-modal hidden" id="legalModal" role="dialog">
-<div class="legal-modal-backdrop" data-legal-close="1"></div>
-<div class="legal-modal-card">
-<button aria-label="閉じる" class="legal-modal-close" id="legalModalClose" type="button">×</button>
-<h2 id="legalModalTitle">クレジット</h2>
-<div class="legal-modal-body" id="legalModalBody"></div>
-</div>
-</div>
-<div aria-live="polite" class="death-dance-cutin hidden" id="deathDanceCutin">
-<div class="death-dance-cutin-strip">
-<img alt="剣舞カットイン" id="deathDanceCutinImg" src="assets/cutin_eye_1.jpg"/>
-<div class="death-dance-cutin-quote" id="deathDanceCutinQuote">負けるわけにはいかない！</div>
-</div>
-<div class="death-dance-cutin-title">死線の剣舞</div>
-</div>
-<div aria-labelledby="fleeModalTitle" aria-modal="true" class="flee-modal hidden" id="fleeModal" role="dialog">
-<div class="flee-modal-backdrop"></div>
-<div class="flee-modal-card">
-<h2 id="fleeModalTitle">戦闘から離脱しますか？</h2>
-<p id="fleeModalDesc">敵の出現レベルが20下がります。<br/>経験値は失いません。</p>
-<div class="flee-modal-actions">
-<button id="fleeCancelBtn" type="button">キャンセル</button>
-<button id="fleeOkBtn" type="button">逃走する</button>
-</div>
-</div>
-</div>
-<script>
+  <div id="game">
+    <header class="topbar">
+      <div class="brand">ミニブラウザヒーロー <span class="build-version">ver.0.2.8</span></div>
+      <div class="resources"><b id="mats">0</b> 強化石</div>
+      <div class="controls">
+        <button id="equipToggleBtn">メニュー</button>
+        <button id="debugBtn">デバッグ</button>
+        <button id="muteBtn" class="mute-btn" type="button" aria-pressed="true">🔇 ミュート</button>
+        <label class="volume-control">音量 <input id="volumeSlider" type="range" min="0" max="200" value="100" step="1"><span id="volumeText">100%</span></label>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="battle-panel">
+        <div class="battle-bg"></div>
+        <div class="battle-vignette"></div>
+        <div id="levelEffect" class="level-effect hidden"><img src="assets/fx_levelup.png"><span>LEVEL UP!</span></div>
+        <div id="centerBanner" class="center-banner hidden"></div>
+        <div id="dropToast" class="drop-toast hidden"></div>
+        <div id="audioHint" class="audio-hint hidden">クリックで音声ON</div>
+
+        <div class="enemy-zone">
+          <div class="name-line"><span id="enemyName">スライム</span><span id="enemyLevel" class="enemy-level">Lv.1</span><b id="enemyTag"></b></div>
+          <div class="hpbar enemy-hp"><div id="enemyHpFill"></div><span id="enemyHpText"></span></div>
+          <div id="enemyCard" class="card enemy-card">
+            <img id="enemyImg" src="assets/enemy_slime.jpg" alt="敵" />
+            <div class="card-flash"></div>
+            <div id="enemyEffectLayer" class="effect-layer"></div>
+            <div id="enemyFloats" class="float-layer"></div>
+          </div>
+          <div id="enemyStatusList" class="status-list" aria-label="敵の状態"></div>
+        </div>
+
+        <div class="hero-zone">
+          <div class="name-line"><span>騎士</span><em id="deathDanceStatus" class="dance-status hidden">死線の剣舞 残り10秒</em><b id="heroLevel">Lv.1</b></div>
+          <div class="hpbar hero-hp"><div id="heroHpFill"></div><span id="heroHpText"></span></div>
+          <div id="heroCard" class="card hero-card">
+            <img src="assets/hero_card.jpg" alt="主人公" />
+            <div id="deathAura" class="death-aura hidden"></div>
+            <div id="downOverlay" class="down-overlay hidden"><div class="down-text">DOWN...</div><strong id="downCount">5</strong></div>
+            <div class="card-flash"></div>
+          </div>
+          <div id="heroStatusList" class="status-list" aria-label="主人公の状態"></div>
+        </div>
+        <div class="expbar"><div id="expFill"></div><span id="expLabel">Lv.1 EXP 0 / 1000</span><b id="expGainLabel">+0</b></div>
+        <button id="fleeBtn" class="flee-btn" type="button" aria-label="逃走">🏃</button>
+      </section>
+
+      <aside class="side-panel">
+        <nav class="mobile-menu-tabs side-tabs" aria-label="右側タブ">
+          <button type="button" data-menu-page="stats" class="active">ステータス</button>
+          <button type="button" data-menu-page="equip">装備・強化</button>
+          <button type="button" data-menu-page="inventory">倉庫</button>
+          <button type="button" data-menu-page="log">ログ</button>
+        </nav>
+        <div class="menu-col menu-left">
+        <div class="panel hero-stats">
+          <h2>ステータス</h2>
+          <div class="stat-grid">
+            <span>Lv</span><b id="statLv">1</b>
+            <span>現在Lv経験値</span><b id="statXp">0 / 1000</b>
+            <span>次Lv必要</span><b id="statXpNext">1000</b>
+            <span>獲得経験値</span><b id="statXpGain">0</b>
+            <span>攻撃力</span><b id="statAtk">42</b>
+            <span>防御力</span><b id="statDef">12</b>
+            <span>火軽減</span><b id="statFireRes">0%</b>
+            </div>
+          <div class="monster-records">
+            <h3>モンスター討伐記録</h3>
+            <div id="monsterRecords" class="monster-record-list"></div>
+          </div>
+        </div>
+
+        <div class="panel equip-panel">
+          <h2>現在装備</h2>
+          <div id="equipList" class="equip-list"></div>
+          <button id="upgradeBtn" class="wide">装備を選択して強化</button>
+        </div>
+
+        </div>
+        <div class="menu-col menu-right">
+        <div class="panel inventory-panel">
+          <h2>倉庫</h2>
+          <div class="inventory-actions">
+            <button id="bestEquipBtn">最強装備</button>
+            <div class="sell-box">
+              <button id="sellSelectedBtn">経験値化</button>
+              <label><input id="sellNormalChk" type="checkbox" checked>ノーマル</label>
+              <label><input id="sellRareChk" type="checkbox">レア</label>
+              <label><input id="sellLegendaryChk" type="checkbox">レジェンダリー</label>
+            </div>
+          </div>
+          <div id="inventory" class="inventory"></div>
+          <div id="tooltip" class="tooltip hidden"></div>
+        </div>
+
+        <div class="panel log-panel">
+          <h2>バトルログ</h2>
+          <div id="logFilterBar" class="log-filter-bar"><button type="button" data-log-filter="all" class="active">すべて</button><button type="button" data-log-filter="damage">ダメージ</button><button type="button" data-log-filter="system">システム</button><button type="button" data-log-filter="drop">ドロップ</button></div>
+          <div id="log" class="log"></div>
+        </div>
+        <div class="legal-links" aria-label="公開情報">
+          <button id="creditBtn" type="button">クレジット</button>
+          <button id="termsBtn" type="button">利用規約</button>
+          <button id="privacyBtn" type="button">プライバシーポリシー</button>
+        </div>
+        </div>
+      </aside>
+    </main>
+      <div id="debugPanel" class="debug-panel hidden">
+        <div class="debug-head">デバッグ</div>
+        <button id="debugAddChests">装備+50</button>
+        <button id="debugResetData">ユーザーデータリセット</button>
+        <button id="debugDarkSwordSaint">暗黒剣聖召喚</button>
+        <button id="debugGrantDarkSet">闇装備7種セット付与</button>
+        <div id="debugGrantDarkItems" class="debug-grid"></div>
+        <div id="mbhTraceBox" class="debug-trace-box">
+          <div class="debug-trace-title">進行デバッグログ ver.0.2.8</div>
+          <button id="mbhTraceMark" type="button">現在状態を記録</button>
+          <button id="mbhTraceCopy" type="button">ログコピー</button>
+          <button id="mbhTraceDownload" type="button">DL</button>
+          <button id="mbhTraceClear" type="button">消去</button>
+          <pre id="mbhTraceOut" class="debug-trace-output"></pre>
+        </div>
+        <label><input id="debugKillEnemy" type="checkbox"> 敵への攻撃で即死</label>
+        <label><input id="debugKillHero" type="checkbox"> 敵からの攻撃で即死</label>
+        <div class="debug-version">Build: ver.0.2.8 debug</div>
+        <button id="debugClose">閉じる</button>
+      </div>
+  </div>
+
+  <div id="legalModal" class="legal-modal hidden" role="dialog" aria-modal="true" aria-labelledby="legalModalTitle">
+    <div class="legal-modal-backdrop" data-legal-close="1"></div>
+    <div class="legal-modal-card">
+      <button id="legalModalClose" class="legal-modal-close" type="button" aria-label="閉じる">×</button>
+      <h2 id="legalModalTitle">クレジット</h2>
+      <div id="legalModalBody" class="legal-modal-body"></div>
+    </div>
+  </div>
+
+
+  <div id="deathDanceCutin" class="death-dance-cutin hidden" aria-live="polite">
+    <div class="death-dance-cutin-strip">
+      <img id="deathDanceCutinImg" src="assets/cutin_eye_1.jpg" alt="剣舞カットイン" />
+      <div id="deathDanceCutinQuote" class="death-dance-cutin-quote">負けるわけにはいかない！</div>
+    </div>
+    <div class="death-dance-cutin-title">死線の剣舞</div>
+  </div>
+
+  <div id="fleeModal" class="flee-modal hidden" role="dialog" aria-modal="true" aria-labelledby="fleeModalTitle">
+    <div class="flee-modal-backdrop"></div>
+    <div class="flee-modal-card">
+      <h2 id="fleeModalTitle">戦闘から離脱しますか？</h2>
+      <p id="fleeModalDesc">敵の出現レベルが20下がります。<br>経験値は失いません。</p>
+      <div class="flee-modal-actions">
+        <button id="fleeCancelBtn" type="button">キャンセル</button>
+        <button id="fleeOkBtn" type="button">逃走する</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
     (function(){
-      var build = document.documentElement.dataset.buildVersion || '0.2.7';      var s = document.createElement('script');
+      var build = document.documentElement.dataset.buildVersion || '0.2.8';
+      window.APP_VERSION = build;
+      window.GAME_VERSION = build;      var s = document.createElement('script');
       s.src = 'game.js?v=' + encodeURIComponent(build);
       s.defer = false;
       document.body.appendChild(s);
     })();
   </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 </body>
 </html>
