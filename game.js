@@ -1,6 +1,6 @@
 'use strict';
 
-// ver0.4.1: ボス表示整理・火炎ブレスタグカウント・ボスランダム出現。
+// ver0.4.2: ボス表示整理・火炎ブレスタグカウント・ボスランダム出現。
 // strict modeで `makeDarkArmor = function...` がReferenceErrorになり、
 // 後続パッチ全体が止まる問題を防ぐ。
 var makeDarkArmor, makeDarkGauntlets, makeDarkHelm, makeDarkBoots;
@@ -40,7 +40,7 @@ const DEATH_DANCE_CUTINS = [
 ];
 const DARK_SWORD_SAINT_CUTIN = {quote:'私を超えてみせろ。', img:'assets/cutin_dark_sword_dance.png'};
 const DARK_SWORD_TECHNIQUE_CUTIN = {quote:'', img:'assets/cutin_dark_sword_technique.png'};
-const GAME_VERSION = (window.APP_VERSION || '0.4.1');
+const GAME_VERSION = (window.APP_VERSION || '0.4.2');
 window.GAME_VERSION = GAME_VERSION;
 
 const DARK_SWORD_SAINT = {
@@ -874,7 +874,7 @@ function handleHeroDeath(){
   const darkSaintDefeat = isDarkSwordSaint();
   let nextEnemyLevelBase = Math.max(1, Math.floor(defeatedEnemyLevel * 0.9));
   if(darkSaintDefeat){
-    // ver.0.4.1: 100レベルごとの暗黒剣聖は、勝敗に関係なく通常敵レベル+1。
+    // ver.0.4.2: 100レベルごとの暗黒剣聖は、勝敗に関係なく通常敵レベル+1。
     if(state.darkSwordSaintReturn && state.darkSwordSaintReturn.milestoneDarkSaint){
       state.enemyLevelBase = defeatedEnemyLevel + 1;
       state.enemyLevelBaseDefeated = Math.max(0, Math.floor(Number(state.defeated)||0));
@@ -1296,7 +1296,7 @@ function makeFirstEnemy(){
 }
 
 function pickEnemy(){
-  // ver.0.4.1: 通常敵レベルは撃破時抽選で上昇。ボスはLv10刻み予約からランダム出現。
+  // ver.0.4.2: 通常敵レベルは撃破時抽選で上昇。ボスはLv10刻み予約からランダム出現。
   return {...normals[Math.floor(Math.random()*normals.length)]};
 }
 function getBossForNormal(normalId){
@@ -1311,7 +1311,7 @@ function shouldReplaceBossWithDarkSaint(){
   return !!state.darkSwordSaintFirstEncountered && Math.random() < 0.01;
 }
 function scheduleBossAfterNormalDefeat(e){
-  // ver.0.4.1: 雑魚Lv10刻みで、種族ボスからランダム出現。レベルは撃破した雑魚と共通。
+  // ver.0.4.2: 雑魚Lv10刻みで、種族ボスからランダム出現。レベルは撃破した雑魚と共通。
   try{
     if(!e || e.type !== '雑魚') return;
     const lv = Math.max(1, Math.floor(Number(e.level)||1));
@@ -1331,7 +1331,7 @@ function scheduleBossAfterNormalDefeat(e){
     state.lastBossScheduledLevel = lv;
     log(`${e.name}Lv.${lv}を制した。次の敵にボスLv.${lv}が現れる！`, 'danger');
   }catch(err){
-    console.error('[MBH0.4.1 scheduleBossAfterNormalDefeat]', err);
+    console.error('[MBH0.4.2 scheduleBossAfterNormalDefeat]', err);
     state.pendingBossForNext = null;
   }
 }
@@ -1342,7 +1342,7 @@ function makeScaledEnemy(base, forceLevel=null){
   if(forceLevel){
     e.level = forceLevel;
   }else{
-    // ver.0.4.1: 敵レベルは撃破数で自動上昇させず、撃破時の抽選/ボス撃破で更新する。
+    // ver.0.4.2: 敵レベルは撃破数で自動上昇させず、撃破時の抽選/ボス撃破で更新する。
     if(state.enemyLevelBase == null){
       state.enemyLevelBase = Math.max(1, Math.floor(Number(state.enemy?.level) || Number(state.level) || 1));
       state.enemyLevelBaseDefeated = Math.max(0, Math.floor(Number(state.defeated)||0));
@@ -1357,7 +1357,7 @@ function makeScaledEnemy(base, forceLevel=null){
   }
   const scaledDefeated = state.enemyLevelBase != null ? Math.max(0, (state.defeated||0) - (state.enemyLevelBaseDefeated||0)) : (state.defeated||0);
   const hpScale=1 + e.level*.035 + Math.floor(scaledDefeated/10)*.03;
-  // ver.0.4.1: 敵ATK/DEFのレベル成長が弱すぎたため、HPとは別の成長係数へ分離。
+  // ver.0.4.2: 敵ATK/DEFのレベル成長が弱すぎたため、HPとは別の成長係数へ分離。
   // HPは既存の伸びを維持し、攻撃力・防御力だけ敵Lvに応じてしっかり伸ばす。
   const statScale=1 + Math.max(0, (Number(e.level)||1)-1) * 0.08 + Math.floor(scaledDefeated/10)*.03;
   const normalHpGrowth = e.type === '雑魚' ? Math.pow(1.01, Math.max(0, (Number(e.level)||1) - 1)) : 1;
@@ -1392,7 +1392,7 @@ function setEnemy(e){
   log(`${e.name} が現れた。${e.type==='ボス'||e.type==='裏ボス'?'ボス出現！':''}`, e.type==='ボス'||e.type==='裏ボス'?'danger':'');
 }
 function forceSpawnDarkSwordSaint(){
-  // ver0.4.1: 即時召喚ではなく、次の敵として暗黒剣聖を予約する
+  // ver0.4.2: 即時召喚ではなく、次の敵として暗黒剣聖を予約する
   state.forceNextDarkSwordSaint = true;
   state.pendingDarkSwordSaintDelay = false;
   banner('次の敵に暗黒剣聖をセット！', 1400);
@@ -1611,7 +1611,7 @@ function enemyAttack(now){
     renderBattle();
     return;
   }
-  // ver0.4.1: 火の精霊・火の精霊王の通常攻撃は必ず火属性。
+  // ver0.4.2: 火の精霊・火の精霊王の通常攻撃は必ず火属性。
   // 以前は fire 属性敵でも55%抽選だったため、火属性攻撃にならないことがあった。
   const isPureFireAttacker = e && (e.id === 'fire_spirit' || e.id === 'fire_king');
   let element = isDarkSwordSaint() ? 'dark' : (isPureFireAttacker ? 'fire' : (e.element==='fire' && Math.random()<.55 ? 'fire':'normal'));
@@ -1690,7 +1690,7 @@ function tryDarkSwordDanceRevive(){
 
   const t = performance.now();
   state.enemyStatuses.darkDanceCount = count + 1;
-  // ver.0.4.1: 暗黒剣舞でリセットするのは死線の剣舞の発動回数だけ。
+  // ver.0.4.2: 暗黒剣舞でリセットするのは死線の剣舞の発動回数だけ。
   // 発動中の死線の剣舞そのものは解除しない。
   state.deathDanceBattleCount = 0;
   state.deathDanceComboCount = 0;
@@ -1860,7 +1860,7 @@ function showDarkSwordTechniqueCutin(){
   playSfx('cutin');
 }
 function updateEnemyLevelProgressionOnDefeat(e){
-  // ver.0.4.1: 雑魚撃破は10%で敵レベル+1。ボス撃破は確定+1。
+  // ver.0.4.2: 雑魚撃破は10%で敵レベル+1。ボス撃破は確定+1。
   // 暗黒剣聖は通常敵進行に影響させない。
   try{
     if(!e) return;
@@ -1891,7 +1891,7 @@ function updateEnemyLevelProgressionOnDefeat(e){
       }
     }
   }catch(err){
-    console.error('[MBH0.4.1 updateEnemyLevelProgressionOnDefeat]', err);
+    console.error('[MBH0.4.2 updateEnemyLevelProgressionOnDefeat]', err);
   }
 }
 
@@ -1953,7 +1953,7 @@ function enemyDefeated(){
     const makeDarkReward = () => darkPool[Math.floor(Math.random()*darkPool.length)](defeatedLevel);
     const makeLegendReward = () => makeItem(slots[Math.floor(Math.random()*slots.length)], legendary, {isBossDrop:true, levelOverride:defeatedLevel});
 
-    // ver0.4.1: 報酬枠を明示的に固定する。
+    // ver0.4.2: 報酬枠を明示的に固定する。
     // rewards[0] = 1枠目、rewards[1] = 2枠目、rewards[2] = 3枠目。
     // 3枠目は必ず闇装備。1〜2枠目は確率で闇装備になってもよい。
     const rewards = [
@@ -1977,7 +1977,7 @@ function enemyDefeated(){
       showDropToast(it);
     }
   }
-  // ver.0.4.1: 強化石ドロップは廃止。装備はドロップ時に敵Lv依存の+値が付く。
+  // ver.0.4.2: 強化石ドロップは廃止。装備はドロップ時に敵Lv依存の+値が付く。
   if(calcStats().masterRegen && state.hp > 0){
     const heal = Math.max(1, Math.floor(maxHp() * 0.25));
     const beforeHp = state.hp;
@@ -1995,7 +1995,7 @@ function effectiveXpNext(){
   return 1000;
 }
 function checkLevelUp(){
-  // ver0.4.1: 主人公の次Lv必要経験値を現行値の50%として扱う。
+  // ver0.4.2: 主人公の次Lv必要経験値を現行値の50%として扱う。
   while(state.xp>=effectiveXpNext()){
     const need = effectiveXpNext();
     state.xp-=need;
@@ -2577,7 +2577,7 @@ function formatItemNameWithPlus(it){
 
 function darkEquipLevelFromSource(levelOverride){
   const raw = Math.max(1, Math.floor(Number(levelOverride) || Number(state?.enemy?.level) || Number(state?.darkSwordSaintLevel) || Number(state?.level) || 1));
-  // ver.0.4.1: 闇装備は暗黒剣聖の独立Lv1を通常敵Lv100相当として扱う。
+  // ver.0.4.2: 闇装備は暗黒剣聖の独立Lv1を通常敵Lv100相当として扱う。
   // すでに通常敵Lv100以上が渡された場合はそのまま使う。
   return raw < 100 ? raw * 100 : raw;
 }
@@ -3201,7 +3201,7 @@ function v94InstallTouchControls(){
 }
 
 init();
-// ver0.4.1: disable old stacked v94 menu/debug tap binding; clean patch below owns UI events.
+// ver0.4.2: disable old stacked v94 menu/debug tap binding; clean patch below owns UI events.
 // setTimeout(v94InstallTouchControls, 0);
 
 
@@ -3210,12 +3210,12 @@ window.addEventListener("pageshow",()=>{ if(state.mobileMuted) stopAllAudioForMu
 window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(); });
 
 
-/* ver0.4.1 clean stabilization patch: single source, no stacked UI injection */
+/* ver0.4.2 clean stabilization patch: single source, no stacked UI injection */
 (function(){
   'use strict';
   const BUILD=(window.APP_VERSION || window.GAME_VERSION || '0.0');
   const byId = (id)=>document.getElementById(id);
-  function safe(fn){ try{ return fn && fn(); }catch(e){ console.warn('[ver0.4.1]', e); return null; } }
+  function safe(fn){ try{ return fn && fn(); }catch(e){ console.warn('[ver0.4.2]', e); return null; } }
 
   // --- version: one source only, no floating badge ---
   window.GAME_VERSION = BUILD;
@@ -3360,7 +3360,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   }
 
   function bindCleanDebug(){
-    // ver0.4.1: debug panel must be idempotent. Clone once to remove stacked click/pointer handlers.
+    // ver0.4.2: debug panel must be idempotent. Clone once to remove stacked click/pointer handlers.
     let panel = byId('debugPanel');
     if(panel){
       const fresh = panel.cloneNode(false);
@@ -3540,12 +3540,12 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   window.addEventListener('load', boot, {once:true});
 })();
 
-/* ver.0.4.1: audio restore - use lexical state/audio functions, not window fallback */
+/* ver.0.4.2: audio restore - use lexical state/audio functions, not window fallback */
 (function(){
   'use strict';
   const BUILD=(window.APP_VERSION || window.GAME_VERSION || '0.0');
   const $=(id)=>document.getElementById(id);
-  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH0.4.1]', e); } }
+  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH0.4.2]', e); } }
   function setVersion(){
     window.GAME_VERSION=BUILD;
     document.documentElement.setAttribute('data-build-version', BUILD);
@@ -3645,7 +3645,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   window.addEventListener('resize', ()=>safe(()=>applyMenu(typeof state !== 'undefined' ? !!state.uiOpen : false)));
 
 
-  /* ver.0.4.1: mute icon sync fix
+  /* ver.0.4.2: mute icon sync fix
      bindOneTap() clones top buttons, so els.muteBtn can point to a removed old node.
      Always sync els.muteBtn to the current DOM button before updating the icon. */
   const __mbhOriginalUpdateMuteButton = updateMuteButton;
@@ -3672,12 +3672,12 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 
 
 
-  /* ver.0.4.1: UI-only patch
+  /* ver.0.4.2: UI-only patch
      - hide EXP/flee behind overlay menu
      - revive inventory filters
      - keep inventory/log inside viewport with unified scrollbars
   */
-  function mbh9920Safe(fn){ try{return fn();}catch(e){ console.error('[MBH0.4.1]', e); } }
+  function mbh9920Safe(fn){ try{return fn();}catch(e){ console.error('[MBH0.4.2]', e); } }
   function mbh9920IsOverlay(){
     return matchMedia('(max-width: 1279px), (max-height: 700px), (pointer: coarse)').matches;
   }
@@ -3789,12 +3789,12 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 })();
 
 
-/* ver.0.4.1: inventory filter and log viewport final fix */
+/* ver.0.4.2: inventory filter and log viewport final fix */
 (function(){
   'use strict';
   const BUILD=(window.APP_VERSION || window.GAME_VERSION || '0.0');
   const $=(id)=>document.getElementById(id);
-  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH0.4.1]', e); } }
+  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH0.4.2]', e); } }
   function setVersion(){
     window.GAME_VERSION=BUILD;
     document.documentElement.setAttribute('data-build-version', BUILD);
@@ -3955,7 +3955,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   setTimeout(fitScrollablePanels9922,800);
 })();
 
-/* ver.0.4.1: mobile tap recovery only. PC mouse behavior is untouched. */
+/* ver.0.4.2: mobile tap recovery only. PC mouse behavior is untouched. */
 (function(){
   'use strict';
   const BUILD=(window.APP_VERSION || window.GAME_VERSION || '0.0');
@@ -4028,7 +4028,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
           el.click();
         }
       } catch(err) {
-        console.warn('[MBH0.4.1 mobile tap]', err);
+        console.warn('[MBH0.4.2 mobile tap]', err);
       }
     }, 0);
   }
@@ -4046,12 +4046,12 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   window.addEventListener('load', boot, {once:true});
 })();
 
-/* ver.0.4.1: mobile equipment tap + mobile background audio pause only */
+/* ver.0.4.2: mobile equipment tap + mobile background audio pause only */
 (function(){
   'use strict';
   const BUILD=(window.APP_VERSION || window.GAME_VERSION || '0.0');
   const $=(id)=>document.getElementById(id);
-  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH0.4.1]', e); } }
+  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH0.4.2]', e); } }
   function isMobileLike(){
     return !!(window.matchMedia && window.matchMedia('(pointer: coarse), (max-width: 760px)').matches) || ('ontouchstart' in window) || ((navigator.maxTouchPoints||0)>0);
   }
@@ -4163,10 +4163,10 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 })();
 
 
-/* ver.0.4.1: enhancement removal + enemy-level drop plus finalizer */
+/* ver.0.4.2: enhancement removal + enemy-level drop plus finalizer */
 (function(){
   const BUILD=(window.APP_VERSION || window.GAME_VERSION || '0.0');
-  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH0.4.1]', e); } }
+  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH0.4.2]', e); } }
   safe(()=>{
     document.documentElement.setAttribute('data-build-version', BUILD);
     document.querySelectorAll('.build-version').forEach(el=>{ el.textContent='ver.'+BUILD; });
@@ -4184,11 +4184,11 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   });
 })();
 
-/* ver.0.4.1: do not stop BGM on ordinary outside click/blur */
+/* ver.0.4.2: do not stop BGM on ordinary outside click/blur */
 (function(){
   'use strict';
   const BUILD=(window.APP_VERSION || window.GAME_VERSION || '0.0');
-  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH0.4.1]', e); } }
+  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH0.4.2]', e); } }
   function setVersion(){
     safe(()=>{ window.GAME_VERSION=BUILD; });
     safe(()=>document.documentElement.setAttribute('data-build-version', BUILD));
@@ -4265,12 +4265,12 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   window.addEventListener('load', install, {once:true});
 })();
 
-/* ver.0.4.1: battle log scroll-position preserve + lower padding fix */
+/* ver.0.4.2: battle log scroll-position preserve + lower padding fix */
 (function(){
   'use strict';
   const BUILD=(window.APP_VERSION || window.GAME_VERSION || '0.0');
   const $=(id)=>document.getElementById(id);
-  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH0.4.1]', e); } }
+  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH0.4.2]', e); } }
   function setVersion(){
     window.GAME_VERSION=BUILD;
     document.documentElement.setAttribute('data-build-version', BUILD);
@@ -4603,12 +4603,12 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 })();
 
 
-/* ver.0.4.1: strong/named variants, drop source, quality/luck bonuses, deathdance count-only reset補強 */
+/* ver.0.4.2: strong/named variants, drop source, quality/luck bonuses, deathdance count-only reset補強 */
 (function(){
   'use strict';
-  const APP_VERSION = '0.4.1';
+  const APP_VERSION = '0.4.2';
   const PREFIXES = ['狡猾な','獰猛な','蛮勇な','エリート','頂点の','原点の','キラー'];
-  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH 0.4.1]', e); } }
+  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH 0.4.2]', e); } }
   function syncVersion9959(){
     safe(()=>{ window.APP_VERSION = APP_VERSION; window.GAME_VERSION = APP_VERSION; document.documentElement.dataset.buildVersion = APP_VERSION; });
     safe(()=>{ document.querySelectorAll('.build-version,[data-version],#versionText,.version-badge').forEach(el=>{ el.textContent='ver.'+APP_VERSION; }); });
@@ -4888,13 +4888,13 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 })();
 
 
-/* ver.0.4.1: 敵防御を軽減式へ変更、敵レベル経験値制御、Lv100までの戦闘テンポ調整 */
+/* ver.0.4.2: 敵防御を軽減式へ変更、敵レベル経験値制御、Lv100までの戦闘テンポ調整 */
 (function(){
   'use strict';
-  const APP_VERSION = '0.4.1';
+  const APP_VERSION = '0.4.2';
   const ENEMY_LEVEL_XP_KEY = 'mini-browser-hero-enemy-level-xp-v9960';
   const ENEMY_LEVEL_XP_NEXT = 1000;
-  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH 0.4.1]', e); } }
+  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH 0.4.2]', e); } }
   function syncVersion9960(){
     safe(()=>{ window.APP_VERSION = APP_VERSION; window.GAME_VERSION = APP_VERSION; document.documentElement.dataset.buildVersion = APP_VERSION; });
     safe(()=>{ document.querySelectorAll('.build-version,[data-version],#versionText,.version-badge').forEach(el=>{ el.textContent='ver.'+APP_VERSION; }); });
@@ -4974,7 +4974,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
         const boss = isBossType(e);
         // HPは指数ではなく線形成長。Lv100で雑魚は約13倍、ボスは約19倍にする。
         let hp = Math.floor((Number(base.hp)||1) * (1 + lv * (boss ? 0.18 : 0.12)));
-        // 0.4.1の強個体/異名持ち補正を再適用。
+        // 0.4.2の強個体/異名持ち補正を再適用。
         if(e.variant?.type === 'named') hp = Math.floor(hp * 2.0);
         else if(e.variant?.type === 'strong') hp = Math.floor(hp * 1.5);
         e.maxHp = Math.max(1, hp);
@@ -5116,14 +5116,14 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   setInterval(()=>{ syncVersion9960(); renderEnemyLevelXp9960(); saveEnemyLevelXp9960(); }, 1500);
 })();
 
-/* ver.0.4.1: 敵Lv経験値完全固定 + 敵攻撃を防御軽減式へ変更 */
+/* ver.0.4.2: 敵Lv経験値完全固定 + 敵攻撃を防御軽減式へ変更 */
 (function(){
   'use strict';
-  const APP_VERSION = '0.4.1';
+  const APP_VERSION = '0.4.2';
   const ENEMY_LEVEL_XP_KEY_NEW = 'mini-browser-hero-enemy-level-xp-v9961';
   const ENEMY_LEVEL_XP_KEY_OLD = 'mini-browser-hero-enemy-level-xp-v9960';
   const ENEMY_LEVEL_XP_NEXT = 1000;
-  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH 0.4.1]', e); } }
+  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH 0.4.2]', e); } }
   function syncVersion9961(){
     safe(()=>{ window.APP_VERSION = APP_VERSION; window.GAME_VERSION = APP_VERSION; document.documentElement.dataset.buildVersion = APP_VERSION; });
     safe(()=>{ document.querySelectorAll('.build-version,[data-version],#versionText,.version-badge').forEach(el=>{ el.textContent='ver.'+APP_VERSION; }); });
@@ -5203,7 +5203,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   window.__mbhUpdateEnemyLevelProgression9961 = updateEnemyLevelProgressionOnDefeat;
   updateEnemyLevelProgressionOnDefeat = function(e){ addEnemyLevelXp9961(e); };
 
-  // 敵ステータス再調整：HPは0.4.1方針維持、攻撃力は防御装備が意味を持つ範囲まで上昇
+  // 敵ステータス再調整：HPは0.4.2方針維持、攻撃力は防御装備が意味を持つ範囲まで上昇
   const prevMakeScaledEnemy9961 = (typeof makeScaledEnemy === 'function') ? makeScaledEnemy : null;
   if(prevMakeScaledEnemy9961){
     makeScaledEnemy = function(base, forceLevel=null){
@@ -5340,12 +5340,12 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 })();
 
 
-/* ver.0.4.1: 暗黒剣聖の独立Lv表示 + 主人公必要経験値固定 */
+/* ver.0.4.2: 暗黒剣聖の独立Lv表示 + 主人公必要経験値固定 */
 (function(){
   'use strict';
-  const APP_VERSION = '0.4.1';
+  const APP_VERSION = '0.4.2';
   const HERO_XP_NEXT_FIXED = 40;
-  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH 0.4.1]', e); } }
+  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH 0.4.2]', e); } }
   function syncVersion9962(){
     safe(()=>{ window.APP_VERSION = APP_VERSION; window.GAME_VERSION = APP_VERSION; document.documentElement.dataset.buildVersion = APP_VERSION; });
     safe(()=>{ document.querySelectorAll('.build-version,[data-version],#versionText,.version-badge').forEach(el=>{ el.textContent='ver.'+APP_VERSION; }); });
@@ -5451,11 +5451,11 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   setInterval(syncVersion9962, 1500);
 })();
 
-/* ver.0.4.1 hotfix: hero debug stats, dark equipment list visibility, low-level enemy HP trim */
+/* ver.0.4.2 hotfix: hero debug stats, dark equipment list visibility, low-level enemy HP trim */
 (function(){
   'use strict';
-  const APP_VERSION = '0.4.1';
-  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH 0.4.1 hotfix]', e); } }
+  const APP_VERSION = '0.4.2';
+  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH 0.4.2 hotfix]', e); } }
   function esc(s){ return (typeof escapeHtml === 'function') ? escapeHtml(s) : String(s).replace(/[&<>"']/g, ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
   function pct(v){ return Math.round((Number(v)||0)*100)+'%'; }
   function darkEquipRows(){
@@ -5591,14 +5591,14 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   setInterval(hotfixRender, 1200);
 })();
 
-/* ver.0.4.1: 装備名・接頭辞・説明文を実効果へ統一 */
+/* ver.0.4.2: 装備名・接頭辞・説明文を実効果へ統一 */
 (function(){
   'use strict';
-  const APP_VERSION = '0.4.1';
+  const APP_VERSION = '0.4.2';
   const DARK_FIXED_NAMES = new Set(['闇の聖剣','闇の盾','闇のアミュレット','闇の鎧','闇の籠手','闇の兜','暗黒の靴']);
   const DARK_NAME_BY_SLOT = { '武器':'闇の聖剣', '盾':'闇の盾', 'アミュレット':'闇のアミュレット', '鎧':'闇の鎧', '腕':'闇の籠手', '兜':'闇の兜', '足':'暗黒の靴' };
   const BASE_BY_SLOT = { '武器':'剣', '盾':'盾', '兜':'兜', '鎧':'鎧', '腕':'腕甲', '足':'ブーツ', 'リング':'リング', 'アミュレット':'アミュレット' };
-  function safe(fn){ try{ return fn(); }catch(e){ console.warn('[MBH 0.4.1]', e); return null; } }
+  function safe(fn){ try{ return fn(); }catch(e){ console.warn('[MBH 0.4.2]', e); return null; } }
   function pct(v){ return Math.round((Number(v)||0)*100) + '%'; }
   function num(v){ return Math.floor(Number(v)||0).toLocaleString(); }
   function isDarkItem(it){ return !!it && (it.specialFrame === 'darkholy' || DARK_FIXED_NAMES.has(it.name)); }
@@ -5775,12 +5775,12 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 })();
 
 
-/* ver.0.4.1: final XP single-source correction */
+/* ver.0.4.2: final XP single-source correction */
 (function(){
   'use strict';
-  const APP_VERSION = '0.4.1';
+  const APP_VERSION = '0.4.2';
   const HERO_XP_NEXT = 1000;
-  function safe(fn){ try{ return fn && fn(); }catch(e){ console.warn('[MBH 0.4.1 final]', e); } }
+  function safe(fn){ try{ return fn && fn(); }catch(e){ console.warn('[MBH 0.4.2 final]', e); } }
   function syncFinalVersion(){
     window.APP_VERSION = APP_VERSION;
     window.GAME_VERSION = APP_VERSION;
@@ -5845,7 +5845,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* ver.APP_VERSION: variant badge/regen float/legal links visibility final fix */
 (function(){
   'use strict';
-  const APP_VERSION = '0.4.1';
+  const APP_VERSION = '0.4.2';
   function safe(fn){ try{ return fn && fn(); }catch(e){ console.warn('[MBH variant/legal fix]', e); return null; } }
   function syncVersion012(){
     safe(()=>{ window.APP_VERSION = APP_VERSION; window.GAME_VERSION = APP_VERSION; document.documentElement.dataset.buildVersion = APP_VERSION; });
@@ -5932,11 +5932,11 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 })();
 
 
-/* ver.0.4.1: variant buff list, named regen position, legal links only inside menu, boss low-level tuning, BGM accidental-stop guard */
+/* ver.0.4.2: variant buff list, named regen position, legal links only inside menu, boss low-level tuning, BGM accidental-stop guard */
 (function(){
   'use strict';
-  const BUILD = (window.APP_VERSION || window.GAME_VERSION || '0.4.1');
-  function safe(fn){ try{return fn && fn();}catch(e){ console.error('[MBH0.4.1]', e); return null; } }
+  const BUILD = (window.APP_VERSION || window.GAME_VERSION || '0.4.2');
+  function safe(fn){ try{return fn && fn();}catch(e){ console.error('[MBH0.4.2]', e); return null; } }
   function syncVersion013(){
     window.APP_VERSION = BUILD;
     window.GAME_VERSION = BUILD;
@@ -5986,7 +5986,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
     if(typeof bindStatusBadgeEvents === 'function') bindStatusBadgeEvents();
   }
 
-  // 0.4.1の中央上表示をやめ、敵カードの左外へ出す専用クラスにする。
+  // 0.4.2の中央上表示をやめ、敵カードの左外へ出す専用クラスにする。
   if(typeof showFloat === 'function' && !window.__mbhShowFloat013){
     window.__mbhShowFloat013 = showFloat;
     showFloat = function(text, cls='damage'){
@@ -6096,10 +6096,10 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 
 
 
-/* ver.0.4.1: enemy missing watchdog + debug enemy level/variant restore */
+/* ver.0.4.2: enemy missing watchdog + debug enemy level/variant restore */
 (function(){
   'use strict';
-  const BUILD = '0.4.1';
+  const BUILD = '0.4.2';
   function safe(fn){ try{ return fn && fn(); }catch(e){ console.warn('[MBH '+BUILD+']', e); return null; } }
   function syncVersion028(){
     safe(()=>{ window.APP_VERSION = BUILD; window.GAME_VERSION = BUILD; document.documentElement.dataset.buildVersion = BUILD; });
@@ -6257,10 +6257,10 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 
 
 
-/* ver.0.4.1: startup-safe fixed menu layout, footer, log type, debug enemy controls */
+/* ver.0.4.2: startup-safe fixed menu layout, footer, log type, debug enemy controls */
 (function(){
   'use strict';
-  const BUILD='0.4.1';
+  const BUILD='0.4.2';
   const qs=(s,r=document)=>r.querySelector(s);
   const qsa=(s,r=document)=>Array.from(r.querySelectorAll(s));
   const byId=(id)=>document.getElementById(id);
@@ -6445,14 +6445,14 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   safe(()=>{ window.mbh031Check=()=>({build:BUILD, enemy:typeof state!=='undefined'?!!state.enemy:null, side:!!qs('.side-panel'), statusLayout:!!qs('.status-layout'), equipLayout:!!qs('.equip-layout'), footerParent:qs('.menu-footer')?.parentElement?.className||''}); });
 })();
 
-/* ver.0.4.1: root cache-bust, fixed split layouts, fixed footer, fixed log categories */
+/* ver.0.4.2: root cache-bust, fixed split layouts, fixed footer, fixed log categories */
 (function(){
   'use strict';
-  const BUILD = '0.4.1';
+  const BUILD = '0.4.2';
   const $ = (s,r=document)=>r.querySelector(s);
   const $$ = (s,r=document)=>Array.from(r.querySelectorAll(s));
   const byId = (id)=>document.getElementById(id);
-  const safe = (fn)=>{ try{return fn();}catch(e){ console.error('[MBH 0.4.1]', e); } };
+  const safe = (fn)=>{ try{return fn();}catch(e){ console.error('[MBH 0.4.2]', e); } };
   function esc(v){ return String(v ?? '').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
   function syncVersion032(){
     window.APP_VERSION = BUILD;
@@ -6588,15 +6588,15 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   safe(()=>{ window.mbh032Check=()=>({build:document.documentElement.dataset.buildVersion, statusLayout:!!$('.status-layout'), statusCols:[$('.status-left')?.children.length||0,$('.status-right')?.children.length||0], equipLayout:!!$('.equip-layout'), footerParent:$('.menu-footer')?.parentElement?.className||'', badDebug:['debugHp0Kill','debugForceDefeated','debugClearBleed','debugStopDot','debugStopDarkDance'].filter(id=>!!byId(id)), enemy:typeof state!=='undefined'?!!state.enemy:null}); });
 })();
 
-/* ver.0.4.1: footer isolated from log redraw + final log type lock */
+/* ver.0.4.2: footer isolated from log redraw + final log type lock */
 (function(){
   'use strict';
-  const BUILD='0.4.1';
+  const BUILD='0.4.2';
   const qs=(s,r=document)=>r.querySelector(s);
   const qsa=(s,r=document)=>Array.from(r.querySelectorAll(s));
   const byId=(id)=>document.getElementById(id);
   const esc=(v)=>String(v ?? '').replace(/[&<>"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
-  const safe=(fn)=>{ try{return fn();}catch(e){ console.error('[MBH 0.4.1]', e); } };
+  const safe=(fn)=>{ try{return fn();}catch(e){ console.error('[MBH 0.4.2]', e); } };
 
   function syncVersion033(){
     window.APP_VERSION=BUILD;
@@ -6706,13 +6706,13 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 })();
 
 
-/* ver.0.4.1: boss BGM + startup menu closed final lock */
+/* ver.0.4.2: boss BGM + startup menu closed final lock */
 (function(){
   'use strict';
-  const BUILD='0.4.1';
+  const BUILD='0.4.2';
   const qs=(s,r=document)=>r.querySelector(s);
   const qsa=(s,r=document)=>Array.from(r.querySelectorAll(s));
-  const safe=(fn)=>{ try{return fn();}catch(e){ console.error('[MBH 0.4.1]', e); } };
+  const safe=(fn)=>{ try{return fn();}catch(e){ console.error('[MBH 0.4.2]', e); } };
   function compact(){ return window.matchMedia('(max-width:1279px), (max-height:700px)').matches; }
   function syncVersion034(){
     window.APP_VERSION=BUILD; window.GAME_VERSION=BUILD;
@@ -6797,15 +6797,15 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   window.addEventListener('load', boot034, {once:true});
 })();
 
-/* ver.0.4.1: final stable menu/footer/effects/log/sell-exp lock */
+/* ver.0.4.2: final stable menu/footer/effects/log/sell-exp lock */
 (function(){
   'use strict';
-  const BUILD='0.4.1';
+  const BUILD='0.4.2';
   const $=(s,r=document)=>r.querySelector(s);
   const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
   const byId=(id)=>document.getElementById(id);
   const esc=(v)=>String(v ?? '').replace(/[&<>\"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[ch]));
-  const safe=(fn)=>{ try{return fn();}catch(e){ console.error('[MBH 0.4.1]', e); } };
+  const safe=(fn)=>{ try{return fn();}catch(e){ console.error('[MBH 0.4.2]', e); } };
   const compact=()=>window.matchMedia('(max-width:1279px), (max-height:700px)').matches;
 
   function syncVersion035(){
@@ -7057,16 +7057,16 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 })();
 
 
-/* ver.0.4.1: menu initial-close hard lock.
+/* ver.0.4.2: menu initial-close hard lock.
    This patch does not move footer/status/equipment DOM.
    It only owns menu open/close state so older stacked handlers cannot reopen it. */
 (function(){
   'use strict';
-  const BUILD='0.4.1';
+  const BUILD='0.4.2';
   const byId=(id)=>document.getElementById(id);
   const qs=(s)=>document.querySelector(s);
   const qsa=(s)=>Array.from(document.querySelectorAll(s));
-  const safe=(fn)=>{ try{return fn();}catch(e){ console.error('[MBH 0.4.1]', e); } };
+  const safe=(fn)=>{ try{return fn();}catch(e){ console.error('[MBH 0.4.2]', e); } };
   const compact=()=>window.matchMedia('(max-width:1279px), (max-height:700px), (pointer:coarse)').matches;
   let menuOpen=false;
   let lastToggle=0;
@@ -7199,14 +7199,14 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   safe(()=>{ window.mbh037MenuCheck=()=>({build:document.documentElement.dataset.buildVersion, compact:compact(), bodyOpen:document.body.classList.contains('mbh-menu-open'), sideOpen:qs('.side-panel')?.classList.contains('open')||false, display:qs('.side-panel')?.style.display||'', uiOpen:typeof state!=='undefined'?state.uiOpen:null}); });
 })();
 
-/* ver.0.4.1: final layout/log/effect/menu stability lock */
+/* ver.0.4.2: final layout/log/effect/menu stability lock */
 (function(){
   'use strict';
-  const BUILD='0.4.1';
+  const BUILD='0.4.2';
   const $id=(id)=>document.getElementById(id);
   const $$=(sel,root=document)=>Array.from(root.querySelectorAll(sel));
   const esc=(s)=>String(s??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
-  const safe=(fn)=>{try{return fn();}catch(e){console.error('[MBH 0.4.1]',e);}};
+  const safe=(fn)=>{try{return fn();}catch(e){console.error('[MBH 0.4.2]',e);}};
   const compact=()=>window.matchMedia('(max-width:1279px), (max-height:700px)').matches;
   const pct=(v)=>Math.round((Number(v)||0)*1000)/10+'%';
 
@@ -7429,14 +7429,14 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   window.mbh038Check=()=>({build:document.documentElement.dataset.buildVersion, menuOpen:document.body.classList.contains('mbh-menu-open'), footerParent:document.querySelector('.menu-footer')?.parentElement?.className||'', statusCols:$$('.status-layout > *').map(x=>x.className), equipCols:$$('.equip-layout > *').map(x=>x.className), enemyXp:!!$id('statEnemyLevelXp')});
 })();
 
-/* ver.0.4.1: final stable layout, no insertBefore loop, null enemy guard, log category hard fix */
+/* ver.0.4.2: final stable layout, no insertBefore loop, null enemy guard, log category hard fix */
 (function(){
   'use strict';
-  const APP_VERSION = '0.4.1';
+  const APP_VERSION = '0.4.2';
   const $ = (id)=>document.getElementById(id);
   const $$ = (sel,root=document)=>Array.from(root.querySelectorAll(sel));
   const esc = (s)=>String(s==null?'':s).replace(/[&<>\"']/g, ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[ch]));
-  function safe(fn,label){ try{return fn();}catch(e){ console.error('[MBH 0.4.1 '+(label||'')+']', e); } }
+  function safe(fn,label){ try{return fn();}catch(e){ console.error('[MBH 0.4.2 '+(label||'')+']', e); } }
   function syncVersion039(){
     safe(()=>{ window.APP_VERSION=APP_VERSION; window.GAME_VERSION=APP_VERSION; document.documentElement.dataset.buildVersion=APP_VERSION; });
     safe(()=>$$('.build-version,[data-version],#versionText,.version-badge').forEach(el=>{ el.textContent='ver.'+APP_VERSION; }));
@@ -7670,13 +7670,13 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 })();
 
 
-/* MBH ver.0.4.1: 軽量化・ログ撤去・メニューDOM固定 */
+/* MBH ver.0.4.2: 軽量化・ログ撤去・メニューDOM固定 */
 (function(){
   'use strict';
-  const BUILD='0.4.1';
+  const BUILD='0.4.2';
   const $=(id)=>document.getElementById(id);
   const $$=(sel,root=document)=>Array.from(root.querySelectorAll(sel));
-  const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.warn('[MBH 0.4.1]', e); } };
+  const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.warn('[MBH 0.4.2]', e); } };
   const esc=(v)=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
   const setStable=(el,html)=>{ if(el && el.innerHTML!==html) el.innerHTML=html; };
   const pct=(v)=>Math.round((Number(v)||0)*100)+'%';
@@ -7692,7 +7692,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
     if($('mbh-041-css')) return;
     const st=document.createElement('style'); st.id='mbh-041-css';
     st.textContent=`
-      /* 0.4.1: ログ撤去 */
+      /* 0.4.2: ログ撤去 */
       .log-panel,#logFilterBar,#log,[data-menu-page="log"]{display:none!important;}
       .side-panel{display:grid!important;grid-template-rows:auto minmax(0,1fr) auto!important;grid-template-columns:1fr!important;gap:10px!important;min-width:0!important;overflow:hidden!important;}
       .mobile-menu-tabs{flex:0 0 auto!important;}
@@ -7926,13 +7926,13 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   setInterval(()=>safe(()=>{ syncVersion041(); removeLogUi041(); removeEnemyLevelXp041(); }),3000);
 })();
 
-/* MBH ver.0.4.1: menu layout rule finalizer */
+/* MBH ver.0.4.2: menu layout rule finalizer */
 (function(){
   'use strict';
-  const BUILD='0.4.1';
+  const BUILD='0.4.2';
   const $=(id)=>document.getElementById(id);
   const $$=(sel,root=document)=>Array.from(root.querySelectorAll(sel));
-  const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.warn('[MBH 0.4.1 layout]', e); } };
+  const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.warn('[MBH 0.4.2 layout]', e); } };
 
   function syncVersion041Final(){
     window.APP_VERSION=BUILD; window.GAME_VERSION=BUILD;
@@ -7947,12 +7947,12 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
     let st=$('mbh-041-layout-final-css');
     if(!st){ st=document.createElement('style'); st.id='mbh-041-layout-final-css'; document.head.appendChild(st); }
     st.textContent=`
-      html[data-build-version="0.4.1"] .log-panel,
-      html[data-build-version="0.4.1"] #log,
-      html[data-build-version="0.4.1"] #logFilterBar,
-      html[data-build-version="0.4.1"] [data-menu-page="log"]{display:none!important;}
+      html[data-build-version="0.4.2"] .log-panel,
+      html[data-build-version="0.4.2"] #log,
+      html[data-build-version="0.4.2"] #logFilterBar,
+      html[data-build-version="0.4.2"] [data-menu-page="log"]{display:none!important;}
 
-      html[data-build-version="0.4.1"] .side-panel{
+      html[data-build-version="0.4.2"] .side-panel{
         box-sizing:border-box!important;
         min-width:0!important;
         min-height:0!important;
@@ -7962,8 +7962,8 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
         grid-template-columns:minmax(0,1fr)!important;
         gap:10px!important;
       }
-      html[data-build-version="0.4.1"] .side-panel *{box-sizing:border-box!important;}
-      html[data-build-version="0.4.1"] .side-panel>.mobile-menu-tabs{
+      html[data-build-version="0.4.2"] .side-panel *{box-sizing:border-box!important;}
+      html[data-build-version="0.4.2"] .side-panel>.mobile-menu-tabs{
         display:grid!important;
         grid-template-columns:repeat(3,minmax(0,1fr))!important;
         gap:8px!important;
@@ -7971,17 +7971,17 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
         min-width:0!important;
         flex:0 0 auto!important;
       }
-      html[data-build-version="0.4.1"] .side-panel>.mobile-menu-tabs button{min-width:0!important;width:100%!important;}
+      html[data-build-version="0.4.2"] .side-panel>.mobile-menu-tabs button{min-width:0!important;width:100%!important;}
 
-      html[data-build-version="0.4.1"] .menu-col,
-      html[data-build-version="0.4.1"] .menu-left,
-      html[data-build-version="0.4.1"] .menu-right,
-      html[data-build-version="0.4.1"] .menu-main{display:contents!important;width:auto!important;height:auto!important;max-width:none!important;max-height:none!important;}
+      html[data-build-version="0.4.2"] .menu-col,
+      html[data-build-version="0.4.2"] .menu-left,
+      html[data-build-version="0.4.2"] .menu-right,
+      html[data-build-version="0.4.2"] .menu-main{display:contents!important;width:auto!important;height:auto!important;max-width:none!important;max-height:none!important;}
 
-      html[data-build-version="0.4.1"] #mbhMenuContent041,
-      html[data-build-version="0.4.1"] #mbhMenuContent040,
-      html[data-build-version="0.4.1"] #mbhMenuContent039,
-      html[data-build-version="0.4.1"] .menu-content-fixed{
+      html[data-build-version="0.4.2"] #mbhMenuContent041,
+      html[data-build-version="0.4.2"] #mbhMenuContent040,
+      html[data-build-version="0.4.2"] #mbhMenuContent039,
+      html[data-build-version="0.4.2"] .menu-content-fixed{
         width:100%!important;
         height:100%!important;
         min-width:0!important;
@@ -7991,7 +7991,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
         overflow:hidden!important;
         display:block!important;
       }
-      html[data-build-version="0.4.1"] .side-panel .panel{
+      html[data-build-version="0.4.2"] .side-panel .panel{
         width:100%!important;
         height:100%!important;
         min-width:0!important;
@@ -8002,11 +8002,11 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
         overflow:hidden!important;
         position:relative!important;
       }
-      html[data-build-version="0.4.1"] .side-panel .panel:not(.active-page){display:none!important;}
-      html[data-build-version="0.4.1"] .side-panel .panel.active-page{display:flex!important;flex-direction:column!important;}
+      html[data-build-version="0.4.2"] .side-panel .panel:not(.active-page){display:none!important;}
+      html[data-build-version="0.4.2"] .side-panel .panel.active-page{display:flex!important;flex-direction:column!important;}
 
-      html[data-build-version="0.4.1"] .status-layout,
-      html[data-build-version="0.4.1"] .equip-layout{
+      html[data-build-version="0.4.2"] .status-layout,
+      html[data-build-version="0.4.2"] .equip-layout{
         flex:1 1 auto!important;
         width:100%!important;
         height:100%!important;
@@ -8019,10 +8019,10 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
         overflow:hidden!important;
         align-items:stretch!important;
       }
-      html[data-build-version="0.4.1"] .status-left,
-      html[data-build-version="0.4.1"] .status-right,
-      html[data-build-version="0.4.1"] .equip-left,
-      html[data-build-version="0.4.1"] .equip-right{
+      html[data-build-version="0.4.2"] .status-left,
+      html[data-build-version="0.4.2"] .status-right,
+      html[data-build-version="0.4.2"] .equip-left,
+      html[data-build-version="0.4.2"] .equip-right{
         min-width:0!important;
         min-height:0!important;
         max-width:none!important;
@@ -8030,12 +8030,12 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
         display:flex!important;
         flex-direction:column!important;
       }
-      html[data-build-version="0.4.1"] .hero-stats>h2,
-      html[data-build-version="0.4.1"] .equip-panel>h2{flex:0 0 auto!important;}
-      html[data-build-version="0.4.1"] .status-left .stat-grid{flex:0 0 auto!important;}
-      html[data-build-version="0.4.1"] .status-special-effects,
-      html[data-build-version="0.4.1"] .monster-records,
-      html[data-build-version="0.4.1"] .equip-effect-totals{
+      html[data-build-version="0.4.2"] .hero-stats>h2,
+      html[data-build-version="0.4.2"] .equip-panel>h2{flex:0 0 auto!important;}
+      html[data-build-version="0.4.2"] .status-left .stat-grid{flex:0 0 auto!important;}
+      html[data-build-version="0.4.2"] .status-special-effects,
+      html[data-build-version="0.4.2"] .monster-records,
+      html[data-build-version="0.4.2"] .equip-effect-totals{
         flex:1 1 auto!important;
         min-height:0!important;
         max-height:none!important;
@@ -8045,11 +8045,11 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
         padding:8px!important;
         background:rgba(0,0,0,.18)!important;
       }
-      html[data-build-version="0.4.1"] .status-special-effects{margin-top:10px!important;}
-      html[data-build-version="0.4.1"] .monster-records,
-      html[data-build-version="0.4.1"] .equip-effect-totals{margin-top:0!important;}
-      html[data-build-version="0.4.1"] .effect-scroll,
-      html[data-build-version="0.4.1"] .monster-record-list{
+      html[data-build-version="0.4.2"] .status-special-effects{margin-top:10px!important;}
+      html[data-build-version="0.4.2"] .monster-records,
+      html[data-build-version="0.4.2"] .equip-effect-totals{margin-top:0!important;}
+      html[data-build-version="0.4.2"] .effect-scroll,
+      html[data-build-version="0.4.2"] .monster-record-list{
         width:100%!important;
         flex:1 1 auto!important;
         min-height:0!important;
@@ -8060,20 +8060,20 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
         scrollbar-color:#b8872d #120b06!important;
         scrollbar-width:thin!important;
       }
-      html[data-build-version="0.4.1"] .effect-scroll::-webkit-scrollbar,
-      html[data-build-version="0.4.1"] .monster-record-list::-webkit-scrollbar,
-      html[data-build-version="0.4.1"] #inventory::-webkit-scrollbar,
-      html[data-build-version="0.4.1"] .equip-list::-webkit-scrollbar{width:9px!important;height:9px!important;}
-      html[data-build-version="0.4.1"] .effect-scroll::-webkit-scrollbar-track,
-      html[data-build-version="0.4.1"] .monster-record-list::-webkit-scrollbar-track,
-      html[data-build-version="0.4.1"] #inventory::-webkit-scrollbar-track,
-      html[data-build-version="0.4.1"] .equip-list::-webkit-scrollbar-track{background:#100905!important;border-radius:9px!important;}
-      html[data-build-version="0.4.1"] .effect-scroll::-webkit-scrollbar-thumb,
-      html[data-build-version="0.4.1"] .monster-record-list::-webkit-scrollbar-thumb,
-      html[data-build-version="0.4.1"] #inventory::-webkit-scrollbar-thumb,
-      html[data-build-version="0.4.1"] .equip-list::-webkit-scrollbar-thumb{background:linear-gradient(#d7a340,#7b5519)!important;border-radius:9px!important;border:1px solid #2b1a07!important;}
+      html[data-build-version="0.4.2"] .effect-scroll::-webkit-scrollbar,
+      html[data-build-version="0.4.2"] .monster-record-list::-webkit-scrollbar,
+      html[data-build-version="0.4.2"] #inventory::-webkit-scrollbar,
+      html[data-build-version="0.4.2"] .equip-list::-webkit-scrollbar{width:9px!important;height:9px!important;}
+      html[data-build-version="0.4.2"] .effect-scroll::-webkit-scrollbar-track,
+      html[data-build-version="0.4.2"] .monster-record-list::-webkit-scrollbar-track,
+      html[data-build-version="0.4.2"] #inventory::-webkit-scrollbar-track,
+      html[data-build-version="0.4.2"] .equip-list::-webkit-scrollbar-track{background:#100905!important;border-radius:9px!important;}
+      html[data-build-version="0.4.2"] .effect-scroll::-webkit-scrollbar-thumb,
+      html[data-build-version="0.4.2"] .monster-record-list::-webkit-scrollbar-thumb,
+      html[data-build-version="0.4.2"] #inventory::-webkit-scrollbar-thumb,
+      html[data-build-version="0.4.2"] .equip-list::-webkit-scrollbar-thumb{background:linear-gradient(#d7a340,#7b5519)!important;border-radius:9px!important;border:1px solid #2b1a07!important;}
 
-      html[data-build-version="0.4.1"] .equip-list{
+      html[data-build-version="0.4.2"] .equip-list{
         flex:1 1 auto!important;
         min-height:0!important;
         width:100%!important;
@@ -8086,12 +8086,12 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
         align-content:start!important;
         padding-right:8px!important;
       }
-      html[data-build-version="0.4.1"] .equip-actions-fixed,
-      html[data-build-version="0.4.1"] #bestEquipBtnEquip,
-      html[data-build-version="0.4.1"] #upgradeBtn{display:none!important;}
-      html[data-build-version="0.4.1"] .equip-left>#bestEquipBtn{flex:0 0 auto!important;display:block!important;width:100%!important;margin:8px 0 0!important;}
+      html[data-build-version="0.4.2"] .equip-actions-fixed,
+      html[data-build-version="0.4.2"] #bestEquipBtnEquip,
+      html[data-build-version="0.4.2"] #upgradeBtn{display:none!important;}
+      html[data-build-version="0.4.2"] .equip-left>#bestEquipBtn{flex:0 0 auto!important;display:block!important;width:100%!important;margin:8px 0 0!important;}
 
-      html[data-build-version="0.4.1"] .inventory-panel.active-page{
+      html[data-build-version="0.4.2"] .inventory-panel.active-page{
         display:flex!important;
         flex-direction:column!important;
         width:100%!important;
@@ -8099,10 +8099,10 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
         max-width:none!important;
         overflow:hidden!important;
       }
-      html[data-build-version="0.4.1"] .inventory-panel h2{flex:0 0 auto!important;}
-      html[data-build-version="0.4.1"] .inventory-actions,
-      html[data-build-version="0.4.1"] .inventory-filter-bar{flex:0 0 auto!important;width:100%!important;max-width:none!important;}
-      html[data-build-version="0.4.1"] #inventory{
+      html[data-build-version="0.4.2"] .inventory-panel h2{flex:0 0 auto!important;}
+      html[data-build-version="0.4.2"] .inventory-actions,
+      html[data-build-version="0.4.2"] .inventory-filter-bar{flex:0 0 auto!important;width:100%!important;max-width:none!important;}
+      html[data-build-version="0.4.2"] #inventory{
         flex:1 1 auto!important;
         min-height:0!important;
         width:100%!important;
@@ -8120,9 +8120,9 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
         scrollbar-width:thin!important;
       }
 
-      html[data-build-version="0.4.1"] .menu-footer-fixed,
-      html[data-build-version="0.4.1"] .side-panel>.legal-links,
-      html[data-build-version="0.4.1"] .side-panel>.menu-footer{
+      html[data-build-version="0.4.2"] .menu-footer-fixed,
+      html[data-build-version="0.4.2"] .side-panel>.legal-links,
+      html[data-build-version="0.4.2"] .side-panel>.menu-footer{
         flex:0 0 auto!important;
         display:grid!important;
         grid-template-columns:repeat(3,minmax(0,1fr))!important;
@@ -8138,31 +8138,31 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
         background:linear-gradient(rgba(16,10,5,.98),rgba(5,5,5,.98))!important;
         box-shadow:none!important;
       }
-      html[data-build-version="0.4.1"] .panel .legal-links,
-      html[data-build-version="0.4.1"] .panel .menu-footer{display:none!important;}
+      html[data-build-version="0.4.2"] .panel .legal-links,
+      html[data-build-version="0.4.2"] .panel .menu-footer{display:none!important;}
 
-      html[data-build-version="0.4.1"] body.menu-open .flee-btn,
-      html[data-build-version="0.4.1"] body.menu-open .expbar{display:none!important;}
+      html[data-build-version="0.4.2"] body.menu-open .flee-btn,
+      html[data-build-version="0.4.2"] body.menu-open .expbar{display:none!important;}
 
       @media(min-width:1280px) and (min-height:701px) and (pointer:fine){
-        html[data-build-version="0.4.1"] .layout{grid-template-columns:minmax(780px,1fr) minmax(560px,760px)!important;}
-        html[data-build-version="0.4.1"] .side-panel{position:static!important;display:grid!important;width:auto!important;height:auto!important;background:none!important;border:0!important;padding:0!important;box-shadow:none!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;}
-        html[data-build-version="0.4.1"] #equipToggleBtn{display:none!important;}
+        html[data-build-version="0.4.2"] .layout{grid-template-columns:minmax(780px,1fr) minmax(560px,760px)!important;}
+        html[data-build-version="0.4.2"] .side-panel{position:static!important;display:grid!important;width:auto!important;height:auto!important;background:none!important;border:0!important;padding:0!important;box-shadow:none!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;}
+        html[data-build-version="0.4.2"] #equipToggleBtn{display:none!important;}
       }
       @media(max-width:1279px),(max-height:700px),(pointer:coarse){
-        html[data-build-version="0.4.1"] .layout{grid-template-columns:1fr!important;}
-        html[data-build-version="0.4.1"] #equipToggleBtn{display:inline-flex!important;}
-        html[data-build-version="0.4.1"] body:not(.mbh-menu-open) .side-panel{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;}
-        html[data-build-version="0.4.1"] body.mbh-menu-open .side-panel{display:grid!important;position:fixed!important;left:8px!important;right:8px!important;top:calc(var(--mbh-topbar-h,58px) + 8px)!important;bottom:8px!important;width:auto!important;height:auto!important;z-index:70!important;background:rgba(0,0,0,.94)!important;border:2px solid #c99b39!important;padding:8px!important;box-shadow:0 0 35px #000!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;}
+        html[data-build-version="0.4.2"] .layout{grid-template-columns:1fr!important;}
+        html[data-build-version="0.4.2"] #equipToggleBtn{display:inline-flex!important;}
+        html[data-build-version="0.4.2"] body:not(.mbh-menu-open) .side-panel{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;}
+        html[data-build-version="0.4.2"] body.mbh-menu-open .side-panel{display:grid!important;position:fixed!important;left:8px!important;right:8px!important;top:calc(var(--mbh-topbar-h,58px) + 8px)!important;bottom:8px!important;width:auto!important;height:auto!important;z-index:70!important;background:rgba(0,0,0,.94)!important;border:2px solid #c99b39!important;padding:8px!important;box-shadow:0 0 35px #000!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;}
       }
       @media(max-width:760px){
-        html[data-build-version="0.4.1"] .status-layout,
-        html[data-build-version="0.4.1"] .equip-layout{grid-template-columns:1fr!important;overflow-y:auto!important;}
-        html[data-build-version="0.4.1"] .side-panel>.mobile-menu-tabs{grid-template-columns:repeat(3,minmax(0,1fr))!important;}
-        html[data-build-version="0.4.1"] .side-panel>.legal-links,
-        html[data-build-version="0.4.1"] .side-panel>.menu-footer{grid-template-columns:1fr!important;}
-        html[data-build-version="0.4.1"] .equip-list{grid-template-columns:1fr!important;}
-        html[data-build-version="0.4.1"] #inventory{grid-template-columns:repeat(auto-fill,minmax(120px,1fr))!important;}
+        html[data-build-version="0.4.2"] .status-layout,
+        html[data-build-version="0.4.2"] .equip-layout{grid-template-columns:1fr!important;overflow-y:auto!important;}
+        html[data-build-version="0.4.2"] .side-panel>.mobile-menu-tabs{grid-template-columns:repeat(3,minmax(0,1fr))!important;}
+        html[data-build-version="0.4.2"] .side-panel>.legal-links,
+        html[data-build-version="0.4.2"] .side-panel>.menu-footer{grid-template-columns:1fr!important;}
+        html[data-build-version="0.4.2"] .equip-list{grid-template-columns:1fr!important;}
+        html[data-build-version="0.4.2"] #inventory{grid-template-columns:repeat(auto-fill,minmax(120px,1fr))!important;}
       }
     `;
   }
@@ -8267,4 +8267,195 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   window.addEventListener('load',boot041Final,{once:true});
   window.addEventListener('resize',()=>setTimeout(boot041Final,0));
   setInterval(()=>safe(()=>{ syncVersion041Final(); normalizeMenu041Final(); ensureEquipButton041Final(); fitNoInline041Final(); }),1500);
+})();
+
+/* MBH ver.0.4.2: 固有能力表示の固定化 + レアリティ色付け + 戦闘中の一時効果を表示しない */
+(function(){
+  'use strict';
+  const BUILD='0.4.2';
+  const DARK_COLOR='#b86cff';
+  const BASIC_COLOR='#f7ead0';
+  const ABILITY_KEYS=new Set([
+    'fireRes','fireDamageHeal','fireDmg','fireSkillChance','thunderDmg','thunderSkillChance',
+    'deathDanceChance','deathDanceDefIgnore','heroDarkBleedChance','lifeSteal','guard','crit',
+    'darkShield','darkAmulet','masterRegen','killHeal','skill'
+  ]);
+  const PCT_KEYS=new Set(['fireRes','fireDamageHeal','fireDmg','fireSkillChance','thunderDmg','thunderSkillChance','deathDanceChance','deathDanceDefIgnore','heroDarkBleedChance','lifeSteal','guard','crit','killHeal']);
+  const LABEL={
+    hp:'HP', atk:'攻撃力', def:'防御力',
+    fireRes:'火軽減', fireDamageHeal:'火吸収', fireDmg:'火ダメージ', fireSkillChance:'炎斬り発動率',
+    thunderDmg:'雷ダメージ', thunderSkillChance:'雷撃発動率',
+    deathDanceChance:'死線の剣舞率', deathDanceDefIgnore:'剣舞防御無視', heroDarkBleedChance:'暗黒出血付与',
+    lifeSteal:'HP吸収', guard:'ガード率', crit:'クリティカル率', killHeal:'撃破時HP回復'
+  };
+  const DARK_EFFECT_LABEL={
+    darkShield:['闇の盾','毎ターン被ダメ軽減+1%（最大50%） / 被ダメージ50%回復'],
+    darkAmulet:['闇のアミュレット','死線の剣舞効果時間2倍'],
+    masterRegen:['師匠のアミュレット','10秒ごとにHP回復 / 撃破時HP25%回復']
+  };
+  function safe(fn){ try{return fn&&fn();}catch(e){ console.warn('[MBH 0.4.2]', e); return null; } }
+  function $(id){return document.getElementById(id);}
+  function esc(s){return String(s??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));}
+  function pct(v, signed=false){ const n=Math.round(Number(v||0)*100); return (signed&&n>0?'+':'')+n+'%'; }
+  function num(v, signed=true){ const n=Math.floor(Number(v||0)); return (signed&&n>0?'+':'')+n.toLocaleString(); }
+  function colorOf(it){
+    if(!it) return BASIC_COLOR;
+    if(it.specialFrame==='darkholy' || /^闇の|^暗黒/.test(String(it.name||'')) || it.darkShield || it.darkAmulet) return DARK_COLOR;
+    if(typeof rarityColor==='function') return rarityColor(it.rarity);
+    return ({legendary:'#ff9b24',rare:'#4d8dff',normal:'#eeeeee'}[it.rarity] || '#eeeeee');
+  }
+  function itemList(){ return Object.values((typeof state!=='undefined' && state.equip) ? state.equip : {}).filter(Boolean); }
+  function itemHash(){
+    return JSON.stringify(itemList().map(it=>({
+      id:it.id,name:it.name,slot:it.slot,rarity:it.rarity,specialFrame:it.specialFrame,level:it.level,itemLevel:it.itemLevel,
+      hp:it.hp,atk:it.atk,def:it.def,fireRes:it.fireRes,fireDamageHeal:it.fireDamageHeal,fireDmg:it.fireDmg,fireSkillChance:it.fireSkillChance,
+      thunderDmg:it.thunderDmg,thunderSkillChance:it.thunderSkillChance,deathDanceChance:it.deathDanceChance,deathDanceDefIgnore:it.deathDanceDefIgnore,
+      heroDarkBleedChance:it.heroDarkBleedChance,lifeSteal:it.lifeSteal,guard:it.guard,crit:it.crit,killHeal:it.killHeal,
+      darkShield:it.darkShield,darkAmulet:it.darkAmulet,masterRegen:it.masterRegen,skill:it.skill&&{id:it.skill.id,name:it.skill.name,chance:it.skill.chance}
+    })).sort((a,b)=>String(a.slot).localeCompare(String(b.slot))));
+  }
+  function addAbilityRowsFromItem(rows,it,aggregate=false){
+    const c=colorOf(it);
+    const add=(key,val,label=LABEL[key])=>{ if(Number(val||0)) rows.push({label,value:pct(val,true),color:c,key,ability:true}); };
+    add('fireRes',it.fireRes,LABEL.fireRes);
+    add('fireDamageHeal',it.fireDamageHeal,LABEL.fireDamageHeal);
+    add('fireDmg',it.fireDmg,LABEL.fireDmg);
+    add('fireSkillChance',it.fireSkillChance,LABEL.fireSkillChance);
+    add('thunderDmg',it.thunderDmg,LABEL.thunderDmg);
+    add('thunderSkillChance',it.thunderSkillChance,LABEL.thunderSkillChance);
+    add('deathDanceChance',it.deathDanceChance,LABEL.deathDanceChance);
+    add('deathDanceDefIgnore',it.deathDanceDefIgnore,LABEL.deathDanceDefIgnore);
+    add('heroDarkBleedChance',it.heroDarkBleedChance,LABEL.heroDarkBleedChance);
+    add('lifeSteal',it.lifeSteal,LABEL.lifeSteal);
+    add('guard',it.guard,LABEL.guard);
+    add('crit',it.crit,LABEL.crit);
+    add('killHeal',it.killHeal,LABEL.killHeal);
+    if(it.darkShield){ const [l,v]=DARK_EFFECT_LABEL.darkShield; rows.push({label:l,value:v,color:DARK_COLOR,key:'darkShield',ability:true}); }
+    if(it.darkAmulet){ const [l,v]=DARK_EFFECT_LABEL.darkAmulet; rows.push({label:l,value:v,color:DARK_COLOR,key:'darkAmulet',ability:true}); }
+    if(it.masterRegen){ const [l,v]=DARK_EFFECT_LABEL.masterRegen; rows.push({label:l,value:v,color:c,key:'masterRegen',ability:true}); }
+    // 闇の兜・闇の籠手など、現時点で専用効果がコード実装されていないものは固有効果として表示しない。
+    // HP/攻撃/防御などの基礎パラメータは装備効果合計側にだけ出す。
+    if(it.skill && it.skill.name){
+      const extra=(it.skill.id==='fire'?(Number(it.fireSkillChance)||0):it.skill.id==='thunder'?(Number(it.thunderSkillChance)||0):0);
+      const chance=Math.max(0, Number(it.skill.chance||0)+extra);
+      rows.push({label:'武器スキル',value:`${it.skill.name} ${pct(chance,false)}`,color:c,key:'skill',ability:true});
+      if(it.skill.id==='thunder') rows.push({label:'雷撃',value:'防御25%無視',color:c,key:'skillThunder',ability:true});
+      if(it.skill.id==='fire') rows.push({label:'炎斬り',value:'火傷20%',color:c,key:'skillFire',ability:true});
+    }
+  }
+  function mergeRows(rows){
+    const out=[]; const map=new Map();
+    function priority(c){ if(c===DARK_COLOR) return 99; if(c==='#ff9b24'||c==='#ffad31') return 3; if(c==='#4d8dff'||c==='#4fa2ff') return 2; return 1; }
+    rows.forEach(r=>{
+      const id=r.key||r.label;
+      if(PCT_KEYS.has(id)){
+        const old=map.get(id);
+        const val=Number(String(r.value).replace(/[+%]/g,''))/100 || 0;
+        if(!old){ map.set(id,{...r,_sum:val}); out.push(map.get(id)); }
+        else{ old._sum+=val; old.value=pct(old._sum,true); if(priority(r.color)>priority(old.color)) old.color=r.color; }
+      }else{
+        if(!map.has(id)){ map.set(id,{...r}); out.push(map.get(id)); }
+      }
+    });
+    return out;
+  }
+  function abilityRows(){ const rows=[]; itemList().forEach(it=>addAbilityRowsFromItem(rows,it)); return mergeRows(rows); }
+  function equipmentRows(){
+    const rows=[]; const t={hp:0,atk:0,def:0};
+    itemList().forEach(it=>{ t.hp+=Number(it.hp||0); t.atk+=Number(it.atk||0); t.def+=Number(it.def||0); });
+    if(t.hp) rows.push({label:'HP',value:num(t.hp,true),color:BASIC_COLOR,basic:true});
+    if(t.atk) rows.push({label:'攻撃力',value:num(t.atk,true),color:BASIC_COLOR,basic:true});
+    if(t.def) rows.push({label:'防御力',value:num(t.def,true),color:BASIC_COLOR,basic:true});
+    return rows.concat(abilityRows());
+  }
+  function rowsHtml(rows,empty){
+    if(!rows.length) return `<div class="effect-row effect-empty"><span>${esc(empty)}</span><b>-</b></div>`;
+    return rows.map(r=>`<div class="effect-row ${r.ability?'ability-option':'basic-option'}" data-effect-key="${esc(r.key||r.label)}" style="--effect-color:${esc(r.color||BASIC_COLOR)}"><span>${esc(r.label)}</span><b>${esc(r.value)}</b></div>`).join('');
+  }
+  function setIfChanged(el,html){ if(el && el.innerHTML!==html) el.innerHTML=html; }
+  let applying=false, lastHash='';
+  function renderCanonicalEffects(force=false){
+    if(applying) return;
+    const h=itemHash();
+    const sbox=document.querySelector('#statusSpecialEffects .effect-scroll');
+    const ebox=document.querySelector('#equipEffectTotals .effect-scroll');
+    const shtml=rowsHtml(abilityRows(),'特殊効果なし');
+    const ehtml=rowsHtml(equipmentRows(),'装備効果なし');
+    applying=true;
+    setIfChanged(sbox,shtml);
+    setIfChanged(ebox,ehtml);
+    lastHash=h;
+    applying=false;
+  }
+  function installObserver(){
+    ['#statusSpecialEffects .effect-scroll','#equipEffectTotals .effect-scroll'].forEach(sel=>{
+      const el=document.querySelector(sel); if(!el || el.__mbh042Observed) return;
+      el.__mbh042Observed=true;
+      new MutationObserver(()=>{ if(!applying) requestAnimationFrame(()=>renderCanonicalEffects(true)); }).observe(el,{childList:true,subtree:true,characterData:true});
+    });
+  }
+  function installCss(){
+    if($('mbh-042-effects-css')) return;
+    const st=document.createElement('style'); st.id='mbh-042-effects-css';
+    st.textContent=`
+      html[data-build-version="0.4.2"] .effect-row.ability-option span,
+      html[data-build-version="0.4.2"] .effect-row.ability-option b{color:var(--effect-color)!important;text-shadow:0 0 8px color-mix(in srgb, var(--effect-color) 55%, transparent)!important;}
+      html[data-build-version="0.4.2"] .effect-row.basic-option span{color:#e8d0a2!important;}
+      html[data-build-version="0.4.2"] .effect-row.basic-option b{color:#fff7c8!important;}
+      html[data-build-version="0.4.2"] .equip small .item-ability-option{color:var(--item-ability-color)!important;text-shadow:0 0 7px color-mix(in srgb, var(--item-ability-color) 50%, transparent)!important;font-weight:800!important;}
+      html[data-build-version="0.4.2"] .equip small .item-basic-option{color:#c8b98e!important;}
+    `;
+    document.head.appendChild(st);
+  }
+  function coloredSummaryHtml(it){
+    const parts=[]; const basic=(s)=>parts.push(`<span class="item-basic-option">${esc(s)}</span>`); const ability=(s)=>parts.push(`<span class="item-ability-option" style="--item-ability-color:${esc(colorOf(it))}">${esc(s)}</span>`);
+    if(it.itemLevel) basic(`ドロップLv${Math.floor(Number(it.itemLevel)||1)}`);
+    basic(`品質+${Math.max(0,Math.floor(Number(it.level)||0))}`);
+    if(it.atk) basic(`攻+${Math.floor(Number(it.atk)||0)}`); if(it.def) basic(`防+${Math.floor(Number(it.def)||0)}`); if(it.hp) basic(`HP+${Math.floor(Number(it.hp)||0)}`);
+    if(it.fireRes) ability(`火軽減${pct(it.fireRes,false)}`);
+    if(it.fireDamageHeal) ability(`火吸収${pct(it.fireDamageHeal,false)}`);
+    if(it.fireDmg) ability(`火ダメージ${pct(it.fireDmg,true)}`);
+    if(it.fireSkillChance) ability(`炎斬り発動率${pct(it.fireSkillChance,true)}`);
+    if(it.thunderDmg) ability(`雷ダメージ${pct(it.thunderDmg,true)}`);
+    if(it.thunderSkillChance) ability(`雷撃発動率${pct(it.thunderSkillChance,true)}`);
+    if(it.deathDanceChance) ability(`死線の剣舞率${pct(it.deathDanceChance,true)}`);
+    if(it.deathDanceDefIgnore) ability(`剣舞防御無視${pct(it.deathDanceDefIgnore,false)}`);
+    if(it.heroDarkBleedChance) ability(`暗黒出血付与${pct(it.heroDarkBleedChance,false)}`);
+    if(it.lifeSteal) ability(`HP吸収${pct(it.lifeSteal,false)}`);
+    if(it.guard) ability(`ガード率${pct(it.guard,true)}`);
+    if(it.crit) ability(`クリティカル率${pct(it.crit,true)}`);
+    if(it.darkShield) ability(DARK_EFFECT_LABEL.darkShield[1]);
+    if(it.darkAmulet) ability(DARK_EFFECT_LABEL.darkAmulet[1]);
+    if(it.masterRegen) ability(DARK_EFFECT_LABEL.masterRegen[1]);
+    if(it.skill && it.skill.name){ const extra=(it.skill.id==='fire'?(Number(it.fireSkillChance)||0):it.skill.id==='thunder'?(Number(it.thunderSkillChance)||0):0); ability(`武器スキル：${it.skill.name} ${pct((Number(it.skill.chance)||0)+extra,false)}`); }
+    return parts.join(' / ');
+  }
+  function patchItemSummary(){
+    safe(()=>{ itemSummary=function(it){ return coloredSummaryHtml(it); }; });
+  }
+  function patchRenderEquip(){
+    if(typeof renderEquip!=='function' || renderEquip.__mbh042) return;
+    const old=renderEquip;
+    renderEquip=function(){ const r=old.apply(this,arguments); safe(()=>{ renderCanonicalEffects(true); installObserver(); }); return r; };
+    renderEquip.__mbh042=true;
+  }
+  function patchRenderStats(){
+    if(typeof renderStats!=='function' || renderStats.__mbh042) return;
+    const old=renderStats;
+    renderStats=function(){ const r=old.apply(this,arguments); safe(()=>{ renderCanonicalEffects(false); installObserver(); }); return r; };
+    renderStats.__mbh042=true;
+  }
+  function syncVersion(){
+    window.APP_VERSION=BUILD; window.GAME_VERSION=BUILD;
+    document.documentElement.dataset.buildVersion=BUILD;
+    document.querySelectorAll('.build-version').forEach(el=>{el.textContent='ver.'+BUILD;});
+    document.querySelectorAll('.debug-version').forEach(el=>{el.textContent='Build: ver.'+BUILD;});
+    document.querySelectorAll('.debug-trace-title').forEach(el=>{el.textContent='進行デバッグログ ver.'+BUILD;});
+  }
+  function boot(){
+    syncVersion(); installCss(); patchItemSummary(); patchRenderEquip(); patchRenderStats(); renderCanonicalEffects(true); installObserver();
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot,{once:true}); else setTimeout(boot,0);
+  window.addEventListener('load',boot,{once:true});
+  setInterval(()=>safe(()=>{ syncVersion(); patchItemSummary(); patchRenderEquip(); patchRenderStats(); renderCanonicalEffects(false); installObserver(); }),250);
 })();
