@@ -2808,3 +2808,5 @@ html[data-build-version="0.4.0"] #statEnemyLevelXpLabel{
 
 /* MBH 0.4.0: log removed and menu fixed */
 .log-panel,#logFilterBar,#log,[data-menu-page="log"]{display:none!important;}
+
+/* MBH 0.4.1 layout rule patch marker */
