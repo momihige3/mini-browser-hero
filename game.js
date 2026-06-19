@@ -42,7 +42,7 @@ const DARK_SWORD_SAINT_CUTIN = {quote:'私を超えてみせろ。', img:'assets
 const DARK_SWORD_TECHNIQUE_CUTIN = {quote:'', img:'assets/cutin_dark_sword_technique.png'};
 const TENSEI_KNIGHT_CUTIN = {quote:'勇者の力、ここに覚醒する。', img:'assets/cutin_hero_awakening.png'};
 const HOLY_SWORD_RELEASE_CUTIN = {quote:'聖剣解放。すべてを砕く光となれ。', img:'assets/cutin_holy_sword_release.png'};
-const GAME_VERSION = (window.APP_VERSION || '0.6.7');
+const GAME_VERSION = (window.APP_VERSION || '0.6.8');
 window.GAME_VERSION = GAME_VERSION;
 
 const DARK_SWORD_SAINT = {
@@ -1015,9 +1015,9 @@ function statusTooltipHtml(kind, target){
   if(kind === 'burn') return `<b>火傷</b><br>残り：${burnSeconds(target)}秒<br>防御力25%低下。<br>火耐性10%以上で無効化。`;
   if(kind === 'deathdance') return `<b>死線の剣舞</b><br>残り：${Math.max(0, Math.ceil((state.deathDanceUntil-nowMs())/1000))}秒<br>極限状態で連続攻撃を放つ。<br>発動時にすべてのデバフを解除し、発動中は新たなデバフを無効化する。<br>この戦闘での発動回数：${state.deathDanceBattleCount||0}回<br>現在威力：${Math.pow(2, state.deathDanceBattleCount||0)}倍`; 
   if(kind === 'unyielding') return `<b>不屈</b><br>暗黒剣聖・天聖騎士と対峙中のみ発動。<br>死線の剣舞発動率+50%。<br>現在の剣舞発動率：${Math.round(calcStats().deathDanceChance*100)}%。`;
-  if(kind === 'holy_protection') return `<b>光の加護</b><br>天聖騎士の常時効果。<br>被ダメージ50%軽減。<br>毎秒HP1%回復。HP50%以下では毎秒HP2%回復。`;
+  if(kind === 'holy_protection') return `<b>光の加護</b><br>天聖騎士の常時効果。<br>被ダメージ90%軽減。<br>毎秒HP1%回復。HP50%以下では毎秒HP2%回復。`;
   if(kind === 'holy_awakening') return `<b>勇者の覚醒</b><br>HP50%以下で発動。<br>攻撃力+300%。<br>攻撃速度+100%。<br>状態異常90%軽減。`;
-  if(kind === 'holy_release') return `<b>聖剣解放</b><br>天聖騎士の必殺技。<br>一定回数ごとに防御をほぼ無視する光属性特大ダメージを放つ。`;
+  if(kind === 'holy_release') return `<b>聖剣解放</b><br>天聖騎士の必殺技。<br>一定回数ごとに防御をほぼ無視する光属性特大ダメージを放つ。<br>発動後5秒間、0.2秒ごとに最大HPの3%を回復。`;
   if(kind === 'holy_ailment_guard') return `<b>聖域浄化</b><br>天聖騎士の状態異常軽減。<br>状態異常の時間・ダメージ・デバフ量を90%軽減。`;
   if(kind === 'darkaura') return `<b>闇オーラ</b><br>現在：${darkAuraStacks()}スタック<br>1スタックごとに被ダメージ10%軽減。<br>闇オーラ中は出血ダメージ90%軽減。<br>最大10スタック。10秒ごとに1減少。<br>暗黒剣舞発動時に10へ回復。`;
   if(kind === 'darksword') return `<b>暗黒の剣</b><br>現在：${darkSwordBuffCount()}スタック<br>攻撃力+50% / スタック。<br>効果時間：60秒。スタック可能。<br>最長残り：${darkSwordBuffSeconds()}秒。`;
@@ -1299,7 +1299,7 @@ function renderStatusLists(){
     }
     if(isTenseiKnight()){
       parts.push(makeStatusBadge('✨光の加護', 'bossbuff', 'holy_protection', 'enemy'));
-      parts.push(makeStatusBadge(`⚔️聖剣解放(${state.enemyStatuses?.holyReleaseCount||0}/6)`, 'bossbuff', 'holy_release', 'enemy'));
+      parts.push(makeStatusBadge(`⚔️聖剣解放${(state.enemyStatuses?.holyReleaseHealUntil||0)>nowMs()?'：回復中':'('+(state.enemyStatuses?.holyReleaseCount||0)+'/6)'}`, 'bossbuff', 'holy_release', 'enemy'));
       parts.push(makeStatusBadge('🕊️聖域浄化', 'bossbuff', 'holy_ailment_guard', 'enemy'));
       if(state.enemyStatuses?.holyAwakened) parts.push(makeStatusBadge('🌈勇者の覚醒', 'bossbuff', 'holy_awakening', 'enemy'));
     }
@@ -1430,6 +1430,7 @@ function setEnemy(e){
     state.enemyStatuses.holyReleaseCount = 0;
     state.enemyStatuses.holyRegenLast = performance.now();
     state.enemyStatuses.holyProtection = true;
+    state.enemyStatuses.holyReleaseHealUntil = 0;
     state.enemyStatuses.holyAilmentReduce = .90;
     setBgmMode('tensei_knight');
   }else if(isDarkSwordSaint(e)){
@@ -1607,7 +1608,7 @@ function applyHeroHit(skill){
     if(element==='fire' && state.enemy.fireResist){dmg=Math.floor(dmg*(1-state.enemy.fireResist)); resisted=true;}
     if(isSpeciesBoss()) dmg = Math.max(1, Math.floor(dmg * (1 - bossCommonDamageReduction())));
     if(state.enemy?.bossBuff === 'apex') dmg = Math.max(1, Math.floor(dmg * 0.5));
-    if(isTenseiKnight()) dmg = Math.max(1, Math.floor(dmg * 0.50));
+    if(isTenseiKnight()) dmg = Math.max(1, Math.floor(dmg * 0.10));
     if(isDarkSwordSaint()){
       const auraReduce = Math.min(1, darkAuraStacks() * 0.10);
       dmg = Math.floor(dmg * (1 - auraReduce));
@@ -3363,7 +3364,7 @@ init();
 /* MBH ver.0.6.5: clean menu controller. No redirect URL params. No BGM assets. */
 (function(){
   'use strict';
-  const BUILD='0.6.5';
+  const BUILD='0.6.8';
   const $=(s,r=document)=>r.querySelector(s);
   const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
   const safe=(fn)=>{ try{ return fn&&fn(); }catch(e){ console.error('[MBH0.6.5]', e); return null; } };
@@ -3584,7 +3585,7 @@ init();
 /* MBH ver.0.6.5: single-click menu/debug stabilizer */
 (function(){
   'use strict';
-  const BUILD='0.6.5';
+  const BUILD='0.6.8';
   const $=(s,r=document)=>r.querySelector(s);
   const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
   const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.error('[MBH0.6.5]', e); return null; } };
@@ -3732,7 +3733,7 @@ init();
 /* MBH ver.0.6.5: restore effect panels and sell EXP display */
 (function(){
   'use strict';
-  const BUILD='0.6.5';
+  const BUILD='0.6.8';
   const $=(s,r=document)=>r.querySelector(s);
   const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
   const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.error('[MBH0.6.5]', e); return null; } };
@@ -3883,7 +3884,7 @@ init();
 /* MBH ver.0.6.5: mobile tap recovery + status detail outside-close */
 (function(){
   'use strict';
-  const BUILD='0.6.5';
+  const BUILD='0.6.8';
   const $=(s,r=document)=>r.querySelector(s);
   const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
   const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.error('[MBH0.6.5]', e); return null; } };
@@ -4014,7 +4015,7 @@ init();
 /* MBH ver.0.6.5: inventory lock restore + slot filter fit + auto-lock valuables */
 (function(){
   'use strict';
-  const BUILD='0.6.5';
+  const BUILD='0.6.8';
   const $id=(id)=>document.getElementById(id);
   const $q=(s,r=document)=>r.querySelector(s);
   const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
@@ -4365,7 +4366,7 @@ init();
 /* MBH ver.0.6.5: inventory filter single-source cleanup */
 (function(){
   'use strict';
-  const BUILD='0.6.5';
+  const BUILD='0.6.8';
   const $=(id)=>document.getElementById(id);
   const $$=(sel,root=document)=>Array.from(root.querySelectorAll(sel));
   const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.error('[MBH0.6.5]', e); return null; } };
@@ -4403,7 +4404,7 @@ init();
 /* ver0.6.5: debug enemy level +/-1,+/-10 and next specified boss buttons */
 (function(){
   'use strict';
-  const BUILD='0.6.5';
+  const BUILD='0.6.8';
   const $=(id)=>document.getElementById(id);
   const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.error('[MBH0.6.5]',e); return null; } };
 
@@ -4558,7 +4559,7 @@ init();
 /* MBH ver.0.6.5: UI label, mobile audio background stop, invincible debug, dark grant repair, SP expbar */
 (function(){
   'use strict';
-  const BUILD='0.6.5';
+  const BUILD='0.6.8';
   const $=(id)=>document.getElementById(id);
   const $$=(sel,root=document)=>Array.from(root.querySelectorAll(sel));
   const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.error('[MBH0.6.5]',e); return null; } };
@@ -4844,7 +4845,7 @@ init();
     const st=document.createElement('style'); st.id='mbh062-sp-exp-style';
     st.textContent=`
       @media (max-width:760px), (pointer:coarse){
-        html[data-build-version="0.6.5"] .battle-panel .expbar{
+        html[data-build-version="0.6.8"] .battle-panel .expbar{
           display:block!important;visibility:visible!important;opacity:1!important;
           position:absolute!important;left:8px!important;right:8px!important;
           bottom:max(8px, env(safe-area-inset-bottom, 0px))!important;
@@ -4852,9 +4853,9 @@ init();
           border:2px solid #c99b39!important;background:rgba(10,6,3,.9)!important;
           box-shadow:0 0 14px #000,inset 0 0 8px #000!important;overflow:hidden!important;
         }
-        html[data-build-version="0.6.5"] .battle-panel .expbar span{line-height:24px!important;font-size:12px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;padding:0 48px 0 6px!important;}
-        html[data-build-version="0.6.5"] .battle-panel .expbar b{display:block!important;right:8px!important;top:3px!important;font-size:12px!important;}
-        html[data-build-version="0.6.5"] .battle-panel{padding-bottom:36px!important;}
+        html[data-build-version="0.6.8"] .battle-panel .expbar span{line-height:24px!important;font-size:12px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;padding:0 48px 0 6px!important;}
+        html[data-build-version="0.6.8"] .battle-panel .expbar b{display:block!important;right:8px!important;top:3px!important;font-size:12px!important;}
+        html[data-build-version="0.6.8"] .battle-panel{padding-bottom:36px!important;}
       }
     `;
     document.head.appendChild(st);
@@ -4890,7 +4891,7 @@ init();
 /* MBH ver.0.6.5: legal modal front-layer fix */
 (function(){
   'use strict';
-  const BUILD='0.6.5';
+  const BUILD='0.6.8';
   const $=(id)=>document.getElementById(id);
   function safe(fn){try{return fn&&fn();}catch(e){console.error('[MBH0.6.5 legal]', e);}}
   function setBuild(){
@@ -4984,6 +4985,30 @@ function processTenseiKnight(now){
 }
 function tenseiKnightAtkMul(){ return isTenseiKnight() && state.enemyStatuses?.holyAwakened ? 4 : 1; }
 function tenseiKnightIntervalMul(){ return isTenseiKnight() && state.enemyStatuses?.holyAwakened ? .5 : 1; }
+function startTenseiHolyReleaseHeal(){
+  if(!isTenseiKnight() || !state.enemyStatuses) return;
+  const started = performance.now();
+  state.enemyStatuses.holyReleaseHealUntil = started + 5000;
+  let ticks = 0;
+  const timer = setInterval(()=>{
+    try{
+      if(!isTenseiKnight() || !state.enemy || !state.enemyStatuses || state.enemyHp <= 0){ clearInterval(timer); return; }
+      ticks += 1;
+      const heal = Math.max(1, Math.floor(state.enemy.maxHp * 0.03));
+      if(state.enemyHp < state.enemy.maxHp){
+        state.enemyHp = Math.min(state.enemy.maxHp, state.enemyHp + heal);
+        showFloat(`+${heal}`, 'heal');
+        renderBattle();
+      }
+      if(ticks >= 25 || performance.now() >= state.enemyStatuses.holyReleaseHealUntil){
+        clearInterval(timer);
+        if(state.enemyStatuses) state.enemyStatuses.holyReleaseHealUntil = 0;
+        renderStatusLists();
+      }
+    }catch(e){ clearInterval(timer); }
+  }, 200);
+  renderStatusLists();
+}
 const __oldEnemyInterval066 = enemyInterval;
 enemyInterval = function(){ return Math.max(360, __oldEnemyInterval066() * tenseiKnightIntervalMul()); };
 const __oldEnemyAttack066 = enemyAttack;
@@ -4993,6 +5018,7 @@ enemyAttack = function(now){
     if(state.enemyStatuses.holyReleaseCount >= 6){
       state.enemyStatuses.holyReleaseCount = 0;
       showHolyCutin('release');
+      startTenseiHolyReleaseHeal();
       setTimeout(()=>{
         const st=calcStats();
         let dmg = Math.max(1, Math.floor((state.enemy.atk * 3.2 * tenseiKnightAtkMul()) - st.def*.15 + rand(0,state.enemy.atk*.6)));
