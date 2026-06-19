@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja" data-build-version="0.4.3" data-build-date="2026-06-18">
+<html lang="ja" data-build-version="0.4.0" data-build-date="2026-06-19">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -7,7 +7,7 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
   <title>ミニブラウザヒーロー</title>
-  <link rel="stylesheet" href="style.css?v=0.4.3" />
+  <link rel="stylesheet" href="style.css?v=0.4.0" />
 
     <!-- Cloudflare Web Analytics -->
     <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token":"f48e7088e55c41f4a0a6044f8bf3531b"}'></script>
@@ -21,7 +21,7 @@
 <body>
   <div id="game">
     <header class="topbar">
-      <div class="brand">ミニブラウザヒーロー <span class="build-version">ver.0.4.3</span></div>
+      <div class="brand">ミニブラウザヒーロー <span class="build-version">ver.0.4.0</span></div>
       <div class="resources"><b id="mats">0</b> 強化石</div>
       <div class="controls">
         <button id="equipToggleBtn">メニュー</button>
@@ -150,7 +150,7 @@
         <button id="debugGrantDarkSet">闇装備7種セット付与</button>
         <div id="debugGrantDarkItems" class="debug-grid"></div>
         <div id="mbhTraceBox" class="debug-trace-box">
-          <div class="debug-trace-title">進行デバッグログ ver.0.4.3</div>
+          <div class="debug-trace-title">進行デバッグログ ver.0.4.0</div>
           <button id="mbhTraceMark" type="button">現在状態を記録</button>
           <button id="mbhTraceCopy" type="button">ログコピー</button>
           <button id="mbhTraceDownload" type="button">DL</button>
@@ -159,7 +159,7 @@
         </div>
         <label><input id="debugKillEnemy" type="checkbox"> 敵への攻撃で即死</label>
         <label><input id="debugKillHero" type="checkbox"> 敵からの攻撃で即死</label>
-        <div class="debug-version">Build: ver.0.4.3 debug</div>
+        <div class="debug-version">Build: ver.0.4.0 debug</div>
         <button id="debugClose">閉じる</button>
       </div>
   </div>
@@ -196,11 +196,11 @@
 
   <script>
     (function(){
-      var build = document.documentElement.dataset.buildVersion || '0.4.3';
+      var build = document.documentElement.dataset.buildVersion || '0.4.0';
       window.APP_VERSION = build;
       window.GAME_VERSION = build;
       var s = document.createElement('script');
-      s.src = 'game.js?v=' + encodeURIComponent(build) + '&t=043';
+      s.src = 'game.js?v=' + encodeURIComponent(build) + '&t=044';
       s.defer = false;
       document.body.appendChild(s);
     })();

@@ -40,7 +40,7 @@ const DEATH_DANCE_CUTINS = [
 ];
 const DARK_SWORD_SAINT_CUTIN = {quote:'私を超えてみせろ。', img:'assets/cutin_dark_sword_dance.png'};
 const DARK_SWORD_TECHNIQUE_CUTIN = {quote:'', img:'assets/cutin_dark_sword_technique.png'};
-const GAME_VERSION = (window.APP_VERSION || '0.4.3');
+const GAME_VERSION = (window.APP_VERSION || '0.4.4');
 window.GAME_VERSION = GAME_VERSION;
 
 const DARK_SWORD_SAINT = {
@@ -6260,7 +6260,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* ver.0.4.2: startup-safe fixed menu layout, footer, log type, debug enemy controls */
 (function(){
   'use strict';
-  const BUILD='0.4.3';
+  const BUILD='0.4.4';
   const qs=(s,r=document)=>r.querySelector(s);
   const qsa=(s,r=document)=>Array.from(r.querySelectorAll(s));
   const byId=(id)=>document.getElementById(id);
@@ -6591,7 +6591,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* ver.0.4.2: footer isolated from log redraw + final log type lock */
 (function(){
   'use strict';
-  const BUILD='0.4.3';
+  const BUILD='0.4.4';
   const qs=(s,r=document)=>r.querySelector(s);
   const qsa=(s,r=document)=>Array.from(r.querySelectorAll(s));
   const byId=(id)=>document.getElementById(id);
@@ -6709,7 +6709,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* ver.0.4.2: boss BGM + startup menu closed final lock */
 (function(){
   'use strict';
-  const BUILD='0.4.3';
+  const BUILD='0.4.4';
   const qs=(s,r=document)=>r.querySelector(s);
   const qsa=(s,r=document)=>Array.from(r.querySelectorAll(s));
   const safe=(fn)=>{ try{return fn();}catch(e){ console.error('[MBH 0.4.2]', e); } };
@@ -6800,7 +6800,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* ver.0.4.2: final stable menu/footer/effects/log/sell-exp lock */
 (function(){
   'use strict';
-  const BUILD='0.4.3';
+  const BUILD='0.4.4';
   const $=(s,r=document)=>r.querySelector(s);
   const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
   const byId=(id)=>document.getElementById(id);
@@ -7062,7 +7062,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
    It only owns menu open/close state so older stacked handlers cannot reopen it. */
 (function(){
   'use strict';
-  const BUILD='0.4.3';
+  const BUILD='0.4.4';
   const byId=(id)=>document.getElementById(id);
   const qs=(s)=>document.querySelector(s);
   const qsa=(s)=>Array.from(document.querySelectorAll(s));
@@ -7202,7 +7202,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* ver.0.4.2: final layout/log/effect/menu stability lock */
 (function(){
   'use strict';
-  const BUILD='0.4.3';
+  const BUILD='0.4.4';
   const $id=(id)=>document.getElementById(id);
   const $$=(sel,root=document)=>Array.from(root.querySelectorAll(sel));
   const esc=(s)=>String(s??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
@@ -7673,7 +7673,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* MBH ver.0.4.2: 軽量化・ログ撤去・メニューDOM固定 */
 (function(){
   'use strict';
-  const BUILD='0.4.3';
+  const BUILD='0.4.4';
   const $=(id)=>document.getElementById(id);
   const $$=(sel,root=document)=>Array.from(root.querySelectorAll(sel));
   const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.warn('[MBH 0.4.2]', e); } };
@@ -7929,7 +7929,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* MBH ver.0.4.2: menu layout rule finalizer */
 (function(){
   'use strict';
-  const BUILD='0.4.3';
+  const BUILD='0.4.4';
   const $=(id)=>document.getElementById(id);
   const $$=(sel,root=document)=>Array.from(root.querySelectorAll(sel));
   const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.warn('[MBH 0.4.2 layout]', e); } };
@@ -8272,7 +8272,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* MBH ver.0.4.2: 固有能力表示の固定化 + レアリティ色付け + 戦闘中の一時効果を表示しない */
 (function(){
   'use strict';
-  const BUILD='0.4.3';
+  const BUILD='0.4.4';
   const DARK_COLOR='#b86cff';
   const BASIC_COLOR='#f7ead0';
   const ABILITY_KEYS=new Set([
@@ -8461,10 +8461,10 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 })();
 
 
-/* MBH ver.0.4.3: version single-source, stable effect panels, debug/menu layout lock, named regen display */
+/* MBH ver.0.4.4: version single-source, stable effect panels, debug/menu layout lock, named regen display */
 (function(){
   'use strict';
-  const BUILD='0.4.3';
+  const BUILD='0.4.4';
   const BASIC_COLOR='#f7ead0';
   const DARK_COLOR='#b86cff';
   const RARITY_COLORS={legendary:'#ff9b24',rare:'#4d8dff',normal:'#eeeeee'};
@@ -8475,7 +8475,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
     deathDanceDefIgnore:'剣舞防御無視', heroDarkBleedChance:'暗黒出血付与', lifeSteal:'HP吸収',
     guard:'ガード率', crit:'クリティカル率', killHeal:'撃破時HP回復'
   };
-  function safe(fn){ try{return fn&&fn();}catch(e){ console.warn('[MBH0.4.3]', e); return null; } }
+  function safe(fn){ try{return fn&&fn();}catch(e){ console.warn('[MBH0.4.4]', e); return null; } }
   function $(id){ return document.getElementById(id); }
   function esc(s){ return String(s??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
   function pct(v,signed=false){ const n=Math.round(Number(v||0)*100); return (signed&&n>0?'+':'')+n+'%'; }
@@ -8600,23 +8600,23 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
     if($('mbh-043-final-css')) return;
     const st=document.createElement('style'); st.id='mbh-043-final-css';
     st.textContent=`
-      html[data-build-version="0.4.3"] .effect-row.ability-option span,
-      html[data-build-version="0.4.3"] .effect-row.ability-option b{color:var(--effect-color)!important;text-shadow:0 0 8px color-mix(in srgb,var(--effect-color) 55%,transparent)!important;}
-      html[data-build-version="0.4.3"] .effect-row.basic-option span{color:#e8d0a2!important;}
-      html[data-build-version="0.4.3"] .effect-row.basic-option b{color:#fff7c8!important;}
-      html[data-build-version="0.4.3"] #statusSpecialEffects .effect-scroll,
-      html[data-build-version="0.4.3"] #equipEffectTotals .effect-scroll{scrollbar-color:#9d742a #111!important;scrollbar-width:thin!important;overflow:auto!important;}
-      html[data-build-version="0.4.3"] #statusSpecialEffects .effect-scroll::-webkit-scrollbar,
-      html[data-build-version="0.4.3"] #equipEffectTotals .effect-scroll::-webkit-scrollbar{width:8px!important;}
-      html[data-build-version="0.4.3"] #statusSpecialEffects .effect-scroll::-webkit-scrollbar-thumb,
-      html[data-build-version="0.4.3"] #equipEffectTotals .effect-scroll::-webkit-scrollbar-thumb{background:#8b6628!important;border-radius:8px!important;}
-      html[data-build-version="0.4.3"] #statusSpecialEffects .effect-scroll::-webkit-scrollbar-track,
-      html[data-build-version="0.4.3"] #equipEffectTotals .effect-scroll::-webkit-scrollbar-track{background:#120b06!important;}
+      html[data-build-version="0.4.4"] .effect-row.ability-option span,
+      html[data-build-version="0.4.4"] .effect-row.ability-option b{color:var(--effect-color)!important;text-shadow:0 0 8px color-mix(in srgb,var(--effect-color) 55%,transparent)!important;}
+      html[data-build-version="0.4.4"] .effect-row.basic-option span{color:#e8d0a2!important;}
+      html[data-build-version="0.4.4"] .effect-row.basic-option b{color:#fff7c8!important;}
+      html[data-build-version="0.4.4"] #statusSpecialEffects .effect-scroll,
+      html[data-build-version="0.4.4"] #equipEffectTotals .effect-scroll{scrollbar-color:#9d742a #111!important;scrollbar-width:thin!important;overflow:auto!important;}
+      html[data-build-version="0.4.4"] #statusSpecialEffects .effect-scroll::-webkit-scrollbar,
+      html[data-build-version="0.4.4"] #equipEffectTotals .effect-scroll::-webkit-scrollbar{width:8px!important;}
+      html[data-build-version="0.4.4"] #statusSpecialEffects .effect-scroll::-webkit-scrollbar-thumb,
+      html[data-build-version="0.4.4"] #equipEffectTotals .effect-scroll::-webkit-scrollbar-thumb{background:#8b6628!important;border-radius:8px!important;}
+      html[data-build-version="0.4.4"] #statusSpecialEffects .effect-scroll::-webkit-scrollbar-track,
+      html[data-build-version="0.4.4"] #equipEffectTotals .effect-scroll::-webkit-scrollbar-track{background:#120b06!important;}
       @media (min-width:1280px) and (min-height:701px){
-        html[data-build-version="0.4.3"] .side-panel{position:static!important;display:grid!important;grid-template-rows:auto minmax(0,1fr) auto!important;grid-template-columns:1fr!important;overflow:hidden!important;}
-        html[data-build-version="0.4.3"] .side-panel .mobile-menu-tabs{grid-row:1!important;position:relative!important;top:auto!important;left:auto!important;right:auto!important;display:flex!important;z-index:2!important;}
-        html[data-build-version="0.4.3"] #debugPanel:not(.hidden){position:fixed!important;right:18px!important;top:70px!important;z-index:12000!important;max-height:calc(100vh - 88px)!important;overflow:auto!important;}
-        html[data-build-version="0.4.3"] #debugPanel:not(.hidden) ~ *{position:static!important;}
+        html[data-build-version="0.4.4"] .side-panel{position:static!important;display:grid!important;grid-template-rows:auto minmax(0,1fr) auto!important;grid-template-columns:1fr!important;overflow:hidden!important;}
+        html[data-build-version="0.4.4"] .side-panel .mobile-menu-tabs{grid-row:1!important;position:relative!important;top:auto!important;left:auto!important;right:auto!important;display:flex!important;z-index:2!important;}
+        html[data-build-version="0.4.4"] #debugPanel:not(.hidden){position:fixed!important;right:18px!important;top:70px!important;z-index:12000!important;max-height:calc(100vh - 88px)!important;overflow:auto!important;}
+        html[data-build-version="0.4.4"] #debugPanel:not(.hidden) ~ *{position:static!important;}
       }
     `;
     document.head.appendChild(st);
@@ -8630,4 +8630,280 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot,{once:true}); else setTimeout(boot,0);
   window.addEventListener('load',boot,{once:true});
   setInterval(()=>safe(()=>{ syncVersion(); patchNamedRegen(); patchRenderHooks(); renderEffects(false); sanitizeNamedRegenText(); }),300);
+})();
+
+
+/* MBH ver.0.4.4: final menu full-page layout + debug next enemy queue + spawn overwrite guard */
+(function(){
+  'use strict';
+  const BUILD='0.4.4';
+  const $=(id)=>document.getElementById(id);
+  const qs=(s,r=document)=>r.querySelector(s);
+  const qsa=(s,r=document)=>Array.from(r.querySelectorAll(s));
+  const safe=(fn)=>{ try{ return fn&&fn(); }catch(e){ console.warn('[MBH0.4.4]', e); return null; } };
+
+  function syncVersion044(){
+    window.APP_VERSION=BUILD;
+    window.GAME_VERSION=BUILD;
+    document.documentElement.dataset.buildVersion=BUILD;
+    document.documentElement.dataset.mbhVersion=BUILD;
+    qsa('.build-version').forEach(el=>{ el.textContent='ver.'+BUILD; });
+    qsa('.debug-version').forEach(el=>{ el.textContent='Build: ver.'+BUILD; });
+    qsa('.debug-trace-title').forEach(el=>{ el.textContent='進行デバッグログ ver.'+BUILD; });
+  }
+
+  function ensureCss044(){
+    if($('mbh-044-final-css')) return;
+    const st=document.createElement('style');
+    st.id='mbh-044-final-css';
+    st.textContent=`
+      html[data-build-version="0.4.4"] .side-panel{
+        display:grid!important;
+        grid-template-columns:1fr!important;
+        grid-template-rows:auto minmax(0,1fr) auto!important;
+        gap:10px!important;
+        min-width:0!important;min-height:0!important;overflow:hidden!important;
+      }
+      html[data-build-version="0.4.4"] .side-panel>.mobile-menu-tabs{
+        grid-row:1!important;display:flex!important;position:relative!important;top:auto!important;left:auto!important;right:auto!important;width:100%!important;z-index:5!important;flex:0 0 auto!important;
+      }
+      html[data-build-version="0.4.4"] .side-panel>.mobile-menu-tabs button{flex:1 1 0!important;min-width:0!important;white-space:nowrap!important;}
+      html[data-build-version="0.4.4"] .side-panel>.menu-col,
+      html[data-build-version="0.4.4"] .side-panel>.menu-main,
+      html[data-build-version="0.4.4"] .side-panel>.menu-left,
+      html[data-build-version="0.4.4"] .side-panel>.menu-right{display:none!important;}
+      html[data-build-version="0.4.4"] .side-panel>.menu-content-fixed,
+      html[data-build-version="0.4.4"] #mbhMenuContent044{
+        grid-row:2!important;display:block!important;width:100%!important;height:100%!important;min-width:0!important;min-height:0!important;max-width:none!important;overflow:hidden!important;margin:0!important;padding:0!important;
+        grid-template-columns:none!important;grid-template-rows:none!important;
+      }
+      html[data-build-version="0.4.4"] #mbhMenuContent044>.panel{
+        width:100%!important;height:100%!important;max-width:none!important;min-width:0!important;min-height:0!important;margin:0!important;grid-column:auto!important;grid-row:auto!important;align-self:stretch!important;justify-self:stretch!important;overflow:hidden!important;
+      }
+      html[data-build-version="0.4.4"] #mbhMenuContent044>.panel:not(.active-page){display:none!important;}
+      html[data-build-version="0.4.4"] #mbhMenuContent044>.panel.active-page{display:flex!important;flex-direction:column!important;}
+      html[data-build-version="0.4.4"] .hero-stats>.status-layout,
+      html[data-build-version="0.4.4"] .equip-panel>.equip-layout{
+        flex:1 1 auto!important;min-height:0!important;width:100%!important;height:auto!important;display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;grid-template-rows:minmax(0,1fr)!important;gap:12px!important;overflow:hidden!important;
+      }
+      html[data-build-version="0.4.4"] .status-left,
+      html[data-build-version="0.4.4"] .status-right,
+      html[data-build-version="0.4.4"] .equip-left,
+      html[data-build-version="0.4.4"] .equip-right{min-width:0!important;min-height:0!important;overflow:hidden!important;display:flex!important;flex-direction:column!important;}
+      html[data-build-version="0.4.4"] .status-special-effects,
+      html[data-build-version="0.4.4"] .monster-records,
+      html[data-build-version="0.4.4"] .equip-effect-totals{flex:1 1 auto!important;min-height:0!important;overflow:hidden!important;display:flex!important;flex-direction:column!important;}
+      html[data-build-version="0.4.4"] .effect-scroll,
+      html[data-build-version="0.4.4"] .monster-record-list,
+      html[data-build-version="0.4.4"] .equip-list,
+      html[data-build-version="0.4.4"] .inventory{min-height:0!important;overflow-y:auto!important;overflow-x:hidden!important;scrollbar-color:#9d742a #111!important;scrollbar-width:thin!important;}
+      html[data-build-version="0.4.4"] .effect-scroll::-webkit-scrollbar,
+      html[data-build-version="0.4.4"] .monster-record-list::-webkit-scrollbar,
+      html[data-build-version="0.4.4"] .equip-list::-webkit-scrollbar,
+      html[data-build-version="0.4.4"] .inventory::-webkit-scrollbar{width:8px!important;}
+      html[data-build-version="0.4.4"] .effect-scroll::-webkit-scrollbar-thumb,
+      html[data-build-version="0.4.4"] .monster-record-list::-webkit-scrollbar-thumb,
+      html[data-build-version="0.4.4"] .equip-list::-webkit-scrollbar-thumb,
+      html[data-build-version="0.4.4"] .inventory::-webkit-scrollbar-thumb{background:#8b6628!important;border-radius:8px!important;}
+      html[data-build-version="0.4.4"] .effect-scroll::-webkit-scrollbar-track,
+      html[data-build-version="0.4.4"] .monster-record-list::-webkit-scrollbar-track,
+      html[data-build-version="0.4.4"] .equip-list::-webkit-scrollbar-track,
+      html[data-build-version="0.4.4"] .inventory::-webkit-scrollbar-track{background:#120b06!important;}
+      html[data-build-version="0.4.4"] .inventory-panel.active-page{display:flex!important;flex-direction:column!important;}
+      html[data-build-version="0.4.4"] .inventory-panel .inventory{flex:1 1 auto!important;width:100%!important;max-height:none!important;display:grid!important;grid-template-columns:repeat(auto-fill,minmax(96px,1fr))!important;align-content:start!important;}
+      html[data-build-version="0.4.4"] .menu-footer{grid-row:3!important;position:relative!important;display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important;width:100%!important;margin:0!important;z-index:4!important;}
+      html[data-build-version="0.4.4"] #bestEquipBtnEquip{display:none!important;}
+      @media (min-width:1280px) and (min-height:701px){
+        html[data-build-version="0.4.4"] #equipToggleBtn{display:none!important;}
+        html[data-build-version="0.4.4"] .side-panel{position:static!important;width:auto!important;background:none!important;border:0!important;box-shadow:none!important;padding:0!important;}
+        html[data-build-version="0.4.4"] #debugPanel:not(.hidden){position:fixed!important;right:18px!important;top:70px!important;z-index:12000!important;max-height:calc(100vh - 88px)!important;overflow:auto!important;}
+      }
+      @media (max-width:1279px),(max-height:700px){
+        html[data-build-version="0.4.4"] #equipToggleBtn{display:inline-block!important;}
+        html[data-build-version="0.4.4"] .side-panel{display:none!important;position:fixed!important;left:8px!important;right:8px!important;top:calc(var(--mbh-topbar-h,58px) + 8px)!important;bottom:8px!important;width:auto!important;max-width:calc(100vw - 16px)!important;z-index:70!important;background:rgba(0,0,0,.94)!important;border:2px solid #c99b39!important;padding:8px!important;box-shadow:0 0 35px #000!important;}
+        html[data-build-version="0.4.4"] .side-panel.open{display:grid!important;}
+      }
+      @media (max-width:760px){
+        html[data-build-version="0.4.4"] .hero-stats>.status-layout,
+        html[data-build-version="0.4.4"] .equip-panel>.equip-layout{grid-template-columns:1fr!important;overflow-y:auto!important;}
+        html[data-build-version="0.4.4"] .menu-footer{grid-template-columns:1fr!important;}
+      }
+    `;
+    document.head.appendChild(st);
+  }
+
+  function normalizeTabs044(){
+    const panel=qs('.side-panel'); if(!panel) return;
+    let tabs=qs(':scope > .mobile-menu-tabs', panel) || qs('.mobile-menu-tabs', panel);
+    if(!tabs){
+      tabs=document.createElement('nav'); tabs.className='mobile-menu-tabs side-tabs'; tabs.setAttribute('aria-label','右側タブ');
+      panel.insertBefore(tabs, panel.firstChild);
+    }
+    tabs.innerHTML='<button type="button" data-menu-page="stats">ステータス</button><button type="button" data-menu-page="equip">装備</button><button type="button" data-menu-page="inventory">倉庫</button>';
+    if(tabs.parentElement!==panel) panel.insertBefore(tabs, panel.firstChild);
+  }
+
+  function ensureMenuContent044(){
+    const panel=qs('.side-panel'); if(!panel) return;
+    normalizeTabs044();
+    let content=$('mbhMenuContent044');
+    if(!content){ content=document.createElement('div'); content.id='mbhMenuContent044'; content.className='menu-content-fixed'; }
+    content.id='mbhMenuContent044'; content.className='menu-content-fixed';
+    const footer=qs(':scope > .menu-footer', panel) || qs(':scope > .legal-links', panel) || qs('.menu-footer,.legal-links');
+    const tabs=qs(':scope > .mobile-menu-tabs', panel);
+    if(content.parentElement!==panel){
+      if(footer && footer.parentElement===panel) panel.insertBefore(content, footer); else panel.appendChild(content);
+    }
+    ['.hero-stats','.equip-panel','.inventory-panel'].forEach(sel=>{
+      const el=qs(sel, panel) || qs(sel, document);
+      if(el && el.parentElement!==content) content.appendChild(el);
+    });
+    // 古いログパネルは表示対象から外す。ログ機能削除を維持。
+    qsa('.log-panel', panel).forEach(el=>el.remove());
+    qsa('[data-menu-page="log"]', panel).forEach(el=>el.remove());
+    // 空の旧カラムは非表示用に残っていてもよいが、中身はcontentへ寄せる。
+    qsa('.menu-col,.menu-main', panel).forEach(el=>{ if(!el.children.length) el.style.display='none'; });
+    // footerは必ず最後。
+    let legal=footer;
+    if(!legal){
+      legal=document.createElement('div'); legal.className='legal-links menu-footer'; legal.setAttribute('aria-label','公開情報');
+      legal.innerHTML='<button id="creditBtn" type="button">クレジット</button><button id="termsBtn" type="button">利用規約</button><button id="privacyBtn" type="button">プライバシーポリシー</button>';
+    }
+    legal.className='legal-links menu-footer'; legal.classList.remove('hidden');
+    if(legal.parentElement!==panel) panel.appendChild(legal); else panel.appendChild(legal);
+    if(tabs && tabs.parentElement===panel) panel.insertBefore(tabs, content);
+    setMenuPage044((typeof state!=='undefined' && state.menuPage) || 'stats', false);
+  }
+
+  function setMenuPage044(page, save=true){
+    page = page==='equip' || page==='inventory' ? page : 'stats';
+    if(typeof state!=='undefined') state.menuPage=page;
+    const map={stats:'.hero-stats',equip:'.equip-panel',inventory:'.inventory-panel'};
+    qsa('.side-panel .mobile-menu-tabs button').forEach(b=>b.classList.toggle('active', b.dataset.menuPage===page));
+    qsa('#mbhMenuContent044>.panel').forEach(p=>p.classList.remove('active-page'));
+    const target=qs('#mbhMenuContent044>'+map[page]);
+    if(target) target.classList.add('active-page');
+    if(save && typeof scheduleSave==='function') safe(()=>scheduleSave());
+  }
+
+  function bindMenu044(){
+    const panel=qs('.side-panel'); const btn=$('equipToggleBtn'); if(!panel) return;
+    qsa('.side-panel .mobile-menu-tabs button').forEach(b=>{
+      if(b.__mbh044) return; b.__mbh044=true;
+      b.onclick=(e)=>{ e.preventDefault(); e.stopPropagation(); safe(()=>{ if(typeof playUiClick==='function') playUiClick(); }); setMenuPage044(b.dataset.menuPage||'stats'); return false; };
+    });
+    if(btn && btn.__mbh044!=='1'){
+      btn.__mbh044='1';
+      btn.onclick=(e)=>{
+        e.preventDefault(); e.stopPropagation();
+        const compact=window.matchMedia('(max-width:1279px),(max-height:700px)').matches;
+        if(!compact) return false;
+        const open=!panel.classList.contains('open');
+        panel.classList.toggle('open', open);
+        if(typeof state!=='undefined') state.uiOpen=open;
+        btn.textContent=open?'閉じる':'メニュー';
+        safe(()=>{ if(typeof playUiClick==='function') playUiClick(); });
+        ensureMenuContent044();
+        return false;
+      };
+    }
+  }
+
+  function patchSpawn044(){
+    if(typeof spawnEnemy==='function' && !spawnEnemy.__mbh044){
+      const old=spawnEnemy;
+      let lastSpawnAt=0;
+      spawnEnemy=function(forceFirst=false){
+        const now=Date.now();
+        // 古い監視処理や複数の撃破タイマーが、出現直後の生存中の敵を上書きするのを防ぐ。
+        if(!forceFirst && typeof state!=='undefined' && state.enemy && Number(state.enemyHp||0)>0 && now-lastSpawnAt<1200){
+          return state.enemy;
+        }
+        const r=old.apply(this,arguments);
+        lastSpawnAt=Date.now();
+        return r;
+      };
+      spawnEnemy.__mbh044=true;
+    }
+    if(typeof makeScaledEnemy==='function' && !makeScaledEnemy.__mbh044){
+      const oldMake=makeScaledEnemy;
+      makeScaledEnemy=function(base, forceLevel=null){
+        const e=oldMake.apply(this,arguments);
+        safe(()=>{
+          if(!e || e.id==='dark_sword_saint' || typeof state==='undefined') return;
+          const kind=state.mbhNextVariant044 || state.debugNextEnemyVariant || state.debugNextVariant031;
+          if(kind!=='strong' && kind!=='named') return;
+          state.mbhNextVariant044=null;
+          state.debugNextEnemyVariant=null;
+          state.debugNextVariant031=null;
+          e.variant={type:kind,label:kind==='named'?'異名持ち':'強個体'};
+          e.variantType=kind;
+          if(!e.__mbh044VariantApplied){
+            e.maxHp=Math.max(1,Math.floor((Number(e.maxHp)||1)*(kind==='named'?2.0:1.5)));
+            e.atk=Math.max(1,Math.floor((Number(e.atk)||1)*(kind==='named'?1.25:1.10)));
+            if(kind==='named') e.def=Math.max(0,Math.floor((Number(e.def)||0)*1.10));
+            e.__mbh044VariantApplied=true;
+          }
+        });
+        return e;
+      };
+      makeScaledEnemy.__mbh044=true;
+    }
+  }
+
+  function bindDebug044(){
+    const p=$('debugPanel'); if(!p) return;
+    const setVariant=(kind)=>{
+      if(typeof state==='undefined') return;
+      state.mbhNextVariant044=kind;
+      state.debugNextEnemyVariant=kind;
+      state.debugNextVariant031=kind;
+      const label=kind==='named'?'異名持ち':'強個体';
+      safe(()=>{ if(typeof log==='function') log('デバッグ：次の敵を'+label+'に設定。現在の敵を倒した後に出現。','system'); });
+      safe(()=>{ if(typeof scheduleSave==='function') scheduleSave(); });
+      const t=$('mbhDebugEnemyLevelText'); if(t){
+        const lv=Math.max(1,Math.floor(Number(state.enemyLevelBase)||Number(state.enemy?.level)||Number(state.level)||1));
+        t.textContent='現在出現Lv: '+lv+' / 次個体: '+label;
+      }
+    };
+    [['debugNextStrong','strong'],['debugNextNamed','named']].forEach(([id,kind])=>{
+      const b=$(id); if(!b) return;
+      b.onclick=(e)=>{ e.preventDefault(); e.stopPropagation(); safe(()=>{ if(typeof playUiClick==='function') playUiClick(); }); setVariant(kind); return false; };
+    });
+    qsa('[data-mbh-variant]', p).forEach(b=>{
+      if(b.__mbh044) return; b.__mbh044=true;
+      b.onclick=(e)=>{ e.preventDefault(); e.stopPropagation(); safe(()=>{ if(typeof playUiClick==='function') playUiClick(); }); setVariant(b.dataset.mbhVariant); return false; };
+    });
+    qsa('[data-mbh-clear]', p).forEach(b=>{
+      if(b.__mbh044Clear) return; b.__mbh044Clear=true;
+      b.onclick=(e)=>{ e.preventDefault(); e.stopPropagation(); if(typeof state!=='undefined'){ state.mbhNextVariant044=null; state.debugNextEnemyVariant=null; state.debugNextVariant031=null; } safe(()=>{ if(typeof log==='function') log('デバッグ：次個体予約を解除。','system'); }); return false; };
+    });
+  }
+
+  function sanitizeNamedRegen044(){
+    qsa('.float').forEach(el=>{
+      const t=String(el.textContent||'');
+      if(t.includes('異名再生')) el.textContent=t.replace(/異名再生\s*/g,'');
+      if(/^再生\s*\+?\d/.test(el.textContent||'')) el.textContent=String(el.textContent).replace(/^再生\s*/,'');
+    });
+  }
+  function patchNamedFloat044(){
+    if(typeof showFloat==='function' && !showFloat.__mbh044){
+      const old=showFloat;
+      showFloat=function(text,cls){
+        let t=String(text??'');
+        t=t.replace(/異名再生\s*/g,'').replace(/^再生\s*/,'');
+        return old.call(this,t,cls);
+      };
+      showFloat.__mbh044=true;
+    }
+  }
+
+  function boot044(){
+    syncVersion044(); ensureCss044(); ensureMenuContent044(); bindMenu044(); patchSpawn044(); bindDebug044(); patchNamedFloat044(); sanitizeNamedRegen044();
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot044,{once:true}); else setTimeout(boot044,0);
+  window.addEventListener('load',boot044,{once:true});
+  window.addEventListener('resize',()=>setTimeout(boot044,40));
+  setInterval(()=>safe(()=>{ syncVersion044(); ensureMenuContent044(); bindMenu044(); patchSpawn044(); bindDebug044(); patchNamedFloat044(); sanitizeNamedRegen044(); }),200);
 })();
