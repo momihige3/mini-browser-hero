@@ -2810,3 +2810,22 @@ html[data-build-version="0.4.0"] #statEnemyLevelXpLabel{
 .log-panel,#logFilterBar,#log,[data-menu-page="log"]{display:none!important;}
 
 /* MBH 0.4.2 layout rule patch marker */
+
+
+/* MBH ver.0.4.3: final menu/debug/effect scrollbar guard */
+html[data-build-version="0.4.3"] .effect-row.ability-option span,
+html[data-build-version="0.4.3"] .effect-row.ability-option b{color:var(--effect-color)!important;text-shadow:0 0 8px color-mix(in srgb,var(--effect-color) 55%,transparent)!important;}
+html[data-build-version="0.4.3"] .effect-row.basic-option span{color:#e8d0a2!important;}
+html[data-build-version="0.4.3"] .effect-row.basic-option b{color:#fff7c8!important;}
+html[data-build-version="0.4.3"] .effect-scroll,
+html[data-build-version="0.4.3"] .inventory{scrollbar-color:#9d742a #111!important;scrollbar-width:thin!important;}
+html[data-build-version="0.4.3"] .effect-scroll::-webkit-scrollbar,
+html[data-build-version="0.4.3"] .inventory::-webkit-scrollbar{width:8px!important;}
+html[data-build-version="0.4.3"] .effect-scroll::-webkit-scrollbar-thumb,
+html[data-build-version="0.4.3"] .inventory::-webkit-scrollbar-thumb{background:#8b6628!important;border-radius:8px!important;}
+html[data-build-version="0.4.3"] .effect-scroll::-webkit-scrollbar-track,
+html[data-build-version="0.4.3"] .inventory::-webkit-scrollbar-track{background:#120b06!important;}
+@media (min-width:1280px) and (min-height:701px){
+  html[data-build-version="0.4.3"] #debugPanel:not(.hidden){position:fixed!important;right:18px!important;top:70px!important;z-index:12000!important;max-height:calc(100vh - 88px)!important;overflow:auto!important;}
+  html[data-build-version="0.4.3"] .side-panel .mobile-menu-tabs{position:relative!important;top:auto!important;left:auto!important;right:auto!important;display:flex!important;}
+}

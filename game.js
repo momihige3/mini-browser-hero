@@ -40,7 +40,7 @@ const DEATH_DANCE_CUTINS = [
 ];
 const DARK_SWORD_SAINT_CUTIN = {quote:'私を超えてみせろ。', img:'assets/cutin_dark_sword_dance.png'};
 const DARK_SWORD_TECHNIQUE_CUTIN = {quote:'', img:'assets/cutin_dark_sword_technique.png'};
-const GAME_VERSION = (window.APP_VERSION || '0.4.2');
+const GAME_VERSION = (window.APP_VERSION || '0.4.3');
 window.GAME_VERSION = GAME_VERSION;
 
 const DARK_SWORD_SAINT = {
@@ -4742,7 +4742,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
             state.enemyStatuses.namedRegenLast += ticks*1000;
             const heal = Math.max(1, Math.floor(state.enemy.maxHp * 0.02 * ticks));
             state.enemyHp = Math.min(state.enemy.maxHp, state.enemyHp + heal);
-            if(typeof showFloat === 'function') showFloat(`異名再生 +${heal.toLocaleString()}`, 'heal named-regen');
+            if(typeof showFloat === 'function') showFloat(`+${heal.toLocaleString()}`, 'heal named-regen');
             if(typeof renderBattle === 'function') renderBattle();
           }
         }
@@ -6260,7 +6260,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* ver.0.4.2: startup-safe fixed menu layout, footer, log type, debug enemy controls */
 (function(){
   'use strict';
-  const BUILD='0.4.2';
+  const BUILD='0.4.3';
   const qs=(s,r=document)=>r.querySelector(s);
   const qsa=(s,r=document)=>Array.from(r.querySelectorAll(s));
   const byId=(id)=>document.getElementById(id);
@@ -6591,7 +6591,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* ver.0.4.2: footer isolated from log redraw + final log type lock */
 (function(){
   'use strict';
-  const BUILD='0.4.2';
+  const BUILD='0.4.3';
   const qs=(s,r=document)=>r.querySelector(s);
   const qsa=(s,r=document)=>Array.from(r.querySelectorAll(s));
   const byId=(id)=>document.getElementById(id);
@@ -6709,7 +6709,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* ver.0.4.2: boss BGM + startup menu closed final lock */
 (function(){
   'use strict';
-  const BUILD='0.4.2';
+  const BUILD='0.4.3';
   const qs=(s,r=document)=>r.querySelector(s);
   const qsa=(s,r=document)=>Array.from(r.querySelectorAll(s));
   const safe=(fn)=>{ try{return fn();}catch(e){ console.error('[MBH 0.4.2]', e); } };
@@ -6800,7 +6800,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* ver.0.4.2: final stable menu/footer/effects/log/sell-exp lock */
 (function(){
   'use strict';
-  const BUILD='0.4.2';
+  const BUILD='0.4.3';
   const $=(s,r=document)=>r.querySelector(s);
   const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
   const byId=(id)=>document.getElementById(id);
@@ -7062,7 +7062,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
    It only owns menu open/close state so older stacked handlers cannot reopen it. */
 (function(){
   'use strict';
-  const BUILD='0.4.2';
+  const BUILD='0.4.3';
   const byId=(id)=>document.getElementById(id);
   const qs=(s)=>document.querySelector(s);
   const qsa=(s)=>Array.from(document.querySelectorAll(s));
@@ -7202,7 +7202,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* ver.0.4.2: final layout/log/effect/menu stability lock */
 (function(){
   'use strict';
-  const BUILD='0.4.2';
+  const BUILD='0.4.3';
   const $id=(id)=>document.getElementById(id);
   const $$=(sel,root=document)=>Array.from(root.querySelectorAll(sel));
   const esc=(s)=>String(s??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
@@ -7673,7 +7673,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* MBH ver.0.4.2: 軽量化・ログ撤去・メニューDOM固定 */
 (function(){
   'use strict';
-  const BUILD='0.4.2';
+  const BUILD='0.4.3';
   const $=(id)=>document.getElementById(id);
   const $$=(sel,root=document)=>Array.from(root.querySelectorAll(sel));
   const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.warn('[MBH 0.4.2]', e); } };
@@ -7929,7 +7929,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* MBH ver.0.4.2: menu layout rule finalizer */
 (function(){
   'use strict';
-  const BUILD='0.4.2';
+  const BUILD='0.4.3';
   const $=(id)=>document.getElementById(id);
   const $$=(sel,root=document)=>Array.from(root.querySelectorAll(sel));
   const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.warn('[MBH 0.4.2 layout]', e); } };
@@ -8272,7 +8272,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* MBH ver.0.4.2: 固有能力表示の固定化 + レアリティ色付け + 戦闘中の一時効果を表示しない */
 (function(){
   'use strict';
-  const BUILD='0.4.2';
+  const BUILD='0.4.3';
   const DARK_COLOR='#b86cff';
   const BASIC_COLOR='#f7ead0';
   const ABILITY_KEYS=new Set([
@@ -8458,4 +8458,176 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot,{once:true}); else setTimeout(boot,0);
   window.addEventListener('load',boot,{once:true});
   setInterval(()=>safe(()=>{ syncVersion(); patchItemSummary(); patchRenderEquip(); patchRenderStats(); renderCanonicalEffects(false); installObserver(); }),250);
+})();
+
+
+/* MBH ver.0.4.3: version single-source, stable effect panels, debug/menu layout lock, named regen display */
+(function(){
+  'use strict';
+  const BUILD='0.4.3';
+  const BASIC_COLOR='#f7ead0';
+  const DARK_COLOR='#b86cff';
+  const RARITY_COLORS={legendary:'#ff9b24',rare:'#4d8dff',normal:'#eeeeee'};
+  const PCT_KEYS=new Set(['fireRes','fireDamageHeal','fireDmg','fireSkillChance','thunderDmg','thunderSkillChance','deathDanceChance','deathDanceDefIgnore','heroDarkBleedChance','lifeSteal','guard','crit','killHeal']);
+  const LABEL={
+    fireRes:'火軽減', fireDamageHeal:'火吸収', fireDmg:'火ダメージ', fireSkillChance:'炎斬り発動率',
+    thunderDmg:'雷ダメージ', thunderSkillChance:'雷撃発動率', deathDanceChance:'死線の剣舞率',
+    deathDanceDefIgnore:'剣舞防御無視', heroDarkBleedChance:'暗黒出血付与', lifeSteal:'HP吸収',
+    guard:'ガード率', crit:'クリティカル率', killHeal:'撃破時HP回復'
+  };
+  function safe(fn){ try{return fn&&fn();}catch(e){ console.warn('[MBH0.4.3]', e); return null; } }
+  function $(id){ return document.getElementById(id); }
+  function esc(s){ return String(s??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
+  function pct(v,signed=false){ const n=Math.round(Number(v||0)*100); return (signed&&n>0?'+':'')+n+'%'; }
+  function num(v,signed=true){ const n=Math.floor(Number(v||0)); return (signed&&n>0?'+':'')+n.toLocaleString(); }
+  function colorOf(it){
+    if(!it) return BASIC_COLOR;
+    if(it.specialFrame==='darkholy' || /^闇の|^暗黒/.test(String(it.name||'')) || it.darkShield || it.darkAmulet) return DARK_COLOR;
+    return RARITY_COLORS[it.rarity] || '#eeeeee';
+  }
+  function itemList(){ return Object.values((typeof state!=='undefined' && state.equip) ? state.equip : {}).filter(Boolean); }
+  function itemHash(){
+    return JSON.stringify(itemList().map(it=>({
+      id:it.id,name:it.name,slot:it.slot,rarity:it.rarity,specialFrame:it.specialFrame,level:it.level,itemLevel:it.itemLevel,
+      hp:it.hp,atk:it.atk,def:it.def,fireRes:it.fireRes,fireDamageHeal:it.fireDamageHeal,fireDmg:it.fireDmg,fireSkillChance:it.fireSkillChance,
+      thunderDmg:it.thunderDmg,thunderSkillChance:it.thunderSkillChance,deathDanceChance:it.deathDanceChance,deathDanceDefIgnore:it.deathDanceDefIgnore,
+      heroDarkBleedChance:it.heroDarkBleedChance,lifeSteal:it.lifeSteal,guard:it.guard,crit:it.crit,killHeal:it.killHeal,
+      darkShield:it.darkShield,darkAmulet:it.darkAmulet,masterRegen:it.masterRegen,skill:it.skill&&{id:it.skill.id,name:it.skill.name,chance:it.skill.chance}
+    })).sort((a,b)=>String(a.slot).localeCompare(String(b.slot))));
+  }
+  function addAbilityRows(rows,it){
+    const c=colorOf(it);
+    const add=(key,val,label=LABEL[key])=>{ if(Number(val||0)) rows.push({label,value:pct(val,true),color:c,key,ability:true}); };
+    add('fireRes',it.fireRes); add('fireDamageHeal',it.fireDamageHeal); add('fireDmg',it.fireDmg); add('fireSkillChance',it.fireSkillChance);
+    add('thunderDmg',it.thunderDmg); add('thunderSkillChance',it.thunderSkillChance); add('deathDanceChance',it.deathDanceChance);
+    add('deathDanceDefIgnore',it.deathDanceDefIgnore); add('heroDarkBleedChance',it.heroDarkBleedChance); add('lifeSteal',it.lifeSteal);
+    add('guard',it.guard); add('crit',it.crit); add('killHeal',it.killHeal);
+    if(it.darkShield) rows.push({label:'闇の盾',value:'毎ターン被ダメ軽減+1%（最大50%） / 被ダメージ50%回復',color:DARK_COLOR,key:'darkShield',ability:true});
+    if(it.darkAmulet) rows.push({label:'闇のアミュレット',value:'死線の剣舞効果時間2倍',color:DARK_COLOR,key:'darkAmulet',ability:true});
+    if(it.masterRegen) rows.push({label:'師匠のアミュレット',value:'10秒ごとにHP回復 / 撃破時HP25%回復',color:c,key:'masterRegen',ability:true});
+    // 闇の兜など、装備データ上に専用フラグが無い効果は書かない。基礎値は装備効果合計だけに出す。
+    if(it.skill && it.skill.name){
+      const extra=(it.skill.id==='fire'?(Number(it.fireSkillChance)||0):it.skill.id==='thunder'?(Number(it.thunderSkillChance)||0):0);
+      const chance=Math.max(0, Number(it.skill.chance||0)+extra);
+      rows.push({label:'武器スキル',value:`${it.skill.name} ${pct(chance,false)}`,color:c,key:'skill:'+it.skill.id,ability:true});
+      if(it.skill.id==='thunder') rows.push({label:'雷撃',value:'防御25%無視',color:c,key:'skillThunder',ability:true});
+      if(it.skill.id==='fire') rows.push({label:'炎斬り',value:'火傷20%',color:c,key:'skillFire',ability:true});
+    }
+  }
+  function priority(c){ if(c===DARK_COLOR) return 99; if(c==='#ff9b24'||c==='#ffad31') return 3; if(c==='#4d8dff'||c==='#4fa2ff') return 2; return 1; }
+  function mergeRows(rows){
+    const out=[]; const map=new Map();
+    rows.forEach(r=>{
+      const id=r.key||r.label;
+      if(PCT_KEYS.has(id)){
+        const val=Number(String(r.value).replace(/[+%]/g,''))/100 || 0;
+        const old=map.get(id);
+        if(!old){ const n={...r,_sum:val}; map.set(id,n); out.push(n); }
+        else{ old._sum+=val; old.value=pct(old._sum,true); if(priority(r.color)>priority(old.color)) old.color=r.color; }
+      }else if(!map.has(id)){ map.set(id,{...r}); out.push(map.get(id)); }
+    });
+    return out;
+  }
+  function abilityRows(){ const rows=[]; itemList().forEach(it=>addAbilityRows(rows,it)); return mergeRows(rows); }
+  function equipmentRows(){
+    const rows=[]; const t={hp:0,atk:0,def:0};
+    itemList().forEach(it=>{ t.hp+=Number(it.hp||0); t.atk+=Number(it.atk||0); t.def+=Number(it.def||0); });
+    if(t.hp) rows.push({label:'HP',value:num(t.hp,true),color:BASIC_COLOR,key:'basicHp',ability:false});
+    if(t.atk) rows.push({label:'攻撃力',value:num(t.atk,true),color:BASIC_COLOR,key:'basicAtk',ability:false});
+    if(t.def) rows.push({label:'防御力',value:num(t.def,true),color:BASIC_COLOR,key:'basicDef',ability:false});
+    return rows.concat(abilityRows());
+  }
+  function rowsHtml(rows,empty){
+    if(!rows.length) return `<div class="effect-row effect-empty"><span>${esc(empty)}</span><b>-</b></div>`;
+    return rows.map(r=>`<div class="effect-row ${r.ability?'ability-option':'basic-option'}" data-effect-key="${esc(r.key||r.label)}" style="--effect-color:${esc(r.color||BASIC_COLOR)}"><span>${esc(r.label)}</span><b>${esc(r.value)}</b></div>`).join('');
+  }
+  function isEffectBox(el){ return !!(el && el.classList && el.classList.contains('effect-scroll') && (el.closest('#statusSpecialEffects') || el.closest('#equipEffectTotals'))); }
+  let patchedDom=false;
+  function patchDomWrites(){
+    if(patchedDom) return; patchedDom=true;
+    const proto=Element.prototype;
+    const desc=Object.getOwnPropertyDescriptor(proto,'innerHTML');
+    if(desc && desc.set && desc.get){
+      Object.defineProperty(proto,'innerHTML',{configurable:true,enumerable:desc.enumerable,get:desc.get,set:function(v){
+        if(isEffectBox(this) && !window.__mbh043AllowEffectWrite) return;
+        return desc.set.call(this,v);
+      }});
+    }
+    const oldAppend=proto.appendChild;
+    proto.appendChild=function(child){ if(isEffectBox(this) && !window.__mbh043AllowEffectWrite) return child; return oldAppend.call(this,child); };
+    const oldReplace=proto.replaceChildren;
+    if(oldReplace){ proto.replaceChildren=function(){ if(isEffectBox(this) && !window.__mbh043AllowEffectWrite) return; return oldReplace.apply(this,arguments); }; }
+  }
+  function setHtml(el,html){ if(!el) return; window.__mbh043AllowEffectWrite=true; try{ if(el.innerHTML!==html) el.innerHTML=html; } finally{ window.__mbh043AllowEffectWrite=false; } }
+  let last='';
+  function renderEffects(force=false){
+    const sbox=document.querySelector('#statusSpecialEffects .effect-scroll');
+    const ebox=document.querySelector('#equipEffectTotals .effect-scroll');
+    const h=itemHash();
+    if(!force && h===last && sbox?.dataset.mbh043Locked==='1' && ebox?.dataset.mbh043Locked==='1') return;
+    setHtml(sbox, rowsHtml(abilityRows(),'特殊効果なし'));
+    setHtml(ebox, rowsHtml(equipmentRows(),'装備効果なし'));
+    if(sbox) sbox.dataset.mbh043Locked='1';
+    if(ebox) ebox.dataset.mbh043Locked='1';
+    last=h;
+  }
+  function sanitizeNamedRegenText(){
+    document.querySelectorAll('.float').forEach(el=>{
+      const t=String(el.textContent||'');
+      if(t.includes('異名再生')) el.textContent=t.replace(/異名再生\s*/g,'');
+    });
+  }
+  function patchNamedRegen(){
+    if(typeof showFloat==='function' && !showFloat.__mbh043){
+      const old=showFloat;
+      showFloat=function(text,cls){
+        let t=String(text ?? '');
+        if(t.includes('異名再生')) t=t.replace(/異名再生\s*/g,'');
+        return old.call(this,t,cls);
+      };
+      showFloat.__mbh043=true;
+    }
+  }
+  function syncVersion(){
+    window.APP_VERSION=BUILD; window.GAME_VERSION=BUILD;
+    document.documentElement.dataset.buildVersion=BUILD;
+    document.documentElement.dataset.mbhVersion=BUILD;
+    document.querySelectorAll('.build-version').forEach(el=>{ el.textContent='ver.'+BUILD; });
+    document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent='Build: ver.'+BUILD; });
+    document.querySelectorAll('.debug-trace-title').forEach(el=>{ el.textContent='進行デバッグログ ver.'+BUILD; });
+  }
+  function installCss(){
+    if($('mbh-043-final-css')) return;
+    const st=document.createElement('style'); st.id='mbh-043-final-css';
+    st.textContent=`
+      html[data-build-version="0.4.3"] .effect-row.ability-option span,
+      html[data-build-version="0.4.3"] .effect-row.ability-option b{color:var(--effect-color)!important;text-shadow:0 0 8px color-mix(in srgb,var(--effect-color) 55%,transparent)!important;}
+      html[data-build-version="0.4.3"] .effect-row.basic-option span{color:#e8d0a2!important;}
+      html[data-build-version="0.4.3"] .effect-row.basic-option b{color:#fff7c8!important;}
+      html[data-build-version="0.4.3"] #statusSpecialEffects .effect-scroll,
+      html[data-build-version="0.4.3"] #equipEffectTotals .effect-scroll{scrollbar-color:#9d742a #111!important;scrollbar-width:thin!important;overflow:auto!important;}
+      html[data-build-version="0.4.3"] #statusSpecialEffects .effect-scroll::-webkit-scrollbar,
+      html[data-build-version="0.4.3"] #equipEffectTotals .effect-scroll::-webkit-scrollbar{width:8px!important;}
+      html[data-build-version="0.4.3"] #statusSpecialEffects .effect-scroll::-webkit-scrollbar-thumb,
+      html[data-build-version="0.4.3"] #equipEffectTotals .effect-scroll::-webkit-scrollbar-thumb{background:#8b6628!important;border-radius:8px!important;}
+      html[data-build-version="0.4.3"] #statusSpecialEffects .effect-scroll::-webkit-scrollbar-track,
+      html[data-build-version="0.4.3"] #equipEffectTotals .effect-scroll::-webkit-scrollbar-track{background:#120b06!important;}
+      @media (min-width:1280px) and (min-height:701px){
+        html[data-build-version="0.4.3"] .side-panel{position:static!important;display:grid!important;grid-template-rows:auto minmax(0,1fr) auto!important;grid-template-columns:1fr!important;overflow:hidden!important;}
+        html[data-build-version="0.4.3"] .side-panel .mobile-menu-tabs{grid-row:1!important;position:relative!important;top:auto!important;left:auto!important;right:auto!important;display:flex!important;z-index:2!important;}
+        html[data-build-version="0.4.3"] #debugPanel:not(.hidden){position:fixed!important;right:18px!important;top:70px!important;z-index:12000!important;max-height:calc(100vh - 88px)!important;overflow:auto!important;}
+        html[data-build-version="0.4.3"] #debugPanel:not(.hidden) ~ *{position:static!important;}
+      }
+    `;
+    document.head.appendChild(st);
+  }
+  function patchRenderHooks(){
+    if(typeof renderEquip==='function' && !renderEquip.__mbh043){ const old=renderEquip; renderEquip=function(){ const r=old.apply(this,arguments); safe(()=>renderEffects(true)); return r; }; renderEquip.__mbh043=true; }
+    if(typeof renderStats==='function' && !renderStats.__mbh043){ const old=renderStats; renderStats=function(){ const r=old.apply(this,arguments); safe(()=>renderEffects(false)); return r; }; renderStats.__mbh043=true; }
+    if(typeof renderAll==='function' && !renderAll.__mbh043){ const old=renderAll; renderAll=function(){ const r=old.apply(this,arguments); safe(()=>renderEffects(false)); return r; }; renderAll.__mbh043=true; }
+  }
+  function boot(){ syncVersion(); installCss(); patchNamedRegen(); patchDomWrites(); patchRenderHooks(); renderEffects(true); sanitizeNamedRegenText(); }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot,{once:true}); else setTimeout(boot,0);
+  window.addEventListener('load',boot,{once:true});
+  setInterval(()=>safe(()=>{ syncVersion(); patchNamedRegen(); patchRenderHooks(); renderEffects(false); sanitizeNamedRegenText(); }),300);
 })();
