@@ -1,6 +1,6 @@
 'use strict';
 
-// ver0.5.1: ボス表示整理・火炎ブレスタグカウント・ボスランダム出現。
+// ver0.5.2: ボス表示整理・火炎ブレスタグカウント・ボスランダム出現。
 // strict modeで `makeDarkArmor = function...` がReferenceErrorになり、
 // 後続パッチ全体が止まる問題を防ぐ。
 var makeDarkArmor, makeDarkGauntlets, makeDarkHelm, makeDarkBoots;
@@ -40,7 +40,7 @@ const DEATH_DANCE_CUTINS = [
 ];
 const DARK_SWORD_SAINT_CUTIN = {quote:'私を超えてみせろ。', img:'assets/cutin_dark_sword_dance.png'};
 const DARK_SWORD_TECHNIQUE_CUTIN = {quote:'', img:'assets/cutin_dark_sword_technique.png'};
-const GAME_VERSION = (window.APP_VERSION || '0.5.1');
+const GAME_VERSION = (window.APP_VERSION || '0.5.2');
 window.GAME_VERSION = GAME_VERSION;
 
 const DARK_SWORD_SAINT = {
@@ -874,7 +874,7 @@ function handleHeroDeath(){
   const darkSaintDefeat = isDarkSwordSaint();
   let nextEnemyLevelBase = Math.max(1, Math.floor(defeatedEnemyLevel * 0.9));
   if(darkSaintDefeat){
-    // ver.0.5.1: 100レベルごとの暗黒剣聖は、勝敗に関係なく通常敵レベル+1。
+    // ver.0.5.2: 100レベルごとの暗黒剣聖は、勝敗に関係なく通常敵レベル+1。
     if(state.darkSwordSaintReturn && state.darkSwordSaintReturn.milestoneDarkSaint){
       state.enemyLevelBase = defeatedEnemyLevel + 1;
       state.enemyLevelBaseDefeated = Math.max(0, Math.floor(Number(state.defeated)||0));
@@ -1296,7 +1296,7 @@ function makeFirstEnemy(){
 }
 
 function pickEnemy(){
-  // ver.0.5.1: 通常敵レベルは撃破時抽選で上昇。ボスはLv10刻み予約からランダム出現。
+  // ver.0.5.2: 通常敵レベルは撃破時抽選で上昇。ボスはLv10刻み予約からランダム出現。
   return {...normals[Math.floor(Math.random()*normals.length)]};
 }
 function getBossForNormal(normalId){
@@ -1311,7 +1311,7 @@ function shouldReplaceBossWithDarkSaint(){
   return !!state.darkSwordSaintFirstEncountered && Math.random() < 0.01;
 }
 function scheduleBossAfterNormalDefeat(e){
-  // ver.0.5.1: 雑魚Lv10刻みで、種族ボスからランダム出現。レベルは撃破した雑魚と共通。
+  // ver.0.5.2: 雑魚Lv10刻みで、種族ボスからランダム出現。レベルは撃破した雑魚と共通。
   try{
     if(!e || e.type !== '雑魚') return;
     const lv = Math.max(1, Math.floor(Number(e.level)||1));
@@ -1331,7 +1331,7 @@ function scheduleBossAfterNormalDefeat(e){
     state.lastBossScheduledLevel = lv;
     log(`${e.name}Lv.${lv}を制した。次の敵にボスLv.${lv}が現れる！`, 'danger');
   }catch(err){
-    console.error('[MBH0.5.1 scheduleBossAfterNormalDefeat]', err);
+    console.error('[MBH0.5.2 scheduleBossAfterNormalDefeat]', err);
     state.pendingBossForNext = null;
   }
 }
@@ -1342,7 +1342,7 @@ function makeScaledEnemy(base, forceLevel=null){
   if(forceLevel){
     e.level = forceLevel;
   }else{
-    // ver.0.5.1: 敵レベルは撃破数で自動上昇させず、撃破時の抽選/ボス撃破で更新する。
+    // ver.0.5.2: 敵レベルは撃破数で自動上昇させず、撃破時の抽選/ボス撃破で更新する。
     if(state.enemyLevelBase == null){
       state.enemyLevelBase = Math.max(1, Math.floor(Number(state.enemy?.level) || Number(state.level) || 1));
       state.enemyLevelBaseDefeated = Math.max(0, Math.floor(Number(state.defeated)||0));
@@ -1357,7 +1357,7 @@ function makeScaledEnemy(base, forceLevel=null){
   }
   const scaledDefeated = state.enemyLevelBase != null ? Math.max(0, (state.defeated||0) - (state.enemyLevelBaseDefeated||0)) : (state.defeated||0);
   const hpScale=1 + e.level*.035 + Math.floor(scaledDefeated/10)*.03;
-  // ver.0.5.1: 敵ATK/DEFのレベル成長が弱すぎたため、HPとは別の成長係数へ分離。
+  // ver.0.5.2: 敵ATK/DEFのレベル成長が弱すぎたため、HPとは別の成長係数へ分離。
   // HPは既存の伸びを維持し、攻撃力・防御力だけ敵Lvに応じてしっかり伸ばす。
   const statScale=1 + Math.max(0, (Number(e.level)||1)-1) * 0.08 + Math.floor(scaledDefeated/10)*.03;
   const normalHpGrowth = e.type === '雑魚' ? Math.pow(1.01, Math.max(0, (Number(e.level)||1) - 1)) : 1;
@@ -1392,7 +1392,7 @@ function setEnemy(e){
   log(`${e.name} が現れた。${e.type==='ボス'||e.type==='裏ボス'?'ボス出現！':''}`, e.type==='ボス'||e.type==='裏ボス'?'danger':'');
 }
 function forceSpawnDarkSwordSaint(){
-  // ver0.5.1: 即時召喚ではなく、次の敵として暗黒剣聖を予約する
+  // ver0.5.2: 即時召喚ではなく、次の敵として暗黒剣聖を予約する
   state.forceNextDarkSwordSaint = true;
   state.pendingDarkSwordSaintDelay = false;
   banner('次の敵に暗黒剣聖をセット！', 1400);
@@ -1611,7 +1611,7 @@ function enemyAttack(now){
     renderBattle();
     return;
   }
-  // ver0.5.1: 火の精霊・火の精霊王の通常攻撃は必ず火属性。
+  // ver0.5.2: 火の精霊・火の精霊王の通常攻撃は必ず火属性。
   // 以前は fire 属性敵でも55%抽選だったため、火属性攻撃にならないことがあった。
   const isPureFireAttacker = e && (e.id === 'fire_spirit' || e.id === 'fire_king');
   let element = isDarkSwordSaint() ? 'dark' : (isPureFireAttacker ? 'fire' : (e.element==='fire' && Math.random()<.55 ? 'fire':'normal'));
@@ -1690,7 +1690,7 @@ function tryDarkSwordDanceRevive(){
 
   const t = performance.now();
   state.enemyStatuses.darkDanceCount = count + 1;
-  // ver.0.5.1: 暗黒剣舞でリセットするのは死線の剣舞の発動回数だけ。
+  // ver.0.5.2: 暗黒剣舞でリセットするのは死線の剣舞の発動回数だけ。
   // 発動中の死線の剣舞そのものは解除しない。
   state.deathDanceBattleCount = 0;
   state.deathDanceComboCount = 0;
@@ -1860,7 +1860,7 @@ function showDarkSwordTechniqueCutin(){
   playSfx('cutin');
 }
 function updateEnemyLevelProgressionOnDefeat(e){
-  // ver.0.5.1: 雑魚撃破は10%で敵レベル+1。ボス撃破は確定+1。
+  // ver.0.5.2: 雑魚撃破は10%で敵レベル+1。ボス撃破は確定+1。
   // 暗黒剣聖は通常敵進行に影響させない。
   try{
     if(!e) return;
@@ -1891,7 +1891,7 @@ function updateEnemyLevelProgressionOnDefeat(e){
       }
     }
   }catch(err){
-    console.error('[MBH0.5.1 updateEnemyLevelProgressionOnDefeat]', err);
+    console.error('[MBH0.5.2 updateEnemyLevelProgressionOnDefeat]', err);
   }
 }
 
@@ -1953,7 +1953,7 @@ function enemyDefeated(){
     const makeDarkReward = () => darkPool[Math.floor(Math.random()*darkPool.length)](defeatedLevel);
     const makeLegendReward = () => makeItem(slots[Math.floor(Math.random()*slots.length)], legendary, {isBossDrop:true, levelOverride:defeatedLevel});
 
-    // ver0.5.1: 報酬枠を明示的に固定する。
+    // ver0.5.2: 報酬枠を明示的に固定する。
     // rewards[0] = 1枠目、rewards[1] = 2枠目、rewards[2] = 3枠目。
     // 3枠目は必ず闇装備。1〜2枠目は確率で闇装備になってもよい。
     const rewards = [
@@ -1977,7 +1977,7 @@ function enemyDefeated(){
       showDropToast(it);
     }
   }
-  // ver.0.5.1: 強化石ドロップは廃止。装備はドロップ時に敵Lv依存の+値が付く。
+  // ver.0.5.2: 強化石ドロップは廃止。装備はドロップ時に敵Lv依存の+値が付く。
   if(calcStats().masterRegen && state.hp > 0){
     const heal = Math.max(1, Math.floor(maxHp() * 0.25));
     const beforeHp = state.hp;
@@ -1995,7 +1995,7 @@ function effectiveXpNext(){
   return 1000;
 }
 function checkLevelUp(){
-  // ver0.5.1: 主人公の次Lv必要経験値を現行値の50%として扱う。
+  // ver0.5.2: 主人公の次Lv必要経験値を現行値の50%として扱う。
   while(state.xp>=effectiveXpNext()){
     const need = effectiveXpNext();
     state.xp-=need;
@@ -2577,7 +2577,7 @@ function formatItemNameWithPlus(it){
 
 function darkEquipLevelFromSource(levelOverride){
   const raw = Math.max(1, Math.floor(Number(levelOverride) || Number(state?.enemy?.level) || Number(state?.darkSwordSaintLevel) || Number(state?.level) || 1));
-  // ver.0.5.1: 闇装備は暗黒剣聖の独立Lv1を通常敵Lv100相当として扱う。
+  // ver.0.5.2: 闇装備は暗黒剣聖の独立Lv1を通常敵Lv100相当として扱う。
   // すでに通常敵Lv100以上が渡された場合はそのまま使う。
   return raw < 100 ? raw * 100 : raw;
 }
@@ -3201,7 +3201,7 @@ function v94InstallTouchControls(){
 }
 
 init();
-// ver0.5.1: disable old stacked v94 menu/debug tap binding; clean patch below owns UI events.
+// ver0.5.2: disable old stacked v94 menu/debug tap binding; clean patch below owns UI events.
 // setTimeout(v94InstallTouchControls, 0);
 
 
@@ -3210,12 +3210,12 @@ window.addEventListener("pageshow",()=>{ if(state.mobileMuted) stopAllAudioForMu
 window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(); });
 
 
-/* ver0.5.1 clean stabilization patch: single source, no stacked UI injection */
+/* ver0.5.2 clean stabilization patch: single source, no stacked UI injection */
 (function(){
   'use strict';
   const BUILD=(window.APP_VERSION || window.GAME_VERSION || '0.0');
   const byId = (id)=>document.getElementById(id);
-  function safe(fn){ try{ return fn && fn(); }catch(e){ console.warn('[ver0.5.1]', e); return null; } }
+  function safe(fn){ try{ return fn && fn(); }catch(e){ console.warn('[ver0.5.2]', e); return null; } }
 
   // --- version: one source only, no floating badge ---
   window.GAME_VERSION = BUILD;
@@ -3360,7 +3360,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   }
 
   function bindCleanDebug(){
-    // ver0.5.1: debug panel must be idempotent. Clone once to remove stacked click/pointer handlers.
+    // ver0.5.2: debug panel must be idempotent. Clone once to remove stacked click/pointer handlers.
     let panel = byId('debugPanel');
     if(panel){
       const fresh = panel.cloneNode(false);
@@ -3540,12 +3540,12 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   window.addEventListener('load', boot, {once:true});
 })();
 
-/* ver.0.5.1: audio restore - use lexical state/audio functions, not window fallback */
+/* ver.0.5.2: audio restore - use lexical state/audio functions, not window fallback */
 (function(){
   'use strict';
   const BUILD=(window.APP_VERSION || window.GAME_VERSION || '0.0');
   const $=(id)=>document.getElementById(id);
-  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH0.5.1]', e); } }
+  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH0.5.2]', e); } }
   function setVersion(){
     window.GAME_VERSION=BUILD;
     document.documentElement.setAttribute('data-build-version', BUILD);
@@ -3645,7 +3645,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   window.addEventListener('resize', ()=>safe(()=>applyMenu(typeof state !== 'undefined' ? !!state.uiOpen : false)));
 
 
-  /* ver.0.5.1: mute icon sync fix
+  /* ver.0.5.2: mute icon sync fix
      bindOneTap() clones top buttons, so els.muteBtn can point to a removed old node.
      Always sync els.muteBtn to the current DOM button before updating the icon. */
   const __mbhOriginalUpdateMuteButton = updateMuteButton;
@@ -3672,12 +3672,12 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 
 
 
-  /* ver.0.5.1: UI-only patch
+  /* ver.0.5.2: UI-only patch
      - hide EXP/flee behind overlay menu
      - revive inventory filters
      - keep inventory/log inside viewport with unified scrollbars
   */
-  function mbh9920Safe(fn){ try{return fn();}catch(e){ console.error('[MBH0.5.1]', e); } }
+  function mbh9920Safe(fn){ try{return fn();}catch(e){ console.error('[MBH0.5.2]', e); } }
   function mbh9920IsOverlay(){
     return matchMedia('(max-width: 1279px), (max-height: 700px), (pointer: coarse)').matches;
   }
@@ -3789,12 +3789,12 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 })();
 
 
-/* ver.0.5.1: inventory filter and log viewport final fix */
+/* ver.0.5.2: inventory filter and log viewport final fix */
 (function(){
   'use strict';
   const BUILD=(window.APP_VERSION || window.GAME_VERSION || '0.0');
   const $=(id)=>document.getElementById(id);
-  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH0.5.1]', e); } }
+  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH0.5.2]', e); } }
   function setVersion(){
     window.GAME_VERSION=BUILD;
     document.documentElement.setAttribute('data-build-version', BUILD);
@@ -3955,7 +3955,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   setTimeout(fitScrollablePanels9922,800);
 })();
 
-/* ver.0.5.1: mobile tap recovery only. PC mouse behavior is untouched. */
+/* ver.0.5.2: mobile tap recovery only. PC mouse behavior is untouched. */
 (function(){
   'use strict';
   const BUILD=(window.APP_VERSION || window.GAME_VERSION || '0.0');
@@ -4028,7 +4028,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
           el.click();
         }
       } catch(err) {
-        console.warn('[MBH0.5.1 mobile tap]', err);
+        console.warn('[MBH0.5.2 mobile tap]', err);
       }
     }, 0);
   }
@@ -4046,12 +4046,12 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   window.addEventListener('load', boot, {once:true});
 })();
 
-/* ver.0.5.1: mobile equipment tap + mobile background audio pause only */
+/* ver.0.5.2: mobile equipment tap + mobile background audio pause only */
 (function(){
   'use strict';
   const BUILD=(window.APP_VERSION || window.GAME_VERSION || '0.0');
   const $=(id)=>document.getElementById(id);
-  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH0.5.1]', e); } }
+  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH0.5.2]', e); } }
   function isMobileLike(){
     return !!(window.matchMedia && window.matchMedia('(pointer: coarse), (max-width: 760px)').matches) || ('ontouchstart' in window) || ((navigator.maxTouchPoints||0)>0);
   }
@@ -4163,10 +4163,10 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 })();
 
 
-/* ver.0.5.1: enhancement removal + enemy-level drop plus finalizer */
+/* ver.0.5.2: enhancement removal + enemy-level drop plus finalizer */
 (function(){
   const BUILD=(window.APP_VERSION || window.GAME_VERSION || '0.0');
-  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH0.5.1]', e); } }
+  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH0.5.2]', e); } }
   safe(()=>{
     document.documentElement.setAttribute('data-build-version', BUILD);
     document.querySelectorAll('.build-version').forEach(el=>{ el.textContent='ver.'+BUILD; });
@@ -4184,11 +4184,11 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   });
 })();
 
-/* ver.0.5.1: do not stop BGM on ordinary outside click/blur */
+/* ver.0.5.2: do not stop BGM on ordinary outside click/blur */
 (function(){
   'use strict';
   const BUILD=(window.APP_VERSION || window.GAME_VERSION || '0.0');
-  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH0.5.1]', e); } }
+  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH0.5.2]', e); } }
   function setVersion(){
     safe(()=>{ window.GAME_VERSION=BUILD; });
     safe(()=>document.documentElement.setAttribute('data-build-version', BUILD));
@@ -4265,12 +4265,12 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   window.addEventListener('load', install, {once:true});
 })();
 
-/* ver.0.5.1: battle log scroll-position preserve + lower padding fix */
+/* ver.0.5.2: battle log scroll-position preserve + lower padding fix */
 (function(){
   'use strict';
   const BUILD=(window.APP_VERSION || window.GAME_VERSION || '0.0');
   const $=(id)=>document.getElementById(id);
-  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH0.5.1]', e); } }
+  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH0.5.2]', e); } }
   function setVersion(){
     window.GAME_VERSION=BUILD;
     document.documentElement.setAttribute('data-build-version', BUILD);
@@ -4603,12 +4603,12 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 })();
 
 
-/* ver.0.5.1: strong/named variants, drop source, quality/luck bonuses, deathdance count-only reset補強 */
+/* ver.0.5.2: strong/named variants, drop source, quality/luck bonuses, deathdance count-only reset補強 */
 (function(){
   'use strict';
-  const APP_VERSION = '0.5.1';
+  const APP_VERSION = '0.5.2';
   const PREFIXES = ['狡猾な','獰猛な','蛮勇な','エリート','頂点の','原点の','キラー'];
-  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH 0.5.1]', e); } }
+  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH 0.5.2]', e); } }
   function syncVersion9959(){
     safe(()=>{ window.APP_VERSION = APP_VERSION; window.GAME_VERSION = APP_VERSION; document.documentElement.dataset.buildVersion = APP_VERSION; });
     safe(()=>{ document.querySelectorAll('.build-version,[data-version],#versionText,.version-badge').forEach(el=>{ el.textContent='ver.'+APP_VERSION; }); });
@@ -4888,13 +4888,13 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 })();
 
 
-/* ver.0.5.1: 敵防御を軽減式へ変更、敵レベル経験値制御、Lv100までの戦闘テンポ調整 */
+/* ver.0.5.2: 敵防御を軽減式へ変更、敵レベル経験値制御、Lv100までの戦闘テンポ調整 */
 (function(){
   'use strict';
-  const APP_VERSION = '0.5.1';
+  const APP_VERSION = '0.5.2';
   const ENEMY_LEVEL_XP_KEY = 'mini-browser-hero-enemy-level-xp-v9960';
   const ENEMY_LEVEL_XP_NEXT = 1000;
-  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH 0.5.1]', e); } }
+  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH 0.5.2]', e); } }
   function syncVersion9960(){
     safe(()=>{ window.APP_VERSION = APP_VERSION; window.GAME_VERSION = APP_VERSION; document.documentElement.dataset.buildVersion = APP_VERSION; });
     safe(()=>{ document.querySelectorAll('.build-version,[data-version],#versionText,.version-badge').forEach(el=>{ el.textContent='ver.'+APP_VERSION; }); });
@@ -4974,7 +4974,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
         const boss = isBossType(e);
         // HPは指数ではなく線形成長。Lv100で雑魚は約13倍、ボスは約19倍にする。
         let hp = Math.floor((Number(base.hp)||1) * (1 + lv * (boss ? 0.18 : 0.12)));
-        // 0.5.1の強個体/異名持ち補正を再適用。
+        // 0.5.2の強個体/異名持ち補正を再適用。
         if(e.variant?.type === 'named') hp = Math.floor(hp * 2.0);
         else if(e.variant?.type === 'strong') hp = Math.floor(hp * 1.5);
         e.maxHp = Math.max(1, hp);
@@ -5116,14 +5116,14 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   setInterval(()=>{ syncVersion9960(); renderEnemyLevelXp9960(); saveEnemyLevelXp9960(); }, 1500);
 })();
 
-/* ver.0.5.1: 敵Lv経験値完全固定 + 敵攻撃を防御軽減式へ変更 */
+/* ver.0.5.2: 敵Lv経験値完全固定 + 敵攻撃を防御軽減式へ変更 */
 (function(){
   'use strict';
-  const APP_VERSION = '0.5.1';
+  const APP_VERSION = '0.5.2';
   const ENEMY_LEVEL_XP_KEY_NEW = 'mini-browser-hero-enemy-level-xp-v9961';
   const ENEMY_LEVEL_XP_KEY_OLD = 'mini-browser-hero-enemy-level-xp-v9960';
   const ENEMY_LEVEL_XP_NEXT = 1000;
-  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH 0.5.1]', e); } }
+  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH 0.5.2]', e); } }
   function syncVersion9961(){
     safe(()=>{ window.APP_VERSION = APP_VERSION; window.GAME_VERSION = APP_VERSION; document.documentElement.dataset.buildVersion = APP_VERSION; });
     safe(()=>{ document.querySelectorAll('.build-version,[data-version],#versionText,.version-badge').forEach(el=>{ el.textContent='ver.'+APP_VERSION; }); });
@@ -5203,7 +5203,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   window.__mbhUpdateEnemyLevelProgression9961 = updateEnemyLevelProgressionOnDefeat;
   updateEnemyLevelProgressionOnDefeat = function(e){ addEnemyLevelXp9961(e); };
 
-  // 敵ステータス再調整：HPは0.5.1方針維持、攻撃力は防御装備が意味を持つ範囲まで上昇
+  // 敵ステータス再調整：HPは0.5.2方針維持、攻撃力は防御装備が意味を持つ範囲まで上昇
   const prevMakeScaledEnemy9961 = (typeof makeScaledEnemy === 'function') ? makeScaledEnemy : null;
   if(prevMakeScaledEnemy9961){
     makeScaledEnemy = function(base, forceLevel=null){
@@ -5340,12 +5340,12 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 })();
 
 
-/* ver.0.5.1: 暗黒剣聖の独立Lv表示 + 主人公必要経験値固定 */
+/* ver.0.5.2: 暗黒剣聖の独立Lv表示 + 主人公必要経験値固定 */
 (function(){
   'use strict';
-  const APP_VERSION = '0.5.1';
+  const APP_VERSION = '0.5.2';
   const HERO_XP_NEXT_FIXED = 40;
-  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH 0.5.1]', e); } }
+  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH 0.5.2]', e); } }
   function syncVersion9962(){
     safe(()=>{ window.APP_VERSION = APP_VERSION; window.GAME_VERSION = APP_VERSION; document.documentElement.dataset.buildVersion = APP_VERSION; });
     safe(()=>{ document.querySelectorAll('.build-version,[data-version],#versionText,.version-badge').forEach(el=>{ el.textContent='ver.'+APP_VERSION; }); });
@@ -5451,11 +5451,11 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   setInterval(syncVersion9962, 1500);
 })();
 
-/* ver.0.5.1 hotfix: hero debug stats, dark equipment list visibility, low-level enemy HP trim */
+/* ver.0.5.2 hotfix: hero debug stats, dark equipment list visibility, low-level enemy HP trim */
 (function(){
   'use strict';
-  const APP_VERSION = '0.5.1';
-  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH 0.5.1 hotfix]', e); } }
+  const APP_VERSION = '0.5.2';
+  function safe(fn){ try{return fn();}catch(e){ console.error('[MBH 0.5.2 hotfix]', e); } }
   function esc(s){ return (typeof escapeHtml === 'function') ? escapeHtml(s) : String(s).replace(/[&<>"']/g, ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
   function pct(v){ return Math.round((Number(v)||0)*100)+'%'; }
   function darkEquipRows(){
@@ -5591,14 +5591,14 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   setInterval(hotfixRender, 1200);
 })();
 
-/* ver.0.5.1: 装備名・接頭辞・説明文を実効果へ統一 */
+/* ver.0.5.2: 装備名・接頭辞・説明文を実効果へ統一 */
 (function(){
   'use strict';
-  const APP_VERSION = '0.5.1';
+  const APP_VERSION = '0.5.2';
   const DARK_FIXED_NAMES = new Set(['闇の聖剣','闇の盾','闇のアミュレット','闇の鎧','闇の籠手','闇の兜','暗黒の靴']);
   const DARK_NAME_BY_SLOT = { '武器':'闇の聖剣', '盾':'闇の盾', 'アミュレット':'闇のアミュレット', '鎧':'闇の鎧', '腕':'闇の籠手', '兜':'闇の兜', '足':'暗黒の靴' };
   const BASE_BY_SLOT = { '武器':'剣', '盾':'盾', '兜':'兜', '鎧':'鎧', '腕':'腕甲', '足':'ブーツ', 'リング':'リング', 'アミュレット':'アミュレット' };
-  function safe(fn){ try{ return fn(); }catch(e){ console.warn('[MBH 0.5.1]', e); return null; } }
+  function safe(fn){ try{ return fn(); }catch(e){ console.warn('[MBH 0.5.2]', e); return null; } }
   function pct(v){ return Math.round((Number(v)||0)*100) + '%'; }
   function num(v){ return Math.floor(Number(v)||0).toLocaleString(); }
   function isDarkItem(it){ return !!it && (it.specialFrame === 'darkholy' || DARK_FIXED_NAMES.has(it.name)); }
@@ -5775,12 +5775,12 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 })();
 
 
-/* ver.0.5.1: final XP single-source correction */
+/* ver.0.5.2: final XP single-source correction */
 (function(){
   'use strict';
-  const APP_VERSION = '0.5.1';
+  const APP_VERSION = '0.5.2';
   const HERO_XP_NEXT = 1000;
-  function safe(fn){ try{ return fn && fn(); }catch(e){ console.warn('[MBH 0.5.1 final]', e); } }
+  function safe(fn){ try{ return fn && fn(); }catch(e){ console.warn('[MBH 0.5.2 final]', e); } }
   function syncFinalVersion(){
     window.APP_VERSION = APP_VERSION;
     window.GAME_VERSION = APP_VERSION;
@@ -5845,7 +5845,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 /* ver.APP_VERSION: variant badge/regen float/legal links visibility final fix */
 (function(){
   'use strict';
-  const APP_VERSION = '0.5.1';
+  const APP_VERSION = '0.5.2';
   function safe(fn){ try{ return fn && fn(); }catch(e){ console.warn('[MBH variant/legal fix]', e); return null; } }
   function syncVersion012(){
     safe(()=>{ window.APP_VERSION = APP_VERSION; window.GAME_VERSION = APP_VERSION; document.documentElement.dataset.buildVersion = APP_VERSION; });
@@ -5932,11 +5932,11 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 })();
 
 
-/* ver.0.5.1: variant buff list, named regen position, legal links only inside menu, boss low-level tuning, BGM accidental-stop guard */
+/* ver.0.5.2: variant buff list, named regen position, legal links only inside menu, boss low-level tuning, BGM accidental-stop guard */
 (function(){
   'use strict';
-  const BUILD = (window.APP_VERSION || window.GAME_VERSION || '0.5.1');
-  function safe(fn){ try{return fn && fn();}catch(e){ console.error('[MBH0.5.1]', e); return null; } }
+  const BUILD = (window.APP_VERSION || window.GAME_VERSION || '0.5.2');
+  function safe(fn){ try{return fn && fn();}catch(e){ console.error('[MBH0.5.2]', e); return null; } }
   function syncVersion013(){
     window.APP_VERSION = BUILD;
     window.GAME_VERSION = BUILD;
@@ -5986,7 +5986,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
     if(typeof bindStatusBadgeEvents === 'function') bindStatusBadgeEvents();
   }
 
-  // 0.5.1の中央上表示をやめ、敵カードの左外へ出す専用クラスにする。
+  // 0.5.2の中央上表示をやめ、敵カードの左外へ出す専用クラスにする。
   if(typeof showFloat === 'function' && !window.__mbhShowFloat013){
     window.__mbhShowFloat013 = showFloat;
     showFloat = function(text, cls='damage'){
@@ -6096,10 +6096,10 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 
 
 
-/* ver.0.5.1: enemy missing watchdog + debug enemy level/variant restore */
+/* ver.0.5.2: enemy missing watchdog + debug enemy level/variant restore */
 (function(){
   'use strict';
-  const BUILD = '0.5.1';
+  const BUILD = '0.5.2';
   function safe(fn){ try{ return fn && fn(); }catch(e){ console.warn('[MBH '+BUILD+']', e); return null; } }
   function syncVersion028(){
     safe(()=>{ window.APP_VERSION = BUILD; window.GAME_VERSION = BUILD; document.documentElement.dataset.buildVersion = BUILD; });
@@ -6257,10 +6257,10 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 
 
 
-/* ver.0.5.1: startup-safe fixed menu layout, footer, log type, debug enemy controls */
+/* ver.0.5.2: startup-safe fixed menu layout, footer, log type, debug enemy controls */
 (function(){
   'use strict';
-  const BUILD='0.5.1';
+  const BUILD='0.5.2';
   const qs=(s,r=document)=>r.querySelector(s);
   const qsa=(s,r=document)=>Array.from(r.querySelectorAll(s));
   const byId=(id)=>document.getElementById(id);
@@ -6445,14 +6445,14 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   safe(()=>{ window.mbh031Check=()=>({build:BUILD, enemy:typeof state!=='undefined'?!!state.enemy:null, side:!!qs('.side-panel'), statusLayout:!!qs('.status-layout'), equipLayout:!!qs('.equip-layout'), footerParent:qs('.menu-footer')?.parentElement?.className||''}); });
 })();
 
-/* ver.0.5.1: root cache-bust, fixed split layouts, fixed footer, fixed log categories */
+/* ver.0.5.2: root cache-bust, fixed split layouts, fixed footer, fixed log categories */
 (function(){
   'use strict';
-  const BUILD = '0.5.1';
+  const BUILD = '0.5.2';
   const $ = (s,r=document)=>r.querySelector(s);
   const $$ = (s,r=document)=>Array.from(r.querySelectorAll(s));
   const byId = (id)=>document.getElementById(id);
-  const safe = (fn)=>{ try{return fn();}catch(e){ console.error('[MBH 0.5.1]', e); } };
+  const safe = (fn)=>{ try{return fn();}catch(e){ console.error('[MBH 0.5.2]', e); } };
   function esc(v){ return String(v ?? '').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
   function syncVersion032(){
     window.APP_VERSION = BUILD;
@@ -6588,15 +6588,15 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   safe(()=>{ window.mbh032Check=()=>({build:document.documentElement.dataset.buildVersion, statusLayout:!!$('.status-layout'), statusCols:[$('.status-left')?.children.length||0,$('.status-right')?.children.length||0], equipLayout:!!$('.equip-layout'), footerParent:$('.menu-footer')?.parentElement?.className||'', badDebug:['debugHp0Kill','debugForceDefeated','debugClearBleed','debugStopDot','debugStopDarkDance'].filter(id=>!!byId(id)), enemy:typeof state!=='undefined'?!!state.enemy:null}); });
 })();
 
-/* ver.0.5.1: footer isolated from log redraw + final log type lock */
+/* ver.0.5.2: footer isolated from log redraw + final log type lock */
 (function(){
   'use strict';
-  const BUILD='0.5.1';
+  const BUILD='0.5.2';
   const qs=(s,r=document)=>r.querySelector(s);
   const qsa=(s,r=document)=>Array.from(r.querySelectorAll(s));
   const byId=(id)=>document.getElementById(id);
   const esc=(v)=>String(v ?? '').replace(/[&<>"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
-  const safe=(fn)=>{ try{return fn();}catch(e){ console.error('[MBH 0.5.1]', e); } };
+  const safe=(fn)=>{ try{return fn();}catch(e){ console.error('[MBH 0.5.2]', e); } };
 
   function syncVersion033(){
     window.APP_VERSION=BUILD;
@@ -6706,13 +6706,13 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 })();
 
 
-/* ver.0.5.1: boss BGM + startup menu closed final lock */
+/* ver.0.5.2: boss BGM + startup menu closed final lock */
 (function(){
   'use strict';
-  const BUILD='0.5.1';
+  const BUILD='0.5.2';
   const qs=(s,r=document)=>r.querySelector(s);
   const qsa=(s,r=document)=>Array.from(r.querySelectorAll(s));
-  const safe=(fn)=>{ try{return fn();}catch(e){ console.error('[MBH 0.5.1]', e); } };
+  const safe=(fn)=>{ try{return fn();}catch(e){ console.error('[MBH 0.5.2]', e); } };
   function compact(){ return window.matchMedia('(max-width:1279px), (max-height:700px)').matches; }
   function syncVersion034(){
     window.APP_VERSION=BUILD; window.GAME_VERSION=BUILD;
@@ -6797,15 +6797,15 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   window.addEventListener('load', boot034, {once:true});
 })();
 
-/* ver.0.5.1: final stable menu/footer/effects/log/sell-exp lock */
+/* ver.0.5.2: final stable menu/footer/effects/log/sell-exp lock */
 (function(){
   'use strict';
-  const BUILD='0.5.1';
+  const BUILD='0.5.2';
   const $=(s,r=document)=>r.querySelector(s);
   const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
   const byId=(id)=>document.getElementById(id);
   const esc=(v)=>String(v ?? '').replace(/[&<>\"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[ch]));
-  const safe=(fn)=>{ try{return fn();}catch(e){ console.error('[MBH 0.5.1]', e); } };
+  const safe=(fn)=>{ try{return fn();}catch(e){ console.error('[MBH 0.5.2]', e); } };
   const compact=()=>window.matchMedia('(max-width:1279px), (max-height:700px)').matches;
 
   function syncVersion035(){
@@ -7057,16 +7057,16 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 })();
 
 
-/* ver.0.5.1: menu initial-close hard lock.
+/* ver.0.5.2: menu initial-close hard lock.
    This patch does not move footer/status/equipment DOM.
    It only owns menu open/close state so older stacked handlers cannot reopen it. */
 (function(){
   'use strict';
-  const BUILD='0.5.1';
+  const BUILD='0.5.2';
   const byId=(id)=>document.getElementById(id);
   const qs=(s)=>document.querySelector(s);
   const qsa=(s)=>Array.from(document.querySelectorAll(s));
-  const safe=(fn)=>{ try{return fn();}catch(e){ console.error('[MBH 0.5.1]', e); } };
+  const safe=(fn)=>{ try{return fn();}catch(e){ console.error('[MBH 0.5.2]', e); } };
   const compact=()=>window.matchMedia('(max-width:1279px), (max-height:700px), (pointer:coarse)').matches;
   let menuOpen=false;
   let lastToggle=0;
@@ -7199,14 +7199,14 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   safe(()=>{ window.mbh037MenuCheck=()=>({build:document.documentElement.dataset.buildVersion, compact:compact(), bodyOpen:document.body.classList.contains('mbh-menu-open'), sideOpen:qs('.side-panel')?.classList.contains('open')||false, display:qs('.side-panel')?.style.display||'', uiOpen:typeof state!=='undefined'?state.uiOpen:null}); });
 })();
 
-/* ver.0.5.1: final layout/log/effect/menu stability lock */
+/* ver.0.5.2: final layout/log/effect/menu stability lock */
 (function(){
   'use strict';
-  const BUILD='0.5.1';
+  const BUILD='0.5.2';
   const $id=(id)=>document.getElementById(id);
   const $$=(sel,root=document)=>Array.from(root.querySelectorAll(sel));
   const esc=(s)=>String(s??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
-  const safe=(fn)=>{try{return fn();}catch(e){console.error('[MBH 0.5.1]',e);}};
+  const safe=(fn)=>{try{return fn();}catch(e){console.error('[MBH 0.5.2]',e);}};
   const compact=()=>window.matchMedia('(max-width:1279px), (max-height:700px)').matches;
   const pct=(v)=>Math.round((Number(v)||0)*1000)/10+'%';
 
@@ -7429,14 +7429,14 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   window.mbh038Check=()=>({build:document.documentElement.dataset.buildVersion, menuOpen:document.body.classList.contains('mbh-menu-open'), footerParent:document.querySelector('.menu-footer')?.parentElement?.className||'', statusCols:$$('.status-layout > *').map(x=>x.className), equipCols:$$('.equip-layout > *').map(x=>x.className), enemyXp:!!$id('statEnemyLevelXp')});
 })();
 
-/* ver.0.5.1: final stable layout, no insertBefore loop, null enemy guard, log category hard fix */
+/* ver.0.5.2: final stable layout, no insertBefore loop, null enemy guard, log category hard fix */
 (function(){
   'use strict';
-  const APP_VERSION = '0.5.1';
+  const APP_VERSION = '0.5.2';
   const $ = (id)=>document.getElementById(id);
   const $$ = (sel,root=document)=>Array.from(root.querySelectorAll(sel));
   const esc = (s)=>String(s==null?'':s).replace(/[&<>\"']/g, ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[ch]));
-  function safe(fn,label){ try{return fn();}catch(e){ console.error('[MBH 0.5.1 '+(label||'')+']', e); } }
+  function safe(fn,label){ try{return fn();}catch(e){ console.error('[MBH 0.5.2 '+(label||'')+']', e); } }
   function syncVersion039(){
     safe(()=>{ window.APP_VERSION=APP_VERSION; window.GAME_VERSION=APP_VERSION; document.documentElement.dataset.buildVersion=APP_VERSION; });
     safe(()=>$$('.build-version,[data-version],#versionText,.version-badge').forEach(el=>{ el.textContent='ver.'+APP_VERSION; }));
@@ -7670,13 +7670,13 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 })();
 
 
-/* MBH ver.0.5.1: 軽量化・ログ撤去・メニューDOM固定 */
+/* MBH ver.0.5.2: 軽量化・ログ撤去・メニューDOM固定 */
 (function(){
   'use strict';
-  const BUILD='0.5.1';
+  const BUILD='0.5.2';
   const $=(id)=>document.getElementById(id);
   const $$=(sel,root=document)=>Array.from(root.querySelectorAll(sel));
-  const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.warn('[MBH 0.5.1]', e); } };
+  const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.warn('[MBH 0.5.2]', e); } };
   const esc=(v)=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
   const setStable=(el,html)=>{ if(el && el.innerHTML!==html) el.innerHTML=html; };
   const pct=(v)=>Math.round((Number(v)||0)*100)+'%';
@@ -7692,7 +7692,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
     if($('mbh-041-css')) return;
     const st=document.createElement('style'); st.id='mbh-041-css';
     st.textContent=`
-      /* 0.5.1: ログ撤去 */
+      /* 0.5.2: ログ撤去 */
       .log-panel,#logFilterBar,#log,[data-menu-page="log"]{display:none!important;}
       .side-panel{display:grid!important;grid-template-rows:auto minmax(0,1fr) auto!important;grid-template-columns:1fr!important;gap:10px!important;min-width:0!important;overflow:hidden!important;}
       .mobile-menu-tabs{flex:0 0 auto!important;}
@@ -7926,13 +7926,13 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   setInterval(()=>safe(()=>{ syncVersion041(); removeLogUi041(); removeEnemyLevelXp041(); }),3000);
 })();
 
-/* MBH ver.0.5.1: menu layout rule finalizer */
+/* MBH ver.0.5.2: menu layout rule finalizer */
 (function(){
   'use strict';
-  const BUILD='0.5.1';
+  const BUILD='0.5.2';
   const $=(id)=>document.getElementById(id);
   const $$=(sel,root=document)=>Array.from(root.querySelectorAll(sel));
-  const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.warn('[MBH 0.5.1 layout]', e); } };
+  const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.warn('[MBH 0.5.2 layout]', e); } };
 
   function syncVersion041Final(){
     window.APP_VERSION=BUILD; window.GAME_VERSION=BUILD;
@@ -7947,12 +7947,12 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
     let st=$('mbh-041-layout-final-css');
     if(!st){ st=document.createElement('style'); st.id='mbh-041-layout-final-css'; document.head.appendChild(st); }
     st.textContent=`
-      html[data-build-version="0.5.1"] .log-panel,
-      html[data-build-version="0.5.1"] #log,
-      html[data-build-version="0.5.1"] #logFilterBar,
-      html[data-build-version="0.5.1"] [data-menu-page="log"]{display:none!important;}
+      html[data-build-version="0.5.2"] .log-panel,
+      html[data-build-version="0.5.2"] #log,
+      html[data-build-version="0.5.2"] #logFilterBar,
+      html[data-build-version="0.5.2"] [data-menu-page="log"]{display:none!important;}
 
-      html[data-build-version="0.5.1"] .side-panel{
+      html[data-build-version="0.5.2"] .side-panel{
         box-sizing:border-box!important;
         min-width:0!important;
         min-height:0!important;
@@ -7962,8 +7962,8 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
         grid-template-columns:minmax(0,1fr)!important;
         gap:10px!important;
       }
-      html[data-build-version="0.5.1"] .side-panel *{box-sizing:border-box!important;}
-      html[data-build-version="0.5.1"] .side-panel>.mobile-menu-tabs{
+      html[data-build-version="0.5.2"] .side-panel *{box-sizing:border-box!important;}
+      html[data-build-version="0.5.2"] .side-panel>.mobile-menu-tabs{
         display:grid!important;
         grid-template-columns:repeat(3,minmax(0,1fr))!important;
         gap:8px!important;
@@ -7971,17 +7971,17 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
         min-width:0!important;
         flex:0 0 auto!important;
       }
-      html[data-build-version="0.5.1"] .side-panel>.mobile-menu-tabs button{min-width:0!important;width:100%!important;}
+      html[data-build-version="0.5.2"] .side-panel>.mobile-menu-tabs button{min-width:0!important;width:100%!important;}
 
-      html[data-build-version="0.5.1"] .menu-col,
-      html[data-build-version="0.5.1"] .menu-left,
-      html[data-build-version="0.5.1"] .menu-right,
-      html[data-build-version="0.5.1"] .menu-main{display:contents!important;width:auto!important;height:auto!important;max-width:none!important;max-height:none!important;}
+      html[data-build-version="0.5.2"] .menu-col,
+      html[data-build-version="0.5.2"] .menu-left,
+      html[data-build-version="0.5.2"] .menu-right,
+      html[data-build-version="0.5.2"] .menu-main{display:contents!important;width:auto!important;height:auto!important;max-width:none!important;max-height:none!important;}
 
-      html[data-build-version="0.5.1"] #mbhMenuContent041,
-      html[data-build-version="0.5.1"] #mbhMenuContent040,
-      html[data-build-version="0.5.1"] #mbhMenuContent039,
-      html[data-build-version="0.5.1"] .menu-content-fixed{
+      html[data-build-version="0.5.2"] #mbhMenuContent041,
+      html[data-build-version="0.5.2"] #mbhMenuContent040,
+      html[data-build-version="0.5.2"] #mbhMenuContent039,
+      html[data-build-version="0.5.2"] .menu-content-fixed{
         width:100%!important;
         height:100%!important;
         min-width:0!important;
@@ -7991,7 +7991,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
         overflow:hidden!important;
         display:block!important;
       }
-      html[data-build-version="0.5.1"] .side-panel .panel{
+      html[data-build-version="0.5.2"] .side-panel .panel{
         width:100%!important;
         height:100%!important;
         min-width:0!important;
@@ -8002,11 +8002,11 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
         overflow:hidden!important;
         position:relative!important;
       }
-      html[data-build-version="0.5.1"] .side-panel .panel:not(.active-page){display:none!important;}
-      html[data-build-version="0.5.1"] .side-panel .panel.active-page{display:flex!important;flex-direction:column!important;}
+      html[data-build-version="0.5.2"] .side-panel .panel:not(.active-page){display:none!important;}
+      html[data-build-version="0.5.2"] .side-panel .panel.active-page{display:flex!important;flex-direction:column!important;}
 
-      html[data-build-version="0.5.1"] .status-layout,
-      html[data-build-version="0.5.1"] .equip-layout{
+      html[data-build-version="0.5.2"] .status-layout,
+      html[data-build-version="0.5.2"] .equip-layout{
         flex:1 1 auto!important;
         width:100%!important;
         height:100%!important;
@@ -8019,10 +8019,10 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
         overflow:hidden!important;
         align-items:stretch!important;
       }
-      html[data-build-version="0.5.1"] .status-left,
-      html[data-build-version="0.5.1"] .status-right,
-      html[data-build-version="0.5.1"] .equip-left,
-      html[data-build-version="0.5.1"] .equip-right{
+      html[data-build-version="0.5.2"] .status-left,
+      html[data-build-version="0.5.2"] .status-right,
+      html[data-build-version="0.5.2"] .equip-left,
+      html[data-build-version="0.5.2"] .equip-right{
         min-width:0!important;
         min-height:0!important;
         max-width:none!important;
@@ -8030,12 +8030,12 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
         display:flex!important;
         flex-direction:column!important;
       }
-      html[data-build-version="0.5.1"] .hero-stats>h2,
-      html[data-build-version="0.5.1"] .equip-panel>h2{flex:0 0 auto!important;}
-      html[data-build-version="0.5.1"] .status-left .stat-grid{flex:0 0 auto!important;}
-      html[data-build-version="0.5.1"] .status-special-effects,
-      html[data-build-version="0.5.1"] .monster-records,
-      html[data-build-version="0.5.1"] .equip-effect-totals{
+      html[data-build-version="0.5.2"] .hero-stats>h2,
+      html[data-build-version="0.5.2"] .equip-panel>h2{flex:0 0 auto!important;}
+      html[data-build-version="0.5.2"] .status-left .stat-grid{flex:0 0 auto!important;}
+      html[data-build-version="0.5.2"] .status-special-effects,
+      html[data-build-version="0.5.2"] .monster-records,
+      html[data-build-version="0.5.2"] .equip-effect-totals{
         flex:1 1 auto!important;
         min-height:0!important;
         max-height:none!important;
@@ -8045,11 +8045,11 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
         padding:8px!important;
         background:rgba(0,0,0,.18)!important;
       }
-      html[data-build-version="0.5.1"] .status-special-effects{margin-top:10px!important;}
-      html[data-build-version="0.5.1"] .monster-records,
-      html[data-build-version="0.5.1"] .equip-effect-totals{margin-top:0!important;}
-      html[data-build-version="0.5.1"] .effect-scroll,
-      html[data-build-version="0.5.1"] .monster-record-list{
+      html[data-build-version="0.5.2"] .status-special-effects{margin-top:10px!important;}
+      html[data-build-version="0.5.2"] .monster-records,
+      html[data-build-version="0.5.2"] .equip-effect-totals{margin-top:0!important;}
+      html[data-build-version="0.5.2"] .effect-scroll,
+      html[data-build-version="0.5.2"] .monster-record-list{
         width:100%!important;
         flex:1 1 auto!important;
         min-height:0!important;
@@ -8060,20 +8060,20 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
         scrollbar-color:#b8872d #120b06!important;
         scrollbar-width:thin!important;
       }
-      html[data-build-version="0.5.1"] .effect-scroll::-webkit-scrollbar,
-      html[data-build-version="0.5.1"] .monster-record-list::-webkit-scrollbar,
-      html[data-build-version="0.5.1"] #inventory::-webkit-scrollbar,
-      html[data-build-version="0.5.1"] .equip-list::-webkit-scrollbar{width:9px!important;height:9px!important;}
-      html[data-build-version="0.5.1"] .effect-scroll::-webkit-scrollbar-track,
-      html[data-build-version="0.5.1"] .monster-record-list::-webkit-scrollbar-track,
-      html[data-build-version="0.5.1"] #inventory::-webkit-scrollbar-track,
-      html[data-build-version="0.5.1"] .equip-list::-webkit-scrollbar-track{background:#100905!important;border-radius:9px!important;}
-      html[data-build-version="0.5.1"] .effect-scroll::-webkit-scrollbar-thumb,
-      html[data-build-version="0.5.1"] .monster-record-list::-webkit-scrollbar-thumb,
-      html[data-build-version="0.5.1"] #inventory::-webkit-scrollbar-thumb,
-      html[data-build-version="0.5.1"] .equip-list::-webkit-scrollbar-thumb{background:linear-gradient(#d7a340,#7b5519)!important;border-radius:9px!important;border:1px solid #2b1a07!important;}
+      html[data-build-version="0.5.2"] .effect-scroll::-webkit-scrollbar,
+      html[data-build-version="0.5.2"] .monster-record-list::-webkit-scrollbar,
+      html[data-build-version="0.5.2"] #inventory::-webkit-scrollbar,
+      html[data-build-version="0.5.2"] .equip-list::-webkit-scrollbar{width:9px!important;height:9px!important;}
+      html[data-build-version="0.5.2"] .effect-scroll::-webkit-scrollbar-track,
+      html[data-build-version="0.5.2"] .monster-record-list::-webkit-scrollbar-track,
+      html[data-build-version="0.5.2"] #inventory::-webkit-scrollbar-track,
+      html[data-build-version="0.5.2"] .equip-list::-webkit-scrollbar-track{background:#100905!important;border-radius:9px!important;}
+      html[data-build-version="0.5.2"] .effect-scroll::-webkit-scrollbar-thumb,
+      html[data-build-version="0.5.2"] .monster-record-list::-webkit-scrollbar-thumb,
+      html[data-build-version="0.5.2"] #inventory::-webkit-scrollbar-thumb,
+      html[data-build-version="0.5.2"] .equip-list::-webkit-scrollbar-thumb{background:linear-gradient(#d7a340,#7b5519)!important;border-radius:9px!important;border:1px solid #2b1a07!important;}
 
-      html[data-build-version="0.5.1"] .equip-list{
+      html[data-build-version="0.5.2"] .equip-list{
         flex:1 1 auto!important;
         min-height:0!important;
         width:100%!important;
@@ -8086,12 +8086,12 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
         align-content:start!important;
         padding-right:8px!important;
       }
-      html[data-build-version="0.5.1"] .equip-actions-fixed,
-      html[data-build-version="0.5.1"] #bestEquipBtnEquip,
-      html[data-build-version="0.5.1"] #upgradeBtn{display:none!important;}
-      html[data-build-version="0.5.1"] .equip-left>#bestEquipBtn{flex:0 0 auto!important;display:block!important;width:100%!important;margin:8px 0 0!important;}
+      html[data-build-version="0.5.2"] .equip-actions-fixed,
+      html[data-build-version="0.5.2"] #bestEquipBtnEquip,
+      html[data-build-version="0.5.2"] #upgradeBtn{display:none!important;}
+      html[data-build-version="0.5.2"] .equip-left>#bestEquipBtn{flex:0 0 auto!important;display:block!important;width:100%!important;margin:8px 0 0!important;}
 
-      html[data-build-version="0.5.1"] .inventory-panel.active-page{
+      html[data-build-version="0.5.2"] .inventory-panel.active-page{
         display:flex!important;
         flex-direction:column!important;
         width:100%!important;
@@ -8099,10 +8099,10 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
         max-width:none!important;
         overflow:hidden!important;
       }
-      html[data-build-version="0.5.1"] .inventory-panel h2{flex:0 0 auto!important;}
-      html[data-build-version="0.5.1"] .inventory-actions,
-      html[data-build-version="0.5.1"] .inventory-filter-bar{flex:0 0 auto!important;width:100%!important;max-width:none!important;}
-      html[data-build-version="0.5.1"] #inventory{
+      html[data-build-version="0.5.2"] .inventory-panel h2{flex:0 0 auto!important;}
+      html[data-build-version="0.5.2"] .inventory-actions,
+      html[data-build-version="0.5.2"] .inventory-filter-bar{flex:0 0 auto!important;width:100%!important;max-width:none!important;}
+      html[data-build-version="0.5.2"] #inventory{
         flex:1 1 auto!important;
         min-height:0!important;
         width:100%!important;
@@ -8120,9 +8120,9 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
         scrollbar-width:thin!important;
       }
 
-      html[data-build-version="0.5.1"] .menu-footer-fixed,
-      html[data-build-version="0.5.1"] .side-panel>.legal-links,
-      html[data-build-version="0.5.1"] .side-panel>.menu-footer{
+      html[data-build-version="0.5.2"] .menu-footer-fixed,
+      html[data-build-version="0.5.2"] .side-panel>.legal-links,
+      html[data-build-version="0.5.2"] .side-panel>.menu-footer{
         flex:0 0 auto!important;
         display:grid!important;
         grid-template-columns:repeat(3,minmax(0,1fr))!important;
@@ -8138,31 +8138,31 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
         background:linear-gradient(rgba(16,10,5,.98),rgba(5,5,5,.98))!important;
         box-shadow:none!important;
       }
-      html[data-build-version="0.5.1"] .panel .legal-links,
-      html[data-build-version="0.5.1"] .panel .menu-footer{display:none!important;}
+      html[data-build-version="0.5.2"] .panel .legal-links,
+      html[data-build-version="0.5.2"] .panel .menu-footer{display:none!important;}
 
-      html[data-build-version="0.5.1"] body.menu-open .flee-btn,
-      html[data-build-version="0.5.1"] body.menu-open .expbar{display:none!important;}
+      html[data-build-version="0.5.2"] body.menu-open .flee-btn,
+      html[data-build-version="0.5.2"] body.menu-open .expbar{display:none!important;}
 
       @media(min-width:1280px) and (min-height:701px) and (pointer:fine){
-        html[data-build-version="0.5.1"] .layout{grid-template-columns:minmax(780px,1fr) minmax(560px,760px)!important;}
-        html[data-build-version="0.5.1"] .side-panel{position:static!important;display:grid!important;width:auto!important;height:auto!important;background:none!important;border:0!important;padding:0!important;box-shadow:none!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;}
-        html[data-build-version="0.5.1"] #equipToggleBtn{display:none!important;}
+        html[data-build-version="0.5.2"] .layout{grid-template-columns:minmax(780px,1fr) minmax(560px,760px)!important;}
+        html[data-build-version="0.5.2"] .side-panel{position:static!important;display:grid!important;width:auto!important;height:auto!important;background:none!important;border:0!important;padding:0!important;box-shadow:none!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;}
+        html[data-build-version="0.5.2"] #equipToggleBtn{display:none!important;}
       }
       @media(max-width:1279px),(max-height:700px),(pointer:coarse){
-        html[data-build-version="0.5.1"] .layout{grid-template-columns:1fr!important;}
-        html[data-build-version="0.5.1"] #equipToggleBtn{display:inline-flex!important;}
-        html[data-build-version="0.5.1"] body:not(.mbh-menu-open) .side-panel{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;}
-        html[data-build-version="0.5.1"] body.mbh-menu-open .side-panel{display:grid!important;position:fixed!important;left:8px!important;right:8px!important;top:calc(var(--mbh-topbar-h,58px) + 8px)!important;bottom:8px!important;width:auto!important;height:auto!important;z-index:70!important;background:rgba(0,0,0,.94)!important;border:2px solid #c99b39!important;padding:8px!important;box-shadow:0 0 35px #000!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;}
+        html[data-build-version="0.5.2"] .layout{grid-template-columns:1fr!important;}
+        html[data-build-version="0.5.2"] #equipToggleBtn{display:inline-flex!important;}
+        html[data-build-version="0.5.2"] body:not(.mbh-menu-open) .side-panel{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;}
+        html[data-build-version="0.5.2"] body.mbh-menu-open .side-panel{display:grid!important;position:fixed!important;left:8px!important;right:8px!important;top:calc(var(--mbh-topbar-h,58px) + 8px)!important;bottom:8px!important;width:auto!important;height:auto!important;z-index:70!important;background:rgba(0,0,0,.94)!important;border:2px solid #c99b39!important;padding:8px!important;box-shadow:0 0 35px #000!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;}
       }
       @media(max-width:760px){
-        html[data-build-version="0.5.1"] .status-layout,
-        html[data-build-version="0.5.1"] .equip-layout{grid-template-columns:1fr!important;overflow-y:auto!important;}
-        html[data-build-version="0.5.1"] .side-panel>.mobile-menu-tabs{grid-template-columns:repeat(3,minmax(0,1fr))!important;}
-        html[data-build-version="0.5.1"] .side-panel>.legal-links,
-        html[data-build-version="0.5.1"] .side-panel>.menu-footer{grid-template-columns:1fr!important;}
-        html[data-build-version="0.5.1"] .equip-list{grid-template-columns:1fr!important;}
-        html[data-build-version="0.5.1"] #inventory{grid-template-columns:repeat(auto-fill,minmax(120px,1fr))!important;}
+        html[data-build-version="0.5.2"] .status-layout,
+        html[data-build-version="0.5.2"] .equip-layout{grid-template-columns:1fr!important;overflow-y:auto!important;}
+        html[data-build-version="0.5.2"] .side-panel>.mobile-menu-tabs{grid-template-columns:repeat(3,minmax(0,1fr))!important;}
+        html[data-build-version="0.5.2"] .side-panel>.legal-links,
+        html[data-build-version="0.5.2"] .side-panel>.menu-footer{grid-template-columns:1fr!important;}
+        html[data-build-version="0.5.2"] .equip-list{grid-template-columns:1fr!important;}
+        html[data-build-version="0.5.2"] #inventory{grid-template-columns:repeat(auto-fill,minmax(120px,1fr))!important;}
       }
     `;
   }
@@ -8269,10 +8269,10 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   setInterval(()=>safe(()=>{ syncVersion041Final(); normalizeMenu041Final(); ensureEquipButton041Final(); fitNoInline041Final(); }),1500);
 })();
 
-/* MBH ver.0.5.1: 固有能力表示の固定化 + レアリティ色付け + 戦闘中の一時効果を表示しない */
+/* MBH ver.0.5.2: 固有能力表示の固定化 + レアリティ色付け + 戦闘中の一時効果を表示しない */
 (function(){
   'use strict';
-  const BUILD='0.5.1';
+  const BUILD='0.5.2';
   const DARK_COLOR='#b86cff';
   const BASIC_COLOR='#f7ead0';
   const ABILITY_KEYS=new Set([
@@ -8293,7 +8293,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
     darkAmulet:['闇のアミュレット','死線の剣舞効果時間2倍'],
     masterRegen:['師匠のアミュレット','10秒ごとにHP回復 / 撃破時HP25%回復']
   };
-  function safe(fn){ try{return fn&&fn();}catch(e){ console.warn('[MBH 0.5.1]', e); return null; } }
+  function safe(fn){ try{return fn&&fn();}catch(e){ console.warn('[MBH 0.5.2]', e); return null; } }
   function $(id){return document.getElementById(id);}
   function esc(s){return String(s??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));}
   function pct(v, signed=false){ const n=Math.round(Number(v||0)*100); return (signed&&n>0?'+':'')+n+'%'; }
@@ -8398,12 +8398,12 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
     if($('mbh-042-effects-css')) return;
     const st=document.createElement('style'); st.id='mbh-042-effects-css';
     st.textContent=`
-      html[data-build-version="0.5.1"] .effect-row.ability-option span,
-      html[data-build-version="0.5.1"] .effect-row.ability-option b{color:var(--effect-color)!important;text-shadow:0 0 8px color-mix(in srgb, var(--effect-color) 55%, transparent)!important;}
-      html[data-build-version="0.5.1"] .effect-row.basic-option span{color:#e8d0a2!important;}
-      html[data-build-version="0.5.1"] .effect-row.basic-option b{color:#fff7c8!important;}
-      html[data-build-version="0.5.1"] .equip small .item-ability-option{color:var(--item-ability-color)!important;text-shadow:0 0 7px color-mix(in srgb, var(--item-ability-color) 50%, transparent)!important;font-weight:800!important;}
-      html[data-build-version="0.5.1"] .equip small .item-basic-option{color:#c8b98e!important;}
+      html[data-build-version="0.5.2"] .effect-row.ability-option span,
+      html[data-build-version="0.5.2"] .effect-row.ability-option b{color:var(--effect-color)!important;text-shadow:0 0 8px color-mix(in srgb, var(--effect-color) 55%, transparent)!important;}
+      html[data-build-version="0.5.2"] .effect-row.basic-option span{color:#e8d0a2!important;}
+      html[data-build-version="0.5.2"] .effect-row.basic-option b{color:#fff7c8!important;}
+      html[data-build-version="0.5.2"] .equip small .item-ability-option{color:var(--item-ability-color)!important;text-shadow:0 0 7px color-mix(in srgb, var(--item-ability-color) 50%, transparent)!important;font-weight:800!important;}
+      html[data-build-version="0.5.2"] .equip small .item-basic-option{color:#c8b98e!important;}
     `;
     document.head.appendChild(st);
   }
@@ -8461,10 +8461,10 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 })();
 
 
-/* MBH ver.0.5.1: version single-source, stable effect panels, debug/menu layout lock, named regen display */
+/* MBH ver.0.5.2: version single-source, stable effect panels, debug/menu layout lock, named regen display */
 (function(){
   'use strict';
-  const BUILD='0.5.1';
+  const BUILD='0.5.2';
   const BASIC_COLOR='#f7ead0';
   const DARK_COLOR='#b86cff';
   const RARITY_COLORS={legendary:'#ff9b24',rare:'#4d8dff',normal:'#eeeeee'};
@@ -8475,7 +8475,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
     deathDanceDefIgnore:'剣舞防御無視', heroDarkBleedChance:'暗黒出血付与', lifeSteal:'HP吸収',
     guard:'ガード率', crit:'クリティカル率', killHeal:'撃破時HP回復'
   };
-  function safe(fn){ try{return fn&&fn();}catch(e){ console.warn('[MBH0.5.1]', e); return null; } }
+  function safe(fn){ try{return fn&&fn();}catch(e){ console.warn('[MBH0.5.2]', e); return null; } }
   function $(id){ return document.getElementById(id); }
   function esc(s){ return String(s??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
   function pct(v,signed=false){ const n=Math.round(Number(v||0)*100); return (signed&&n>0?'+':'')+n+'%'; }
@@ -8600,23 +8600,23 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
     if($('mbh-043-final-css')) return;
     const st=document.createElement('style'); st.id='mbh-043-final-css';
     st.textContent=`
-      html[data-build-version="0.5.1"] .effect-row.ability-option span,
-      html[data-build-version="0.5.1"] .effect-row.ability-option b{color:var(--effect-color)!important;text-shadow:0 0 8px color-mix(in srgb,var(--effect-color) 55%,transparent)!important;}
-      html[data-build-version="0.5.1"] .effect-row.basic-option span{color:#e8d0a2!important;}
-      html[data-build-version="0.5.1"] .effect-row.basic-option b{color:#fff7c8!important;}
-      html[data-build-version="0.5.1"] #statusSpecialEffects .effect-scroll,
-      html[data-build-version="0.5.1"] #equipEffectTotals .effect-scroll{scrollbar-color:#9d742a #111!important;scrollbar-width:thin!important;overflow:auto!important;}
-      html[data-build-version="0.5.1"] #statusSpecialEffects .effect-scroll::-webkit-scrollbar,
-      html[data-build-version="0.5.1"] #equipEffectTotals .effect-scroll::-webkit-scrollbar{width:8px!important;}
-      html[data-build-version="0.5.1"] #statusSpecialEffects .effect-scroll::-webkit-scrollbar-thumb,
-      html[data-build-version="0.5.1"] #equipEffectTotals .effect-scroll::-webkit-scrollbar-thumb{background:#8b6628!important;border-radius:8px!important;}
-      html[data-build-version="0.5.1"] #statusSpecialEffects .effect-scroll::-webkit-scrollbar-track,
-      html[data-build-version="0.5.1"] #equipEffectTotals .effect-scroll::-webkit-scrollbar-track{background:#120b06!important;}
+      html[data-build-version="0.5.2"] .effect-row.ability-option span,
+      html[data-build-version="0.5.2"] .effect-row.ability-option b{color:var(--effect-color)!important;text-shadow:0 0 8px color-mix(in srgb,var(--effect-color) 55%,transparent)!important;}
+      html[data-build-version="0.5.2"] .effect-row.basic-option span{color:#e8d0a2!important;}
+      html[data-build-version="0.5.2"] .effect-row.basic-option b{color:#fff7c8!important;}
+      html[data-build-version="0.5.2"] #statusSpecialEffects .effect-scroll,
+      html[data-build-version="0.5.2"] #equipEffectTotals .effect-scroll{scrollbar-color:#9d742a #111!important;scrollbar-width:thin!important;overflow:auto!important;}
+      html[data-build-version="0.5.2"] #statusSpecialEffects .effect-scroll::-webkit-scrollbar,
+      html[data-build-version="0.5.2"] #equipEffectTotals .effect-scroll::-webkit-scrollbar{width:8px!important;}
+      html[data-build-version="0.5.2"] #statusSpecialEffects .effect-scroll::-webkit-scrollbar-thumb,
+      html[data-build-version="0.5.2"] #equipEffectTotals .effect-scroll::-webkit-scrollbar-thumb{background:#8b6628!important;border-radius:8px!important;}
+      html[data-build-version="0.5.2"] #statusSpecialEffects .effect-scroll::-webkit-scrollbar-track,
+      html[data-build-version="0.5.2"] #equipEffectTotals .effect-scroll::-webkit-scrollbar-track{background:#120b06!important;}
       @media (min-width:1280px) and (min-height:701px){
-        html[data-build-version="0.5.1"] .side-panel{position:static!important;display:grid!important;grid-template-rows:auto minmax(0,1fr) auto!important;grid-template-columns:1fr!important;overflow:hidden!important;}
-        html[data-build-version="0.5.1"] .side-panel .mobile-menu-tabs{grid-row:1!important;position:relative!important;top:auto!important;left:auto!important;right:auto!important;display:flex!important;z-index:2!important;}
-        html[data-build-version="0.5.1"] #debugPanel:not(.hidden){position:fixed!important;right:18px!important;top:70px!important;z-index:12000!important;max-height:calc(100vh - 88px)!important;overflow:auto!important;}
-        html[data-build-version="0.5.1"] #debugPanel:not(.hidden) ~ *{position:static!important;}
+        html[data-build-version="0.5.2"] .side-panel{position:static!important;display:grid!important;grid-template-rows:auto minmax(0,1fr) auto!important;grid-template-columns:1fr!important;overflow:hidden!important;}
+        html[data-build-version="0.5.2"] .side-panel .mobile-menu-tabs{grid-row:1!important;position:relative!important;top:auto!important;left:auto!important;right:auto!important;display:flex!important;z-index:2!important;}
+        html[data-build-version="0.5.2"] #debugPanel:not(.hidden){position:fixed!important;right:18px!important;top:70px!important;z-index:12000!important;max-height:calc(100vh - 88px)!important;overflow:auto!important;}
+        html[data-build-version="0.5.2"] #debugPanel:not(.hidden) ~ *{position:static!important;}
       }
     `;
     document.head.appendChild(st);
@@ -8633,14 +8633,14 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 })();
 
 
-/* MBH ver.0.5.1: final menu full-page layout + debug next enemy queue + spawn overwrite guard */
+/* MBH ver.0.5.2: final menu full-page layout + debug next enemy queue + spawn overwrite guard */
 (function(){
   'use strict';
-  const BUILD='0.5.1';
+  const BUILD='0.5.2';
   const $=(id)=>document.getElementById(id);
   const qs=(s,r=document)=>r.querySelector(s);
   const qsa=(s,r=document)=>Array.from(r.querySelectorAll(s));
-  const safe=(fn)=>{ try{ return fn&&fn(); }catch(e){ console.warn('[MBH0.5.1]', e); return null; } };
+  const safe=(fn)=>{ try{ return fn&&fn(); }catch(e){ console.warn('[MBH0.5.2]', e); return null; } };
 
   function syncVersion044(){
     window.APP_VERSION=BUILD;
@@ -8657,76 +8657,76 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
     const st=document.createElement('style');
     st.id='mbh-044-final-css';
     st.textContent=`
-      html[data-build-version="0.5.1"] .side-panel{
+      html[data-build-version="0.5.2"] .side-panel{
         display:grid!important;
         grid-template-columns:1fr!important;
         grid-template-rows:auto minmax(0,1fr) auto!important;
         gap:10px!important;
         min-width:0!important;min-height:0!important;overflow:hidden!important;
       }
-      html[data-build-version="0.5.1"] .side-panel>.mobile-menu-tabs{
+      html[data-build-version="0.5.2"] .side-panel>.mobile-menu-tabs{
         grid-row:1!important;display:flex!important;position:relative!important;top:auto!important;left:auto!important;right:auto!important;width:100%!important;z-index:5!important;flex:0 0 auto!important;
       }
-      html[data-build-version="0.5.1"] .side-panel>.mobile-menu-tabs button{flex:1 1 0!important;min-width:0!important;white-space:nowrap!important;}
-      html[data-build-version="0.5.1"] .side-panel>.menu-col,
-      html[data-build-version="0.5.1"] .side-panel>.menu-main,
-      html[data-build-version="0.5.1"] .side-panel>.menu-left,
-      html[data-build-version="0.5.1"] .side-panel>.menu-right{display:none!important;}
-      html[data-build-version="0.5.1"] .side-panel>.menu-content-fixed,
-      html[data-build-version="0.5.1"] #mbhMenuContent044{
+      html[data-build-version="0.5.2"] .side-panel>.mobile-menu-tabs button{flex:1 1 0!important;min-width:0!important;white-space:nowrap!important;}
+      html[data-build-version="0.5.2"] .side-panel>.menu-col,
+      html[data-build-version="0.5.2"] .side-panel>.menu-main,
+      html[data-build-version="0.5.2"] .side-panel>.menu-left,
+      html[data-build-version="0.5.2"] .side-panel>.menu-right{display:none!important;}
+      html[data-build-version="0.5.2"] .side-panel>.menu-content-fixed,
+      html[data-build-version="0.5.2"] #mbhMenuContent044{
         grid-row:2!important;display:block!important;width:100%!important;height:100%!important;min-width:0!important;min-height:0!important;max-width:none!important;overflow:hidden!important;margin:0!important;padding:0!important;
         grid-template-columns:none!important;grid-template-rows:none!important;
       }
-      html[data-build-version="0.5.1"] #mbhMenuContent044>.panel{
+      html[data-build-version="0.5.2"] #mbhMenuContent044>.panel{
         width:100%!important;height:100%!important;max-width:none!important;min-width:0!important;min-height:0!important;margin:0!important;grid-column:auto!important;grid-row:auto!important;align-self:stretch!important;justify-self:stretch!important;overflow:hidden!important;
       }
-      html[data-build-version="0.5.1"] #mbhMenuContent044>.panel:not(.active-page){display:none!important;}
-      html[data-build-version="0.5.1"] #mbhMenuContent044>.panel.active-page{display:flex!important;flex-direction:column!important;}
-      html[data-build-version="0.5.1"] .hero-stats>.status-layout,
-      html[data-build-version="0.5.1"] .equip-panel>.equip-layout{
+      html[data-build-version="0.5.2"] #mbhMenuContent044>.panel:not(.active-page){display:none!important;}
+      html[data-build-version="0.5.2"] #mbhMenuContent044>.panel.active-page{display:flex!important;flex-direction:column!important;}
+      html[data-build-version="0.5.2"] .hero-stats>.status-layout,
+      html[data-build-version="0.5.2"] .equip-panel>.equip-layout{
         flex:1 1 auto!important;min-height:0!important;width:100%!important;height:auto!important;display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;grid-template-rows:minmax(0,1fr)!important;gap:12px!important;overflow:hidden!important;
       }
-      html[data-build-version="0.5.1"] .status-left,
-      html[data-build-version="0.5.1"] .status-right,
-      html[data-build-version="0.5.1"] .equip-left,
-      html[data-build-version="0.5.1"] .equip-right{min-width:0!important;min-height:0!important;overflow:hidden!important;display:flex!important;flex-direction:column!important;}
-      html[data-build-version="0.5.1"] .status-special-effects,
-      html[data-build-version="0.5.1"] .monster-records,
-      html[data-build-version="0.5.1"] .equip-effect-totals{flex:1 1 auto!important;min-height:0!important;overflow:hidden!important;display:flex!important;flex-direction:column!important;}
-      html[data-build-version="0.5.1"] .effect-scroll,
-      html[data-build-version="0.5.1"] .monster-record-list,
-      html[data-build-version="0.5.1"] .equip-list,
-      html[data-build-version="0.5.1"] .inventory{min-height:0!important;overflow-y:auto!important;overflow-x:hidden!important;scrollbar-color:#9d742a #111!important;scrollbar-width:thin!important;}
-      html[data-build-version="0.5.1"] .effect-scroll::-webkit-scrollbar,
-      html[data-build-version="0.5.1"] .monster-record-list::-webkit-scrollbar,
-      html[data-build-version="0.5.1"] .equip-list::-webkit-scrollbar,
-      html[data-build-version="0.5.1"] .inventory::-webkit-scrollbar{width:8px!important;}
-      html[data-build-version="0.5.1"] .effect-scroll::-webkit-scrollbar-thumb,
-      html[data-build-version="0.5.1"] .monster-record-list::-webkit-scrollbar-thumb,
-      html[data-build-version="0.5.1"] .equip-list::-webkit-scrollbar-thumb,
-      html[data-build-version="0.5.1"] .inventory::-webkit-scrollbar-thumb{background:#8b6628!important;border-radius:8px!important;}
-      html[data-build-version="0.5.1"] .effect-scroll::-webkit-scrollbar-track,
-      html[data-build-version="0.5.1"] .monster-record-list::-webkit-scrollbar-track,
-      html[data-build-version="0.5.1"] .equip-list::-webkit-scrollbar-track,
-      html[data-build-version="0.5.1"] .inventory::-webkit-scrollbar-track{background:#120b06!important;}
-      html[data-build-version="0.5.1"] .inventory-panel.active-page{display:flex!important;flex-direction:column!important;}
-      html[data-build-version="0.5.1"] .inventory-panel .inventory{flex:1 1 auto!important;width:100%!important;max-height:none!important;display:grid!important;grid-template-columns:repeat(auto-fill,minmax(96px,1fr))!important;align-content:start!important;}
-      html[data-build-version="0.5.1"] .menu-footer{grid-row:3!important;position:relative!important;display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important;width:100%!important;margin:0!important;z-index:4!important;}
-      html[data-build-version="0.5.1"] #bestEquipBtnEquip{display:none!important;}
+      html[data-build-version="0.5.2"] .status-left,
+      html[data-build-version="0.5.2"] .status-right,
+      html[data-build-version="0.5.2"] .equip-left,
+      html[data-build-version="0.5.2"] .equip-right{min-width:0!important;min-height:0!important;overflow:hidden!important;display:flex!important;flex-direction:column!important;}
+      html[data-build-version="0.5.2"] .status-special-effects,
+      html[data-build-version="0.5.2"] .monster-records,
+      html[data-build-version="0.5.2"] .equip-effect-totals{flex:1 1 auto!important;min-height:0!important;overflow:hidden!important;display:flex!important;flex-direction:column!important;}
+      html[data-build-version="0.5.2"] .effect-scroll,
+      html[data-build-version="0.5.2"] .monster-record-list,
+      html[data-build-version="0.5.2"] .equip-list,
+      html[data-build-version="0.5.2"] .inventory{min-height:0!important;overflow-y:auto!important;overflow-x:hidden!important;scrollbar-color:#9d742a #111!important;scrollbar-width:thin!important;}
+      html[data-build-version="0.5.2"] .effect-scroll::-webkit-scrollbar,
+      html[data-build-version="0.5.2"] .monster-record-list::-webkit-scrollbar,
+      html[data-build-version="0.5.2"] .equip-list::-webkit-scrollbar,
+      html[data-build-version="0.5.2"] .inventory::-webkit-scrollbar{width:8px!important;}
+      html[data-build-version="0.5.2"] .effect-scroll::-webkit-scrollbar-thumb,
+      html[data-build-version="0.5.2"] .monster-record-list::-webkit-scrollbar-thumb,
+      html[data-build-version="0.5.2"] .equip-list::-webkit-scrollbar-thumb,
+      html[data-build-version="0.5.2"] .inventory::-webkit-scrollbar-thumb{background:#8b6628!important;border-radius:8px!important;}
+      html[data-build-version="0.5.2"] .effect-scroll::-webkit-scrollbar-track,
+      html[data-build-version="0.5.2"] .monster-record-list::-webkit-scrollbar-track,
+      html[data-build-version="0.5.2"] .equip-list::-webkit-scrollbar-track,
+      html[data-build-version="0.5.2"] .inventory::-webkit-scrollbar-track{background:#120b06!important;}
+      html[data-build-version="0.5.2"] .inventory-panel.active-page{display:flex!important;flex-direction:column!important;}
+      html[data-build-version="0.5.2"] .inventory-panel .inventory{flex:1 1 auto!important;width:100%!important;max-height:none!important;display:grid!important;grid-template-columns:repeat(auto-fill,minmax(96px,1fr))!important;align-content:start!important;}
+      html[data-build-version="0.5.2"] .menu-footer{grid-row:3!important;position:relative!important;display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important;width:100%!important;margin:0!important;z-index:4!important;}
+      html[data-build-version="0.5.2"] #bestEquipBtnEquip{display:none!important;}
       @media (min-width:1280px) and (min-height:701px){
-        html[data-build-version="0.5.1"] #equipToggleBtn{display:none!important;}
-        html[data-build-version="0.5.1"] .side-panel{position:static!important;width:auto!important;background:none!important;border:0!important;box-shadow:none!important;padding:0!important;}
-        html[data-build-version="0.5.1"] #debugPanel:not(.hidden){position:fixed!important;right:18px!important;top:70px!important;z-index:12000!important;max-height:calc(100vh - 88px)!important;overflow:auto!important;}
+        html[data-build-version="0.5.2"] #equipToggleBtn{display:none!important;}
+        html[data-build-version="0.5.2"] .side-panel{position:static!important;width:auto!important;background:none!important;border:0!important;box-shadow:none!important;padding:0!important;}
+        html[data-build-version="0.5.2"] #debugPanel:not(.hidden){position:fixed!important;right:18px!important;top:70px!important;z-index:12000!important;max-height:calc(100vh - 88px)!important;overflow:auto!important;}
       }
       @media (max-width:1279px),(max-height:700px){
-        html[data-build-version="0.5.1"] #equipToggleBtn{display:inline-block!important;}
-        html[data-build-version="0.5.1"] .side-panel{display:none!important;position:fixed!important;left:8px!important;right:8px!important;top:calc(var(--mbh-topbar-h,58px) + 8px)!important;bottom:8px!important;width:auto!important;max-width:calc(100vw - 16px)!important;z-index:70!important;background:rgba(0,0,0,.94)!important;border:2px solid #c99b39!important;padding:8px!important;box-shadow:0 0 35px #000!important;}
-        html[data-build-version="0.5.1"] .side-panel.open{display:grid!important;}
+        html[data-build-version="0.5.2"] #equipToggleBtn{display:inline-block!important;}
+        html[data-build-version="0.5.2"] .side-panel{display:none!important;position:fixed!important;left:8px!important;right:8px!important;top:calc(var(--mbh-topbar-h,58px) + 8px)!important;bottom:8px!important;width:auto!important;max-width:calc(100vw - 16px)!important;z-index:70!important;background:rgba(0,0,0,.94)!important;border:2px solid #c99b39!important;padding:8px!important;box-shadow:0 0 35px #000!important;}
+        html[data-build-version="0.5.2"] .side-panel.open{display:grid!important;}
       }
       @media (max-width:760px){
-        html[data-build-version="0.5.1"] .hero-stats>.status-layout,
-        html[data-build-version="0.5.1"] .equip-panel>.equip-layout{grid-template-columns:1fr!important;overflow-y:auto!important;}
-        html[data-build-version="0.5.1"] .menu-footer{grid-template-columns:1fr!important;}
+        html[data-build-version="0.5.2"] .hero-stats>.status-layout,
+        html[data-build-version="0.5.2"] .equip-panel>.equip-layout{grid-template-columns:1fr!important;overflow-y:auto!important;}
+        html[data-build-version="0.5.2"] .menu-footer{grid-template-columns:1fr!important;}
       }
     `;
     document.head.appendChild(st);
@@ -8908,14 +8908,14 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   setInterval(()=>safe(()=>{ syncVersion044(); ensureMenuContent044(); bindMenu044(); patchSpawn044(); bindDebug044(); patchNamedFloat044(); sanitizeNamedRegen044(); }),200);
 })();
 
-/* MBH ver.0.5.1: final build lock + visible menu tabs repair */
+/* MBH ver.0.5.2: final build lock + visible menu tabs repair */
 (function(){
   'use strict';
-  const BUILD='0.5.1';
+  const BUILD='0.5.2';
   const $=(id)=>document.getElementById(id);
   const qs=(s,r=document)=>r.querySelector(s);
   const qsa=(s,r=document)=>Array.from(r.querySelectorAll(s));
-  const safe=(fn)=>{try{return fn&&fn();}catch(e){console.warn('[MBH0.5.1]',e);return null;}};
+  const safe=(fn)=>{try{return fn&&fn();}catch(e){console.warn('[MBH0.5.2]',e);return null;}};
   function syncVersion045(){
     window.APP_VERSION=BUILD; window.GAME_VERSION=BUILD;
     document.documentElement.dataset.buildVersion=BUILD;
@@ -8980,10 +8980,10 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 })();
 
 
-/* MBH ver.0.5.1: safe menu layer fix - no MutationObserver loop */
+/* MBH ver.0.5.2: safe menu layer fix - no MutationObserver loop */
 (function(){
   'use strict';
-  const BUILD='0.5.1';
+  const BUILD='0.5.2';
   const $$=(sel)=>Array.from(document.querySelectorAll(sel));
   const $=(sel)=>document.querySelector(sel);
   let applying=false;
@@ -8998,7 +8998,7 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
       $$('.build-version,[data-version],#versionText,.version-badge').forEach(el=>{ el.textContent='ver.'+BUILD; });
       $$('.debug-version').forEach(el=>{ el.textContent='Build: ver.'+BUILD; });
       $$('.debug-trace-title').forEach(el=>{ el.textContent='進行デバッグログ ver.'+BUILD; });
-    }catch(e){ console.warn('[MBH0.5.1 syncVersion]', e); }
+    }catch(e){ console.warn('[MBH0.5.2 syncVersion]', e); }
     finally{ applying=false; }
   }
   function installCss047(){
@@ -9006,22 +9006,22 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
     const st=document.createElement('style');
     st.id='mbh-047-safe-layer-css';
     st.textContent=`
-      html[data-build-version="0.5.1"] .layout{position:relative!important;z-index:1!important;}
-      html[data-build-version="0.5.1"] .battle-panel{position:relative!important;z-index:1!important;}
-      html[data-build-version="0.5.1"] .side-panel{position:relative!important;z-index:9000!important;pointer-events:auto!important;}
-      html[data-build-version="0.5.1"] .side-panel.open{position:fixed!important;z-index:20000!important;pointer-events:auto!important;}
-      html[data-build-version="0.5.1"] #debugPanel:not(.hidden){z-index:21000!important;pointer-events:auto!important;}
-      html[data-build-version="0.5.1"] .mobile-menu-tabs{display:flex!important;width:100%!important;min-height:40px!important;gap:8px!important;flex:0 0 auto!important;}
-      html[data-build-version="0.5.1"] .mobile-menu-tabs button,
-      html[data-build-version="0.5.1"] [data-menu-page]{display:inline-flex!important;align-items:center!important;justify-content:center!important;flex:1 1 0!important;min-width:88px!important;min-height:40px!important;height:40px!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;white-space:nowrap!important;}
-      html[data-build-version="0.5.1"] .menu-footer{position:relative!important;z-index:9001!important;pointer-events:auto!important;}
-      html[data-build-version="0.5.1"] .menu-footer button{min-width:0!important;pointer-events:auto!important;}
+      html[data-build-version="0.5.2"] .layout{position:relative!important;z-index:1!important;}
+      html[data-build-version="0.5.2"] .battle-panel{position:relative!important;z-index:1!important;}
+      html[data-build-version="0.5.2"] .side-panel{position:relative!important;z-index:9000!important;pointer-events:auto!important;}
+      html[data-build-version="0.5.2"] .side-panel.open{position:fixed!important;z-index:20000!important;pointer-events:auto!important;}
+      html[data-build-version="0.5.2"] #debugPanel:not(.hidden){z-index:21000!important;pointer-events:auto!important;}
+      html[data-build-version="0.5.2"] .mobile-menu-tabs{display:flex!important;width:100%!important;min-height:40px!important;gap:8px!important;flex:0 0 auto!important;}
+      html[data-build-version="0.5.2"] .mobile-menu-tabs button,
+      html[data-build-version="0.5.2"] [data-menu-page]{display:inline-flex!important;align-items:center!important;justify-content:center!important;flex:1 1 0!important;min-width:88px!important;min-height:40px!important;height:40px!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;white-space:nowrap!important;}
+      html[data-build-version="0.5.2"] .menu-footer{position:relative!important;z-index:9001!important;pointer-events:auto!important;}
+      html[data-build-version="0.5.2"] .menu-footer button{min-width:0!important;pointer-events:auto!important;}
       @media (min-width:1280px) and (min-height:701px){
-        html[data-build-version="0.5.1"] .side-panel{display:grid!important;position:relative!important;grid-column:2!important;width:100%!important;height:100%!important;background:none!important;border:0!important;box-shadow:none!important;padding:0!important;}
+        html[data-build-version="0.5.2"] .side-panel{display:grid!important;position:relative!important;grid-column:2!important;width:100%!important;height:100%!important;background:none!important;border:0!important;box-shadow:none!important;padding:0!important;}
       }
       @media (max-width:1279px),(max-height:700px){
-        html[data-build-version="0.5.1"] .side-panel:not(.open){display:none!important;pointer-events:none!important;}
-        html[data-build-version="0.5.1"] .side-panel.open{display:grid!important;left:8px!important;right:8px!important;top:calc(var(--mbh-topbar-h,58px) + 8px)!important;bottom:8px!important;width:auto!important;}
+        html[data-build-version="0.5.2"] .side-panel:not(.open){display:none!important;pointer-events:none!important;}
+        html[data-build-version="0.5.2"] .side-panel.open{display:grid!important;left:8px!important;right:8px!important;top:calc(var(--mbh-topbar-h,58px) + 8px)!important;bottom:8px!important;width:auto!important;}
       }
     `;
     document.head.appendChild(st);
@@ -9036,13 +9036,13 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 })();
 
 
-/* ver.0.5.1: final menu DOM/geometry guard. No observer, no BGM assets. */
+/* ver.0.5.2: final menu DOM/geometry guard. No observer, no BGM assets. */
 (function(){
   'use strict';
-  const BUILD='0.5.1';
+  const BUILD='0.5.2';
   const $=(s,r=document)=>r.querySelector(s);
   const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
-  const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.error('[MBH 0.5.1 menu]', e); } };
+  const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.error('[MBH 0.5.2 menu]', e); } };
   function syncVersion049(){
     window.APP_VERSION=BUILD; window.GAME_VERSION=BUILD;
     document.documentElement.dataset.buildVersion=BUILD;
@@ -9122,13 +9122,13 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
 })();
 
 
-/* MBH ver.0.5.1: verified menu geometry finalizer. No MutationObserver, no BGM assets. */
+/* MBH ver.0.5.2: verified menu geometry finalizer. No MutationObserver, no BGM assets. */
 (function(){
   'use strict';
-  const BUILD='0.5.1';
+  const BUILD='0.5.2';
   const $=(s,r=document)=>r.querySelector(s);
   const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
-  const safe=(fn)=>{ try{ return fn&&fn(); }catch(e){ console.error('[MBH 0.5.1 menu]', e); return null; } };
+  const safe=(fn)=>{ try{ return fn&&fn(); }catch(e){ console.error('[MBH 0.5.2 menu]', e); return null; } };
   function syncVersion050(){
     window.APP_VERSION=BUILD; window.GAME_VERSION=BUILD;
     document.documentElement.dataset.buildVersion=BUILD;
@@ -9141,13 +9141,13 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
     let st=document.getElementById('mbh-050-runtime-css');
     if(!st){ st=document.createElement('style'); st.id='mbh-050-runtime-css'; document.head.appendChild(st); }
     st.textContent = `
-      html[data-build-version="0.5.1"] .side-panel{grid-template-columns:minmax(0,1fr)!important;grid-template-rows:auto minmax(0,1fr) auto!important;align-items:stretch!important;justify-items:stretch!important;width:100%!important;min-width:0!important;overflow:hidden!important;z-index:30000!important;pointer-events:auto!important;}
-      html[data-build-version="0.5.1"] .side-panel>*{grid-column:1 / -1!important;width:100%!important;min-width:0!important;max-width:none!important;box-sizing:border-box!important;}
-      html[data-build-version="0.5.1"] .side-panel>.mobile-menu-tabs,html[data-build-version="0.5.1"] .side-panel>.side-tabs{grid-row:1!important;display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important;width:100%!important;min-width:0!important;height:44px!important;min-height:44px!important;max-height:44px!important;overflow:visible!important;position:relative!important;z-index:30002!important;}
-      html[data-build-version="0.5.1"] [data-menu-page]{display:flex!important;align-items:center!important;justify-content:center!important;width:100%!important;min-width:0!important;max-width:none!important;height:44px!important;min-height:44px!important;max-height:44px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;pointer-events:auto!important;visibility:visible!important;opacity:1!important;}
-      html[data-build-version="0.5.1"] #mbhMenuContent050,html[data-build-version="0.5.1"] #mbhMenuContent044,html[data-build-version="0.5.1"] #mbhMenuContent041,html[data-build-version="0.5.1"] .side-panel>.menu-content-fixed{grid-row:2!important;display:block!important;width:100%!important;height:100%!important;min-width:0!important;min-height:0!important;overflow:hidden!important;position:relative!important;z-index:30001!important;}
-      html[data-build-version="0.5.1"] .menu-footer{grid-row:3!important;display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important;width:100%!important;min-width:0!important;position:relative!important;z-index:30002!important;pointer-events:auto!important;}
-      html[data-build-version="0.5.1"] .menu-footer button{width:100%!important;min-width:0!important;pointer-events:auto!important;}
+      html[data-build-version="0.5.2"] .side-panel{grid-template-columns:minmax(0,1fr)!important;grid-template-rows:auto minmax(0,1fr) auto!important;align-items:stretch!important;justify-items:stretch!important;width:100%!important;min-width:0!important;overflow:hidden!important;z-index:30000!important;pointer-events:auto!important;}
+      html[data-build-version="0.5.2"] .side-panel>*{grid-column:1 / -1!important;width:100%!important;min-width:0!important;max-width:none!important;box-sizing:border-box!important;}
+      html[data-build-version="0.5.2"] .side-panel>.mobile-menu-tabs,html[data-build-version="0.5.2"] .side-panel>.side-tabs{grid-row:1!important;display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important;width:100%!important;min-width:0!important;height:44px!important;min-height:44px!important;max-height:44px!important;overflow:visible!important;position:relative!important;z-index:30002!important;}
+      html[data-build-version="0.5.2"] [data-menu-page]{display:flex!important;align-items:center!important;justify-content:center!important;width:100%!important;min-width:0!important;max-width:none!important;height:44px!important;min-height:44px!important;max-height:44px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;pointer-events:auto!important;visibility:visible!important;opacity:1!important;}
+      html[data-build-version="0.5.2"] #mbhMenuContent050,html[data-build-version="0.5.2"] #mbhMenuContent044,html[data-build-version="0.5.2"] #mbhMenuContent041,html[data-build-version="0.5.2"] .side-panel>.menu-content-fixed{grid-row:2!important;display:block!important;width:100%!important;height:100%!important;min-width:0!important;min-height:0!important;overflow:hidden!important;position:relative!important;z-index:30001!important;}
+      html[data-build-version="0.5.2"] .menu-footer{grid-row:3!important;display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important;width:100%!important;min-width:0!important;position:relative!important;z-index:30002!important;pointer-events:auto!important;}
+      html[data-build-version="0.5.2"] .menu-footer button{width:100%!important;min-width:0!important;pointer-events:auto!important;}
     `;
   }
   function getPage050(){ return (typeof state!=='undefined' && state.menuPage) || 'stats'; }
@@ -9216,13 +9216,13 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   window.addEventListener('resize', ()=>setTimeout(apply050,50));
 })();
 
-/* MBH ver.0.5.1: click routing repair for fixed right menu. No BGM assets. */
+/* MBH ver.0.5.2: click routing repair for fixed right menu. No BGM assets. */
 (function(){
   'use strict';
-  const BUILD='0.5.1';
+  const BUILD='0.5.2';
   const $=(s,r=document)=>r.querySelector(s);
   const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
-  const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.error('[MBH0.5.1]', e); return null; } };
+  const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.error('[MBH0.5.2]', e); return null; } };
   function syncVersion051(){
     window.APP_VERSION=BUILD; window.GAME_VERSION=BUILD;
     document.documentElement.dataset.buildVersion=BUILD;
@@ -9316,4 +9316,96 @@ window.addEventListener("focus",()=>{ if(state.mobileMuted) stopAllAudioForMute(
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', boot051, {once:true}); else setTimeout(boot051,0);
   window.addEventListener('load', boot051, {once:true});
   window.addEventListener('resize', ()=>setTimeout(apply051,60));
+})();
+
+
+/* MBH ver.0.5.2: menu closed-by-default finalizer. No MutationObserver, no BGM assets. */
+(function(){
+  'use strict';
+  const BUILD='0.5.2';
+  const $=(s,r=document)=>r.querySelector(s);
+  const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+  const safe=(fn)=>{try{return fn&&fn();}catch(e){console.error('[MBH0.5.2]',e);return null;}};
+  function syncVersion052(){
+    window.APP_VERSION=BUILD; window.GAME_VERSION=BUILD;
+    document.documentElement.dataset.buildVersion=BUILD;
+    document.documentElement.dataset.mbhVersion=BUILD;
+    $$('.build-version,[data-version],#versionText,.version-badge').forEach(el=>{el.textContent='ver.'+BUILD;});
+    $$('.debug-version').forEach(el=>{el.textContent='Build: ver.'+BUILD+' debug';});
+    $$('.debug-trace-title').forEach(el=>{el.textContent='進行デバッグログ ver.'+BUILD;});
+  }
+  function panelFor052(page){ return page==='equip' ? $('.equip-panel') : page==='inventory' ? $('.inventory-panel') : $('.hero-stats'); }
+  function ensureMenu052(){
+    const side=$('.side-panel'); if(!side) return null;
+    let tabs=side.querySelector(':scope > .mobile-menu-tabs, :scope > .side-tabs') || $('.mobile-menu-tabs,.side-tabs');
+    if(tabs && tabs.parentElement!==side) side.insertBefore(tabs, side.firstChild);
+    let content=$('#mbhMenuContent052') || $('#mbhMenuContent051') || $('#mbhMenuContent050') || $('#mbhMenuContent044') || side.querySelector(':scope > .menu-content-fixed');
+    if(!content){ content=document.createElement('div'); content.className='menu-content-fixed'; }
+    content.id='mbhMenuContent052'; content.classList.add('menu-content-fixed');
+    if(content.parentElement!==side){
+      const footer=side.querySelector(':scope > .menu-footer, :scope > .legal-links');
+      side.insertBefore(content, footer || null);
+    }
+    ['.hero-stats','.equip-panel','.inventory-panel'].forEach(sel=>{ const p=$(sel); if(p && p.parentElement!==content) content.appendChild(p); });
+    let footer=side.querySelector(':scope > .menu-footer, :scope > .legal-links') || $('.menu-footer,.legal-links');
+    if(footer){ footer.classList.add('menu-footer'); if(footer.parentElement!==side) side.appendChild(footer); }
+    $$('.menu-col,.menu-left,.menu-right', side).forEach(el=>{ if(!el.children.length) el.remove(); else el.style.display='none'; });
+    return content;
+  }
+  function setPage052(page){
+    const current=page || (typeof state!=='undefined' && state.menuPage) || 'stats';
+    if(typeof state!=='undefined') state.menuPage=current;
+    ensureMenu052();
+    $$('[data-menu-page]').forEach(btn=>btn.classList.toggle('active', btn.dataset.menuPage===current));
+    $$('.side-panel .panel').forEach(p=>p.classList.remove('active-page'));
+    const target=panelFor052(current) || panelFor052('stats');
+    if(target) target.classList.add('active-page');
+  }
+  function applyOpenState052(open){
+    const side=$('.side-panel'); const btn=$('#equipToggleBtn'); if(!side) return;
+    if(open){ side.classList.add('open'); }
+    else { side.classList.remove('open'); }
+    side.__mbh052KnownOpen=!!open;
+    if(typeof state!=='undefined') state.uiOpen=!!open;
+    if(btn){ btn.style.display='inline-flex'; btn.textContent=open?'閉じる':'メニュー'; }
+    setPage052((typeof state!=='undefined' && state.menuPage) || 'stats');
+  }
+  function closeOnBoot052(){
+    const side=$('.side-panel'); if(!side) return;
+    applyOpenState052(false);
+  }
+  function bind052(){
+    const side=$('.side-panel'); const btn=$('#equipToggleBtn'); if(!side || !btn) return;
+    if(!document.__mbh052ToggleBound){
+      document.__mbh052ToggleBound=true;
+      const routeToggle=(e)=>{
+        const t=e.target && e.target.closest ? e.target.closest('#equipToggleBtn') : null;
+        if(!t) return;
+        const known=!!side.__mbh052KnownOpen;
+        const desired=!known;
+        // 旧0.5.1のdocument捕捉処理が同じイベントで開閉しても、最後にこの状態へ戻す。
+        setTimeout(()=>applyOpenState052(desired), 0);
+        setTimeout(()=>applyOpenState052(desired), 40);
+        setTimeout(()=>applyOpenState052(desired), 120);
+      };
+      document.addEventListener('pointerdown', routeToggle, true);
+      document.addEventListener('click', routeToggle, true);
+      document.addEventListener('touchstart', routeToggle, {capture:true, passive:true});
+    }
+    if(!document.__mbh052RouteBound){
+      document.__mbh052RouteBound=true;
+      document.addEventListener('click', e=>{
+        const t=e.target && e.target.closest ? e.target.closest('[data-menu-page],#creditBtn,#termsBtn,#privacyBtn') : null;
+        if(!t) return;
+        if(t.dataset && t.dataset.menuPage){ e.preventDefault(); e.stopPropagation(); setPage052(t.dataset.menuPage); return false; }
+        if(t.id==='creditBtn'){ e.preventDefault(); e.stopPropagation(); safe(()=>openLegalModal('credit')); return false; }
+        if(t.id==='termsBtn'){ e.preventDefault(); e.stopPropagation(); safe(()=>openLegalModal('terms')); return false; }
+        if(t.id==='privacyBtn'){ e.preventDefault(); e.stopPropagation(); safe(()=>openLegalModal('privacy')); return false; }
+      }, true);
+    }
+  }
+  function boot052(){ syncVersion052(); ensureMenu052(); closeOnBoot052(); bind052(); setTimeout(()=>setPage052((typeof state!=='undefined' && state.menuPage)||'stats'),50); }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', boot052, {once:true}); else setTimeout(boot052,0);
+  window.addEventListener('load', boot052, {once:true});
+  window.addEventListener('resize', ()=>setTimeout(()=>{ if(!$('.side-panel')?.classList.contains('open')) closeOnBoot052(); },60));
 })();

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja" data-build-version="0.5.1" data-build-date="2026-06-19">
+<html lang="ja" data-build-version="0.5.2" data-build-date="2026-06-19">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -10,7 +10,7 @@
 
   <script id="mbh048-root-normalize">
     (function(){
-      var BUILD='0.5.1';
+      var BUILD='0.5.2';
       document.documentElement.dataset.buildVersion = BUILD;
       window.APP_VERSION = BUILD;
       window.GAME_VERSION = BUILD;
@@ -22,7 +22,7 @@
       }
     })();
   </script>
-  <link rel="stylesheet" href="style.css?v=0.5.1" />
+  <link rel="stylesheet" href="style.css?v=0.5.2" />
 
     <!-- Cloudflare Web Analytics -->
     <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token":"f48e7088e55c41f4a0a6044f8bf3531b"}'></script>
@@ -36,7 +36,7 @@
 <body>
   <div id="game">
     <header class="topbar">
-      <div class="brand">ミニブラウザヒーロー <span class="build-version">ver.0.5.1</span></div>
+      <div class="brand">ミニブラウザヒーロー <span class="build-version">ver.0.5.2</span></div>
       <div class="resources"><b id="mats">0</b> 強化石</div>
       <div class="controls">
         <button id="equipToggleBtn">メニュー</button>
@@ -165,7 +165,7 @@
         <button id="debugGrantDarkSet">闇装備7種セット付与</button>
         <div id="debugGrantDarkItems" class="debug-grid"></div>
         <div id="mbhTraceBox" class="debug-trace-box">
-          <div class="debug-trace-title">進行デバッグログ ver.0.5.1</div>
+          <div class="debug-trace-title">進行デバッグログ ver.0.5.2</div>
           <button id="mbhTraceMark" type="button">現在状態を記録</button>
           <button id="mbhTraceCopy" type="button">ログコピー</button>
           <button id="mbhTraceDownload" type="button">DL</button>
@@ -174,7 +174,7 @@
         </div>
         <label><input id="debugKillEnemy" type="checkbox"> 敵への攻撃で即死</label>
         <label><input id="debugKillHero" type="checkbox"> 敵からの攻撃で即死</label>
-        <div class="debug-version">Build: ver.0.5.1 debug</div>
+        <div class="debug-version">Build: ver.0.5.2 debug</div>
         <button id="debugClose">閉じる</button>
       </div>
   </div>
@@ -211,11 +211,11 @@
 
   <script>
     (function(){
-      var build = document.documentElement.dataset.buildVersion || '0.5.1';
+      var build = document.documentElement.dataset.buildVersion || '0.5.2';
       window.APP_VERSION = build;
       window.GAME_VERSION = build;
       var s = document.createElement('script');
-      s.src = 'game.js?v=' + encodeURIComponent(build) + '&t=051';
+      s.src = 'game.js?v=' + encodeURIComponent(build) + '&t=052';
       s.defer = false;
       document.body.appendChild(s);
     })();
