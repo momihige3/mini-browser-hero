@@ -1,6 +1,6 @@
 'use strict';
 
-// ver0.6.2: ボス表示整理・火炎ブレスタグカウント・ボスランダム出現。
+// ver0.6.3: ボス表示整理・火炎ブレスタグカウント・ボスランダム出現。
 // strict modeで `makeDarkArmor = function...` がReferenceErrorになり、
 // 後続パッチ全体が止まる問題を防ぐ。
 var makeDarkArmor, makeDarkGauntlets, makeDarkHelm, makeDarkBoots;

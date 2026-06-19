@@ -4088,3 +4088,25 @@ html[data-build-version="0.6.2"] #debugGrantDarkItems button{min-width:0!importa
 @media (max-width:760px),(pointer:coarse){
   html[data-build-version="0.6.2"] .expbar{display:block!important;visibility:visible!important;opacity:1!important;z-index:120!important;}
 }
+
+/* v0.6.3 mobile fixes */
+@media (max-width:760px),(pointer:coarse){
+  .expbar{
+    display:block !important;
+    visibility:visible !important;
+    opacity:1 !important;
+    bottom:calc(8px + env(safe-area-inset-bottom)) !important;
+    z-index:20 !important;
+  }
+  .inventory-filter-bar{
+    flex-wrap:wrap !important;
+    font-size:14px !important;
+  }
+  .inventory-filter-bar button,
+  .inventory-filter-bar select{
+    font-size:14px !important;
+  }
+}
+.modal,.popup,.credit-modal,.terms-modal,.privacy-modal{
+  z-index:30000 !important;
+}
