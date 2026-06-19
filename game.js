@@ -42,7 +42,7 @@ const DARK_SWORD_SAINT_CUTIN = {quote:'私を超えてみせろ。', img:'assets
 const DARK_SWORD_TECHNIQUE_CUTIN = {quote:'', img:'assets/cutin_dark_sword_technique.png'};
 const TENSEI_KNIGHT_CUTIN = {quote:'勇者の力、ここに覚醒する。', img:'assets/cutin_hero_awakening.png'};
 const HOLY_SWORD_RELEASE_CUTIN = {quote:'聖剣解放。すべてを砕く光となれ。', img:'assets/cutin_holy_sword_release.png'};
-const GAME_VERSION = (window.APP_VERSION || '0.6.6');
+const GAME_VERSION = (window.APP_VERSION || '0.6.7');
 window.GAME_VERSION = GAME_VERSION;
 
 const DARK_SWORD_SAINT = {
@@ -51,7 +51,7 @@ const DARK_SWORD_SAINT = {
 };
 const TENSEI_KNIGHT = {
   id:'tensei_knight', name:'天聖騎士', type:'裏ボス', img:'assets/enemy_tensei_knight.png', element:'holy',
-  hp:36000, atk:245, def:120, xp:3000, gold:6000, bossChance:0, enemySkill:'聖剣解放'
+  hp:52000, atk:340, def:155, xp:4200, gold:9000, bossChance:0, enemySkill:'聖剣解放'
 };
 
 const ENEMIES = [
@@ -88,7 +88,7 @@ const state = {
   level:1, xp:0, xpNext:1000, chests:0, mats:3, defeated:0,
   base:{hp:520, atk:48, def:14}, hp:520, enemy:null, enemyHp:1,
   inventory:[], equip:{}, down:false, downUntil:0, deathDance:false, deathDanceUntil:0, deathDanceBattleCount:0, deathDanceCutin:false, deathDanceCutinTimer:null, deathDanceSeqTimers:[], lastHeroAttack:0, lastEnemyAttack:0,
-  log:[], debug:{killEnemy:false, killHero:false}, audio:null, masterGain:null, bgmGain:null, bgmTimer:null, bgmMode:'normal', normalBgm:null, swordDanceBgm:null, darkSwordSaintBgm:null, tenseiKnightBgm:null, bossBgm:null, darkSwordSaintVoice:null, darkSwordReviveTimer:null, darkSwordComboTimers:[], darkSwordCutinActive:false, audioUnlocked:false, mobileMuted:true, menuPage:'stats', inventoryMenuItemId:null, enemyRecords:{}, forceFirstEnemy:false, bgmPausedByVisibility:false, heroStatuses:null, enemyStatuses:null, darkShieldStacks:0, dropToastTimer:null, dropToastQueueTimers:[], winStreak:0, bestWinStreak:0, forceNextDarkSwordSaint:false, pendingBossForNext:null, darkSwordSaintFirstEncountered:false, darkSwordSaintLevel:1, darkSwordSaintKills:0, darkSwordSaintLastLevelTrigger:0, darkSwordSaintReturn:null, debugForcedBossNext:null
+  log:[], debug:{killEnemy:false, killHero:false}, audio:null, masterGain:null, bgmGain:null, bgmTimer:null, bgmMode:'normal', normalBgm:null, swordDanceBgm:null, darkSwordSaintBgm:null, tenseiKnightBgm:null, bossBgm:null, darkSwordSaintVoice:null, darkSwordReviveTimer:null, darkSwordComboTimers:[], darkSwordCutinActive:false, audioUnlocked:false, mobileMuted:true, menuPage:'stats', inventoryMenuItemId:null, enemyRecords:{}, forceFirstEnemy:false, bgmPausedByVisibility:false, heroStatuses:null, enemyStatuses:null, darkShieldStacks:0, dropToastTimer:null, dropToastQueueTimers:[], winStreak:0, bestWinStreak:0, forceNextDarkSwordSaint:false, pendingBossForNext:null, darkSwordSaintFirstEncountered:false, darkSwordSaintLevel:1, darkSwordSaintKills:0, darkSwordSaintLastLevelTrigger:0, darkSwordSaintReturn:null, debugForcedBossNext:null, tenseiKnightLevel:1, tenseiKnightKills:0
 };
 
 const SAVE_KEY = 'mini-browser-hero-save-v36';
@@ -269,7 +269,7 @@ function saveGame(){
       chests:state.chests, mats:state.mats, defeated:state.defeated,
       hp:Math.max(1, Math.floor(state.hp||1)), base:state.base,
       inventory:state.inventory.map(cleanItem), equip:serializeEquip(), selectedEquip:state.selectedEquip,
-      volume:state.volume, mobileMuted:state.mobileMuted, debug:state.debug, enemyRecords:state.enemyRecords, enemyLevelBase:state.enemyLevelBase, enemyLevelBaseDefeated:state.enemyLevelBaseDefeated, winStreak:state.winStreak, bestWinStreak:state.bestWinStreak, forceNextDarkSwordSaint:state.forceNextDarkSwordSaint, pendingBossForNext:state.pendingBossForNext, darkSwordSaintFirstEncountered:state.darkSwordSaintFirstEncountered, darkSwordSaintLevel:state.darkSwordSaintLevel, darkSwordSaintKills:state.darkSwordSaintKills, darkSwordSaintLastLevelTrigger:state.darkSwordSaintLastLevelTrigger, darkSwordSaintReturn:state.darkSwordSaintReturn, debugForcedBossNext:state.debugForcedBossNext,
+      volume:state.volume, mobileMuted:state.mobileMuted, debug:state.debug, enemyRecords:state.enemyRecords, enemyLevelBase:state.enemyLevelBase, enemyLevelBaseDefeated:state.enemyLevelBaseDefeated, winStreak:state.winStreak, bestWinStreak:state.bestWinStreak, forceNextDarkSwordSaint:state.forceNextDarkSwordSaint, pendingBossForNext:state.pendingBossForNext, darkSwordSaintFirstEncountered:state.darkSwordSaintFirstEncountered, darkSwordSaintLevel:state.darkSwordSaintLevel, darkSwordSaintKills:state.darkSwordSaintKills, darkSwordSaintLastLevelTrigger:state.darkSwordSaintLastLevelTrigger, darkSwordSaintReturn:state.darkSwordSaintReturn, debugForcedBossNext:state.debugForcedBossNext, tenseiKnightLevel:state.tenseiKnightLevel, tenseiKnightKills:state.tenseiKnightKills,
       savedAt:Date.now()
     };
     localStorage.setItem(SAVE_KEY, JSON.stringify(data));
@@ -309,6 +309,8 @@ function loadGame(){
     state.darkSwordSaintLastLevelTrigger = data.darkSwordSaintLastLevelTrigger == null ? Math.floor((Number(state.level)||1)/20) : Math.max(0, Math.floor(Number(data.darkSwordSaintLastLevelTrigger)||0));
     state.darkSwordSaintReturn = data.darkSwordSaintReturn || null;
     state.debugForcedBossNext = data.debugForcedBossNext || null;
+    state.tenseiKnightLevel = Math.max(1, Math.floor(Number(data.tenseiKnightLevel)||1));
+    state.tenseiKnightKills = Math.max(0, Math.floor(Number(data.tenseiKnightKills)||0));
     state.hp = Math.min(Number(data.hp)||maxHp(), maxHp());
     if(state.hp<=0) state.hp=Math.floor(maxHp()*0.5);
     sanitizeAllEquipmentDeathDanceChance();
@@ -516,7 +518,7 @@ function makeEmptyEnemyStatuses(t=0){
   return {bleeds:[], darkBleeds:[], burnUntil:0, lastBleedTick:t, lastDarkBleedTick:t, darkAuraStacks:0, darkAuraLastTick:t, darkSwordBuffs:[], darkDanceCount:0, darkRevivingUntil:0, darkReviveStart:0, darkOneDamageCount:0, darkTechniqueAwakened:false, bossRegenLast:t, dragonBreathCount:0, bossBuffStart:t, bossPierceStart:t};
 }
 function isDarkSwordSaint(e=state.enemy){ return !!e && e.id === 'dark_sword_saint'; }
-function hasUnyieldingBuff(){ return isDarkSwordSaint() && !state.down; }
+function hasUnyieldingBuff(){ return (isDarkSwordSaint() || isTenseiKnight?.()) && !state.down; }
 function isDarkSwordSaintReviving(){ ensureStatusContainers(); return isDarkSwordSaint() && (state.enemyStatuses.darkRevivingUntil || 0) > performance.now(); }
 function darkSwordBuffCount(){ ensureStatusContainers(); cleanupStatuses(); return state.enemyStatuses.darkSwordBuffs.length; }
 function darkSwordBuffSeconds(){ ensureStatusContainers(); cleanupStatuses(); const n=nowMs(); return Math.max(0, ...state.enemyStatuses.darkSwordBuffs.map(t=>Math.ceil((t-n)/1000)), 0); }
@@ -837,8 +839,16 @@ function spawnEnemyAfterDefeat(){
   scheduleSave();
 }
 function fleeBattle(){
+  const tenseiBattle = isTenseiKnight();
   const darkSaintBattle = isDarkSwordSaint();
   const currentLevel = Math.max(1, Math.floor(state.enemy?.level || state.enemyLevelBase || state.level || 1));
+  if(tenseiBattle){
+    state.winStreak = 0;
+    log('天聖騎士戦から離脱した。天聖騎士は独立レベルのため、逃走してもレベルは下がらない。', 'danger');
+    banner('天聖騎士から離脱');
+    spawnWeakEnemyAfterEscape();
+    return;
+  }
   if(darkSaintBattle){
     state.winStreak = 0;
     state.forceNextDarkSwordSaint = false;
@@ -872,9 +882,11 @@ function confirmFlee(){
   const modal = document.getElementById('fleeModal');
   const desc = document.getElementById('fleeModalDesc');
   if(desc){
-    desc.innerHTML = isDarkSwordSaint()
-      ? '暗黒剣聖は独立レベルのため、逃走しても敵の出現レベルは下がりません。<br>経験値は失いません。'
-      : '敵の出現レベルが20下がります。<br>経験値は失いません。';
+    desc.innerHTML = isTenseiKnight()
+      ? '天聖騎士は独立レベルのため、逃走しても天聖騎士レベルは下がりません。<br>経験値は失いません。'
+      : (isDarkSwordSaint()
+        ? '暗黒剣聖は独立レベルのため、逃走しても敵の出現レベルは下がりません。<br>経験値は失いません。'
+        : '敵の出現レベルが20下がります。<br>経験値は失いません。');
   }
   if(modal) modal.classList.remove('hidden');
 }
@@ -1002,7 +1014,11 @@ function statusTooltipHtml(kind, target){
   if(kind === 'darkbleed') return `<b>暗黒出血</b><br>現在：${darkBleedCount(target||'hero')}スタック<br>暗黒剣舞の攻撃ごとに50%で付与。<br>15秒ごとに最大HPの1%ダメージ。<br>最大100スタック。効果時間60秒。`; 
   if(kind === 'burn') return `<b>火傷</b><br>残り：${burnSeconds(target)}秒<br>防御力25%低下。<br>火耐性10%以上で無効化。`;
   if(kind === 'deathdance') return `<b>死線の剣舞</b><br>残り：${Math.max(0, Math.ceil((state.deathDanceUntil-nowMs())/1000))}秒<br>極限状態で連続攻撃を放つ。<br>発動時にすべてのデバフを解除し、発動中は新たなデバフを無効化する。<br>この戦闘での発動回数：${state.deathDanceBattleCount||0}回<br>現在威力：${Math.pow(2, state.deathDanceBattleCount||0)}倍`; 
-  if(kind === 'unyielding') return `<b>不屈</b><br>暗黒剣聖と対峙中のみ発動。<br>死線の剣舞発動率+50%。<br>現在の剣舞発動率：${Math.round(calcStats().deathDanceChance*100)}%。`;
+  if(kind === 'unyielding') return `<b>不屈</b><br>暗黒剣聖・天聖騎士と対峙中のみ発動。<br>死線の剣舞発動率+50%。<br>現在の剣舞発動率：${Math.round(calcStats().deathDanceChance*100)}%。`;
+  if(kind === 'holy_protection') return `<b>光の加護</b><br>天聖騎士の常時効果。<br>被ダメージ50%軽減。<br>毎秒HP1%回復。HP50%以下では毎秒HP2%回復。`;
+  if(kind === 'holy_awakening') return `<b>勇者の覚醒</b><br>HP50%以下で発動。<br>攻撃力+300%。<br>攻撃速度+100%。<br>状態異常90%軽減。`;
+  if(kind === 'holy_release') return `<b>聖剣解放</b><br>天聖騎士の必殺技。<br>一定回数ごとに防御をほぼ無視する光属性特大ダメージを放つ。`;
+  if(kind === 'holy_ailment_guard') return `<b>聖域浄化</b><br>天聖騎士の状態異常軽減。<br>状態異常の時間・ダメージ・デバフ量を90%軽減。`;
   if(kind === 'darkaura') return `<b>闇オーラ</b><br>現在：${darkAuraStacks()}スタック<br>1スタックごとに被ダメージ10%軽減。<br>闇オーラ中は出血ダメージ90%軽減。<br>最大10スタック。10秒ごとに1減少。<br>暗黒剣舞発動時に10へ回復。`;
   if(kind === 'darksword') return `<b>暗黒の剣</b><br>現在：${darkSwordBuffCount()}スタック<br>攻撃力+50% / スタック。<br>効果時間：60秒。スタック可能。<br>最長残り：${darkSwordBuffSeconds()}秒。`;
   if(kind === 'darktechnique') return `<b>暗黒剣技</b><br>暗黒剣聖の通常攻撃で1ダメージが20回発生すると覚醒。<br>覚醒後は通常攻撃が暗黒剣技に置き換わる。<br>暗黒剣舞の回数にはカウントしない。<br>HP回復・闇オーラ回復・暗黒の剣付与はなし。<br>攻撃速度3倍、ガード無効、防御力50%無視。<br>攻撃ごとに出血50%、暗黒出血50%。<br>現在：${state.enemyStatuses?.darkTechniqueAwakened?'覚醒中':((state.enemyStatuses?.darkOneDamageCount||0)+' / 20')}。`;
@@ -1281,6 +1297,12 @@ function renderStatusLists(){
     if(isDragonEnemy()){
       parts.push(makeStatusBadge(`🐉火炎ブレス：${dragonBreathTurnsLeft()}`, 'bossbuff', 'dragon_breath', 'enemy'));
     }
+    if(isTenseiKnight()){
+      parts.push(makeStatusBadge('✨光の加護', 'bossbuff', 'holy_protection', 'enemy'));
+      parts.push(makeStatusBadge(`⚔️聖剣解放(${state.enemyStatuses?.holyReleaseCount||0}/6)`, 'bossbuff', 'holy_release', 'enemy'));
+      parts.push(makeStatusBadge('🕊️聖域浄化', 'bossbuff', 'holy_ailment_guard', 'enemy'));
+      if(state.enemyStatuses?.holyAwakened) parts.push(makeStatusBadge('🌈勇者の覚醒', 'bossbuff', 'holy_awakening', 'enemy'));
+    }
     const bc = bleedCount('enemy');
     if(bc) parts.push(makeStatusBadge(`🩸出血(${bc})`, 'bleed', 'bleed', 'enemy'));
     const edbc = darkBleedCount('enemy');
@@ -1367,7 +1389,7 @@ function scheduleBossAfterNormalDefeat(e){
 function makeScaledEnemy(base, forceLevel=null){
   const e = {...base};
   if(e.id === 'dark_sword_saint' && forceLevel == null){ forceLevel = Math.max(1, Math.floor(state.darkSwordSaintLevel || 1)); }
-  if(e.id === 'tensei_knight' && forceLevel == null){ forceLevel = Math.max(1, Math.floor(Number(state.level)||1)); }
+  if(e.id === 'tensei_knight' && forceLevel == null){ forceLevel = Math.max(1, Math.floor(Number(state.tenseiKnightLevel)||1)); }
   const bossBonus = e.type==='ボス' || e.type==='裏ボス' ? 4 : 0;
   if(forceLevel){
     e.level = forceLevel;
@@ -1395,6 +1417,7 @@ function makeScaledEnemy(base, forceLevel=null){
   e.atk=Math.max(1, Math.floor(e.atk*statScale));
   e.def=Math.max(0, Math.floor(e.def*statScale));
   e.xp=Math.floor(e.xp*(1+e.level*.045));
+  if(e.id === 'tensei_knight'){ e.maxHp = Math.max(e.maxHp, Math.floor(e.maxHp * 1.20)); e.atk = Math.max(e.atk, Math.floor(e.atk * 1.15)); e.def = Math.max(e.def, Math.floor(e.def * 1.20)); }
   return e;
 }
 function setEnemy(e){
@@ -1406,6 +1429,8 @@ function setEnemy(e){
     state.enemyStatuses.holyAwakened = false;
     state.enemyStatuses.holyReleaseCount = 0;
     state.enemyStatuses.holyRegenLast = performance.now();
+    state.enemyStatuses.holyProtection = true;
+    state.enemyStatuses.holyAilmentReduce = .90;
     setBgmMode('tensei_knight');
   }else if(isDarkSwordSaint(e)){
     state.darkSwordSaintFirstEncountered = true;
@@ -1582,6 +1607,7 @@ function applyHeroHit(skill){
     if(element==='fire' && state.enemy.fireResist){dmg=Math.floor(dmg*(1-state.enemy.fireResist)); resisted=true;}
     if(isSpeciesBoss()) dmg = Math.max(1, Math.floor(dmg * (1 - bossCommonDamageReduction())));
     if(state.enemy?.bossBuff === 'apex') dmg = Math.max(1, Math.floor(dmg * 0.5));
+    if(isTenseiKnight()) dmg = Math.max(1, Math.floor(dmg * 0.50));
     if(isDarkSwordSaint()){
       const auraReduce = Math.min(1, darkAuraStacks() * 0.10);
       dmg = Math.floor(dmg * (1 - auraReduce));
@@ -1901,6 +1927,7 @@ function updateEnemyLevelProgressionOnDefeat(e){
   try{
     if(!e) return;
     const lv = Math.max(1, Math.floor(Number(e.level) || Number(state.enemyLevelBase) || Number(state.level) || 1));
+    if(e.id === 'tensei_knight'){ return; }
     if(e.id === 'dark_sword_saint'){
       if(state.darkSwordSaintReturn && state.darkSwordSaintReturn.milestoneDarkSaint){
         state.enemyLevelBase = lv + 1;
@@ -1986,6 +2013,9 @@ function enemyDefeated(){
   state.lastXpGain = gainXp;
   state.xp += gainXp;
   if(e && e.id === 'tensei_knight'){
+    state.tenseiKnightKills = Math.max(0, Math.floor(Number(state.tenseiKnightKills)||0)) + 1;
+    state.tenseiKnightLevel = Math.max(1, Math.floor(Number(state.tenseiKnightLevel)||1)) + 1;
+    log(`天聖騎士の独自レベルがLv.${state.tenseiKnightLevel}に上昇。`, 'system');
     const defeatedLevel = Math.max(1, Math.floor(Number(e?.level) || Number(state.enemyLevelBase) || Number(state.level) || 1));
     const holySlots = ['武器','盾','兜','鎧','腕','足','アミュレット'];
     const makeHolyReward = () => makeHolyItem(holySlots[Math.floor(Math.random()*holySlots.length)], defeatedLevel);
@@ -3206,6 +3236,8 @@ function resetUserData(){
   state.forceNextDarkSwordSaint = false;
   state.darkSwordSaintLevel = 1;
   state.darkSwordSaintKills = 0;
+  state.tenseiKnightLevel = 1;
+  state.tenseiKnightKills = 0;
   state.enemyLevelBase = null;
   state.enemyLevelBaseDefeated = 0;
   state.base = {hp:520, atk:48, def:14};
@@ -4990,7 +5022,7 @@ function makeHolyItem(slot, levelOverride){
   it.__dropPlusApplied=false; applyDropPlusToItem(it, lv); return it;
 }
 function grantHolySet(){ ['武器','盾','兜','鎧','腕','足','アミュレット'].forEach(slot=>state.inventory.unshift(makeHolyItem(slot, state.level))); renderAll(); log('デバッグ：聖剣シリーズ7種を倉庫に追加。','good'); scheduleSave(); }
-function forceSpawnTenseiKnight(){ const lv=Math.max(1, Math.floor(Number(state.enemy?.level)||Number(state.level)||1)); setEnemy(makeScaledEnemy(TENSEI_KNIGHT, lv)); banner('天聖騎士 降臨',1800); log(`デバッグ：天聖騎士Lv.${lv}と強制戦闘。`,'danger'); renderAll(); scheduleSave(); }
+function forceSpawnTenseiKnight(){ const lv=Math.max(1, Math.floor(Number(state.tenseiKnightLevel)||1)); setEnemy(makeScaledEnemy(TENSEI_KNIGHT, lv)); banner('天聖騎士 降臨',1800); log(`デバッグ：天聖騎士Lv.${lv}と強制戦闘。`,'danger'); renderAll(); scheduleSave(); }
 function installHolyDebug066(){
   const p=document.getElementById('debugPanel'); if(!p) return;
   const close=document.getElementById('debugClose');
@@ -5002,3 +5034,59 @@ function installHolyDebug066(){
   b2.onclick=()=>{playUiClick(); grantHolySet();};
 }
 setTimeout(installHolyDebug066, 300);
+
+// ===== ver0.6.7 天聖騎士 独立Lv・不屈・バフ表示の補強 =====
+(function(){
+  const __oldHandleHeroDeath067 = handleHeroDeath;
+  handleHeroDeath = function(){
+    if(!isTenseiKnight()) return __oldHandleHeroDeath067.apply(this, arguments);
+    if(state.defeatSequence || state.down || state.deathDance || (state.deathDanceCutin && !state.darkSwordCutinActive)) return;
+    state.defeatSequence = true;
+    if(state.defeatCountdownTimer){ clearInterval(state.defeatCountdownTimer); state.defeatCountdownTimer = null; }
+    clearDarkSwordTimers();
+    clearDeathDanceSequence();
+    hideDeathDanceCutin();
+    state.deathDance = false;
+    state.deathDanceCutin = false;
+    state.darkSwordCutinActive = false;
+    state.hp = 0;
+    resetTransientStatuses();
+    state.hp = 0;
+    state.winStreak = 0;
+    state.forceNextDarkSwordSaint = false;
+    const defeatedEnemyLevel = Math.max(1, Math.floor(state.enemy?.level || state.tenseiKnightLevel || 1));
+    loseExpPercent(calcStats().effortRing ? 0 : (calcStats().humbleRing ? 0.09 : 0.25));
+    const lostPct = calcStats().effortRing ? 0 : (calcStats().humbleRing ? 9 : 25);
+    log(`天聖騎士に敗北した。経験値を${lostPct}%失ったが、天聖騎士は独立レベルのためLv.${defeatedEnemyLevel}から低下しない。`,'danger');
+    banner('敗北…');
+    if(els.heroCard) els.heroCard.classList.add('down');
+    if(els.downOverlay){
+      els.downOverlay.classList.remove('hidden');
+      const dt = els.downOverlay.querySelector('.down-text');
+      if(dt) dt.textContent = 'DOWN...';
+      if(els.downCount) els.downCount.textContent = '5';
+    }
+    if(els.enemyCard){
+      els.enemyCard.classList.remove('hit','attack','enter');
+      els.enemyCard.classList.add('defeated-gone');
+    }
+    if(els.enemyHpFill) els.enemyHpFill.style.width='0%';
+    if(els.enemyHpText) els.enemyHpText.textContent='消滅';
+    renderStatusLists();
+    renderBattle();
+    scheduleSave();
+    let count = 5;
+    state.defeatCountdownTimer = setInterval(()=>{
+      count -= 1;
+      if(els.downCount) els.downCount.textContent = String(Math.max(0,count));
+      if(count <= 0){
+        clearInterval(state.defeatCountdownTimer);
+        state.defeatCountdownTimer = null;
+        if(els.enemyCard) els.enemyCard.classList.remove('defeated-gone');
+        spawnEnemyAfterDefeat();
+        state.defeatSequence = false;
+        log('戦闘を再開。天聖騎士レベルは低下していない。','good');
+      }
+    }, 1000);
+  };
+})();
