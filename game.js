@@ -1,6 +1,6 @@
 'use strict';
 
-// ver0.5.4: ボス表示整理・火炎ブレスタグカウント・ボスランダム出現。
+// ver0.5.5: ボス表示整理・火炎ブレスタグカウント・ボスランダム出現。
 // strict modeで `makeDarkArmor = function...` がReferenceErrorになり、
 // 後続パッチ全体が止まる問題を防ぐ。
 var makeDarkArmor, makeDarkGauntlets, makeDarkHelm, makeDarkBoots;
@@ -40,7 +40,7 @@ const DEATH_DANCE_CUTINS = [
 ];
 const DARK_SWORD_SAINT_CUTIN = {quote:'私を超えてみせろ。', img:'assets/cutin_dark_sword_dance.png'};
 const DARK_SWORD_TECHNIQUE_CUTIN = {quote:'', img:'assets/cutin_dark_sword_technique.png'};
-const GAME_VERSION = (window.APP_VERSION || '0.5.4');
+const GAME_VERSION = (window.APP_VERSION || '0.5.5');
 window.GAME_VERSION = GAME_VERSION;
 
 const DARK_SWORD_SAINT = {
@@ -874,7 +874,7 @@ function handleHeroDeath(){
   const darkSaintDefeat = isDarkSwordSaint();
   let nextEnemyLevelBase = Math.max(1, Math.floor(defeatedEnemyLevel * 0.9));
   if(darkSaintDefeat){
-    // ver.0.5.4: 100レベルごとの暗黒剣聖は、勝敗に関係なく通常敵レベル+1。
+    // ver.0.5.5: 100レベルごとの暗黒剣聖は、勝敗に関係なく通常敵レベル+1。
     if(state.darkSwordSaintReturn && state.darkSwordSaintReturn.milestoneDarkSaint){
       state.enemyLevelBase = defeatedEnemyLevel + 1;
       state.enemyLevelBaseDefeated = Math.max(0, Math.floor(Number(state.defeated)||0));
@@ -1296,7 +1296,7 @@ function makeFirstEnemy(){
 }
 
 function pickEnemy(){
-  // ver.0.5.4: 通常敵レベルは撃破時抽選で上昇。ボスはLv10刻み予約からランダム出現。
+  // ver.0.5.5: 通常敵レベルは撃破時抽選で上昇。ボスはLv10刻み予約からランダム出現。
   return {...normals[Math.floor(Math.random()*normals.length)]};
 }
 function getBossForNormal(normalId){
@@ -1311,7 +1311,7 @@ function shouldReplaceBossWithDarkSaint(){
   return !!state.darkSwordSaintFirstEncountered && Math.random() < 0.01;
 }
 function scheduleBossAfterNormalDefeat(e){
-  // ver.0.5.4: 雑魚Lv10刻みで、種族ボスからランダム出現。レベルは撃破した雑魚と共通。
+  // ver.0.5.5: 雑魚Lv10刻みで、種族ボスからランダム出現。レベルは撃破した雑魚と共通。
   try{
     if(!e || e.type !== '雑魚') return;
     const lv = Math.max(1, Math.floor(Number(e.level)||1));
@@ -1331,7 +1331,7 @@ function scheduleBossAfterNormalDefeat(e){
     state.lastBossScheduledLevel = lv;
     log(`${e.name}Lv.${lv}を制した。次の敵にボスLv.${lv}が現れる！`, 'danger');
   }catch(err){
-    console.error('[MBH0.5.4 scheduleBossAfterNormalDefeat]', err);
+    console.error('[MBH0.5.5 scheduleBossAfterNormalDefeat]', err);
     state.pendingBossForNext = null;
   }
 }
@@ -1342,7 +1342,7 @@ function makeScaledEnemy(base, forceLevel=null){
   if(forceLevel){
     e.level = forceLevel;
   }else{
-    // ver.0.5.4: 敵レベルは撃破数で自動上昇させず、撃破時の抽選/ボス撃破で更新する。
+    // ver.0.5.5: 敵レベルは撃破数で自動上昇させず、撃破時の抽選/ボス撃破で更新する。
     if(state.enemyLevelBase == null){
       state.enemyLevelBase = Math.max(1, Math.floor(Number(state.enemy?.level) || Number(state.level) || 1));
       state.enemyLevelBaseDefeated = Math.max(0, Math.floor(Number(state.defeated)||0));
@@ -1357,7 +1357,7 @@ function makeScaledEnemy(base, forceLevel=null){
   }
   const scaledDefeated = state.enemyLevelBase != null ? Math.max(0, (state.defeated||0) - (state.enemyLevelBaseDefeated||0)) : (state.defeated||0);
   const hpScale=1 + e.level*.035 + Math.floor(scaledDefeated/10)*.03;
-  // ver.0.5.4: 敵ATK/DEFのレベル成長が弱すぎたため、HPとは別の成長係数へ分離。
+  // ver.0.5.5: 敵ATK/DEFのレベル成長が弱すぎたため、HPとは別の成長係数へ分離。
   // HPは既存の伸びを維持し、攻撃力・防御力だけ敵Lvに応じてしっかり伸ばす。
   const statScale=1 + Math.max(0, (Number(e.level)||1)-1) * 0.08 + Math.floor(scaledDefeated/10)*.03;
   const normalHpGrowth = e.type === '雑魚' ? Math.pow(1.01, Math.max(0, (Number(e.level)||1) - 1)) : 1;
@@ -1392,7 +1392,7 @@ function setEnemy(e){
   log(`${e.name} が現れた。${e.type==='ボス'||e.type==='裏ボス'?'ボス出現！':''}`, e.type==='ボス'||e.type==='裏ボス'?'danger':'');
 }
 function forceSpawnDarkSwordSaint(){
-  // ver0.5.4: 即時召喚ではなく、次の敵として暗黒剣聖を予約する
+  // ver0.5.5: 即時召喚ではなく、次の敵として暗黒剣聖を予約する
   state.forceNextDarkSwordSaint = true;
   state.pendingDarkSwordSaintDelay = false;
   banner('次の敵に暗黒剣聖をセット！', 1400);
@@ -1611,7 +1611,7 @@ function enemyAttack(now){
     renderBattle();
     return;
   }
-  // ver0.5.4: 火の精霊・火の精霊王の通常攻撃は必ず火属性。
+  // ver0.5.5: 火の精霊・火の精霊王の通常攻撃は必ず火属性。
   // 以前は fire 属性敵でも55%抽選だったため、火属性攻撃にならないことがあった。
   const isPureFireAttacker = e && (e.id === 'fire_spirit' || e.id === 'fire_king');
   let element = isDarkSwordSaint() ? 'dark' : (isPureFireAttacker ? 'fire' : (e.element==='fire' && Math.random()<.55 ? 'fire':'normal'));
@@ -1690,7 +1690,7 @@ function tryDarkSwordDanceRevive(){
 
   const t = performance.now();
   state.enemyStatuses.darkDanceCount = count + 1;
-  // ver.0.5.4: 暗黒剣舞でリセットするのは死線の剣舞の発動回数だけ。
+  // ver.0.5.5: 暗黒剣舞でリセットするのは死線の剣舞の発動回数だけ。
   // 発動中の死線の剣舞そのものは解除しない。
   state.deathDanceBattleCount = 0;
   state.deathDanceComboCount = 0;
@@ -1860,7 +1860,7 @@ function showDarkSwordTechniqueCutin(){
   playSfx('cutin');
 }
 function updateEnemyLevelProgressionOnDefeat(e){
-  // ver.0.5.4: 雑魚撃破は10%で敵レベル+1。ボス撃破は確定+1。
+  // ver.0.5.5: 雑魚撃破は10%で敵レベル+1。ボス撃破は確定+1。
   // 暗黒剣聖は通常敵進行に影響させない。
   try{
     if(!e) return;
@@ -1891,7 +1891,7 @@ function updateEnemyLevelProgressionOnDefeat(e){
       }
     }
   }catch(err){
-    console.error('[MBH0.5.4 updateEnemyLevelProgressionOnDefeat]', err);
+    console.error('[MBH0.5.5 updateEnemyLevelProgressionOnDefeat]', err);
   }
 }
 
@@ -1953,7 +1953,7 @@ function enemyDefeated(){
     const makeDarkReward = () => darkPool[Math.floor(Math.random()*darkPool.length)](defeatedLevel);
     const makeLegendReward = () => makeItem(slots[Math.floor(Math.random()*slots.length)], legendary, {isBossDrop:true, levelOverride:defeatedLevel});
 
-    // ver0.5.4: 報酬枠を明示的に固定する。
+    // ver0.5.5: 報酬枠を明示的に固定する。
     // rewards[0] = 1枠目、rewards[1] = 2枠目、rewards[2] = 3枠目。
     // 3枠目は必ず闇装備。1〜2枠目は確率で闇装備になってもよい。
     const rewards = [
@@ -1977,7 +1977,7 @@ function enemyDefeated(){
       showDropToast(it);
     }
   }
-  // ver.0.5.4: 強化石ドロップは廃止。装備はドロップ時に敵Lv依存の+値が付く。
+  // ver.0.5.5: 強化石ドロップは廃止。装備はドロップ時に敵Lv依存の+値が付く。
   if(calcStats().masterRegen && state.hp > 0){
     const heal = Math.max(1, Math.floor(maxHp() * 0.25));
     const beforeHp = state.hp;
@@ -1995,7 +1995,7 @@ function effectiveXpNext(){
   return 1000;
 }
 function checkLevelUp(){
-  // ver0.5.4: 主人公の次Lv必要経験値を現行値の50%として扱う。
+  // ver0.5.5: 主人公の次Lv必要経験値を現行値の50%として扱う。
   while(state.xp>=effectiveXpNext()){
     const need = effectiveXpNext();
     state.xp-=need;
@@ -2577,7 +2577,7 @@ function formatItemNameWithPlus(it){
 
 function darkEquipLevelFromSource(levelOverride){
   const raw = Math.max(1, Math.floor(Number(levelOverride) || Number(state?.enemy?.level) || Number(state?.darkSwordSaintLevel) || Number(state?.level) || 1));
-  // ver.0.5.4: 闇装備は暗黒剣聖の独立Lv1を通常敵Lv100相当として扱う。
+  // ver.0.5.5: 闇装備は暗黒剣聖の独立Lv1を通常敵Lv100相当として扱う。
   // すでに通常敵Lv100以上が渡された場合はそのまま使う。
   return raw < 100 ? raw * 100 : raw;
 }
@@ -3203,13 +3203,13 @@ function v94InstallTouchControls(){
 init();
 
 
-/* MBH ver.0.5.4: clean menu controller. No redirect URL params. No BGM assets. */
+/* MBH ver.0.5.5: clean menu controller. No redirect URL params. No BGM assets. */
 (function(){
   'use strict';
-  const BUILD='0.5.4';
+  const BUILD='0.5.5';
   const $=(s,r=document)=>r.querySelector(s);
   const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
-  const safe=(fn)=>{ try{ return fn&&fn(); }catch(e){ console.error('[MBH0.5.4]', e); return null; } };
+  const safe=(fn)=>{ try{ return fn&&fn(); }catch(e){ console.error('[MBH0.5.5]', e); return null; } };
 
   function syncVersion054(){
     window.APP_VERSION=BUILD;
@@ -3333,24 +3333,18 @@ init();
         return false;
       };
       btn.addEventListener('click', onToggle, true);
-      btn.addEventListener('pointerup', onToggle, true);
-      btn.addEventListener('touchend', onToggle, {capture:true, passive:false});
     }
     $$('.side-panel [data-menu-page]').forEach(b=>{
       if(b.dataset.mbh054Bound==='1') return;
       b.dataset.mbh054Bound='1';
       const onPage=(e)=>{ e.preventDefault(); e.stopPropagation(); setPage054(b.dataset.menuPage||'stats'); safe(()=>{ if(typeof playUiClick==='function') playUiClick(); }); return false; };
       b.addEventListener('click', onPage, true);
-      b.addEventListener('pointerup', onPage, true);
-      b.addEventListener('touchend', onPage, {capture:true, passive:false});
     });
     [['creditBtn','credit'],['termsBtn','terms'],['privacyBtn','privacy']].forEach(([id,type])=>{
       const b=document.getElementById(id); if(!b || b.dataset.mbh054Bound==='1') return;
       b.dataset.mbh054Bound='1';
       const onLegal=(e)=>{ e.preventDefault(); e.stopPropagation(); safe(()=>{ if(typeof playUiClick==='function') playUiClick(); }); safe(()=>{ if(typeof openLegalModal==='function') openLegalModal(type); }); return false; };
       b.addEventListener('click', onLegal, true);
-      b.addEventListener('pointerup', onLegal, true);
-      b.addEventListener('touchend', onLegal, {capture:true, passive:false});
     });
   }
 
@@ -3427,4 +3421,153 @@ init();
   window.addEventListener('load',()=>{ boot054(); setTimeout(()=>{ ensureBattleVisible054(); setMenuOpen054(false); },60); },{once:true});
   window.addEventListener('resize',()=>setTimeout(()=>{ ensureBattleVisible054(); if(!document.body.classList.contains('mbh-menu-open')) setMenuOpen054(false); },60));
   safe(()=>{ window.mbh054Check=()=>({build:document.documentElement.dataset.buildVersion, menuOpen:document.body.classList.contains('mbh-menu-open'), sideOpen:$('.side-panel')?.classList.contains('open')||false, page:typeof state!=='undefined'?state.menuPage:null, footerParent:$('.menu-footer')?.parentElement?.className||'', inventoryOverflow:getComputedStyle($('#inventory')).overflowY, battleBg:getComputedStyle($('.battle-bg')).backgroundImage}); });
+})();
+
+
+/* MBH ver.0.5.5: single-click menu/debug stabilizer */
+(function(){
+  'use strict';
+  const BUILD='0.5.5';
+  const $=(s,r=document)=>r.querySelector(s);
+  const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+  const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.error('[MBH0.5.5]', e); return null; } };
+
+  function syncVersion055(){
+    window.APP_VERSION=BUILD;
+    window.GAME_VERSION=BUILD;
+    document.documentElement.dataset.buildVersion=BUILD;
+    document.documentElement.dataset.mbhVersion=BUILD;
+    $$('.build-version,[data-version],#versionText,.version-badge').forEach(el=>{ el.textContent='ver.'+BUILD; });
+    $$('.debug-version').forEach(el=>{ el.textContent='Build: ver.'+BUILD+' debug'; });
+    $$('.debug-trace-title').forEach(el=>{ el.textContent='進行デバッグログ ver.'+BUILD; });
+  }
+
+  function ensureMenuDom055(){
+    const side=$('.side-panel'); if(!side) return null;
+    let tabs=side.querySelector(':scope > .mobile-menu-tabs, :scope > .side-tabs');
+    if(!tabs){
+      tabs=document.createElement('nav');
+      tabs.className='mobile-menu-tabs side-tabs';
+      tabs.setAttribute('aria-label','右側タブ');
+      tabs.innerHTML='<button type="button" data-menu-page="stats">ステータス</button><button type="button" data-menu-page="equip">装備・強化</button><button type="button" data-menu-page="inventory">倉庫</button>';
+      side.insertBefore(tabs, side.firstChild);
+    }
+    if(tabs.parentElement!==side) side.insertBefore(tabs, side.firstChild);
+
+    let footer=side.querySelector(':scope > .menu-footer, :scope > .legal-links');
+    if(!footer){
+      footer=document.createElement('div');
+      footer.className='legal-links menu-footer';
+      footer.setAttribute('aria-label','公開情報');
+      footer.innerHTML='<button id="creditBtn" type="button">クレジット</button><button id="termsBtn" type="button">利用規約</button><button id="privacyBtn" type="button">プライバシーポリシー</button>';
+      side.appendChild(footer);
+    }
+    footer.className='legal-links menu-footer';
+
+    let content=$('#mbhMenuContent055') || $('#mbhMenuContent054') || $('#mbhMenuContent052') || $('#mbhMenuContent051') || $('#mbhMenuContent050');
+    if(!content){
+      content=document.createElement('div');
+      content.className='menu-content-fixed';
+      side.insertBefore(content, footer);
+    }
+    content.id='mbhMenuContent055';
+    content.className='menu-content-fixed';
+    if(content.parentElement!==side) side.insertBefore(content, footer);
+
+    ['.hero-stats','.equip-panel','.inventory-panel'].forEach(sel=>{
+      const p=$(sel);
+      if(p && p.parentElement!==content) content.appendChild(p);
+    });
+    $$('.log-panel', side).forEach(el=>el.remove());
+    $$('[data-menu-page="log"]', side).forEach(el=>el.remove());
+    $$('.menu-col,.menu-left,.menu-right', side).forEach(el=>{ if(el.parentElement===side) el.remove(); });
+    if(footer.parentElement!==side || side.lastElementChild!==footer) side.appendChild(footer);
+    return content;
+  }
+
+  function setPage055(page){
+    page=(page==='equip'||page==='inventory')?page:'stats';
+    if(typeof state!=='undefined') state.menuPage=page;
+    const content=ensureMenuDom055();
+    $$('.side-panel [data-menu-page]').forEach(b=>b.classList.toggle('active', b.dataset.menuPage===page));
+    if(content){
+      $$('#mbhMenuContent055>.panel').forEach(p=>p.classList.remove('active-page'));
+      const target=page==='equip'?$('.equip-panel'):page==='inventory'?$('.inventory-panel'):$('.hero-stats');
+      if(target) target.classList.add('active-page');
+    }
+    if(page==='inventory') safe(()=>{ if(typeof renderInventory==='function') renderInventory(); });
+  }
+
+  function setMenuOpen055(open){
+    const side=$('.side-panel'); if(!side) return;
+    open=!!open;
+    side.classList.toggle('open', open);
+    document.body.classList.toggle('mbh-menu-open', open);
+    if(typeof state!=='undefined') state.uiOpen=open;
+    const btn=$('#equipToggleBtn');
+    if(btn) btn.textContent=open?'閉じる':'メニュー';
+    if(open) setPage055((typeof state!=='undefined'&&state.menuPage)||'stats');
+  }
+
+  function replaceAndBind055(id, handler){
+    const old=document.getElementById(id); if(!old) return null;
+    const clone=old.cloneNode(true);
+    clone.dataset.mbh055Bound='1';
+    old.replaceWith(clone);
+    clone.addEventListener('click', function(e){
+      e.preventDefault(); e.stopPropagation();
+      handler(e);
+      return false;
+    }, true);
+    return clone;
+  }
+
+  function bind055(){
+    ensureMenuDom055();
+    replaceAndBind055('equipToggleBtn', ()=>{
+      setMenuOpen055(!document.body.classList.contains('mbh-menu-open'));
+      safe(()=>{ if(typeof playUiClick==='function') playUiClick(); });
+    });
+    replaceAndBind055('debugBtn', ()=>{
+      const p=$('#debugPanel'); if(!p) return;
+      p.classList.toggle('hidden');
+      safe(()=>{ if(typeof playUiClick==='function') playUiClick(); });
+    });
+    const close=replaceAndBind055('debugClose', ()=>{ const p=$('#debugPanel'); if(p) p.classList.add('hidden'); });
+    $$('.side-panel [data-menu-page]').forEach(b=>{
+      const clone=b.cloneNode(true);
+      b.replaceWith(clone);
+      clone.addEventListener('click', function(e){
+        e.preventDefault(); e.stopPropagation();
+        setPage055(clone.dataset.menuPage||'stats');
+        safe(()=>{ if(typeof playUiClick==='function') playUiClick(); });
+        return false;
+      }, true);
+    });
+    [['creditBtn','credit'],['termsBtn','terms'],['privacyBtn','privacy']].forEach(([id,type])=>{
+      replaceAndBind055(id, ()=>{
+        safe(()=>{ if(typeof playUiClick==='function') playUiClick(); });
+        safe(()=>{ if(typeof openLegalModal==='function') openLegalModal(type); });
+      });
+    });
+  }
+
+  function boot055(){
+    syncVersion055();
+    ensureMenuDom055();
+    bind055();
+    setPage055((typeof state!=='undefined'&&state.menuPage)||'stats');
+    setMenuOpen055(false);
+  }
+
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', boot055, {once:true}); else setTimeout(boot055, 0);
+  window.addEventListener('load', ()=>setTimeout(boot055, 0), {once:true});
+  window.mbh055Check=()=>({
+    build:document.documentElement.dataset.buildVersion,
+    menuOpen:document.body.classList.contains('mbh-menu-open'),
+    sideOpen:$('.side-panel')?.classList.contains('open')||false,
+    debugHidden:$('#debugPanel')?.classList.contains('hidden'),
+    page:typeof state!=='undefined'?state.menuPage:null,
+    inventoryOverflow:$('#inventory')?getComputedStyle($('#inventory')).overflowY:null
+  });
 })();
