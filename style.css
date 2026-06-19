@@ -4240,3 +4240,11 @@ html[data-build-version="0.6.5"] body.mbh-legal-open #legalModal *{
     text-overflow:clip !important;
   }
 }
+/* ver0.6.6 holy frame / floats */
+.item-card.holy, .drop-toast.holy, .item-card.frame-holy, .drop-toast.frame-holy{
+  border-color:#ffd86b !important;
+  box-shadow:0 0 14px rgba(255,216,107,.9), inset 0 0 12px rgba(255,255,255,.18);
+  background:linear-gradient(135deg, rgba(255,245,190,.18), rgba(255,255,255,.08), rgba(255,205,80,.14));
+}
+.float.holy, .hero-float.holy{ color:#fff1a8; text-shadow:0 0 8px #fff,0 0 16px #ffd86b; font-weight:900; }
+.status-badge.holy{ border-color:#ffd86b; color:#fff1a8; box-shadow:0 0 10px rgba(255,216,107,.65); }
