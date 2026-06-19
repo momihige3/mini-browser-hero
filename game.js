@@ -1299,7 +1299,7 @@ function renderStatusLists(){
     }
     if(isTenseiKnight()){
       parts.push(makeStatusBadge('✨光の加護', 'bossbuff', 'holy_protection', 'enemy'));
-      parts.push(makeStatusBadge(`⚔️聖剣解放${(state.enemyStatuses?.holyReleaseHealUntil||0)>nowMs()?'：回復中':'('+(state.enemyStatuses?.holyReleaseCount||0)+'/6)'}`, 'bossbuff', 'holy_release', 'enemy'));
+      parts.push(makeStatusBadge(`⚔️聖剣解放${(state.enemyStatuses?.holyReleaseHealUntil||0)>nowMs()?'：回復中':''}`, 'bossbuff', 'holy_release', 'enemy'));
       parts.push(makeStatusBadge('🕊️聖域浄化', 'bossbuff', 'holy_ailment_guard', 'enemy'));
       if(state.enemyStatuses?.holyAwakened) parts.push(makeStatusBadge('🌈勇者の覚醒', 'bossbuff', 'holy_awakening', 'enemy'));
     }
@@ -1614,6 +1614,13 @@ function applyHeroHit(skill){
       dmg = Math.floor(dmg * (1 - auraReduce));
     }
     state.enemyHp=Math.max(0, state.enemyHp - dmg);
+    if(isTenseiKnight() && state.enemyStatuses?.holyAwakened && skill==='deathdance' && dmg > 0){
+      const danceHeal = Math.max(1, Math.floor(dmg * 0.90));
+      if(state.enemyHp > 0){
+        state.enemyHp = Math.min(state.enemy.maxHp, state.enemyHp + danceHeal);
+        showFloat(`剣舞吸収 +${danceHeal}`, 'heal');
+      }
+    }
     // v95.9: スライムキング（酸ボディ）はHP0到達時点で即撃破確定。
     // 剣舞などの多段ヒット中でも、倒した後に反射が続かないようにする。
     if(state.enemy?.bossBuff === 'acid_body' && state.enemyHp <= 0){
@@ -5208,7 +5215,7 @@ setTimeout(installHolyDebug066, 300);
     if(!list || !isTensei069()) return;
     const add=(kind, html)=>{ if(!list.querySelector(`[data-status-kind="${kind}"]`)) list.insertAdjacentHTML('afterbegin', html); };
     add('holy_ailment_guard', makeBadge069('🕊️聖域浄化','bossbuff','holy_ailment_guard','enemy'));
-    add('holy_release', makeBadge069(`⚔️聖剣解放${(state.enemyStatuses?.holyReleaseHealUntil||0)>performance.now()?'：回復中':'('+(state.enemyStatuses?.holyReleaseCount||0)+'/6)'}`,'bossbuff','holy_release','enemy'));
+    add('holy_release', makeBadge069(`⚔️聖剣解放${(state.enemyStatuses?.holyReleaseHealUntil||0)>performance.now()?'：回復中':''}`,'bossbuff','holy_release','enemy'));
     if(state.enemyStatuses?.holyAwakened) add('holy_awakening', makeBadge069('🌈勇者の覚醒','bossbuff','holy_awakening','enemy'));
     add('holy_protection', makeBadge069('✨光の加護','bossbuff','holy_protection','enemy'));
     safe(()=>{ if(typeof bindStatusBadgeEvents==='function') bindStatusBadgeEvents(); });
@@ -5260,4 +5267,125 @@ setTimeout(installHolyDebug066, 300);
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', boot069, {once:true}); else setTimeout(boot069, 0);
   window.addEventListener('load', ()=>setTimeout(boot069, 80), {once:true});
   setInterval(syncVersion069, 1000);
+})();
+
+
+/* MBH ver.0.6.10: 天聖騎士 次敵予約・覚醒吸収・聖剣解放カウント非表示・闇装備名補正 */
+(function(){
+  'use strict';
+  const BUILD='0.6.10';
+  const $id=(id)=>document.getElementById(id);
+  const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.error('[MBH0.6.10]', e); return null; } };
+
+  function syncVersion0610(){
+    window.APP_VERSION=BUILD;
+    window.GAME_VERSION=BUILD;
+    if(document.documentElement){ document.documentElement.dataset.buildVersion=BUILD; document.documentElement.dataset.buildDate='2026-06-19'; }
+    document.querySelectorAll('.build-version').forEach(el=>{ el.textContent='ver.'+BUILD; });
+    document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent='Build: ver.'+BUILD+' debug'; });
+    document.querySelectorAll('.debug-trace-title').forEach(el=>{ el.textContent='進行デバッグログ ver.'+BUILD; });
+  }
+
+  // ボタン名は維持しつつ、押下時は「即時差し替え」ではなく次の敵として予約する。
+  window.forceSpawnTenseiKnight = function(){
+    const lv=Math.max(1, Math.floor(Number(state?.tenseiKnightLevel)||1));
+    state.debugForcedBossNext = {id:'tensei_knight', level:lv, from:'debug_next'};
+    safe(()=>banner('次の敵に天聖騎士をセット！', 1400));
+    safe(()=>log(`デバッグ：次の敵を天聖騎士Lv.${lv}にセット。現在の敵を倒すと出現する。`, 'danger'));
+    safe(()=>renderAll());
+    safe(()=>scheduleSave());
+  };
+
+  function bindTenseiButton0610(){
+    const b=$id('debugTenseiKnight');
+    if(!b) return;
+    b.textContent='天聖騎士召喚';
+    b.onclick=()=>{ safe(()=>playUiClick()); window.forceSpawnTenseiKnight(); };
+  }
+
+  // 既存のバッジから 0/6 などのカウント表示を消す。
+  function cleanHolyReleaseBadges0610(){
+    document.querySelectorAll('.status-badge[data-status-kind="holy_release"]').forEach(btn=>{
+      btn.textContent = (state?.enemyStatuses?.holyReleaseHealUntil||0) > performance.now() ? '⚔️聖剣解放：回復中' : '⚔️聖剣解放';
+      btn.setAttribute('aria-label','聖剣解放 の効果を見る');
+    });
+  }
+  if(typeof renderStatusLists==='function' && !renderStatusLists.__mbh0610Wrapped){
+    const old=renderStatusLists;
+    renderStatusLists=function(){ const r=old.apply(this,arguments); cleanHolyReleaseBadges0610(); return r; };
+    renderStatusLists.__mbh0610Wrapped=true;
+  }
+
+  // 勇者の覚醒中：敵側の暗黒出血をダメージではなく回復へ変換する。
+  function convertTenseiDarkBleed0610(){
+    if(!(typeof isTenseiKnight==='function' && isTenseiKnight()) || !state.enemyStatuses?.holyAwakened) return;
+    const stacks=(state.enemyStatuses.darkBleeds||[]).length;
+    if(stacks<=0 || !state.enemy || state.enemyHp<=0) return;
+    const heal=Math.max(1, Math.floor(state.enemy.maxHp * 0.01 * stacks));
+    state.enemyStatuses.darkBleeds=[];
+    state.enemyStatuses.lastDarkBleedTick=performance.now();
+    state.enemyHp=Math.min(state.enemy.maxHp, state.enemyHp + heal);
+    safe(()=>showFloat(`暗黒出血浄化 +${heal}`, 'heal'));
+    safe(()=>log(`勇者の覚醒：暗黒出血${stacks}スタックを回復に変換。`, 'good'));
+  }
+  if(typeof processTenseiKnight==='function' && !processTenseiKnight.__mbh0610Wrapped){
+    const old=processTenseiKnight;
+    processTenseiKnight=function(now){ const r=old.apply(this,arguments); convertTenseiDarkBleed0610(); return r; };
+    processTenseiKnight.__mbh0610Wrapped=true;
+  }
+  if(typeof addDarkBleed==='function' && !addDarkBleed.__mbh0610Wrapped){
+    const old=addDarkBleed;
+    addDarkBleed=function(target='hero'){
+      if(target==='enemy' && typeof isTenseiKnight==='function' && isTenseiKnight() && state.enemyStatuses?.holyAwakened && state.enemy && state.enemyHp>0){
+        const heal=Math.max(1, Math.floor(state.enemy.maxHp * 0.01));
+        state.enemyHp=Math.min(state.enemy.maxHp, state.enemyHp + heal);
+        safe(()=>showFloat(`暗黒出血浄化 +${heal}`, 'heal'));
+        safe(()=>log('勇者の覚醒：暗黒出血を回復に変換。', 'good'));
+        safe(()=>renderStatusLists());
+        return true;
+      }
+      return old.apply(this, arguments);
+    };
+    addDarkBleed.__mbh0610Wrapped=true;
+  }
+
+  // 既存データや生成時の闇装備に、聖剣シリーズ由来の名前が残っていた場合に補正する。
+  function normalizeDarkItemName0610(it){
+    if(!it || it.specialFrame!=='darkholy') return it;
+    const bySlot={武器:'闇の聖剣',盾:'闇の盾',兜:'闇の兜',鎧:'闇の鎧',腕:'闇の籠手',足:'暗黒の靴',アミュレット:'闇のアミュレット'};
+    const expected=bySlot[it.slot];
+    if(expected && (/^聖/.test(String(it.name||'')) || !/^闇の|^暗黒の/.test(String(it.name||'')))) it.name=expected;
+    if(it.baseName && /^聖/.test(String(it.baseName))) delete it.baseName;
+    if(it.displayName && /^聖/.test(String(it.displayName))) delete it.displayName;
+    if(it.setName && /聖剣/.test(String(it.setName))) it.setName='闇装備';
+    return it;
+  }
+  function normalizeAllDarkNames0610(){
+    safe(()=>Object.keys(state.equip||{}).forEach(k=>normalizeDarkItemName0610(state.equip[k])));
+    safe(()=>Array.isArray(state.inventory) && state.inventory.forEach(normalizeDarkItemName0610));
+  }
+  ['makeDarkHolySword','makeDarkShield','makeDarkAmulet','makeDarkArmor','makeDarkGauntlets','makeDarkHelm','makeDarkBoots'].forEach(name=>{
+    const fn=window[name];
+    if(typeof fn==='function' && !fn.__mbh0610NameWrap){
+      const wrapped=function(...args){ return normalizeDarkItemName0610(fn.apply(this,args)); };
+      wrapped.__mbh0610NameWrap=true;
+      window[name]=wrapped;
+      try{ eval(name+'=window["'+name+'"]'); }catch(_){ }
+    }
+  });
+
+  if(typeof statusTooltipHtml==='function' && !statusTooltipHtml.__mbh0610Wrapped){
+    const old=statusTooltipHtml;
+    statusTooltipHtml=function(kind,target){
+      if(kind==='holy_awakening') return `<b>勇者の覚醒</b><br>HP50%以下で発動。<br>攻撃力+300%。<br>攻撃速度+100%。<br>状態異常90%軽減。<br>死線の剣舞ダメージの90%を回復。<br>暗黒出血を回復へ変換。`;
+      if(kind==='holy_release') return `<b>聖剣解放</b><br>天聖騎士の必殺技。<br>防御をほぼ無視する光属性特大ダメージを放つ。<br>発動後5秒間、0.2秒ごとに最大HPの3%を回復。`;
+      return old.apply(this,arguments);
+    };
+    statusTooltipHtml.__mbh0610Wrapped=true;
+  }
+
+  function boot0610(){ syncVersion0610(); bindTenseiButton0610(); normalizeAllDarkNames0610(); cleanHolyReleaseBadges0610(); safe(()=>renderAll()); safe(()=>scheduleSave()); }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', boot0610, {once:true}); else setTimeout(boot0610,0);
+  window.addEventListener('load', ()=>setTimeout(boot0610,120), {once:true});
+  setInterval(()=>{ syncVersion0610(); bindTenseiButton0610(); cleanHolyReleaseBadges0610(); }, 1000);
 })();
