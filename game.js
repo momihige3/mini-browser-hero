@@ -1,6 +1,6 @@
 'use strict';
 
-// ver0.6.3: ボス表示整理・火炎ブレスタグカウント・ボスランダム出現。
+// ver0.6.4: ボス表示整理・火炎ブレスタグカウント・ボスランダム出現。
 // strict modeで `makeDarkArmor = function...` がReferenceErrorになり、
 // 後続パッチ全体が止まる問題を防ぐ。
 var makeDarkArmor, makeDarkGauntlets, makeDarkHelm, makeDarkBoots;
@@ -40,7 +40,7 @@ const DEATH_DANCE_CUTINS = [
 ];
 const DARK_SWORD_SAINT_CUTIN = {quote:'私を超えてみせろ。', img:'assets/cutin_dark_sword_dance.png'};
 const DARK_SWORD_TECHNIQUE_CUTIN = {quote:'', img:'assets/cutin_dark_sword_technique.png'};
-const GAME_VERSION = (window.APP_VERSION || '0.6.3');
+const GAME_VERSION = (window.APP_VERSION || '0.6.4');
 window.GAME_VERSION = GAME_VERSION;
 
 const DARK_SWORD_SAINT = {
@@ -874,7 +874,7 @@ function handleHeroDeath(){
   const darkSaintDefeat = isDarkSwordSaint();
   let nextEnemyLevelBase = Math.max(1, Math.floor(defeatedEnemyLevel * 0.9));
   if(darkSaintDefeat){
-    // ver.0.6.3: 100レベルごとの暗黒剣聖は、勝敗に関係なく通常敵レベル+1。
+    // ver.0.6.4: 100レベルごとの暗黒剣聖は、勝敗に関係なく通常敵レベル+1。
     if(state.darkSwordSaintReturn && state.darkSwordSaintReturn.milestoneDarkSaint){
       state.enemyLevelBase = defeatedEnemyLevel + 1;
       state.enemyLevelBaseDefeated = Math.max(0, Math.floor(Number(state.defeated)||0));
@@ -1296,7 +1296,7 @@ function makeFirstEnemy(){
 }
 
 function pickEnemy(){
-  // ver.0.6.3: 通常敵レベルは撃破時抽選で上昇。ボスはLv10刻み予約からランダム出現。
+  // ver.0.6.4: 通常敵レベルは撃破時抽選で上昇。ボスはLv10刻み予約からランダム出現。
   return {...normals[Math.floor(Math.random()*normals.length)]};
 }
 function getBossForNormal(normalId){
@@ -1311,7 +1311,7 @@ function shouldReplaceBossWithDarkSaint(){
   return !!state.darkSwordSaintFirstEncountered && Math.random() < 0.01;
 }
 function scheduleBossAfterNormalDefeat(e){
-  // ver.0.6.3: 雑魚Lv10刻みで、種族ボスからランダム出現。レベルは撃破した雑魚と共通。
+  // ver.0.6.4: 雑魚Lv10刻みで、種族ボスからランダム出現。レベルは撃破した雑魚と共通。
   try{
     if(!e || e.type !== '雑魚') return;
     const lv = Math.max(1, Math.floor(Number(e.level)||1));
@@ -1331,7 +1331,7 @@ function scheduleBossAfterNormalDefeat(e){
     state.lastBossScheduledLevel = lv;
     log(`${e.name}Lv.${lv}を制した。次の敵にボスLv.${lv}が現れる！`, 'danger');
   }catch(err){
-    console.error('[MBH0.6.3 scheduleBossAfterNormalDefeat]', err);
+    console.error('[MBH0.6.4 scheduleBossAfterNormalDefeat]', err);
     state.pendingBossForNext = null;
   }
 }
@@ -1342,7 +1342,7 @@ function makeScaledEnemy(base, forceLevel=null){
   if(forceLevel){
     e.level = forceLevel;
   }else{
-    // ver.0.6.3: 敵レベルは撃破数で自動上昇させず、撃破時の抽選/ボス撃破で更新する。
+    // ver.0.6.4: 敵レベルは撃破数で自動上昇させず、撃破時の抽選/ボス撃破で更新する。
     if(state.enemyLevelBase == null){
       state.enemyLevelBase = Math.max(1, Math.floor(Number(state.enemy?.level) || Number(state.level) || 1));
       state.enemyLevelBaseDefeated = Math.max(0, Math.floor(Number(state.defeated)||0));
@@ -1357,7 +1357,7 @@ function makeScaledEnemy(base, forceLevel=null){
   }
   const scaledDefeated = state.enemyLevelBase != null ? Math.max(0, (state.defeated||0) - (state.enemyLevelBaseDefeated||0)) : (state.defeated||0);
   const hpScale=1 + e.level*.035 + Math.floor(scaledDefeated/10)*.03;
-  // ver.0.6.3: 敵ATK/DEFのレベル成長が弱すぎたため、HPとは別の成長係数へ分離。
+  // ver.0.6.4: 敵ATK/DEFのレベル成長が弱すぎたため、HPとは別の成長係数へ分離。
   // HPは既存の伸びを維持し、攻撃力・防御力だけ敵Lvに応じてしっかり伸ばす。
   const statScale=1 + Math.max(0, (Number(e.level)||1)-1) * 0.08 + Math.floor(scaledDefeated/10)*.03;
   const normalHpGrowth = e.type === '雑魚' ? Math.pow(1.01, Math.max(0, (Number(e.level)||1) - 1)) : 1;
@@ -1392,7 +1392,7 @@ function setEnemy(e){
   log(`${e.name} が現れた。${e.type==='ボス'||e.type==='裏ボス'?'ボス出現！':''}`, e.type==='ボス'||e.type==='裏ボス'?'danger':'');
 }
 function forceSpawnDarkSwordSaint(){
-  // ver0.6.3: 即時召喚ではなく、次の敵として暗黒剣聖を予約する
+  // ver0.6.4: 即時召喚ではなく、次の敵として暗黒剣聖を予約する
   state.forceNextDarkSwordSaint = true;
   state.pendingDarkSwordSaintDelay = false;
   banner('次の敵に暗黒剣聖をセット！', 1400);
@@ -1611,7 +1611,7 @@ function enemyAttack(now){
     renderBattle();
     return;
   }
-  // ver0.6.3: 火の精霊・火の精霊王の通常攻撃は必ず火属性。
+  // ver0.6.4: 火の精霊・火の精霊王の通常攻撃は必ず火属性。
   // 以前は fire 属性敵でも55%抽選だったため、火属性攻撃にならないことがあった。
   const isPureFireAttacker = e && (e.id === 'fire_spirit' || e.id === 'fire_king');
   let element = isDarkSwordSaint() ? 'dark' : (isPureFireAttacker ? 'fire' : (e.element==='fire' && Math.random()<.55 ? 'fire':'normal'));
@@ -1690,7 +1690,7 @@ function tryDarkSwordDanceRevive(){
 
   const t = performance.now();
   state.enemyStatuses.darkDanceCount = count + 1;
-  // ver.0.6.3: 暗黒剣舞でリセットするのは死線の剣舞の発動回数だけ。
+  // ver.0.6.4: 暗黒剣舞でリセットするのは死線の剣舞の発動回数だけ。
   // 発動中の死線の剣舞そのものは解除しない。
   state.deathDanceBattleCount = 0;
   state.deathDanceComboCount = 0;
@@ -1860,7 +1860,7 @@ function showDarkSwordTechniqueCutin(){
   playSfx('cutin');
 }
 function updateEnemyLevelProgressionOnDefeat(e){
-  // ver.0.6.3: 雑魚撃破は10%で敵レベル+1。ボス撃破は確定+1。
+  // ver.0.6.4: 雑魚撃破は10%で敵レベル+1。ボス撃破は確定+1。
   // 暗黒剣聖は通常敵進行に影響させない。
   try{
     if(!e) return;
@@ -1891,7 +1891,7 @@ function updateEnemyLevelProgressionOnDefeat(e){
       }
     }
   }catch(err){
-    console.error('[MBH0.6.3 updateEnemyLevelProgressionOnDefeat]', err);
+    console.error('[MBH0.6.4 updateEnemyLevelProgressionOnDefeat]', err);
   }
 }
 
@@ -1953,7 +1953,7 @@ function enemyDefeated(){
     const makeDarkReward = () => darkPool[Math.floor(Math.random()*darkPool.length)](defeatedLevel);
     const makeLegendReward = () => makeItem(slots[Math.floor(Math.random()*slots.length)], legendary, {isBossDrop:true, levelOverride:defeatedLevel});
 
-    // ver0.6.3: 報酬枠を明示的に固定する。
+    // ver0.6.4: 報酬枠を明示的に固定する。
     // rewards[0] = 1枠目、rewards[1] = 2枠目、rewards[2] = 3枠目。
     // 3枠目は必ず闇装備。1〜2枠目は確率で闇装備になってもよい。
     const rewards = [
@@ -1977,7 +1977,7 @@ function enemyDefeated(){
       showDropToast(it);
     }
   }
-  // ver.0.6.3: 強化石ドロップは廃止。装備はドロップ時に敵Lv依存の+値が付く。
+  // ver.0.6.4: 強化石ドロップは廃止。装備はドロップ時に敵Lv依存の+値が付く。
   if(calcStats().masterRegen && state.hp > 0){
     const heal = Math.max(1, Math.floor(maxHp() * 0.25));
     const beforeHp = state.hp;
@@ -1995,7 +1995,7 @@ function effectiveXpNext(){
   return 1000;
 }
 function checkLevelUp(){
-  // ver0.6.3: 主人公の次Lv必要経験値を現行値の50%として扱う。
+  // ver0.6.4: 主人公の次Lv必要経験値を現行値の50%として扱う。
   while(state.xp>=effectiveXpNext()){
     const need = effectiveXpNext();
     state.xp-=need;
@@ -2577,7 +2577,7 @@ function formatItemNameWithPlus(it){
 
 function darkEquipLevelFromSource(levelOverride){
   const raw = Math.max(1, Math.floor(Number(levelOverride) || Number(state?.enemy?.level) || Number(state?.darkSwordSaintLevel) || Number(state?.level) || 1));
-  // ver.0.6.3: 闇装備は暗黒剣聖の独立Lv1を通常敵Lv100相当として扱う。
+  // ver.0.6.4: 闇装備は暗黒剣聖の独立Lv1を通常敵Lv100相当として扱う。
   // すでに通常敵Lv100以上が渡された場合はそのまま使う。
   return raw < 100 ? raw * 100 : raw;
 }
@@ -3203,13 +3203,13 @@ function v94InstallTouchControls(){
 init();
 
 
-/* MBH ver.0.6.3: clean menu controller. No redirect URL params. No BGM assets. */
+/* MBH ver.0.6.4: clean menu controller. No redirect URL params. No BGM assets. */
 (function(){
   'use strict';
-  const BUILD='0.6.3';
+  const BUILD='0.6.4';
   const $=(s,r=document)=>r.querySelector(s);
   const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
-  const safe=(fn)=>{ try{ return fn&&fn(); }catch(e){ console.error('[MBH0.6.3]', e); return null; } };
+  const safe=(fn)=>{ try{ return fn&&fn(); }catch(e){ console.error('[MBH0.6.4]', e); return null; } };
 
   function syncVersion054(){
     window.APP_VERSION=BUILD;
@@ -3424,13 +3424,13 @@ init();
 })();
 
 
-/* MBH ver.0.6.3: single-click menu/debug stabilizer */
+/* MBH ver.0.6.4: single-click menu/debug stabilizer */
 (function(){
   'use strict';
-  const BUILD='0.6.3';
+  const BUILD='0.6.4';
   const $=(s,r=document)=>r.querySelector(s);
   const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
-  const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.error('[MBH0.6.3]', e); return null; } };
+  const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.error('[MBH0.6.4]', e); return null; } };
 
   function syncVersion055(){
     window.APP_VERSION=BUILD;
@@ -3572,13 +3572,13 @@ init();
   });
 })();
 
-/* MBH ver.0.6.3: restore effect panels and sell EXP display */
+/* MBH ver.0.6.4: restore effect panels and sell EXP display */
 (function(){
   'use strict';
-  const BUILD='0.6.3';
+  const BUILD='0.6.4';
   const $=(s,r=document)=>r.querySelector(s);
   const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
-  const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.error('[MBH0.6.3]', e); return null; } };
+  const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.error('[MBH0.6.4]', e); return null; } };
   function syncVersion056(){
     window.APP_VERSION=BUILD;
     window.GAME_VERSION=BUILD;
@@ -3721,15 +3721,15 @@ init();
   window.mbh056Check=()=>({build:document.documentElement.dataset.buildVersion, resourcesVisible:!!$('.topbar .resources')&&getComputedStyle($('.topbar .resources')).display!=='none', statusEffects:$('#statusSpecialEffects .effect-scroll')?.innerText||'', equipEffects:$('#equipEffectTotals .effect-scroll')?.innerText||'', sellText:$('#sellSelectedBtn')?.textContent||'', monsterHeight:$('.monster-records')?.getBoundingClientRect().height||0, inventoryOverflow:$('#inventory')?getComputedStyle($('#inventory')).overflowY:null});
 })();
 
-/* MBH ver.0.6.3: removed duplicate 0.5.7 inventory slot filter block. */
+/* MBH ver.0.6.4: removed duplicate 0.5.7 inventory slot filter block. */
 
-/* MBH ver.0.6.3: mobile tap recovery + status detail outside-close */
+/* MBH ver.0.6.4: mobile tap recovery + status detail outside-close */
 (function(){
   'use strict';
-  const BUILD='0.6.3';
+  const BUILD='0.6.4';
   const $=(s,r=document)=>r.querySelector(s);
   const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
-  const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.error('[MBH0.6.3]', e); return null; } };
+  const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.error('[MBH0.6.4]', e); return null; } };
   function syncVersion058(){
     window.APP_VERSION=BUILD;
     window.GAME_VERSION=BUILD;
@@ -3854,14 +3854,14 @@ init();
 
 
 
-/* MBH ver.0.6.3: inventory lock restore + slot filter fit + auto-lock valuables */
+/* MBH ver.0.6.4: inventory lock restore + slot filter fit + auto-lock valuables */
 (function(){
   'use strict';
-  const BUILD='0.6.3';
+  const BUILD='0.6.4';
   const $id=(id)=>document.getElementById(id);
   const $q=(s,r=document)=>r.querySelector(s);
   const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
-  const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.error('[MBH0.6.3]', e); return null; } };
+  const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.error('[MBH0.6.4]', e); return null; } };
 
   function syncVersion059(){
     window.APP_VERSION=BUILD;
@@ -4205,13 +4205,13 @@ init();
 })();
 
 
-/* MBH ver.0.6.3: inventory filter single-source cleanup */
+/* MBH ver.0.6.4: inventory filter single-source cleanup */
 (function(){
   'use strict';
-  const BUILD='0.6.3';
+  const BUILD='0.6.4';
   const $=(id)=>document.getElementById(id);
   const $$=(sel,root=document)=>Array.from(root.querySelectorAll(sel));
-  const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.error('[MBH0.6.3]', e); return null; } };
+  const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.error('[MBH0.6.4]', e); return null; } };
   function syncVersion060(){
     window.APP_VERSION=BUILD; window.GAME_VERSION=BUILD;
     document.documentElement.dataset.buildVersion=BUILD;
@@ -4243,12 +4243,12 @@ init();
 })();
 
 
-/* ver0.6.3: debug enemy level +/-1,+/-10 and next specified boss buttons */
+/* ver0.6.4: debug enemy level +/-1,+/-10 and next specified boss buttons */
 (function(){
   'use strict';
-  const BUILD='0.6.3';
+  const BUILD='0.6.4';
   const $=(id)=>document.getElementById(id);
-  const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.error('[MBH0.6.3]',e); return null; } };
+  const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.error('[MBH0.6.4]',e); return null; } };
 
   function syncVersion061(){
     window.APP_VERSION=BUILD;
@@ -4286,7 +4286,7 @@ init();
   function setNextBoss061(id){
     if(typeof state==='undefined') return;
     const boss=getBossBase061(id);
-    if(!boss){ console.warn('[MBH0.6.3] unknown boss', id); return; }
+    if(!boss){ console.warn('[MBH0.6.4] unknown boss', id); return; }
     const lv=currentEnemyLevel061();
     state.debugForcedBossNext={id:boss.id, level:lv, from:'debug061'};
     state.pendingBossForNext=null;
@@ -4377,7 +4377,7 @@ init();
       b.addEventListener('click',e=>{ e.preventDefault(); e.stopPropagation(); setNextBoss061(bossId); safe(()=>{ if(typeof playUiClick==='function') playUiClick(); }); return false; },true);
       block.appendChild(b);
     });
-    // ver0.6.3: 『設定した次の敵と戦闘』ボタンは削除。次の敵予約のみ残す。
+    // ver0.6.4: 『設定した次の敵と戦闘』ボタンは削除。次の敵予約のみ残す。
   }
 
   function installStyle061(){
@@ -4398,13 +4398,13 @@ init();
 })();
 
 
-/* MBH ver.0.6.3: UI label, mobile audio background stop, invincible debug, dark grant repair, SP expbar */
+/* MBH ver.0.6.4: UI label, mobile audio background stop, invincible debug, dark grant repair, SP expbar */
 (function(){
   'use strict';
-  const BUILD='0.6.3';
+  const BUILD='0.6.4';
   const $=(id)=>document.getElementById(id);
   const $$=(sel,root=document)=>Array.from(root.querySelectorAll(sel));
-  const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.error('[MBH0.6.3]',e); return null; } };
+  const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.error('[MBH0.6.4]',e); return null; } };
 
   function syncVersion062(){
     window.APP_VERSION=BUILD; window.GAME_VERSION=BUILD;
@@ -4687,7 +4687,7 @@ init();
     const st=document.createElement('style'); st.id='mbh062-sp-exp-style';
     st.textContent=`
       @media (max-width:760px), (pointer:coarse){
-        html[data-build-version="0.6.3"] .battle-panel .expbar{
+        html[data-build-version="0.6.4"] .battle-panel .expbar{
           display:block!important;visibility:visible!important;opacity:1!important;
           position:absolute!important;left:8px!important;right:8px!important;
           bottom:max(8px, env(safe-area-inset-bottom, 0px))!important;
@@ -4695,9 +4695,9 @@ init();
           border:2px solid #c99b39!important;background:rgba(10,6,3,.9)!important;
           box-shadow:0 0 14px #000,inset 0 0 8px #000!important;overflow:hidden!important;
         }
-        html[data-build-version="0.6.3"] .battle-panel .expbar span{line-height:24px!important;font-size:12px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;padding:0 48px 0 6px!important;}
-        html[data-build-version="0.6.3"] .battle-panel .expbar b{display:block!important;right:8px!important;top:3px!important;font-size:12px!important;}
-        html[data-build-version="0.6.3"] .battle-panel{padding-bottom:36px!important;}
+        html[data-build-version="0.6.4"] .battle-panel .expbar span{line-height:24px!important;font-size:12px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;padding:0 48px 0 6px!important;}
+        html[data-build-version="0.6.4"] .battle-panel .expbar b{display:block!important;right:8px!important;top:3px!important;font-size:12px!important;}
+        html[data-build-version="0.6.4"] .battle-panel{padding-bottom:36px!important;}
       }
     `;
     document.head.appendChild(st);
@@ -4727,4 +4727,70 @@ init();
     enemyInvincible:!!state?.debug?.enemyInvincible,
     expbar:{w:$('expLabel')?.offsetWidth,h:$('expLabel')?.offsetHeight,text:$('expLabel')?.textContent}
   });
+})();
+
+
+/* MBH ver.0.6.4: legal modal front-layer fix */
+(function(){
+  'use strict';
+  const BUILD='0.6.4';
+  const $=(id)=>document.getElementById(id);
+  function safe(fn){try{return fn&&fn();}catch(e){console.error('[MBH0.6.4 legal]', e);}}
+  function setBuild(){
+    window.GAME_VERSION=BUILD;
+    window.APP_VERSION=BUILD;
+    document.documentElement.dataset.buildVersion=BUILD;
+    document.querySelectorAll('.build-version,[data-version],#versionText,.version-badge').forEach(el=>{el.textContent='ver.'+BUILD;});
+    document.querySelectorAll('.debug-version').forEach(el=>{el.textContent='Build: ver.'+BUILD;});
+  }
+  function liftLegal(){
+    const modal=$('legalModal');
+    if(!modal) return;
+    if(modal.parentElement!==document.body) document.body.appendChild(modal);
+    modal.style.zIndex='2147483600';
+    const bg=modal.querySelector('.legal-modal-backdrop'); if(bg) bg.style.zIndex='2147483601';
+    const card=modal.querySelector('.legal-modal-card'); if(card) card.style.zIndex='2147483602';
+    document.body.classList.toggle('mbh-legal-open', !modal.classList.contains('hidden'));
+  }
+  const oldOpen = (typeof window.openLegalModal==='function') ? window.openLegalModal : null;
+  window.openLegalModal=function(type){
+    if(oldOpen) safe(()=>oldOpen(type));
+    else {
+      const modal=$('legalModal');
+      const title=$('legalModalTitle');
+      if(title) title.textContent = type==='terms'?'利用規約':(type==='privacy'?'プライバシーポリシー':'クレジット');
+      modal?.classList.remove('hidden');
+    }
+    liftLegal();
+  };
+  const oldClose = (typeof window.closeLegalModal==='function') ? window.closeLegalModal : null;
+  window.closeLegalModal=function(){
+    if(oldClose) safe(()=>oldClose());
+    else $('legalModal')?.classList.add('hidden');
+    document.body.classList.remove('mbh-legal-open');
+    liftLegal();
+  };
+  function bind(){
+    setBuild();
+    liftLegal();
+    [['creditBtn','credit'],['termsBtn','terms'],['privacyBtn','privacy']].forEach(([id,type])=>{
+      const b=$(id); if(!b || b.dataset.mbh064Legal==='1') return;
+      b.dataset.mbh064Legal='1';
+      b.addEventListener('click', e=>{e.preventDefault();e.stopPropagation();safe(()=>{if(typeof playUiClick==='function')playUiClick();});window.openLegalModal(type);return false;}, true);
+      b.addEventListener('touchend', e=>{e.preventDefault();e.stopPropagation();window.openLegalModal(type);return false;}, {capture:true, passive:false});
+    });
+    const close=$('legalModalClose');
+    if(close && close.dataset.mbh064Legal!=='1'){
+      close.dataset.mbh064Legal='1';
+      close.addEventListener('click', e=>{e.preventDefault();e.stopPropagation();window.closeLegalModal();return false;}, true);
+      close.addEventListener('touchend', e=>{e.preventDefault();e.stopPropagation();window.closeLegalModal();return false;}, {capture:true, passive:false});
+    }
+    const modal=$('legalModal');
+    if(modal && modal.dataset.mbh064Backdrop!=='1'){
+      modal.dataset.mbh064Backdrop='1';
+      modal.addEventListener('click', e=>{ if(e.target?.dataset?.legalClose){ e.preventDefault(); e.stopPropagation(); window.closeLegalModal(); }}, true);
+    }
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', bind, {once:true}); else bind();
+  window.addEventListener('load', bind, {once:true});
 })();
