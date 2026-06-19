@@ -3520,8 +3520,8 @@ html[data-build-version="0.5.2"] .side-panel.open .menu-footer{
 }
 
 
-/* MBH ver.0.6.0: clean menu overlay. No URL cache redirect. No BGM assets. */
-html[data-build-version="0.6.0"] .layout{
+/* MBH ver.0.6.1: clean menu overlay. No URL cache redirect. No BGM assets. */
+html[data-build-version="0.6.1"] .layout{
   position:relative!important;
   display:block!important;
   width:100vw!important;
@@ -3529,7 +3529,7 @@ html[data-build-version="0.6.0"] .layout{
   padding:10px!important;
   overflow:hidden!important;
 }
-html[data-build-version="0.6.0"] .battle-panel{
+html[data-build-version="0.6.1"] .battle-panel{
   position:relative!important;
   z-index:1!important;
   display:block!important;
@@ -3539,15 +3539,15 @@ html[data-build-version="0.6.0"] .battle-panel{
   background:#101010!important;
   pointer-events:auto!important;
 }
-html[data-build-version="0.6.0"] .battle-bg{
+html[data-build-version="0.6.1"] .battle-bg{
   display:block!important;
   opacity:1!important;
   visibility:visible!important;
   z-index:0!important;
   background-image:url('assets/bg_forest_ruins.jpg');
 }
-html[data-build-version="0.6.0"] .battle-vignette{z-index:1!important;}
-html[data-build-version="0.6.0"] #equipToggleBtn{
+html[data-build-version="0.6.1"] .battle-vignette{z-index:1!important;}
+html[data-build-version="0.6.1"] #equipToggleBtn{
   display:inline-flex!important;
   align-items:center!important;
   justify-content:center!important;
@@ -3555,16 +3555,16 @@ html[data-build-version="0.6.0"] #equipToggleBtn{
   z-index:50000!important;
   pointer-events:auto!important;
 }
-html[data-build-version="0.6.0"] .topbar,
-html[data-build-version="0.6.0"] .topbar .controls{position:relative!important;z-index:50000!important;pointer-events:auto!important;}
-html[data-build-version="0.6.0"] .side-panel{
+html[data-build-version="0.6.1"] .topbar,
+html[data-build-version="0.6.1"] .topbar .controls{position:relative!important;z-index:50000!important;pointer-events:auto!important;}
+html[data-build-version="0.6.1"] .side-panel{
   display:none!important;
   visibility:hidden!important;
   opacity:0!important;
   pointer-events:none!important;
 }
-html[data-build-version="0.6.0"] body.mbh-menu-open .side-panel,
-html[data-build-version="0.6.0"] .side-panel.open{
+html[data-build-version="0.6.1"] body.mbh-menu-open .side-panel,
+html[data-build-version="0.6.1"] .side-panel.open{
   display:grid!important;
   visibility:visible!important;
   opacity:1!important;
@@ -3590,10 +3590,10 @@ html[data-build-version="0.6.0"] .side-panel.open{
   overflow:hidden!important;
   transform:none!important;
 }
-html[data-build-version="0.6.0"] .side-panel.open *,
-html[data-build-version="0.6.0"] body.mbh-menu-open .side-panel *{pointer-events:auto!important;box-sizing:border-box!important;}
-html[data-build-version="0.6.0"] .side-panel>.mobile-menu-tabs,
-html[data-build-version="0.6.0"] .side-panel>.side-tabs{
+html[data-build-version="0.6.1"] .side-panel.open *,
+html[data-build-version="0.6.1"] body.mbh-menu-open .side-panel *{pointer-events:auto!important;box-sizing:border-box!important;}
+html[data-build-version="0.6.1"] .side-panel>.mobile-menu-tabs,
+html[data-build-version="0.6.1"] .side-panel>.side-tabs{
   grid-row:1!important;
   display:grid!important;
   grid-template-columns:repeat(3,minmax(0,1fr))!important;
@@ -3606,7 +3606,7 @@ html[data-build-version="0.6.0"] .side-panel>.side-tabs{
   z-index:40002!important;
   overflow:visible!important;
 }
-html[data-build-version="0.6.0"] .side-panel [data-menu-page]{
+html[data-build-version="0.6.1"] .side-panel [data-menu-page]{
   display:flex!important;
   align-items:center!important;
   justify-content:center!important;
@@ -3619,7 +3619,7 @@ html[data-build-version="0.6.0"] .side-panel [data-menu-page]{
   text-overflow:ellipsis!important;
   cursor:pointer!important;
 }
-html[data-build-version="0.6.0"] #mbhMenuContent054{
+html[data-build-version="0.6.1"] #mbhMenuContent054{
   grid-row:2!important;
   display:block!important;
   width:100%!important;
@@ -3629,7 +3629,7 @@ html[data-build-version="0.6.0"] #mbhMenuContent054{
   overflow:hidden!important;
   position:relative!important;
 }
-html[data-build-version="0.6.0"] #mbhMenuContent054>.panel{
+html[data-build-version="0.6.1"] #mbhMenuContent054>.panel{
   width:100%!important;
   height:100%!important;
   min-width:0!important;
@@ -3637,10 +3637,10 @@ html[data-build-version="0.6.0"] #mbhMenuContent054>.panel{
   max-width:none!important;
   overflow:hidden!important;
 }
-html[data-build-version="0.6.0"] #mbhMenuContent054>.panel:not(.active-page){display:none!important;}
-html[data-build-version="0.6.0"] #mbhMenuContent054>.panel.active-page{display:flex!important;flex-direction:column!important;}
-html[data-build-version="0.6.0"] .hero-stats.active-page .status-layout,
-html[data-build-version="0.6.0"] .equip-panel.active-page .equip-layout{
+html[data-build-version="0.6.1"] #mbhMenuContent054>.panel:not(.active-page){display:none!important;}
+html[data-build-version="0.6.1"] #mbhMenuContent054>.panel.active-page{display:flex!important;flex-direction:column!important;}
+html[data-build-version="0.6.1"] .hero-stats.active-page .status-layout,
+html[data-build-version="0.6.1"] .equip-panel.active-page .equip-layout{
   flex:1 1 auto!important;
   min-height:0!important;
   height:100%!important;
@@ -3649,51 +3649,51 @@ html[data-build-version="0.6.0"] .equip-panel.active-page .equip-layout{
   gap:10px!important;
   overflow:hidden!important;
 }
-html[data-build-version="0.6.0"] .status-left,
-html[data-build-version="0.6.0"] .status-right,
-html[data-build-version="0.6.0"] .equip-left,
-html[data-build-version="0.6.0"] .equip-right{
+html[data-build-version="0.6.1"] .status-left,
+html[data-build-version="0.6.1"] .status-right,
+html[data-build-version="0.6.1"] .equip-left,
+html[data-build-version="0.6.1"] .equip-right{
   min-width:0!important;
   min-height:0!important;
   overflow:hidden!important;
   display:flex!important;
   flex-direction:column!important;
 }
-html[data-build-version="0.6.0"] #statusSpecialEffects,
-html[data-build-version="0.6.0"] #equipEffectTotals,
-html[data-build-version="0.6.0"] .monster-records{
+html[data-build-version="0.6.1"] #statusSpecialEffects,
+html[data-build-version="0.6.1"] #equipEffectTotals,
+html[data-build-version="0.6.1"] .monster-records{
   flex:1 1 auto!important;
   min-height:0!important;
   overflow:hidden!important;
   display:flex!important;
   flex-direction:column!important;
 }
-html[data-build-version="0.6.0"] .effect-scroll,
-html[data-build-version="0.6.0"] .monster-record-list,
-html[data-build-version="0.6.0"] .equip-list,
-html[data-build-version="0.6.0"] .inventory{
+html[data-build-version="0.6.1"] .effect-scroll,
+html[data-build-version="0.6.1"] .monster-record-list,
+html[data-build-version="0.6.1"] .equip-list,
+html[data-build-version="0.6.1"] .inventory{
   overflow-y:auto!important;
   overflow-x:hidden!important;
   scrollbar-color:#9d742a #111!important;
   scrollbar-width:thin!important;
 }
-html[data-build-version="0.6.0"] .effect-scroll::-webkit-scrollbar,
-html[data-build-version="0.6.0"] .monster-record-list::-webkit-scrollbar,
-html[data-build-version="0.6.0"] .equip-list::-webkit-scrollbar,
-html[data-build-version="0.6.0"] .inventory::-webkit-scrollbar{width:8px!important;}
-html[data-build-version="0.6.0"] .effect-scroll::-webkit-scrollbar-thumb,
-html[data-build-version="0.6.0"] .monster-record-list::-webkit-scrollbar-thumb,
-html[data-build-version="0.6.0"] .equip-list::-webkit-scrollbar-thumb,
-html[data-build-version="0.6.0"] .inventory::-webkit-scrollbar-thumb{background:#8b6628!important;border-radius:8px!important;}
-html[data-build-version="0.6.0"] .effect-scroll::-webkit-scrollbar-track,
-html[data-build-version="0.6.0"] .monster-record-list::-webkit-scrollbar-track,
-html[data-build-version="0.6.0"] .equip-list::-webkit-scrollbar-track,
-html[data-build-version="0.6.0"] .inventory::-webkit-scrollbar-track{background:#120b06!important;}
-html[data-build-version="0.6.0"] .inventory-panel.active-page{
+html[data-build-version="0.6.1"] .effect-scroll::-webkit-scrollbar,
+html[data-build-version="0.6.1"] .monster-record-list::-webkit-scrollbar,
+html[data-build-version="0.6.1"] .equip-list::-webkit-scrollbar,
+html[data-build-version="0.6.1"] .inventory::-webkit-scrollbar{width:8px!important;}
+html[data-build-version="0.6.1"] .effect-scroll::-webkit-scrollbar-thumb,
+html[data-build-version="0.6.1"] .monster-record-list::-webkit-scrollbar-thumb,
+html[data-build-version="0.6.1"] .equip-list::-webkit-scrollbar-thumb,
+html[data-build-version="0.6.1"] .inventory::-webkit-scrollbar-thumb{background:#8b6628!important;border-radius:8px!important;}
+html[data-build-version="0.6.1"] .effect-scroll::-webkit-scrollbar-track,
+html[data-build-version="0.6.1"] .monster-record-list::-webkit-scrollbar-track,
+html[data-build-version="0.6.1"] .equip-list::-webkit-scrollbar-track,
+html[data-build-version="0.6.1"] .inventory::-webkit-scrollbar-track{background:#120b06!important;}
+html[data-build-version="0.6.1"] .inventory-panel.active-page{
   display:flex!important;
   flex-direction:column!important;
 }
-html[data-build-version="0.6.0"] .inventory-panel.active-page .inventory{
+html[data-build-version="0.6.1"] .inventory-panel.active-page .inventory{
   flex:1 1 auto!important;
   min-height:0!important;
   max-height:none!important;
@@ -3703,7 +3703,7 @@ html[data-build-version="0.6.0"] .inventory-panel.active-page .inventory{
   align-content:start!important;
   padding-right:6px!important;
 }
-html[data-build-version="0.6.0"] .menu-footer{
+html[data-build-version="0.6.1"] .menu-footer{
   grid-row:3!important;
   display:grid!important;
   grid-template-columns:repeat(3,minmax(0,1fr))!important;
@@ -3717,110 +3717,110 @@ html[data-build-version="0.6.0"] .menu-footer{
   z-index:40002!important;
   pointer-events:auto!important;
 }
-html[data-build-version="0.6.0"] .menu-footer button{width:100%!important;min-width:0!important;min-height:38px!important;white-space:nowrap!important;}
-html[data-build-version="0.6.0"] #debugPanel:not(.hidden){position:fixed!important;z-index:41000!important;pointer-events:auto!important;}
+html[data-build-version="0.6.1"] .menu-footer button{width:100%!important;min-width:0!important;min-height:38px!important;white-space:nowrap!important;}
+html[data-build-version="0.6.1"] #debugPanel:not(.hidden){position:fixed!important;z-index:41000!important;pointer-events:auto!important;}
 @media(max-width:760px),(max-height:700px){
-  html[data-build-version="0.6.0"] body.mbh-menu-open .side-panel,
-  html[data-build-version="0.6.0"] .side-panel.open{left:8px!important;right:8px!important;top:calc(var(--mbh-topbar-h,58px) + 8px)!important;bottom:8px!important;width:auto!important;max-width:calc(100vw - 16px)!important;}
-  html[data-build-version="0.6.0"] .hero-stats.active-page .status-layout,
-  html[data-build-version="0.6.0"] .equip-panel.active-page .equip-layout{grid-template-columns:1fr!important;overflow-y:auto!important;}
-  html[data-build-version="0.6.0"] .menu-footer{grid-template-columns:1fr!important;}
+  html[data-build-version="0.6.1"] body.mbh-menu-open .side-panel,
+  html[data-build-version="0.6.1"] .side-panel.open{left:8px!important;right:8px!important;top:calc(var(--mbh-topbar-h,58px) + 8px)!important;bottom:8px!important;width:auto!important;max-width:calc(100vw - 16px)!important;}
+  html[data-build-version="0.6.1"] .hero-stats.active-page .status-layout,
+  html[data-build-version="0.6.1"] .equip-panel.active-page .equip-layout{grid-template-columns:1fr!important;overflow-y:auto!important;}
+  html[data-build-version="0.6.1"] .menu-footer{grid-template-columns:1fr!important;}
 }
 
 
-/* MBH ver.0.6.0: menu click/debug clip fixes */
-html[data-build-version="0.6.0"] .side-panel:not(.open){display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;}
-html[data-build-version="0.6.0"] body.mbh-menu-open .side-panel,
-html[data-build-version="0.6.0"] .side-panel.open{
+/* MBH ver.0.6.1: menu click/debug clip fixes */
+html[data-build-version="0.6.1"] .side-panel:not(.open){display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;}
+html[data-build-version="0.6.1"] body.mbh-menu-open .side-panel,
+html[data-build-version="0.6.1"] .side-panel.open{
   display:grid!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;
   position:fixed!important;top:68px!important;right:10px!important;bottom:10px!important;left:auto!important;
   width:min(780px,calc(100vw - 20px))!important;max-width:calc(100vw - 20px)!important;
   grid-template-columns:minmax(0,1fr)!important;grid-template-rows:44px minmax(0,1fr) auto!important;
   gap:10px!important;padding:8px!important;z-index:40000!important;overflow:hidden!important;
 }
-html[data-build-version="0.6.0"] .side-panel>.mobile-menu-tabs,
-html[data-build-version="0.6.0"] .side-panel>.side-tabs{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important;height:44px!important;min-height:44px!important;}
-html[data-build-version="0.6.0"] .side-panel [data-menu-page]{display:flex!important;align-items:center!important;justify-content:center!important;width:100%!important;height:44px!important;min-height:44px!important;pointer-events:auto!important;}
-html[data-build-version="0.6.0"] #mbhMenuContent055,
-html[data-build-version="0.6.0"] #mbhMenuContent054{grid-row:2!important;width:100%!important;height:100%!important;min-height:0!important;overflow:hidden!important;}
-html[data-build-version="0.6.0"] #mbhMenuContent055>.panel,
-html[data-build-version="0.6.0"] #mbhMenuContent054>.panel{width:100%!important;height:100%!important;min-height:0!important;overflow:hidden!important;}
-html[data-build-version="0.6.0"] #mbhMenuContent055>.panel:not(.active-page),
-html[data-build-version="0.6.0"] #mbhMenuContent054>.panel:not(.active-page){display:none!important;}
-html[data-build-version="0.6.0"] #mbhMenuContent055>.panel.active-page,
-html[data-build-version="0.6.0"] #mbhMenuContent054>.panel.active-page{display:flex!important;flex-direction:column!important;}
-html[data-build-version="0.6.0"] .inventory-panel.active-page .inventory{flex:1 1 auto!important;min-height:0!important;max-height:none!important;overflow-y:auto!important;overflow-x:hidden!important;}
-html[data-build-version="0.6.0"] .menu-footer{grid-row:3!important;display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important;width:100%!important;min-height:44px!important;position:relative!important;z-index:40002!important;}
-html[data-build-version="0.6.0"] .menu-footer button{width:100%!important;min-height:38px!important;}
-html[data-build-version="0.6.0"] #debugPanel:not(.hidden){
+html[data-build-version="0.6.1"] .side-panel>.mobile-menu-tabs,
+html[data-build-version="0.6.1"] .side-panel>.side-tabs{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important;height:44px!important;min-height:44px!important;}
+html[data-build-version="0.6.1"] .side-panel [data-menu-page]{display:flex!important;align-items:center!important;justify-content:center!important;width:100%!important;height:44px!important;min-height:44px!important;pointer-events:auto!important;}
+html[data-build-version="0.6.1"] #mbhMenuContent055,
+html[data-build-version="0.6.1"] #mbhMenuContent054{grid-row:2!important;width:100%!important;height:100%!important;min-height:0!important;overflow:hidden!important;}
+html[data-build-version="0.6.1"] #mbhMenuContent055>.panel,
+html[data-build-version="0.6.1"] #mbhMenuContent054>.panel{width:100%!important;height:100%!important;min-height:0!important;overflow:hidden!important;}
+html[data-build-version="0.6.1"] #mbhMenuContent055>.panel:not(.active-page),
+html[data-build-version="0.6.1"] #mbhMenuContent054>.panel:not(.active-page){display:none!important;}
+html[data-build-version="0.6.1"] #mbhMenuContent055>.panel.active-page,
+html[data-build-version="0.6.1"] #mbhMenuContent054>.panel.active-page{display:flex!important;flex-direction:column!important;}
+html[data-build-version="0.6.1"] .inventory-panel.active-page .inventory{flex:1 1 auto!important;min-height:0!important;max-height:none!important;overflow-y:auto!important;overflow-x:hidden!important;}
+html[data-build-version="0.6.1"] .menu-footer{grid-row:3!important;display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important;width:100%!important;min-height:44px!important;position:relative!important;z-index:40002!important;}
+html[data-build-version="0.6.1"] .menu-footer button{width:100%!important;min-height:38px!important;}
+html[data-build-version="0.6.1"] #debugPanel:not(.hidden){
   display:grid!important;position:fixed!important;right:18px!important;top:70px!important;bottom:10px!important;
   width:min(360px,calc(100vw - 36px))!important;max-height:calc(100vh - 80px)!important;
   overflow-y:auto!important;overflow-x:hidden!important;z-index:41000!important;pointer-events:auto!important;
 }
-html[data-build-version="0.6.0"] #debugPanel.hidden{display:none!important;}
+html[data-build-version="0.6.1"] #debugPanel.hidden{display:none!important;}
 @media(max-width:760px),(max-height:700px){
-  html[data-build-version="0.6.0"] body.mbh-menu-open .side-panel,
-  html[data-build-version="0.6.0"] .side-panel.open{left:8px!important;right:8px!important;top:calc(var(--mbh-topbar-h,58px) + 8px)!important;bottom:8px!important;width:auto!important;max-width:calc(100vw - 16px)!important;}
-  html[data-build-version="0.6.0"] #debugPanel:not(.hidden){left:8px!important;right:8px!important;top:calc(var(--mbh-topbar-h,58px) + 8px)!important;bottom:8px!important;width:auto!important;max-height:none!important;}
-  html[data-build-version="0.6.0"] .menu-footer{grid-template-columns:1fr!important;}
+  html[data-build-version="0.6.1"] body.mbh-menu-open .side-panel,
+  html[data-build-version="0.6.1"] .side-panel.open{left:8px!important;right:8px!important;top:calc(var(--mbh-topbar-h,58px) + 8px)!important;bottom:8px!important;width:auto!important;max-width:calc(100vw - 16px)!important;}
+  html[data-build-version="0.6.1"] #debugPanel:not(.hidden){left:8px!important;right:8px!important;top:calc(var(--mbh-topbar-h,58px) + 8px)!important;bottom:8px!important;width:auto!important;max-height:none!important;}
+  html[data-build-version="0.6.1"] .menu-footer{grid-template-columns:1fr!important;}
 }
 
-/* MBH ver.0.6.0: status/equipment effects + stable footer/inventory layout */
-html[data-build-version="0.6.0"] .topbar .resources{display:none!important;visibility:hidden!important;width:0!important;min-width:0!important;margin:0!important;padding:0!important;overflow:hidden!important;}
-html[data-build-version="0.6.0"] .side-panel{grid-template-rows:auto minmax(0,1fr) auto!important;}
-html[data-build-version="0.6.0"] #mbhMenuContent055,
-html[data-build-version="0.6.0"] #mbhMenuContent056,
-html[data-build-version="0.6.0"] .menu-content-fixed{min-height:0!important;height:100%!important;overflow:hidden!important;}
-html[data-build-version="0.6.0"] .hero-stats.active-page,
-html[data-build-version="0.6.0"] .equip-panel.active-page,
-html[data-build-version="0.6.0"] .inventory-panel.active-page{height:100%!important;min-height:0!important;overflow:hidden!important;}
-html[data-build-version="0.6.0"] .status-layout,
-html[data-build-version="0.6.0"] .equip-layout{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;gap:10px!important;width:100%!important;height:100%!important;min-height:0!important;overflow:hidden!important;}
-html[data-build-version="0.6.0"] .status-left,
-html[data-build-version="0.6.0"] .status-right,
-html[data-build-version="0.6.0"] .equip-left,
-html[data-build-version="0.6.0"] .equip-right{min-height:0!important;overflow:hidden!important;display:flex!important;flex-direction:column!important;}
-html[data-build-version="0.6.0"] #statusSpecialEffects,
-html[data-build-version="0.6.0"] #equipEffectTotals,
-html[data-build-version="0.6.0"] .monster-records{flex:1 1 auto!important;min-height:0!important;display:flex!important;flex-direction:column!important;overflow:hidden!important;}
-html[data-build-version="0.6.0"] #statusSpecialEffects .effect-scroll,
-html[data-build-version="0.6.0"] #equipEffectTotals .effect-scroll,
-html[data-build-version="0.6.0"] .monster-record-list,
-html[data-build-version="0.6.0"] .equip-list,
-html[data-build-version="0.6.0"] .inventory{flex:1 1 auto!important;min-height:0!important;overflow-y:auto!important;overflow-x:hidden!important;}
-html[data-build-version="0.6.0"] .inventory-panel{display:flex!important;flex-direction:column!important;}
-html[data-build-version="0.6.0"] .inventory{height:auto!important;max-height:none!important;overscroll-behavior:contain!important;}
-html[data-build-version="0.6.0"] #sellSelectedBtn{white-space:nowrap!important;}
-html[data-build-version="0.6.0"] .effect-row{display:flex!important;justify-content:space-between!important;gap:8px!important;border-bottom:1px solid rgba(255,255,255,.08)!important;padding:4px 0!important;font-size:12px!important;line-height:1.3!important;}
-html[data-build-version="0.6.0"] .effect-empty{opacity:.72;font-size:12px;padding:6px 0;color:#cbbd95;}
-html[data-build-version="0.6.0"] .effect-scroll::-webkit-scrollbar,
-html[data-build-version="0.6.0"] .monster-record-list::-webkit-scrollbar,
-html[data-build-version="0.6.0"] .equip-list::-webkit-scrollbar,
-html[data-build-version="0.6.0"] .inventory::-webkit-scrollbar{width:8px!important;}
-html[data-build-version="0.6.0"] .effect-scroll::-webkit-scrollbar-thumb,
-html[data-build-version="0.6.0"] .monster-record-list::-webkit-scrollbar-thumb,
-html[data-build-version="0.6.0"] .equip-list::-webkit-scrollbar-thumb,
-html[data-build-version="0.6.0"] .inventory::-webkit-scrollbar-thumb{background:#8b6628!important;border-radius:8px!important;}
-html[data-build-version="0.6.0"] .effect-scroll::-webkit-scrollbar-track,
-html[data-build-version="0.6.0"] .monster-record-list::-webkit-scrollbar-track,
-html[data-build-version="0.6.0"] .equip-list::-webkit-scrollbar-track,
-html[data-build-version="0.6.0"] .inventory::-webkit-scrollbar-track{background:#120b06!important;}
-@media(max-width:760px){html[data-build-version="0.6.0"] .status-layout,html[data-build-version="0.6.0"] .equip-layout{grid-template-columns:1fr!important;}}
+/* MBH ver.0.6.1: status/equipment effects + stable footer/inventory layout */
+html[data-build-version="0.6.1"] .topbar .resources{display:none!important;visibility:hidden!important;width:0!important;min-width:0!important;margin:0!important;padding:0!important;overflow:hidden!important;}
+html[data-build-version="0.6.1"] .side-panel{grid-template-rows:auto minmax(0,1fr) auto!important;}
+html[data-build-version="0.6.1"] #mbhMenuContent055,
+html[data-build-version="0.6.1"] #mbhMenuContent056,
+html[data-build-version="0.6.1"] .menu-content-fixed{min-height:0!important;height:100%!important;overflow:hidden!important;}
+html[data-build-version="0.6.1"] .hero-stats.active-page,
+html[data-build-version="0.6.1"] .equip-panel.active-page,
+html[data-build-version="0.6.1"] .inventory-panel.active-page{height:100%!important;min-height:0!important;overflow:hidden!important;}
+html[data-build-version="0.6.1"] .status-layout,
+html[data-build-version="0.6.1"] .equip-layout{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;gap:10px!important;width:100%!important;height:100%!important;min-height:0!important;overflow:hidden!important;}
+html[data-build-version="0.6.1"] .status-left,
+html[data-build-version="0.6.1"] .status-right,
+html[data-build-version="0.6.1"] .equip-left,
+html[data-build-version="0.6.1"] .equip-right{min-height:0!important;overflow:hidden!important;display:flex!important;flex-direction:column!important;}
+html[data-build-version="0.6.1"] #statusSpecialEffects,
+html[data-build-version="0.6.1"] #equipEffectTotals,
+html[data-build-version="0.6.1"] .monster-records{flex:1 1 auto!important;min-height:0!important;display:flex!important;flex-direction:column!important;overflow:hidden!important;}
+html[data-build-version="0.6.1"] #statusSpecialEffects .effect-scroll,
+html[data-build-version="0.6.1"] #equipEffectTotals .effect-scroll,
+html[data-build-version="0.6.1"] .monster-record-list,
+html[data-build-version="0.6.1"] .equip-list,
+html[data-build-version="0.6.1"] .inventory{flex:1 1 auto!important;min-height:0!important;overflow-y:auto!important;overflow-x:hidden!important;}
+html[data-build-version="0.6.1"] .inventory-panel{display:flex!important;flex-direction:column!important;}
+html[data-build-version="0.6.1"] .inventory{height:auto!important;max-height:none!important;overscroll-behavior:contain!important;}
+html[data-build-version="0.6.1"] #sellSelectedBtn{white-space:nowrap!important;}
+html[data-build-version="0.6.1"] .effect-row{display:flex!important;justify-content:space-between!important;gap:8px!important;border-bottom:1px solid rgba(255,255,255,.08)!important;padding:4px 0!important;font-size:12px!important;line-height:1.3!important;}
+html[data-build-version="0.6.1"] .effect-empty{opacity:.72;font-size:12px;padding:6px 0;color:#cbbd95;}
+html[data-build-version="0.6.1"] .effect-scroll::-webkit-scrollbar,
+html[data-build-version="0.6.1"] .monster-record-list::-webkit-scrollbar,
+html[data-build-version="0.6.1"] .equip-list::-webkit-scrollbar,
+html[data-build-version="0.6.1"] .inventory::-webkit-scrollbar{width:8px!important;}
+html[data-build-version="0.6.1"] .effect-scroll::-webkit-scrollbar-thumb,
+html[data-build-version="0.6.1"] .monster-record-list::-webkit-scrollbar-thumb,
+html[data-build-version="0.6.1"] .equip-list::-webkit-scrollbar-thumb,
+html[data-build-version="0.6.1"] .inventory::-webkit-scrollbar-thumb{background:#8b6628!important;border-radius:8px!important;}
+html[data-build-version="0.6.1"] .effect-scroll::-webkit-scrollbar-track,
+html[data-build-version="0.6.1"] .monster-record-list::-webkit-scrollbar-track,
+html[data-build-version="0.6.1"] .equip-list::-webkit-scrollbar-track,
+html[data-build-version="0.6.1"] .inventory::-webkit-scrollbar-track{background:#120b06!important;}
+@media(max-width:760px){html[data-build-version="0.6.1"] .status-layout,html[data-build-version="0.6.1"] .equip-layout{grid-template-columns:1fr!important;}}
 
-/* MBH ver.0.6.0: monster records full height + inventory slot filter */
-html[data-build-version="0.6.0"] .hero-stats.active-page{
+/* MBH ver.0.6.1: monster records full height + inventory slot filter */
+html[data-build-version="0.6.1"] .hero-stats.active-page{
   display:flex!important;
   flex-direction:column!important;
   min-height:0!important;
   height:100%!important;
   overflow:hidden!important;
 }
-html[data-build-version="0.6.0"] .hero-stats.active-page>h2,
-html[data-build-version="0.6.0"] .equip-panel.active-page>h2,
-html[data-build-version="0.6.0"] .inventory-panel.active-page>h2{
+html[data-build-version="0.6.1"] .hero-stats.active-page>h2,
+html[data-build-version="0.6.1"] .equip-panel.active-page>h2,
+html[data-build-version="0.6.1"] .inventory-panel.active-page>h2{
   flex:0 0 auto!important;
 }
-html[data-build-version="0.6.0"] .hero-stats.active-page .status-layout{
+html[data-build-version="0.6.1"] .hero-stats.active-page .status-layout{
   flex:1 1 auto!important;
   height:auto!important;
   min-height:0!important;
@@ -3829,15 +3829,15 @@ html[data-build-version="0.6.0"] .hero-stats.active-page .status-layout{
   gap:10px!important;
   overflow:hidden!important;
 }
-html[data-build-version="0.6.0"] .status-left,
-html[data-build-version="0.6.0"] .status-right{
+html[data-build-version="0.6.1"] .status-left,
+html[data-build-version="0.6.1"] .status-right{
   height:100%!important;
   min-height:0!important;
   display:flex!important;
   flex-direction:column!important;
   overflow:hidden!important;
 }
-html[data-build-version="0.6.0"] .monster-records{
+html[data-build-version="0.6.1"] .monster-records{
   flex:1 1 auto!important;
   height:100%!important;
   min-height:0!important;
@@ -3846,7 +3846,7 @@ html[data-build-version="0.6.0"] .monster-records{
   overflow:hidden!important;
   margin-top:0!important;
 }
-html[data-build-version="0.6.0"] .monster-record-list{
+html[data-build-version="0.6.1"] .monster-record-list{
   flex:1 1 auto!important;
   min-height:0!important;
   max-height:none!important;
@@ -3854,18 +3854,18 @@ html[data-build-version="0.6.0"] .monster-record-list{
   overflow-x:hidden!important;
   padding-right:6px!important;
 }
-html[data-build-version="0.6.0"] .inventory-panel.active-page{
+html[data-build-version="0.6.1"] .inventory-panel.active-page{
   display:flex!important;
   flex-direction:column!important;
   min-height:0!important;
   height:100%!important;
   overflow:hidden!important;
 }
-html[data-build-version="0.6.0"] .inventory-actions,
-html[data-build-version="0.6.0"] .inventory-slot-filter-bar{
+html[data-build-version="0.6.1"] .inventory-actions,
+html[data-build-version="0.6.1"] .inventory-slot-filter-bar{
   flex:0 0 auto!important;
 }
-html[data-build-version="0.6.0"] .inventory-slot-filter-bar{
+html[data-build-version="0.6.1"] .inventory-slot-filter-bar{
   display:flex!important;
   align-items:center!important;
   gap:6px!important;
@@ -3879,7 +3879,7 @@ html[data-build-version="0.6.0"] .inventory-slot-filter-bar{
   scrollbar-color:#8b6628 #120b06!important;
   scrollbar-width:thin!important;
 }
-html[data-build-version="0.6.0"] .inventory-slot-filter-bar button{
+html[data-build-version="0.6.1"] .inventory-slot-filter-bar button{
   flex:0 0 auto!important;
   min-width:72px!important;
   min-height:32px!important;
@@ -3888,12 +3888,12 @@ html[data-build-version="0.6.0"] .inventory-slot-filter-bar button{
   white-space:nowrap!important;
   pointer-events:auto!important;
 }
-html[data-build-version="0.6.0"] .inventory-slot-filter-bar button.active{
+html[data-build-version="0.6.1"] .inventory-slot-filter-bar button.active{
   outline:2px solid #ffd76b!important;
   filter:brightness(1.22)!important;
   color:#fff2b2!important;
 }
-html[data-build-version="0.6.0"] .inventory{
+html[data-build-version="0.6.1"] .inventory{
   flex:1 1 auto!important;
   min-height:0!important;
   max-height:none!important;
@@ -3903,7 +3903,7 @@ html[data-build-version="0.6.0"] .inventory{
   align-content:start!important;
   grid-template-columns:repeat(auto-fill,minmax(96px,1fr))!important;
 }
-html[data-build-version="0.6.0"] .inventory-empty{
+html[data-build-version="0.6.1"] .inventory-empty{
   grid-column:1/-1!important;
   padding:16px!important;
   text-align:center!important;
@@ -3912,39 +3912,39 @@ html[data-build-version="0.6.0"] .inventory-empty{
   border-radius:8px!important;
   background:rgba(0,0,0,.22)!important;
 }
-html[data-build-version="0.6.0"] .monster-record-list::-webkit-scrollbar,
-html[data-build-version="0.6.0"] .inventory-slot-filter-bar::-webkit-scrollbar,
-html[data-build-version="0.6.0"] .inventory::-webkit-scrollbar{width:8px!important;height:8px!important;}
-html[data-build-version="0.6.0"] .monster-record-list::-webkit-scrollbar-thumb,
-html[data-build-version="0.6.0"] .inventory-slot-filter-bar::-webkit-scrollbar-thumb,
-html[data-build-version="0.6.0"] .inventory::-webkit-scrollbar-thumb{background:#8b6628!important;border-radius:8px!important;}
-html[data-build-version="0.6.0"] .monster-record-list::-webkit-scrollbar-track,
-html[data-build-version="0.6.0"] .inventory-slot-filter-bar::-webkit-scrollbar-track,
-html[data-build-version="0.6.0"] .inventory::-webkit-scrollbar-track{background:#120b06!important;}
+html[data-build-version="0.6.1"] .monster-record-list::-webkit-scrollbar,
+html[data-build-version="0.6.1"] .inventory-slot-filter-bar::-webkit-scrollbar,
+html[data-build-version="0.6.1"] .inventory::-webkit-scrollbar{width:8px!important;height:8px!important;}
+html[data-build-version="0.6.1"] .monster-record-list::-webkit-scrollbar-thumb,
+html[data-build-version="0.6.1"] .inventory-slot-filter-bar::-webkit-scrollbar-thumb,
+html[data-build-version="0.6.1"] .inventory::-webkit-scrollbar-thumb{background:#8b6628!important;border-radius:8px!important;}
+html[data-build-version="0.6.1"] .monster-record-list::-webkit-scrollbar-track,
+html[data-build-version="0.6.1"] .inventory-slot-filter-bar::-webkit-scrollbar-track,
+html[data-build-version="0.6.1"] .inventory::-webkit-scrollbar-track{background:#120b06!important;}
 @media(max-width:760px){
-  html[data-build-version="0.6.0"] .hero-stats.active-page .status-layout{grid-template-columns:1fr!important;overflow-y:auto!important;}
-  html[data-build-version="0.6.0"] .inventory-slot-filter-bar button{min-width:64px!important;font-size:11px!important;}
+  html[data-build-version="0.6.1"] .hero-stats.active-page .status-layout{grid-template-columns:1fr!important;overflow-y:auto!important;}
+  html[data-build-version="0.6.1"] .inventory-slot-filter-bar button{min-width:64px!important;font-size:11px!important;}
 }
 
-/* MBH ver.0.6.0: mobile button tap and buff detail panel cleanup */
-html[data-build-version="0.6.0"] button,
-html[data-build-version="0.6.0"] [role="button"],
-html[data-build-version="0.6.0"] .item,
-html[data-build-version="0.6.0"] .equip,
-html[data-build-version="0.6.0"] [data-menu-page],
-html[data-build-version="0.6.0"] #enemyCard,
-html[data-build-version="0.6.0"] #heroCard{
+/* MBH ver.0.6.1: mobile button tap and buff detail panel cleanup */
+html[data-build-version="0.6.1"] button,
+html[data-build-version="0.6.1"] [role="button"],
+html[data-build-version="0.6.1"] .item,
+html[data-build-version="0.6.1"] .equip,
+html[data-build-version="0.6.1"] [data-menu-page],
+html[data-build-version="0.6.1"] #enemyCard,
+html[data-build-version="0.6.1"] #heroCard{
   touch-action:manipulation!important;
   -webkit-tap-highlight-color:rgba(255,215,107,.28)!important;
   pointer-events:auto!important;
 }
-html[data-build-version="0.6.0"] .side-panel.open,
-html[data-build-version="0.6.0"] body.mbh-menu-open .side-panel,
-html[data-build-version="0.6.0"] #debugPanel:not(.hidden),
-html[data-build-version="0.6.0"] .legal-modal:not(.hidden){
+html[data-build-version="0.6.1"] .side-panel.open,
+html[data-build-version="0.6.1"] body.mbh-menu-open .side-panel,
+html[data-build-version="0.6.1"] #debugPanel:not(.hidden),
+html[data-build-version="0.6.1"] .legal-modal:not(.hidden){
   pointer-events:auto!important;
 }
-html[data-build-version="0.6.0"] #statusDetailPanel{
+html[data-build-version="0.6.1"] #statusDetailPanel{
   z-index:60000!important;
   pointer-events:auto!important;
   max-width:min(92vw,520px)!important;
@@ -3953,14 +3953,14 @@ html[data-build-version="0.6.0"] #statusDetailPanel{
   scrollbar-color:#9d742a #111!important;
   scrollbar-width:thin!important;
 }
-html[data-build-version="0.6.0"] #statusDetailPanel .status-detail-close,
-html[data-build-version="0.6.0"] #statusDetailPanel.mbh-no-close-button .status-detail-close{
+html[data-build-version="0.6.1"] #statusDetailPanel .status-detail-close,
+html[data-build-version="0.6.1"] #statusDetailPanel.mbh-no-close-button .status-detail-close{
   display:none!important;
   visibility:hidden!important;
   pointer-events:none!important;
 }
 @media (pointer:coarse), (max-width:760px){
-  html[data-build-version="0.6.0"] #statusDetailPanel{
+  html[data-build-version="0.6.1"] #statusDetailPanel{
     left:8px!important;
     right:8px!important;
     top:50%!important;
@@ -3972,7 +3972,7 @@ html[data-build-version="0.6.0"] #statusDetailPanel.mbh-no-close-button .status-
 
 
 
-/* MBH ver.0.6.0: lock/menu/filter fit */
+/* MBH ver.0.6.1: lock/menu/filter fit */
 .inventory-slot-filter-bar,
 .mbh059-slot-filter{
   display:grid!important;
@@ -4037,10 +4037,10 @@ html[data-build-version="0.6.0"] #statusDetailPanel.mbh-no-close-button .status-
 }
 
 
-/* MBH ver.0.6.0: single inventory slot filter, no horizontal stretch */
-html[data-build-version="0.6.0"] .inventory-panel .inventory-slot-filter-bar:not(#inventorySlotFilter059){display:none!important;}
-html[data-build-version="0.6.0"] #inventorySlotFilter059.inventory-slot-filter-bar,
-html[data-build-version="0.6.0"] #inventorySlotFilter059.mbh059-slot-filter{
+/* MBH ver.0.6.1: single inventory slot filter, no horizontal stretch */
+html[data-build-version="0.6.1"] .inventory-panel .inventory-slot-filter-bar:not(#inventorySlotFilter059){display:none!important;}
+html[data-build-version="0.6.1"] #inventorySlotFilter059.inventory-slot-filter-bar,
+html[data-build-version="0.6.1"] #inventorySlotFilter059.mbh059-slot-filter{
   display:grid!important;
   grid-template-columns:repeat(10,minmax(0,1fr))!important;
   gap:3px!important;
@@ -4055,7 +4055,7 @@ html[data-build-version="0.6.0"] #inventorySlotFilter059.mbh059-slot-filter{
   border-radius:8px!important;
   background:rgba(12,8,4,.42)!important;
 }
-html[data-build-version="0.6.0"] #inventorySlotFilter059 button{
+html[data-build-version="0.6.1"] #inventorySlotFilter059 button{
   min-width:0!important;
   width:100%!important;
   max-width:100%!important;
@@ -4068,13 +4068,13 @@ html[data-build-version="0.6.0"] #inventorySlotFilter059 button{
   text-overflow:clip!important;
   text-align:center!important;
 }
-html[data-build-version="0.6.0"] #inventorySlotFilter059 button[data-slot-filter="all"]{
+html[data-build-version="0.6.1"] #inventorySlotFilter059 button[data-slot-filter="all"]{
   grid-column:auto!important;
   min-width:0!important;
   width:100%!important;
   max-width:100%!important;
 }
 @media(max-width:760px){
-  html[data-build-version="0.6.0"] #inventorySlotFilter059.inventory-slot-filter-bar{gap:2px!important;padding:3px!important;}
-  html[data-build-version="0.6.0"] #inventorySlotFilter059 button{font-size:clamp(7px,2.3vw,10px)!important;padding:7px 0!important;}
+  html[data-build-version="0.6.1"] #inventorySlotFilter059.inventory-slot-filter-bar{gap:2px!important;padding:3px!important;}
+  html[data-build-version="0.6.1"] #inventorySlotFilter059 button{font-size:clamp(7px,2.3vw,10px)!important;padding:7px 0!important;}
 }
