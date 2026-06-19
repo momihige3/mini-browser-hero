@@ -4248,3 +4248,29 @@ html[data-build-version="0.6.5"] body.mbh-legal-open #legalModal *{
 }
 .float.holy, .hero-float.holy{ color:#fff1a8; text-shadow:0 0 8px #fff,0 0 16px #ffd86b; font-weight:900; }
 .status-badge.holy{ border-color:#ffd86b; color:#fff1a8; box-shadow:0 0 10px rgba(255,216,107,.65); }
+
+/* MBH ver.0.6.9: 天聖騎士カットイン画像の前面表示修正 */
+.death-dance-cutin.holy-cutin{
+  background:radial-gradient(circle at 50% 50%, rgba(255,245,185,.22), rgba(10,8,0,.72) 55%, rgba(0,0,0,.9));
+}
+.death-dance-cutin.holy-cutin .death-dance-cutin-strip{
+  border-top-color:rgba(255,235,135,.95)!important;
+  border-bottom-color:rgba(255,235,135,.95)!important;
+  background:linear-gradient(90deg,#fff5bd 0%,#291e05 36%,#060402 100%)!important;
+  box-shadow:0 0 42px rgba(255,215,80,.72), inset 0 0 26px rgba(0,0,0,.9)!important;
+}
+.death-dance-cutin.holy-cutin .death-dance-cutin-strip img{
+  display:block!important;
+  opacity:1!important;
+  visibility:visible!important;
+  z-index:1!important;
+  filter:contrast(1.08) saturate(1.15) brightness(1.08) drop-shadow(0 0 20px rgba(255,235,130,.75))!important;
+}
+.death-dance-cutin.holy-cutin .death-dance-cutin-title{
+  color:#fff5bd!important;
+  text-shadow:0 0 12px #fff,0 0 28px #ffd34d,0 5px 5px #000!important;
+}
+.death-dance-cutin.holy-cutin .death-dance-cutin-quote{
+  color:#fffdf0!important;
+  text-shadow:0 0 10px #fff,0 0 22px #ffd34d,0 4px 3px #000!important;
+}

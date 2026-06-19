@@ -42,7 +42,7 @@ const DARK_SWORD_SAINT_CUTIN = {quote:'私を超えてみせろ。', img:'assets
 const DARK_SWORD_TECHNIQUE_CUTIN = {quote:'', img:'assets/cutin_dark_sword_technique.png'};
 const TENSEI_KNIGHT_CUTIN = {quote:'勇者の力、ここに覚醒する。', img:'assets/cutin_hero_awakening.png'};
 const HOLY_SWORD_RELEASE_CUTIN = {quote:'聖剣解放。すべてを砕く光となれ。', img:'assets/cutin_holy_sword_release.png'};
-const GAME_VERSION = (window.APP_VERSION || '0.6.8');
+const GAME_VERSION = (window.APP_VERSION || '0.6.9');
 window.GAME_VERSION = GAME_VERSION;
 
 const DARK_SWORD_SAINT = {
@@ -5115,4 +5115,149 @@ setTimeout(installHolyDebug066, 300);
       }
     }, 1000);
   };
+})();
+
+
+/* MBH ver.0.6.9: 天聖騎士HP10倍・カットイン画像表示修正・バフ一覧同期 */
+(function(){
+  'use strict';
+  const BUILD='0.6.9';
+  const $id=(id)=>document.getElementById(id);
+  const $$=(sel,root=document)=>Array.from(root.querySelectorAll(sel));
+  const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.error('[MBH0.6.9]', e); return null; } };
+
+  function syncVersion069(){
+    window.APP_VERSION=BUILD;
+    window.GAME_VERSION=BUILD;
+    if(document.documentElement){
+      document.documentElement.dataset.buildVersion=BUILD;
+      document.documentElement.dataset.mbhVersion=BUILD;
+    }
+    $$('.build-version,[data-version],#versionText,.version-badge').forEach(el=>{ el.textContent='ver.'+BUILD; });
+    $$('.debug-version').forEach(el=>{ el.textContent='Build: ver.'+BUILD; });
+    $$('.debug-trace-title').forEach(el=>{ el.textContent='進行デバッグログ ver.'+BUILD; });
+  }
+
+  function isTensei069(e){
+    try{ return !!(e || state.enemy) && (e || state.enemy).id === 'tensei_knight'; }catch(_){ return false; }
+  }
+
+  // 元データも10倍化。makeScaledEnemy側でも二重適用しないよう印を付ける。
+  safe(()=>{
+    if(typeof TENSEI_KNIGHT === 'object' && TENSEI_KNIGHT && !TENSEI_KNIGHT.__hp069){
+      TENSEI_KNIGHT.hp = Math.max(1, Math.floor((Number(TENSEI_KNIGHT.hp)||52000) * 10));
+      TENSEI_KNIGHT.__hp069 = true;
+    }
+  });
+
+  if(typeof makeScaledEnemy === 'function' && !makeScaledEnemy.__mbh069Wrapped){
+    const oldMakeScaledEnemy = makeScaledEnemy;
+    makeScaledEnemy = function(base, forceLevel){
+      const e = oldMakeScaledEnemy.apply(this, arguments);
+      if(isTensei069(e) && !e.__tenseiHp10Applied069){
+        // 旧版データのままでも必ず「0.6.8比で10倍」になるようにする。
+        // TENSEI_KNIGHT.hpが既に10倍ならここでは増やさない。
+        const sourceHp = Number(base && base.hp) || 0;
+        if(sourceHp < 100000){
+          e.maxHp = Math.max(1, Math.floor((Number(e.maxHp)||1) * 10));
+        }
+        e.__tenseiHp10Applied069 = true;
+      }
+      return e;
+    };
+    makeScaledEnemy.__mbh069Wrapped = true;
+  }
+
+  function setCutinVisible069(kind, data){
+    const cutin = $id('deathDanceCutin');
+    const img = $id('deathDanceCutinImg');
+    const quote = $id('deathDanceCutinQuote');
+    const title = document.querySelector('.death-dance-cutin-title');
+    if(!cutin || !img) return false;
+    if(data && data.img) img.src = data.img;
+    img.alt = kind === 'release' ? '聖剣解放カットイン' : '勇者の覚醒カットイン';
+    if(quote) quote.textContent = (data && data.quote) || (kind === 'release' ? '聖剣解放。すべてを砕く光となれ。' : '勇者の力、ここに覚醒する。');
+    if(title) title.textContent = kind === 'release' ? '聖剣解放' : '勇者の覚醒';
+    cutin.classList.remove('hidden');
+    cutin.classList.remove('show');
+    // アニメーションを確実に再発火。
+    void cutin.offsetWidth;
+    cutin.classList.add('show','holy-cutin');
+    clearTimeout(window.__mbhHolyCutinTimer069);
+    window.__mbhHolyCutinTimer069 = setTimeout(()=>{
+      cutin.classList.add('hidden');
+      cutin.classList.remove('show','holy-cutin');
+    }, 1550);
+    return true;
+  }
+
+  // 暗転だけで画像が見えない問題を修正：showクラスを必ず付け、画像を前面表示する。
+  window.showHolyCutin = function(kind){
+    const data = kind === 'release'
+      ? (typeof HOLY_SWORD_RELEASE_CUTIN !== 'undefined' ? HOLY_SWORD_RELEASE_CUTIN : {quote:'聖剣解放。すべてを砕く光となれ。', img:'assets/cutin_holy_sword_release.png'})
+      : (typeof TENSEI_KNIGHT_CUTIN !== 'undefined' ? TENSEI_KNIGHT_CUTIN : {quote:'勇者の力、ここに覚醒する。', img:'assets/cutin_hero_awakening.png'});
+    return setCutinVisible069(kind, data);
+  };
+  try{ showHolyCutin = window.showHolyCutin; }catch(_){ }
+
+  function makeBadge069(label, cls, kind, target){
+    return `<button type="button" class="status-badge ${cls}" data-status-kind="${kind}" data-status-target="${target}" aria-label="${label} の効果を見る">${label}</button>`;
+  }
+  function ensureEnemyTenseiBadges069(){
+    const list=$id('enemyStatusList');
+    if(!list || !isTensei069()) return;
+    const add=(kind, html)=>{ if(!list.querySelector(`[data-status-kind="${kind}"]`)) list.insertAdjacentHTML('afterbegin', html); };
+    add('holy_ailment_guard', makeBadge069('🕊️聖域浄化','bossbuff','holy_ailment_guard','enemy'));
+    add('holy_release', makeBadge069(`⚔️聖剣解放${(state.enemyStatuses?.holyReleaseHealUntil||0)>performance.now()?'：回復中':'('+(state.enemyStatuses?.holyReleaseCount||0)+'/6)'}`,'bossbuff','holy_release','enemy'));
+    if(state.enemyStatuses?.holyAwakened) add('holy_awakening', makeBadge069('🌈勇者の覚醒','bossbuff','holy_awakening','enemy'));
+    add('holy_protection', makeBadge069('✨光の加護','bossbuff','holy_protection','enemy'));
+    safe(()=>{ if(typeof bindStatusBadgeEvents==='function') bindStatusBadgeEvents(); });
+  }
+  if(typeof renderStatusLists === 'function' && !renderStatusLists.__mbh069Wrapped){
+    const oldRenderStatusLists = renderStatusLists;
+    renderStatusLists = function(){
+      const r = oldRenderStatusLists.apply(this, arguments);
+      ensureEnemyTenseiBadges069();
+      return r;
+    };
+    renderStatusLists.__mbh069Wrapped = true;
+  }
+
+  if(typeof activeStatusEntries === 'function' && !activeStatusEntries.__mbh069Wrapped){
+    const oldActiveStatusEntries = activeStatusEntries;
+    activeStatusEntries = function(target){
+      const entries = oldActiveStatusEntries.apply(this, arguments) || [];
+      if(target === 'enemy' && isTensei069()){
+        const has=(k)=>entries.some(x=>x && x[0]===k);
+        if(!has('holy_protection')) entries.unshift(['holy_protection','enemy']);
+        if(!has('holy_release')) entries.push(['holy_release','enemy']);
+        if(!has('holy_ailment_guard')) entries.push(['holy_ailment_guard','enemy']);
+        if(state.enemyStatuses?.holyAwakened && !has('holy_awakening')) entries.push(['holy_awakening','enemy']);
+      }
+      return entries;
+    };
+    activeStatusEntries.__mbh069Wrapped = true;
+  }
+
+  // 詳細文の回復量を0.6.8以降の実仕様に合わせる。
+  if(typeof statusTooltipHtml === 'function' && !statusTooltipHtml.__mbh069Wrapped){
+    const oldStatusTooltipHtml = statusTooltipHtml;
+    statusTooltipHtml = function(kind, target){
+      if(kind === 'holy_protection') return `<b>光の加護</b><br>天聖騎士の常時効果。<br>被ダメージ90%軽減。<br>毎秒HP2%回復。`;
+      if(kind === 'holy_release') return `<b>聖剣解放</b><br>天聖騎士の必殺技。<br>防御をほぼ無視する光属性特大ダメージを放つ。<br>発動後5秒間、0.2秒ごとに最大HPの3%を回復。`;
+      if(kind === 'holy_awakening') return `<b>勇者の覚醒</b><br>HP50%以下で発動。<br>攻撃力+300%。<br>攻撃速度+100%。<br>状態異常90%軽減。`;
+      if(kind === 'holy_ailment_guard') return `<b>聖域浄化</b><br>天聖騎士の状態異常軽減。<br>状態異常の時間・ダメージ・デバフ量を90%軽減。`;
+      return oldStatusTooltipHtml.apply(this, arguments);
+    };
+    statusTooltipHtml.__mbh069Wrapped = true;
+  }
+
+  function boot069(){
+    syncVersion069();
+    ensureEnemyTenseiBadges069();
+    safe(()=>{ if(typeof renderStatusLists==='function') renderStatusLists(); });
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', boot069, {once:true}); else setTimeout(boot069, 0);
+  window.addEventListener('load', ()=>setTimeout(boot069, 80), {once:true});
+  setInterval(syncVersion069, 1000);
 })();
