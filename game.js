@@ -5821,13 +5821,7 @@ setTimeout(installHolyDebug066, 300);
     };
     setMobileMuted.__mbh0613Stable=true;
   }
-
-  // 0.6.11の汎用操作アンロックがBGM再生まで進まないよう、後段で再度安定化。
-  ['pointerdown','touchstart','click','keydown'].forEach(ev=>{
-    document.addEventListener(ev,()=>{
-      if(state && !state.mobileMuted) window.mbhUnlockAudioContextOnly0613();
-    },{capture:true,passive:true});
-  });
+  /* 0.6.18 fix: document全体クリック音声アンロック削除 */
 
   function boot0613(){
     /* syncVersion removed */
@@ -5940,9 +5934,7 @@ setTimeout(installHolyDebug066, 300);
     else { ensureAudioCtx0614b(); state.audioUnlocked=true; playBgm(); }
     if(typeof scheduleSave==='function') scheduleSave();
   };
-  ['pointerdown','touchstart','click','keydown'].forEach(ev=>{
-    document.addEventListener(ev,()=>{ if(state && !state.mobileMuted) ensureAudioCtx0614b(); },{capture:true,passive:true});
-  });
+  /* 0.6.18 fix: document全体クリック音声アンロック削除 */
   if(typeof endDeathDance==='function' && !endDeathDance.__mbh0614bWrapped){
     const old=endDeathDance;
     endDeathDance=function(){
@@ -6119,11 +6111,7 @@ setTimeout(installHolyDebug066, 300);
       safe(()=>log('死線の剣舞が終了。','skilllog'));
     };
   }
-
-  // ユーザー操作ではSEの解除だけ行う。BGMを頭出ししない。
-  ['pointerdown','touchstart','click','keydown'].forEach(ev=>{
-    document.addEventListener(ev,()=>{ if(state && !state.mobileMuted) ensureSfxCtx0615(); },{capture:true,passive:true});
-  });
+  /* 0.6.18 fix: document全体クリック音声アンロック削除 */
 
   function boot(){ /* syncVersion removed */ if(!state.mobileMuted) { ensureBgmCtxOnly0615(); ensureSfxCtx0615(); } }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', boot, {once:true}); else setTimeout(boot,0);
@@ -6336,15 +6324,7 @@ setTimeout(installHolyDebug066, 300);
     }
     safe(()=>scheduleSave());
   };
-
-  // どこをクリックしても「SEを殺す」のではなく、HTMLAudio SEの許可だけを維持する。
-  ['pointerdown','touchstart','mousedown','mouseup','click','keydown'].forEach(ev=>{
-    document.addEventListener(ev,()=>{
-      if(typeof state!=='undefined' && !state.mobileMuted && SE.enabled){
-        unlockSe0618();
-      }
-    },{capture:true,passive:true});
-  });
+  /* 0.6.18 fix: document全体クリック音声アンロック削除 */
 
   window.mbhSfxTest0618 = function(){
     if(typeof state!=='undefined'){
@@ -6368,4 +6348,57 @@ setTimeout(installHolyDebug066, 300);
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', boot0618, {once:true}); else setTimeout(boot0618,0);
   window.addEventListener('load',()=>setTimeout(boot0618,100),{once:true});
   /* version interval removed */
+})();
+
+
+/* MBH 0.6.18 final: mute解除後クリック停止対策 */
+(function(){
+  'use strict';
+  const safe = (fn)=>{ try{return fn&&fn();}catch(e){ console.error('[MBH click-stop final]', e); return null; } };
+
+  // クリック時に呼ばれる旧アンロック関数を無害化。
+  // ミュートボタンの setMobileMuted(false) 内でだけ音声開始する。
+  window.mbhUnlockAudioContextOnly0613 = function(){ return true; };
+  window.mbhUnlockAudioContextOnly0614 = function(){ return true; };
+  window.mbhUnlockSfx0615 = function(){ return true; };
+
+  // 音声再生の失敗で戦闘処理が止まらないように最終保護。
+  if(typeof playSfx === 'function' && !playSfx.__mbhClickStopFinal){
+    const rawPlaySfx = playSfx;
+    playSfx = function(){ try{ return rawPlaySfx.apply(this, arguments); }catch(e){ console.error('[MBH playSfx protected]', e); } };
+    playSfx.__mbhClickStopFinal = true;
+  }
+  if(typeof playUiClick === 'function' && !playUiClick.__mbhClickStopFinal){
+    const rawPlayUiClick = playUiClick;
+    playUiClick = function(){ try{ return rawPlayUiClick.apply(this, arguments); }catch(e){ console.error('[MBH playUiClick protected]', e); } };
+    playUiClick.__mbhClickStopFinal = true;
+  }
+  if(typeof startAudio === 'function' && !startAudio.__mbhClickStopFinal){
+    const rawStartAudio = startAudio;
+    startAudio = function(){ try{ return rawStartAudio.apply(this, arguments); }catch(e){ console.error('[MBH startAudio protected]', e); if(typeof state!=='undefined') state.audioUnlocked=true; } };
+    startAudio.__mbhClickStopFinal = true;
+  }
+
+  // requestAnimationFrameの戦闘ループを、クリック後に止まっても自動復帰させる保険。
+  if(!window.__mbhBattleWatch0618){
+    window.__mbhBattleWatch0618 = true;
+    let lastEnemyHp = null;
+    setInterval(function(){
+      try{
+        if(typeof state === 'undefined') return;
+        if(!state.enemy && !state.defeatSequence && typeof spawnEnemy === 'function'){
+          spawnEnemy(false);
+          return;
+        }
+        if(state.enemy && !state.down && !state.defeatSequence && !state.deathDanceCutin && typeof loop === 'function'){
+          const now = performance.now ? performance.now() : Date.now();
+          if(!state.__mbhLastLoopKick || now - state.__mbhLastLoopKick > 1200){
+            state.__mbhLastLoopKick = now;
+            requestAnimationFrame(loop);
+          }
+        }
+        lastEnemyHp = state.enemyHp;
+      }catch(e){ console.error('[MBH battle watch]', e); }
+    }, 1000);
+  }
 })();
