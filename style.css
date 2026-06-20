@@ -4313,3 +4313,101 @@ html[data-build-version="0.6.5"] body.mbh-legal-open #legalModal *{
   .inventory-compare-box{grid-template-columns:1fr;}
   .inventory-compare-col pre{font-size:11px;}
 }
+
+
+/* MBH ver.0.6.12: PC status/equipment split recovery + mobile debug usability */
+html[data-build-version="0.6.12"] .hero-stats .status-layout,
+html[data-build-version="0.6.12"] .equip-panel .equip-layout,
+.hero-stats .status-layout,
+.equip-panel .equip-layout{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+  grid-template-rows:minmax(0,1fr)!important;
+  gap:12px!important;
+  width:100%!important;
+  height:100%!important;
+  min-height:0!important;
+  overflow:hidden!important;
+}
+html[data-build-version="0.6.12"] .status-left,
+html[data-build-version="0.6.12"] .status-right,
+html[data-build-version="0.6.12"] .equip-left,
+html[data-build-version="0.6.12"] .equip-right,
+.status-left,.status-right,.equip-left,.equip-right{
+  min-width:0!important;
+  min-height:0!important;
+  overflow:hidden!important;
+}
+html[data-build-version="0.6.12"] .status-special-effects,
+html[data-build-version="0.6.12"] .equip-effect-totals,
+html[data-build-version="0.6.12"] .monster-records,
+.status-special-effects,.equip-effect-totals,.monster-records{
+  min-height:0!important;
+  overflow:hidden!important;
+}
+html[data-build-version="0.6.12"] .effect-scroll,
+html[data-build-version="0.6.12"] .monster-record-list,
+html[data-build-version="0.6.12"] .equip-left .equip-list,
+.effect-scroll,.monster-record-list,.equip-left .equip-list{
+  overflow:auto!important;
+  min-height:0!important;
+}
+html[data-build-version="0.6.12"] .equip-effect-totals,
+.equip-effect-totals{
+  border-left:1px solid #513917!important;
+  padding-left:10px!important;
+}
+html[data-build-version="0.6.12"] .monster-records,
+.monster-records{
+  border-top:0!important;
+  margin-top:0!important;
+  padding-top:0!important;
+}
+@media(max-width:760px){
+  html[data-build-version="0.6.12"] .hero-stats .status-layout,
+  html[data-build-version="0.6.12"] .equip-panel .equip-layout,
+  .hero-stats .status-layout,
+  .equip-panel .equip-layout{
+    grid-template-columns:1fr!important;
+    overflow-y:auto!important;
+    height:auto!important;
+  }
+  html[data-build-version="0.6.12"] .equip-effect-totals,
+  .equip-effect-totals{
+    border-left:0!important;
+    padding-left:0!important;
+    border-top:1px solid #513917!important;
+    padding-top:8px!important;
+  }
+  .debug-panel{
+    left:8px!important;
+    right:8px!important;
+    top:calc(var(--mbh-topbar-h, 58px) + 8px)!important;
+    bottom:8px!important;
+    width:auto!important;
+    max-height:none!important;
+    overflow-y:auto!important;
+    -webkit-overflow-scrolling:touch!important;
+    padding-bottom:18px!important;
+  }
+  .debug-panel label,
+  .sell-box label{
+    min-height:36px!important;
+    align-items:center!important;
+    pointer-events:auto!important;
+    touch-action:manipulation!important;
+  }
+  .debug-panel input[type="checkbox"],
+  .sell-box input[type="checkbox"]{
+    width:22px!important;
+    height:22px!important;
+    pointer-events:auto!important;
+    touch-action:manipulation!important;
+  }
+}
+.inventory-action-menu-compare{max-width:calc(100vw - 16px)!important;}
+.inventory-compare-box{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;}
+.inventory-compare-col{border:1px solid rgba(201,155,57,.45);background:rgba(0,0,0,.28);border-radius:6px;padding:6px;min-width:0;}
+.inventory-compare-col strong{display:block;color:#ffd76b;margin-bottom:4px;}
+.inventory-compare-col pre{white-space:pre-wrap;word-break:break-word;margin:0;font:inherit;font-size:12px;line-height:1.35;color:#f7ead0;max-height:180px;overflow:auto;}
+@media(max-width:760px){.inventory-compare-box{grid-template-columns:1fr!important}.inventory-compare-col pre{max-height:120px!important}}
