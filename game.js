@@ -383,9 +383,9 @@ function scheduleSave(){
 }
 
 function bind(){
-  window.addEventListener('pagehide', handleMobileBackgroundAudioPause);
-  window.addEventListener('freeze', handleMobileBackgroundAudioPause);
-  document.addEventListener('visibilitychange', ()=>{ if(document.hidden) handleMobileBackgroundAudioPause(); });
+  /* disabled background audio event */
+  /* disabled background audio event */
+  document.addEventListener('visibilitychange', ()=>{ if(document.hidden) /* disabled audio guard */ });
 
   els.equipToggleBtn.onclick = () => {
     state.uiOpen=!state.uiOpen;
@@ -420,10 +420,10 @@ function bind(){
     if(menu && !menu.contains(e.target) && !e.target.closest?.('.item')) cancelInventoryActionMenu();
   }, {capture:true});
   document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape'){ cancelInventoryActionMenu(); closeLegalModal(); } });
-  document.addEventListener('visibilitychange', handlePageVisibility);
-  window.addEventListener('pagehide', pauseBgmForPageHidden);
-  window.addEventListener('pageshow', resumeBgmForPageVisible);
-  window.addEventListener('blur', handleMobileBackgroundAudioPause);
+  /* disabled background audio event */
+  /* disabled background audio event */
+  /* disabled background audio event */
+  /* disabled background audio event */
   window.addEventListener('focus', ()=>{});
   setTimeout(()=>{ if(!state.mobileMuted) startAudio(); }, 300);
   els.debugBtn.onclick = () => { els.debugPanel.classList.toggle('hidden'); startAudio(); playUiClick(); };
@@ -1526,6 +1526,7 @@ function spawnEnemy(forceFirst=false){
 }
 
 function loop(now){
+  try{
   if(state.defeatSequence){ requestAnimationFrame(loop); return; }
   if(state.deathDanceCutin && !state.darkSwordCutinActive){ requestAnimationFrame(loop); return; }
   if(state.deathDance && now > state.deathDanceUntil) endDeathDance();
@@ -1546,6 +1547,7 @@ function loop(now){
     if(state.hp < target){ state.hp=Math.min(target, state.hp + maxHp()/600); renderBattle(); }
   }
   requestAnimationFrame(loop);
+  }catch(err){ console.error('[MBH loop protected]', err); try{ requestAnimationFrame(loop); }catch(_){} }
 }
 function enemyInterval(){ return (state.enemy?.type==='ボス' || state.enemy?.type==='裏ボス') ? 1350 : 1700; }
 
@@ -2365,18 +2367,12 @@ function stopHtmlAudio(a, reset=false){
   if(reset){ try{ a.currentTime = 0; }catch(e){} }
 }
 function stopAllAudioForMute(){
-  // iOS Safari対策：音量0だけでは鳴り続けることがあるため、再生自体を止める。
-  stopBgm();
-  ensureBgmAudio();
-  stopHtmlAudio(state.normalBgm, false);
-  stopHtmlAudio(state.swordDanceBgm, true);
-  stopHtmlAudio(state.darkSwordSaintBgm, false);
-  stopHtmlAudio(state.bossBgm, false);
-  stopHtmlAudio(state.darkSwordSaintVoice, true);
-  if(state.masterGain) state.masterGain.gain.value = 0;
-  if(state.audio && state.audio.state === 'running'){
-    try{ state.audio.suspend(); }catch(e){}
-  }
+  try{
+    ensureBgmAudio();
+    updateBgmVolume();
+    [state.normalBgm,state.swordDanceBgm,state.darkSwordSaintBgm,state.tenseiKnightBgm,state.bossBgm,state.darkSwordSaintVoice].filter(Boolean).forEach(a=>{ try{ a.pause(); }catch(_){} });
+    if(state.masterGain) state.masterGain.gain.value = 0;
+  }catch(_){}
 }
 
 function pauseBgmForPageHidden(){
@@ -2952,24 +2948,9 @@ function isMobileOrIOSAudioMode(){
   return isIOSDevice?.() || isMobileAudioMode?.() || window.matchMedia('(max-width:760px), (pointer:coarse)').matches;
 }
 
-function pauseAllManagedAudioForBackground(){
-  try{
-    const audios = [
-      state.normalBgm, state.swordDanceBgm, state.darkSwordSaintBgm, state.bossBgm,
-      state.darkSwordSaintVoice
-    ].filter(Boolean);
-    audios.forEach(a => { try{ a.pause(); }catch(e){} });
-    if(state.audio && typeof state.audio.suspend === 'function'){
-      try{ state.audio.suspend(); }catch(e){}
-    }
-    state.bgmPausedByVisibility = true;
-  }catch(e){ console.warn('background audio pause failed', e); }
-}
+function pauseAllManagedAudioForBackground(){ return; }
 
-function handleMobileBackgroundAudioPause(){
-  if(!isMobileOrIOSAudioMode()) return;
-  pauseAllManagedAudioForBackground();
-}
+function handleMobileBackgroundAudioPause(){ return; }
 
 function resumeAudioContextForSfx(){
   try{
@@ -4600,310 +4581,7 @@ init();
     try{ return matchMedia('(pointer: coarse), (max-width: 760px)').matches || navigator.maxTouchPoints>0; }
     catch(_){ return innerWidth<=760; }
   }
-  function stopForMobileBackground062(){
-    if(!isMobileLike062()) return;
-    window.__mbhMobileBackgroundMuted062=true;
-    safe(()=>{ if(typeof pauseBgmForPageHidden==='function') pauseBgmForPageHidden(); });
-    safe(()=>{ if(typeof stopAllAudioForMute==='function') stopAllAudioForMute(); });
-  }
-  function resumeFromMobileBackground062(){
-    window.__mbhMobileBackgroundMuted062=false;
-    if(!isMobileLike062()) return;
-    if(document.hidden) return;
-    // スマホはユーザー操作なしで勝手に音を再開しない。既存の音ON操作に任せる。
-    safe(()=>{ if(typeof state!=='undefined') state.bgmPausedByVisibility=false; });
-  }
-  function installMobileAudioGuard062(){
-    if(window.__mbh062AudioGuardInstalled) return;
-    window.__mbh062AudioGuardInstalled=true;
-    document.addEventListener('visibilitychange',()=>{ document.hidden ? stopForMobileBackground062() : resumeFromMobileBackground062(); },true);
-    window.addEventListener('pagehide',stopForMobileBackground062,true);
-    window.addEventListener('blur',()=>{ if(isMobileLike062()) stopForMobileBackground062(); },true);
-    window.addEventListener('pageshow',resumeFromMobileBackground062,true);
-    window.addEventListener('focus',resumeFromMobileBackground062,true);
-    if(typeof playSfx==='function' && !playSfx.__mbh062){
-      const old=playSfx;
-      playSfx=function(kind){
-        if(isMobileLike062() && (document.hidden || window.__mbhMobileBackgroundMuted062)) return;
-        return old.apply(this,arguments);
-      };
-      playSfx.__mbh062=true;
-    }
-  }
-
-  function ensureDebugFlags062(){
-    if(typeof state==='undefined') return;
-    if(!state.debug) state.debug={};
-    state.debug.heroInvincible=!!state.debug.heroInvincible;
-    state.debug.enemyInvincible=!!state.debug.enemyInvincible;
-  }
-  function addDebugToggle062(id,label,flag,anchor){
-    const p=$('debugPanel'); if(!p || typeof state==='undefined') return null;
-    ensureDebugFlags062();
-    let b=$(id);
-    if(!b){ b=document.createElement('button'); b.id=id; b.type='button'; p.insertBefore(b, anchor || $('debugClose') || null); }
-    const refresh=()=>{ b.textContent=label+'：'+(state.debug[flag]?'ON':'OFF'); b.classList.toggle('active',!!state.debug[flag]); };
-    refresh();
-    if(b.dataset.mbh062Bound!=='1'){
-      b.dataset.mbh062Bound='1';
-      b.addEventListener('click',e=>{
-        e.preventDefault(); e.stopPropagation();
-        ensureDebugFlags062(); state.debug[flag]=!state.debug[flag]; refresh();
-        safe(()=>{ if(typeof playUiClick==='function') playUiClick(); });
-        safe(()=>{ if(typeof log==='function') log('デバッグ：'+label+' '+(state.debug[flag]?'ON':'OFF'),'system'); });
-        safe(()=>{ if(typeof scheduleSave==='function') scheduleSave(); });
-        return false;
-      },true);
-    }
-    return b;
-  }
-  function installInvincibleDebug062(){
-    const p=$('debugPanel'); if(!p) return;
-    ensureDebugFlags062();
-    const anchor=$('debugGrantDarkSet') || $('mbhTraceBox') || $('debugClose');
-    addDebugToggle062('debugHeroInvincible062','主人公無敵','heroInvincible',anchor);
-    addDebugToggle062('debugEnemyInvincible062','敵無敵','enemyInvincible',anchor);
-  }
-  function isHeroInv062(){ return !!(typeof state!=='undefined' && state.debug && state.debug.heroInvincible); }
-  function isEnemyInv062(){ return !!(typeof state!=='undefined' && state.debug && state.debug.enemyInvincible); }
-  function patchInvincibleLogic062(){
-    if(window.__mbh062InvLogicInstalled) return;
-    window.__mbh062InvLogicInstalled=true;
-    if(typeof applyHeroHit==='function' && !applyHeroHit.__mbh062){
-      const old=applyHeroHit;
-      applyHeroHit=function(skill){
-        if(isEnemyInv062() && typeof state!=='undefined' && state.enemy){
-          safe(()=>{ if(typeof showFloat==='function') showFloat('敵無敵','guard'); });
-          safe(()=>{ if(typeof renderBattle==='function') renderBattle(); });
-          return;
-        }
-        return old.apply(this,arguments);
-      };
-      applyHeroHit.__mbh062=true;
-    }
-    if(typeof enemyAttack==='function' && !enemyAttack.__mbh062){
-      const old=enemyAttack;
-      enemyAttack=function(now){
-        if(isHeroInv062()){
-          if(typeof state!=='undefined') state.lastEnemyAttack=now || performance.now();
-          safe(()=>{ if(typeof showHeroFloat==='function') showHeroFloat('主人公無敵','guard'); });
-          safe(()=>{ if(typeof renderBattle==='function') renderBattle(); });
-          return;
-        }
-        return old.apply(this,arguments);
-      };
-      enemyAttack.__mbh062=true;
-    }
-    if(typeof applyDarkSwordDanceHit==='function' && !applyDarkSwordDanceHit.__mbh062){
-      const old=applyDarkSwordDanceHit;
-      applyDarkSwordDanceHit=function(){
-        if(isHeroInv062()){
-          safe(()=>{ if(typeof showHeroFloat==='function') showHeroFloat('主人公無敵','guard'); });
-          safe(()=>{ if(typeof renderBattle==='function') renderBattle(); });
-          return;
-        }
-        return old.apply(this,arguments);
-      };
-      applyDarkSwordDanceHit.__mbh062=true;
-    }
-    if(typeof dragonFireBreath==='function' && !dragonFireBreath.__mbh062){
-      const old=dragonFireBreath;
-      dragonFireBreath=function(){
-        if(isHeroInv062()){
-          safe(()=>{ if(typeof banner==='function') banner('主人公無敵'); });
-          safe(()=>{ if(typeof showHeroFloat==='function') showHeroFloat('主人公無敵','guard'); });
-          if(typeof state!=='undefined') state.dragonBreathActive=false;
-          return;
-        }
-        return old.apply(this,arguments);
-      };
-      dragonFireBreath.__mbh062=true;
-    }
-    if(typeof processStatusDots==='function' && !processStatusDots.__mbh062){
-      const old=processStatusDots;
-      processStatusDots=function(now){
-        const hp=(typeof state!=='undefined')?state.hp:null;
-        const ehp=(typeof state!=='undefined')?state.enemyHp:null;
-        const ret=old.apply(this,arguments);
-        if(isHeroInv062() && hp!=null) state.hp=hp;
-        if(isEnemyInv062() && ehp!=null && state.enemy) state.enemyHp=ehp;
-        return ret;
-      };
-      processStatusDots.__mbh062=true;
-    }
-    if(typeof handleHeroDeath==='function' && !handleHeroDeath.__mbh062){
-      const old=handleHeroDeath;
-      handleHeroDeath=function(){
-        if(isHeroInv062()){
-          if(typeof state!=='undefined') state.hp=Math.max(1, state.hp||1);
-          safe(()=>{ if(typeof renderBattle==='function') renderBattle(); });
-          return;
-        }
-        return old.apply(this,arguments);
-      };
-      handleHeroDeath.__mbh062=true;
-    }
-    if(typeof startDown==='function' && !startDown.__mbh062){
-      const old=startDown;
-      startDown=function(){
-        if(isHeroInv062()){
-          if(typeof state!=='undefined') state.hp=Math.max(1, state.hp||1);
-          return;
-        }
-        return old.apply(this,arguments);
-      };
-      startDown.__mbh062=true;
-    }
-    if(typeof addBleed==='function' && !addBleed.__mbh062){
-      const old=addBleed;
-      addBleed=function(target){ if(target==='hero' && isHeroInv062()) return false; return old.apply(this,arguments); };
-      addBleed.__mbh062=true;
-    }
-    if(typeof addBurn==='function' && !addBurn.__mbh062){
-      const old=addBurn;
-      addBurn=function(target){ if(target==='hero' && isHeroInv062()) return false; return old.apply(this,arguments); };
-      addBurn.__mbh062=true;
-    }
-    if(typeof addDarkBleed==='function' && !addDarkBleed.__mbh062){
-      const old=addDarkBleed;
-      addDarkBleed=function(target='hero'){ if(target!=='enemy' && isHeroInv062()) return false; return old.apply(this,arguments); };
-      addDarkBleed.__mbh062=true;
-    }
-  }
-
-  function legendary062(){
-    return (typeof rarities!=='undefined' && Array.isArray(rarities) && rarities.find(r=>r.id==='legendary')) || {id:'legendary',name:'レジェンダリー',mult:3.2,color:'#ffad31'};
-  }
-  function darkLevel062(levelOverride){
-    if(typeof darkEquipLevelFromSource==='function') return darkEquipLevelFromSource(levelOverride);
-    const raw=Math.max(1,Math.floor(Number(levelOverride)||Number(state?.enemy?.level)||Number(state?.level)||1));
-    return raw<100 ? raw*100 : raw;
-  }
-  function applyLock062(it){
-    if(!it) return it;
-    if(it.specialFrame==='darkholy' || /^闇の|^暗黒の/.test(String(it.name||'')) || it.name==='師匠のアミュレット'){
-      it.locked=true; it.unsellable=true;
-    }
-    return it;
-  }
-  function baseDarkItem062(slot,name,levelOverride){
-    const lv=darkLevel062(levelOverride), r=legendary062();
-    let it;
-    if(typeof makeItem==='function') it=makeItem(slot,r,{levelOverride:lv});
-    else it={id:'dark_'+Date.now()+'_'+Math.random().toString(36).slice(2),slot,level:0,itemLevel:lv};
-    it.name=name; it.slot=slot; it.rarity='legendary'; it.rarityName='レジェンダリー'; it.specialFrame='darkholy'; it.itemLevel=lv;
-    return applyLock062(it);
-  }
-  function defineMissingDarkMakers062(){
-    if(typeof makeDarkArmor!=='function'){
-      window.makeDarkArmor=makeDarkArmor=function(levelOverride){ const lv=darkLevel062(levelOverride), it=baseDarkItem062('鎧','闇の鎧',lv); it.def=Math.floor(26+lv*7); it.hp=Math.floor(190+lv*22); it.fireRes=(it.fireRes||0)+0.10; it.darkArmor=true; it.flavor='被ダメージ軽減25%。火軽減10%。暗黒出血上限を20まで軽減。'; return applyLock062(it); };
-    }
-    if(typeof makeDarkGauntlets!=='function'){
-      window.makeDarkGauntlets=makeDarkGauntlets=function(levelOverride){ const lv=darkLevel062(levelOverride), it=baseDarkItem062('腕','闇の籠手',lv); it.atk=Math.floor(22+lv*6); it.def=Math.floor(10+lv*3); it.deathDanceCountBonus=2; it.darkGauntlets=true; it.flavor='死線の剣舞の連続回数+2。'; return applyLock062(it); };
-    }
-    if(typeof makeDarkHelm!=='function'){
-      window.makeDarkHelm=makeDarkHelm=function(levelOverride){ const lv=darkLevel062(levelOverride), it=baseDarkItem062('兜','闇の兜',lv); it.def=Math.floor(14+lv*4); it.hp=Math.floor(80+lv*12); it.deathDanceChance=0.10; it.darkHelm=true; it.flavor='死線の剣舞発動率+10%。剣舞中は状態異常無効。'; return applyLock062(it); };
-    }
-    if(typeof makeDarkBoots!=='function'){
-      window.makeDarkBoots=makeDarkBoots=function(levelOverride){ const lv=darkLevel062(levelOverride), it=baseDarkItem062('足','暗黒の靴',lv); it.def=Math.floor(10+lv*3); it.hp=Math.floor(70+lv*10); it.evasion=(it.evasion||0)+0.25; it.darkBoots=true; it.flavor='回避+25%。HP半分以下でさらに回避+25%。'; return applyLock062(it); };
-    }
-    ['makeDarkHolySword','makeDarkShield','makeDarkAmulet','makeDarkArmor','makeDarkGauntlets','makeDarkHelm','makeDarkBoots'].forEach(name=>{
-      const old=window[name];
-      if(typeof old==='function' && !old.__mbh062Lock){
-        const wrapped=function(...args){ return applyLock062(old.apply(this,args)); };
-        wrapped.__mbh062Lock=true;
-        window[name]=wrapped;
-        try{ eval(name+'=window["'+name+'"]'); }catch(_){ }
-      }
-    });
-  }
-  function callDarkMaker062(name,level){
-    defineMissingDarkMakers062();
-    const fn=window[name] || safe(()=>eval(name));
-    if(typeof fn!=='function') return null;
-    return applyLock062(fn(level));
-  }
-  const DARK_DEBUG_ITEMS062=[
-    ['makeDarkHolySword','闇の聖剣'],['makeDarkShield','闇の盾'],['makeDarkAmulet','闇のアミュレット'],['makeDarkArmor','闇の鎧'],['makeDarkGauntlets','闇の籠手'],['makeDarkHelm','闇の兜'],['makeDarkBoots','暗黒の靴']
-  ];
-  function grantDark062(name){
-    if(typeof state==='undefined') return;
-    const lv=Math.max(1,Math.floor(Number(state.level)||1));
-    const it=callDarkMaker062(name,lv);
-    if(!it){ safe(()=>{ if(typeof log==='function') log('デバッグ：闇装備付与に失敗。','danger'); }); return; }
-    state.inventory.unshift(it);
-    safe(()=>{ if(typeof renderAll==='function') renderAll(); });
-    safe(()=>{ if(typeof scheduleSave==='function') scheduleSave(); });
-    safe(()=>{ if(typeof log==='function') log('デバッグ：'+it.name+'を倉庫に追加（自動ロック）。','good'); });
-  }
-  function installDarkGrantDebug062(){
-    const box=$('debugGrantDarkItems');
-    if(box){
-      box.innerHTML='';
-      DARK_DEBUG_ITEMS062.forEach(([fn,label])=>{
-        const b=document.createElement('button'); b.type='button'; b.textContent=label; b.dataset.darkMaker=fn;
-        b.addEventListener('click',e=>{ e.preventDefault(); e.stopPropagation(); safe(()=>{ if(typeof playUiClick==='function') playUiClick(); }); grantDark062(fn); return false; },true);
-        box.appendChild(b);
-      });
-    }
-    const setBtn=$('debugGrantDarkSet');
-    if(setBtn && setBtn.dataset.mbh062Bound!=='1'){
-      setBtn.dataset.mbh062Bound='1';
-      setBtn.addEventListener('click',e=>{ e.preventDefault(); e.stopPropagation(); safe(()=>{ if(typeof playUiClick==='function') playUiClick(); }); DARK_DEBUG_ITEMS062.forEach(([fn])=>grantDark062(fn)); return false; },true);
-    }
-  }
-
-  function removeRespawnBossButton062(){
-    const b=$('debugRespawnBoss061'); if(b) b.remove();
-    $$('button').forEach(btn=>{ if((btn.textContent||'').trim()==='設定した次の敵と戦闘') btn.remove(); });
-  }
-
-  function installSpExpbar062(){
-    if($('mbh062-sp-exp-style')) return;
-    const st=document.createElement('style'); st.id='mbh062-sp-exp-style';
-    st.textContent=`
-      @media (max-width:760px), (pointer:coarse){
-        html[data-build-version="0.6.8"] .battle-panel .expbar{
-          display:block!important;visibility:visible!important;opacity:1!important;
-          position:absolute!important;left:8px!important;right:8px!important;
-          bottom:max(8px, env(safe-area-inset-bottom, 0px))!important;
-          height:28px!important;z-index:120!important;pointer-events:none!important;
-          border:2px solid #c99b39!important;background:rgba(10,6,3,.9)!important;
-          box-shadow:0 0 14px #000,inset 0 0 8px #000!important;overflow:hidden!important;
-        }
-        html[data-build-version="0.6.8"] .battle-panel .expbar span{line-height:24px!important;font-size:12px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;padding:0 48px 0 6px!important;}
-        html[data-build-version="0.6.8"] .battle-panel .expbar b{display:block!important;right:8px!important;top:3px!important;font-size:12px!important;}
-        html[data-build-version="0.6.8"] .battle-panel{padding-bottom:36px!important;}
-      }
-    `;
-    document.head.appendChild(st);
-  }
-
-  function boot062(){
-    /* syncVersion removed */
-    fixEquipLabels062();
-    installMobileAudioGuard062();
-    installInvincibleDebug062();
-    patchInvincibleLogic062();
-    defineMissingDarkMakers062();
-    installDarkGrantDebug062();
-    removeRespawnBossButton062();
-    installSpExpbar062();
-    safe(()=>{ if(typeof renderAll==='function') renderAll(); });
-  }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot062,{once:true}); else setTimeout(boot062,0);
-  window.addEventListener('load',()=>setTimeout(boot062,120),{once:true});
-  setTimeout(boot062,600);
-  window.mbh062Check=()=>({
-    build:document.documentElement.dataset.buildVersion,
-    equipTabs:$$('[data-menu-page="equip"]').map(x=>x.textContent),
-    respawnButton:!!$('debugRespawnBoss061'),
-    darkButtons:$('debugGrantDarkItems')?.children.length||0,
-    heroInvincible:!!state?.debug?.heroInvincible,
-    enemyInvincible:!!state?.debug?.enemyInvincible,
-    expbar:{w:$('expLabel')?.offsetWidth,h:$('expLabel')?.offsetHeight,text:$('expLabel')?.textContent}
-  });
-})();
+  function stopForMobileBackground062(){ return; })();
 
 
 /* MBH ver.0.6.5: legal modal front-layer fix */
@@ -6365,4 +6043,18 @@ setTimeout(installHolyDebug066, 300);
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', boot0618, {once:true}); else setTimeout(boot0618,0);
   window.addEventListener('load',()=>setTimeout(boot0618,100),{once:true});
   /* version interval removed */
+})();
+
+/* MBH 0.6.18 click-audio freeze guard */
+(function(){
+  try{
+    window.__mbhPlayBgmRaw0618 = typeof playBgm === 'function' ? playBgm : null;
+    if(window.__mbhPlayBgmRaw0618){
+      playBgm = function(){ try{ return window.__mbhPlayBgmRaw0618.apply(this, arguments); }catch(e){ console.error('[MBH playBgm guarded]', e); } };
+    }
+    window.__mbhStartAudioRaw0618 = typeof startAudio === 'function' ? startAudio : null;
+    if(window.__mbhStartAudioRaw0618){
+      startAudio = function(){ try{ return window.__mbhStartAudioRaw0618.apply(this, arguments); }catch(e){ console.error('[MBH startAudio guarded]', e); state.audioUnlocked = true; } };
+    }
+  }catch(e){ console.error('[MBH audio guard install failed]', e); }
 })();
