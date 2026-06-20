@@ -4274,3 +4274,42 @@ html[data-build-version="0.6.5"] body.mbh-legal-open #legalModal *{
   color:#fffdf0!important;
   text-shadow:0 0 10px #fff,0 0 22px #ffd34d,0 4px 3px #000!important;
 }
+
+
+/* MBH ver.0.6.11: SPデバッグ操作・チェックボックス・装備比較 */
+.debug-panel{
+  max-height:calc(100dvh - 84px)!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  overscroll-behavior:contain!important;
+  padding-bottom:18px!important;
+}
+.debug-panel label,
+.sell-box label{
+  min-height:34px!important;
+  align-items:center!important;
+  touch-action:manipulation!important;
+  pointer-events:auto!important;
+}
+.debug-panel input[type="checkbox"],
+.sell-box input[type="checkbox"]{
+  width:22px!important;
+  height:22px!important;
+  min-width:22px!important;
+  min-height:22px!important;
+  pointer-events:auto!important;
+  touch-action:manipulation!important;
+  accent-color:#e3ad39!important;
+}
+.inventory-action-menu-compare{max-width:calc(100vw - 16px)!important;max-height:min(72dvh,620px)!important;overflow:auto!important;}
+.inventory-compare-box{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0;}
+.inventory-compare-col{border:1px solid rgba(201,155,57,.45);border-radius:6px;background:rgba(0,0,0,.28);padding:7px;min-width:0;}
+.inventory-compare-col strong{display:block;color:#ffd76b;margin-bottom:4px;font-size:12px;}
+.inventory-compare-col pre{margin:0;white-space:pre-wrap;word-break:break-word;font-family:inherit;font-size:12px;line-height:1.35;color:#ffe8b5;}
+@media(max-width:760px), (pointer:coarse){
+  .debug-panel{left:8px!important;right:8px!important;top:calc(var(--mbh-topbar-h, 58px) + 8px)!important;bottom:8px!important;width:auto!important;max-height:none!important;}
+  .debug-panel button,.debug-panel label{min-height:40px!important;font-size:13px!important;}
+  .inventory-action-menu-compare{width:calc(100vw - 16px)!important;bottom:8px!important;max-height:68dvh!important;}
+  .inventory-compare-box{grid-template-columns:1fr;}
+  .inventory-compare-col pre{font-size:11px;}
+}

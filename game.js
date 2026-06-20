@@ -4817,7 +4817,7 @@ init();
   ];
   function grantDark062(name){
     if(typeof state==='undefined') return;
-    const lv=Math.max(1,Math.floor(Number(state.enemy?.level)||Number(state.enemyLevelBase)||Number(state.level)||1));
+    const lv=Math.max(1,Math.floor(Number(state.level)||1));
     const it=callDarkMaker062(name,lv);
     if(!it){ safe(()=>{ if(typeof log==='function') log('デバッグ：闇装備付与に失敗。','danger'); }); return; }
     state.inventory.unshift(it);
@@ -5024,15 +5024,17 @@ enemyAttack = function(now){
     state.enemyStatuses.holyReleaseCount = (state.enemyStatuses.holyReleaseCount||0) + 1;
     if(state.enemyStatuses.holyReleaseCount >= 6){
       state.enemyStatuses.holyReleaseCount = 0;
+      state.enemyStatuses.holyReleasePowerCount = (state.enemyStatuses.holyReleasePowerCount||0) + 1;
+      const holyReleasePowerMul = Math.pow(2, Math.max(0, state.enemyStatuses.holyReleasePowerCount - 1));
       showHolyCutin('release');
       startTenseiHolyReleaseHeal();
       setTimeout(()=>{
         const st=calcStats();
-        let dmg = Math.max(1, Math.floor((state.enemy.atk * 3.2 * tenseiKnightAtkMul()) - st.def*.15 + rand(0,state.enemy.atk*.6)));
+        let dmg = Math.max(1, Math.floor((state.enemy.atk * 3.2 * tenseiKnightAtkMul() * holyReleasePowerMul) - st.def*.15 + rand(0,state.enemy.atk*.6)));
         dmg = Math.max(1, Math.floor(dmg * (1 - (st.holyDamageReduce||0))));
         if(state.debug.killHero) dmg = Math.max(dmg, state.hp + 999999);
         if(state.hp - dmg <= 0){ if(tryHeroDeathDance()) return; state.hp=0; renderBattle(); handleHeroDeath(); return; }
-        state.hp=Math.max(0,state.hp-dmg); showHeroFloat(`聖剣 ${dmg}`,'holy'); playSfx('cutin'); log(`天聖騎士の聖剣解放！ ${dmg}ダメージ`,'danger'); renderBattle();
+        state.hp=Math.max(0,state.hp-dmg); showHeroFloat(`聖剣 ${dmg}`,'holy'); playSfx('cutin'); log(`天聖騎士の聖剣解放！ 威力x${holyReleasePowerMul} ${dmg}ダメージ`,'danger'); renderBattle();
       }, 500);
       state.lastEnemyAttack = now || performance.now();
       return;
@@ -5270,12 +5272,12 @@ setTimeout(installHolyDebug066, 300);
 })();
 
 
-/* MBH ver.0.6.10: 天聖騎士 次敵予約・覚醒吸収・聖剣解放カウント非表示・闇装備名補正 */
+/* MBH ver.0.6.11: 天聖騎士 次敵予約・覚醒吸収・聖剣解放カウント非表示・闇装備名補正 */
 (function(){
   'use strict';
-  const BUILD='0.6.10';
+  const BUILD='0.6.11';
   const $id=(id)=>document.getElementById(id);
-  const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.error('[MBH0.6.10]', e); return null; } };
+  const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.error('[MBH0.6.11]', e); return null; } };
 
   function syncVersion0610(){
     window.APP_VERSION=BUILD;
@@ -5388,4 +5390,150 @@ setTimeout(installHolyDebug066, 300);
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', boot0610, {once:true}); else setTimeout(boot0610,0);
   window.addEventListener('load', ()=>setTimeout(boot0610,120), {once:true});
   setInterval(()=>{ syncVersion0610(); bindTenseiButton0610(); cleanHolyReleaseBadges0610(); }, 1000);
+})();
+
+
+/* MBH ver.0.6.11: SE復旧・天聖騎士調整・SP操作改善・装備比較強化 */
+(function(){
+  'use strict';
+  const BUILD='0.6.11';
+  const $id=(id)=>document.getElementById(id);
+  const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.error('[MBH0.6.11]', e); return null; } };
+  function syncVersion0611(){
+    window.APP_VERSION=BUILD; window.GAME_VERSION=BUILD;
+    if(document.documentElement){ document.documentElement.dataset.buildVersion=BUILD; document.documentElement.dataset.buildDate='2026-06-20'; }
+    document.querySelectorAll('.build-version').forEach(el=>{ el.textContent='ver.'+BUILD; });
+    document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent='Build: ver.'+BUILD+' debug'; });
+    document.querySelectorAll('.debug-trace-title').forEach(el=>{ el.textContent='進行デバッグログ ver.'+BUILD; });
+  }
+
+  // SEが鳴らないケース対策：ユーザー操作時にAudioContextを必ず起こす。BGMのON/OFFとは分離してSEを初期化する。
+  function unlockSfx0611(){
+    safe(()=>{ if(typeof startAudio==='function') startAudio(); });
+    safe(()=>{ if(state.audio && state.audio.state==='suspended') state.audio.resume(); });
+    if(state) state.audioUnlocked=true;
+  }
+  ['pointerdown','touchstart','click','keydown'].forEach(ev=>document.addEventListener(ev, unlockSfx0611, {capture:true, passive:true}));
+  if(typeof playSfx==='function' && !playSfx.__mbh0611Wrapped){
+    const old=playSfx;
+    playSfx=function(kind){ unlockSfx0611(); return old.apply(this, arguments); };
+    playSfx.__mbh0611Wrapped=true;
+  }
+  if(typeof playUiClick==='function' && !playUiClick.__mbh0611Wrapped){
+    const old=playUiClick;
+    playUiClick=function(){ unlockSfx0611(); return old.apply(this, arguments); };
+    playUiClick.__mbh0611Wrapped=true;
+  }
+
+  // 天聖騎士の攻撃速度アップは敵だけに適用。主人公側の攻撃間隔には触らない。
+  if(typeof enemyInterval==='function' && !enemyInterval.__mbh0611TenseiSpeed){
+    const old=enemyInterval;
+    enemyInterval=function(){
+      const base=old.apply(this, arguments);
+      if(typeof isTenseiKnight==='function' && isTenseiKnight() && state.enemyStatuses?.holyAwakened) return Math.max(260, base * 0.5);
+      return base;
+    };
+    enemyInterval.__mbh0611TenseiSpeed=true;
+  }
+
+  // 聖剣解放のバフ説明に威力上昇を明記。カウント表記は出さない。
+  function cleanHolyReleaseBadges0611(){
+    document.querySelectorAll('.status-badge[data-status-kind="holy_release"]').forEach(btn=>{
+      btn.textContent=(state?.enemyStatuses?.holyReleaseHealUntil||0)>performance.now() ? '⚔️聖剣解放：回復中' : '⚔️聖剣解放';
+      btn.setAttribute('aria-label','聖剣解放 の効果を見る');
+    });
+  }
+  if(typeof renderStatusLists==='function' && !renderStatusLists.__mbh0611Wrapped){
+    const old=renderStatusLists;
+    renderStatusLists=function(){ const r=old.apply(this,arguments); cleanHolyReleaseBadges0611(); return r; };
+    renderStatusLists.__mbh0611Wrapped=true;
+  }
+  if(typeof statusTooltipHtml==='function' && !statusTooltipHtml.__mbh0611Wrapped){
+    const old=statusTooltipHtml;
+    statusTooltipHtml=function(kind,target){
+      if(kind==='holy_awakening') return `<b>勇者の覚醒</b><br>HP50%以下で発動。<br>攻撃力+300%。<br>攻撃速度+100%。※敵側のみ。<br>状態異常90%軽減。<br>死線の剣舞ダメージの90%を回復。<br>暗黒出血を回復へ変換。`;
+      if(kind==='holy_release') return `<b>聖剣解放</b><br>天聖騎士の必殺技。<br>発動ごとに威力が2倍ずつ増加。<br>防御をほぼ無視する光属性特大ダメージを放つ。<br>発動後5秒間、0.2秒ごとに最大HPの3%を回復。`;
+      return old.apply(this,arguments);
+    };
+    statusTooltipHtml.__mbh0611Wrapped=true;
+  }
+
+  // デバッグ付与装備は主人公Lv基準に固定。
+  function heroLv0611(){ return Math.max(1, Math.floor(Number(state?.level)||1)); }
+  if(typeof grantHolySet==='function' && !grantHolySet.__mbh0611HeroLevel){
+    grantHolySet=function(){ ['武器','盾','兜','鎧','腕','足','アミュレット'].forEach(slot=>state.inventory.unshift(makeHolyItem(slot, heroLv0611()))); safe(()=>renderAll()); safe(()=>log(`デバッグ：聖剣シリーズ7種を倉庫に追加（主人公Lv.${heroLv0611()}基準）。`,'good')); safe(()=>scheduleSave()); };
+    grantHolySet.__mbh0611HeroLevel=true;
+  }
+  function rebindGrantButtons0611(){
+    const holy=$id('debugGrantHolySet');
+    if(holy){ holy.onclick=(e)=>{ e&&e.preventDefault(); safe(()=>playUiClick()); grantHolySet(); }; }
+    const tensei=$id('debugTenseiKnight');
+    if(tensei){ tensei.textContent='天聖騎士召喚'; }
+  }
+
+  // スマホのチェックボックス押下補強。ラベル内でも確実に反応させる。
+  function installCheckboxFix0611(){
+    document.querySelectorAll('.debug-panel input[type="checkbox"], .sell-box input[type="checkbox"]').forEach(input=>{
+      if(input.dataset.mbh0611Check==='1') return;
+      input.dataset.mbh0611Check='1';
+      input.style.pointerEvents='auto';
+      input.style.touchAction='manipulation';
+      const parent=input.closest('label');
+      if(parent){ parent.style.pointerEvents='auto'; parent.style.touchAction='manipulation'; }
+      input.addEventListener('pointerup', e=>{ e.stopPropagation(); }, {capture:true});
+      input.addEventListener('touchend', e=>{ e.stopPropagation(); }, {capture:true});
+    });
+  }
+
+  // 倉庫装備押下時、現在装備のフルスペックも表示して比較できるようにする。
+  function fullSpec0611(it){
+    if(!it) return '未装備';
+    const name=(typeof formatItemNameWithPlus==='function') ? formatItemNameWithPlus(it) : (it.name||'装備');
+    const summary=(typeof itemSummary==='function') ? itemSummary(it) : '';
+    const rarity=it.rarityName||it.rarity||'';
+    return `${name}\n${it.slot||''} / ${rarity}\n${summary||'追加能力なし'}`;
+  }
+  function escape0611(v){ return String(v).replace(/[&<>'"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
+  function showInventoryActionMenu0611(it, anchor){
+    if(!it) return;
+    state.inventoryMenuItemId=it.id;
+    document.querySelectorAll('.item.selected-inventory').forEach(el=>el.classList.remove('selected-inventory'));
+    if(anchor) anchor.classList.add('selected-inventory');
+    let menu=$id('inventoryActionMenu');
+    if(!menu){ menu=document.createElement('div'); menu.id='inventoryActionMenu'; menu.className='inventory-action-menu'; document.body.appendChild(menu); }
+    menu.classList.add('inventory-action-menu-compare');
+    const current=state.equip?.[it.slot];
+    const diff=current && typeof itemPower==='function' ? Math.round(itemPower(it)-itemPower(current)) : 0;
+    const locked=!!it.locked;
+    const color=(typeof itemNameColor==='function') ? itemNameColor(it) : '#ffd76b';
+    const curColor=current && typeof itemNameColor==='function' ? itemNameColor(current) : '#d8c69a';
+    menu.innerHTML=`
+      <div class="inventory-action-title"><b style="color:${color}">${locked?'🔒 ':''}${escape0611((typeof formatItemNameWithPlus==='function')?formatItemNameWithPlus(it):it.name)}</b><small>${escape0611(it.slot||'')} / ${escape0611(it.rarityName||it.rarity||'')}</small></div>
+      <div class="inventory-compare-box">
+        <div class="inventory-compare-col"><strong>選択中</strong><pre>${escape0611(fullSpec0611(it))}</pre></div>
+        <div class="inventory-compare-col current"><strong>現在装備</strong><pre style="color:${curColor}">${escape0611(fullSpec0611(current))}</pre></div>
+      </div>
+      <div class="inventory-action-summary">戦力差: ${current?(diff>=0?'+':'')+diff:'未装備'}</div>
+      <div class="inventory-action-buttons"><button type="button" data-action="equip">装備</button><button type="button" data-action="lock">${locked?'ロック解除':'ロック'}</button><button type="button" data-action="cancel">閉じる</button></div>`;
+    const width=Math.min(520, window.innerWidth-16); menu.style.width=width+'px';
+    const touch=(typeof isTouchDevice==='function' && isTouchDevice()) || window.innerWidth<=760;
+    if(touch){ menu.style.left='50%'; menu.style.right='auto'; menu.style.top='auto'; menu.style.bottom='10px'; menu.style.transform='translateX(-50%)'; }
+    else{
+      const r=anchor?.getBoundingClientRect?.() || {left:8,bottom:80,top:80};
+      let left=Math.min(Math.max(8,r.left),window.innerWidth-width-8); let top=r.bottom+6;
+      menu.style.left=left+'px'; menu.style.right='auto'; menu.style.top=top+'px'; menu.style.bottom='auto'; menu.style.transform='none';
+      requestAnimationFrame(()=>{ const mr=menu.getBoundingClientRect(); if(mr.bottom>window.innerHeight-8) menu.style.top=Math.max(8,r.top-mr.height-6)+'px'; });
+    }
+    const bind=(sel,fn)=>{ const b=menu.querySelector(sel); if(!b) return; const run=(e)=>{ e&&e.preventDefault(); e&&e.stopPropagation(); safe(()=>playUiClick()); fn(); }; b.onclick=run; b.onpointerup=(e)=>{ if(e.pointerType&&e.pointerType!=='mouse') run(e); }; b.ontouchend=run; };
+    bind('[data-action="equip"]',()=>{ safe(()=>cancelInventoryActionMenu()); if(typeof equipItem==='function') equipItem(it); });
+    bind('[data-action="lock"]',()=>{ it.locked=!it.locked; safe(()=>renderInventory()); safe(()=>scheduleSave()); setTimeout(()=>showInventoryActionMenu0611(it, anchor),0); });
+    bind('[data-action="cancel"]',()=>{ safe(()=>cancelInventoryActionMenu()); safe(()=>renderInventory()); });
+    menu.onclick=e=>e.stopPropagation(); menu.onpointerup=e=>e.stopPropagation(); menu.ontouchend=e=>e.stopPropagation();
+  }
+  try{ window.showInventoryActionMenu=showInventoryActionMenu0611; showInventoryActionMenu=showInventoryActionMenu0611; }catch(e){ window.showInventoryActionMenu=showInventoryActionMenu0611; }
+
+  function boot0611(){ syncVersion0611(); rebindGrantButtons0611(); installCheckboxFix0611(); cleanHolyReleaseBadges0611(); safe(()=>renderAll()); }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', boot0611, {once:true}); else setTimeout(boot0611,0);
+  window.addEventListener('load', ()=>setTimeout(boot0611,120), {once:true});
+  setInterval(()=>{ syncVersion0611(); rebindGrantButtons0611(); installCheckboxFix0611(); cleanHolyReleaseBadges0611(); }, 1000);
 })();
