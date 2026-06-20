@@ -6351,38 +6351,97 @@ setTimeout(installHolyDebug066, 300);
 })();
 
 
-/* MBH 0.6.18 final: mute解除後クリック停止対策 */
+
+/* MBH 0.6.18 final: SE復旧＋クリック安全化 */
 (function(){
   'use strict';
-  const safe = (fn)=>{ try{return fn&&fn();}catch(e){ console.error('[MBH click-stop final]', e); return null; } };
 
-  // クリック時に呼ばれる旧アンロック関数を無害化。
-  // ミュートボタンの setMobileMuted(false) 内でだけ音声開始する。
-  window.mbhUnlockAudioContextOnly0613 = function(){ return true; };
-  window.mbhUnlockAudioContextOnly0614 = function(){ return true; };
-  window.mbhUnlockSfx0615 = function(){ return true; };
+  function safe(fn){ try{ return fn && fn(); }catch(e){ console.error('[MBH se final]', e); return null; } }
 
-  // 音声再生の失敗で戦闘処理が止まらないように最終保護。
-  if(typeof playSfx === 'function' && !playSfx.__mbhClickStopFinal){
+  function ensureSeOnly(){
+    try{
+      if(typeof state === 'undefined' || state.mobileMuted) return false;
+      const C = window.AudioContext || window.webkitAudioContext;
+      if(C && !state.audio){
+        state.audio = new C();
+      }
+      if(state.audio && !state.masterGain){
+        state.masterGain = state.audio.createGain();
+        state.masterGain.connect(state.audio.destination);
+      }
+      if(state.masterGain){
+        state.masterGain.gain.value = Math.max(0, Math.min(2, Number(state.volume)||1));
+      }
+      if(state.audio && state.audio.state === 'suspended'){
+        const p = state.audio.resume();
+        if(p && typeof p.catch === 'function') p.catch(()=>{});
+      }
+      state.audioUnlocked = true;
+      return !!state.audio && !!state.masterGain;
+    }catch(e){
+      console.error('[MBH ensureSeOnly]', e);
+      return false;
+    }
+  }
+
+  // 旧クリックアンロック関数は「SE経路だけ復旧」に変更。
+  // BGM再生、敵生成、ループ制御、ミュート変更は絶対にしない。
+  window.mbhUnlockAudioContextOnly0613 = ensureSeOnly;
+  window.mbhUnlockAudioContextOnly0614 = ensureSeOnly;
+  window.mbhUnlockSfx0615 = ensureSeOnly;
+
+  // 前回の削除でSEが起きなくなったため、クリック時はSE AudioContextのresumeだけ行う。
+  if(!window.__mbhSeOnlyClickUnlock0618){
+    window.__mbhSeOnlyClickUnlock0618 = true;
+    ['pointerdown','touchstart','click','keydown'].forEach(function(ev){
+      document.addEventListener(ev, function(){
+        if(typeof state !== 'undefined' && !state.mobileMuted) ensureSeOnly();
+      }, {capture:true, passive:true});
+    });
+  }
+
+  if(typeof playSfx === 'function' && !playSfx.__mbhSeFinal){
     const rawPlaySfx = playSfx;
-    playSfx = function(){ try{ return rawPlaySfx.apply(this, arguments); }catch(e){ console.error('[MBH playSfx protected]', e); } };
-    playSfx.__mbhClickStopFinal = true;
-  }
-  if(typeof playUiClick === 'function' && !playUiClick.__mbhClickStopFinal){
-    const rawPlayUiClick = playUiClick;
-    playUiClick = function(){ try{ return rawPlayUiClick.apply(this, arguments); }catch(e){ console.error('[MBH playUiClick protected]', e); } };
-    playUiClick.__mbhClickStopFinal = true;
-  }
-  if(typeof startAudio === 'function' && !startAudio.__mbhClickStopFinal){
-    const rawStartAudio = startAudio;
-    startAudio = function(){ try{ return rawStartAudio.apply(this, arguments); }catch(e){ console.error('[MBH startAudio protected]', e); if(typeof state!=='undefined') state.audioUnlocked=true; } };
-    startAudio.__mbhClickStopFinal = true;
+    playSfx = function(kind){
+      try{
+        ensureSeOnly();
+        return rawPlaySfx.apply(this, arguments);
+      }catch(e){
+        console.error('[MBH playSfx protected]', e);
+      }
+    };
+    playSfx.__mbhSeFinal = true;
   }
 
-  // requestAnimationFrameの戦闘ループを、クリック後に止まっても自動復帰させる保険。
+  if(typeof playUiClick === 'function' && !playUiClick.__mbhSeFinal){
+    const rawPlayUiClick = playUiClick;
+    playUiClick = function(){
+      try{
+        ensureSeOnly();
+        return rawPlayUiClick.apply(this, arguments);
+      }catch(e){
+        console.error('[MBH playUiClick protected]', e);
+      }
+    };
+    playUiClick.__mbhSeFinal = true;
+  }
+
+  if(typeof startAudio === 'function' && !startAudio.__mbhSeFinal){
+    const rawStartAudio = startAudio;
+    startAudio = function(){
+      try{
+        return rawStartAudio.apply(this, arguments);
+      }catch(e){
+        console.error('[MBH startAudio protected]', e);
+        ensureSeOnly();
+      }
+    };
+    startAudio.__mbhSeFinal = true;
+  }
+
+  // 戦闘ループの自動復帰保険は残すが、音声処理からは独立。
   if(!window.__mbhBattleWatch0618){
     window.__mbhBattleWatch0618 = true;
-    let lastEnemyHp = null;
     setInterval(function(){
       try{
         if(typeof state === 'undefined') return;
@@ -6391,14 +6450,9 @@ setTimeout(installHolyDebug066, 300);
           return;
         }
         if(state.enemy && !state.down && !state.defeatSequence && !state.deathDanceCutin && typeof loop === 'function'){
-          const now = performance.now ? performance.now() : Date.now();
-          if(!state.__mbhLastLoopKick || now - state.__mbhLastLoopKick > 1200){
-            state.__mbhLastLoopKick = now;
-            requestAnimationFrame(loop);
-          }
+          requestAnimationFrame(loop);
         }
-        lastEnemyHp = state.enemyHp;
       }catch(e){ console.error('[MBH battle watch]', e); }
-    }, 1000);
+    }, 1500);
   }
 })();
