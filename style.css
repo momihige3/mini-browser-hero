@@ -4315,9 +4315,9 @@ html[data-build-version="0.6.5"] body.mbh-legal-open #legalModal *{
 }
 
 
-/* MBH ver.0.6.12: PC status/equipment split recovery + mobile debug usability */
-html[data-build-version="0.6.12"] .hero-stats .status-layout,
-html[data-build-version="0.6.12"] .equip-panel .equip-layout,
+/* MBH ver.0.6.15: PC status/equipment split recovery + mobile debug usability */
+html[data-build-version="0.6.15"] .hero-stats .status-layout,
+html[data-build-version="0.6.15"] .equip-panel .equip-layout,
 .hero-stats .status-layout,
 .equip-panel .equip-layout{
   display:grid!important;
@@ -4329,50 +4329,50 @@ html[data-build-version="0.6.12"] .equip-panel .equip-layout,
   min-height:0!important;
   overflow:hidden!important;
 }
-html[data-build-version="0.6.12"] .status-left,
-html[data-build-version="0.6.12"] .status-right,
-html[data-build-version="0.6.12"] .equip-left,
-html[data-build-version="0.6.12"] .equip-right,
+html[data-build-version="0.6.15"] .status-left,
+html[data-build-version="0.6.15"] .status-right,
+html[data-build-version="0.6.15"] .equip-left,
+html[data-build-version="0.6.15"] .equip-right,
 .status-left,.status-right,.equip-left,.equip-right{
   min-width:0!important;
   min-height:0!important;
   overflow:hidden!important;
 }
-html[data-build-version="0.6.12"] .status-special-effects,
-html[data-build-version="0.6.12"] .equip-effect-totals,
-html[data-build-version="0.6.12"] .monster-records,
+html[data-build-version="0.6.15"] .status-special-effects,
+html[data-build-version="0.6.15"] .equip-effect-totals,
+html[data-build-version="0.6.15"] .monster-records,
 .status-special-effects,.equip-effect-totals,.monster-records{
   min-height:0!important;
   overflow:hidden!important;
 }
-html[data-build-version="0.6.12"] .effect-scroll,
-html[data-build-version="0.6.12"] .monster-record-list,
-html[data-build-version="0.6.12"] .equip-left .equip-list,
+html[data-build-version="0.6.15"] .effect-scroll,
+html[data-build-version="0.6.15"] .monster-record-list,
+html[data-build-version="0.6.15"] .equip-left .equip-list,
 .effect-scroll,.monster-record-list,.equip-left .equip-list{
   overflow:auto!important;
   min-height:0!important;
 }
-html[data-build-version="0.6.12"] .equip-effect-totals,
+html[data-build-version="0.6.15"] .equip-effect-totals,
 .equip-effect-totals{
   border-left:1px solid #513917!important;
   padding-left:10px!important;
 }
-html[data-build-version="0.6.12"] .monster-records,
+html[data-build-version="0.6.15"] .monster-records,
 .monster-records{
   border-top:0!important;
   margin-top:0!important;
   padding-top:0!important;
 }
 @media(max-width:760px){
-  html[data-build-version="0.6.12"] .hero-stats .status-layout,
-  html[data-build-version="0.6.12"] .equip-panel .equip-layout,
+  html[data-build-version="0.6.15"] .hero-stats .status-layout,
+  html[data-build-version="0.6.15"] .equip-panel .equip-layout,
   .hero-stats .status-layout,
   .equip-panel .equip-layout{
     grid-template-columns:1fr!important;
     overflow-y:auto!important;
     height:auto!important;
   }
-  html[data-build-version="0.6.12"] .equip-effect-totals,
+  html[data-build-version="0.6.15"] .equip-effect-totals,
   .equip-effect-totals{
     border-left:0!important;
     padding-left:0!important;
@@ -4411,3 +4411,127 @@ html[data-build-version="0.6.12"] .monster-records,
 .inventory-compare-col strong{display:block;color:#ffd76b;margin-bottom:4px;}
 .inventory-compare-col pre{white-space:pre-wrap;word-break:break-word;margin:0;font:inherit;font-size:12px;line-height:1.35;color:#f7ead0;max-height:180px;overflow:auto;}
 @media(max-width:760px){.inventory-compare-box{grid-template-columns:1fr!important}.inventory-compare-col pre{max-height:120px!important}}
+
+
+/* MBH ver.0.6.15: footer fixed to bottom / debug menu fits viewport */
+.side-panel > .legal-links.menu-footer,
+.side-panel .menu-footer{
+  grid-column:1 / -1!important;
+  align-self:end!important;
+  justify-self:stretch!important;
+  margin-top:auto!important;
+  flex:0 0 auto!important;
+  order:999!important;
+  position:relative!important;
+  bottom:auto!important;
+}
+@media (min-width:1280px) and (min-height:701px){
+  .side-panel{
+    grid-template-rows:minmax(0,1fr) auto!important;
+  }
+  .side-panel > .mobile-menu-tabs{grid-column:1 / -1!important;}
+  .side-panel > .menu-left{grid-column:1!important;grid-row:1!important;}
+  .side-panel > .menu-right{grid-column:2!important;grid-row:1!important;}
+  .side-panel > .legal-links.menu-footer{grid-column:1 / -1!important;grid-row:2!important;}
+}
+@media (max-width:1279px), (max-height:700px){
+  .side-panel.open{
+    display:flex!important;
+    flex-direction:column!important;
+  }
+  .side-panel.open .menu-footer{
+    margin-top:auto!important;
+    width:100%!important;
+  }
+}
+.debug-panel{
+  top:calc(var(--mbh-topbar-real-h, var(--mbh-topbar-h, 58px)) + 8px)!important;
+  bottom:8px!important;
+  max-height:calc(100dvh - var(--mbh-topbar-real-h, var(--mbh-topbar-h, 58px)) - 16px)!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  -webkit-overflow-scrolling:touch!important;
+  overscroll-behavior:contain!important;
+  padding-bottom:22px!important;
+}
+@media(max-width:760px), (max-height:700px){
+  .debug-panel{
+    left:8px!important;
+    right:8px!important;
+    width:auto!important;
+    top:calc(var(--mbh-topbar-real-h, var(--mbh-topbar-h, 58px)) + 8px)!important;
+    bottom:8px!important;
+    max-height:calc(100dvh - var(--mbh-topbar-real-h, var(--mbh-topbar-h, 58px)) - 16px)!important;
+  }
+}
+
+
+/* MBH ver.0.6.15: debug panel must never be clipped */
+#debugPanel.debug-panel:not(.hidden){
+  position:fixed!important;
+  top:8px!important;
+  bottom:8px!important;
+  right:8px!important;
+  left:auto!important;
+  width:min(380px, calc(100vw - 16px))!important;
+  max-height:none!important;
+  height:auto!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  -webkit-overflow-scrolling:touch!important;
+  overscroll-behavior:contain!important;
+  padding:10px 10px 54px!important;
+  z-index:99999!important;
+}
+#debugPanel.debug-panel:not(.hidden) button,
+#debugPanel.debug-panel:not(.hidden) label{
+  min-height:40px!important;
+  flex-shrink:0!important;
+}
+#debugPanel.debug-panel:not(.hidden) input[type="checkbox"]{
+  width:22px!important;
+  height:22px!important;
+  min-width:22px!important;
+}
+@media (max-width:760px), (max-height:700px), (pointer:coarse){
+  #debugPanel.debug-panel:not(.hidden){
+    left:8px!important;
+    right:8px!important;
+    top:8px!important;
+    bottom:8px!important;
+    width:auto!important;
+    max-height:none!important;
+    padding-bottom:70px!important;
+  }
+}
+
+/* MBH ver.0.6.15: debug menu never clips */
+.debug-panel{
+  position:fixed!important;
+  top:max(8px, calc(var(--mbh-topbar-real-h, 58px) + 8px))!important;
+  bottom:8px!important;
+  right:8px!important;
+  left:auto!important;
+  width:min(360px, calc(100vw - 16px))!important;
+  max-height:calc(100dvh - var(--mbh-topbar-real-h, 58px) - 16px)!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  overscroll-behavior:contain!important;
+  -webkit-overflow-scrolling:touch!important;
+  padding-bottom:18px!important;
+  z-index:20000!important;
+}
+@media(max-width:760px), (max-height:700px), (pointer:coarse){
+  .debug-panel{
+    left:8px!important;
+    right:8px!important;
+    top:max(8px, calc(var(--mbh-topbar-real-h, 58px) + 8px))!important;
+    bottom:8px!important;
+    width:auto!important;
+    max-width:calc(100vw - 16px)!important;
+    max-height:calc(100dvh - var(--mbh-topbar-real-h, 58px) - 16px)!important;
+    display:block!important;
+  }
+  .debug-panel.hidden{display:none!important;}
+  .debug-panel button,.debug-panel label{width:100%!important;min-height:38px!important;margin:0 0 7px!important;}
+}

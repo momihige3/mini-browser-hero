@@ -42,8 +42,8 @@ const DARK_SWORD_SAINT_CUTIN = {quote:'私を超えてみせろ。', img:'assets
 const DARK_SWORD_TECHNIQUE_CUTIN = {quote:'', img:'assets/cutin_dark_sword_technique.png'};
 const TENSEI_KNIGHT_CUTIN = {quote:'勇者の力、ここに覚醒する。', img:'assets/cutin_hero_awakening.png'};
 const HOLY_SWORD_RELEASE_CUTIN = {quote:'聖剣解放。すべてを砕く光となれ。', img:'assets/cutin_holy_sword_release.png'};
-const GAME_VERSION = (window.APP_VERSION || '0.6.12');
-window.GAME_VERSION = GAME_VERSION;
+const GAME_VERSION = '0.6.18';
+window.APP_VERSION='0.6.18'; window.GAME_VERSION='0.6.18';
 
 const DARK_SWORD_SAINT = {
   id:'dark_sword_saint', name:'暗黒剣聖', type:'裏ボス', img:'assets/enemy_dark_sword_saint.png', element:'dark',
@@ -1554,7 +1554,7 @@ function heroAttack(now){
   const skill = state.deathDance ? 'deathdance' : 'slash';
   els.heroCard.classList.remove('attack'); void els.heroCard.offsetWidth; els.heroCard.classList.add('attack');
   // v70: 攻撃開始時にも短い斬撃SEを鳴らし、自動攻撃でも確実に聞こえるようにする。
-  playSfx(skill==='deathdance'?'dance':'slash');
+  try{ playSfx(skill==='deathdance'?'dance':'slash'); }catch(_){ }
   setTimeout(()=>els.heroCard.classList.remove('attack'),360);
   const hits = skill==='deathdance' ? 3 : 1;
   for(let i=0;i<hits;i++) setTimeout(()=>applyHeroHit(skill), i*120);
@@ -1639,7 +1639,7 @@ function applyHeroHit(skill){
     }
     if(state.enemy?.bossBuff === 'spirit_king'){ addBurn('hero'); log('精霊王の炎が騎士に火傷を刻んだ。','danger'); }
   }
-  showFx(fx); playSfx(skill==='fire'?'fire':skill==='thunder'?'thunder':skill==='heavy'?'heavy':'slash');
+  showFx(fx); try{ playSfx(skill==='fire'?'fire':skill==='thunder'?'thunder':skill==='heavy'?'heavy':'slash'); }catch(_){ }
   // 炎斬り/雷撃は色違い斬撃1個だけ表示する。追加爆発・雷柱は出さない。
   if(skill==='heavy') { document.querySelector('.battle-panel')?.classList.add('shake'); setTimeout(()=>document.querySelector('.battle-panel')?.classList.remove('shake'),260); }
   if(absorbed){ showFloat(`吸収 +${dmg}`,'heal'); log(`${state.enemy.name} は火属性を吸収した！`,'danger'); }
@@ -2076,7 +2076,7 @@ function enemyDefeated(){
     state.hp = Math.min(maxHp(), state.hp + heal);
     if(state.hp > beforeHp){ showHeroFloat(`+${Math.floor(state.hp-beforeHp)}`, 'heal'); log(`師匠のアミュレット：撃破時HP${Math.floor(state.hp-beforeHp).toLocaleString()}回復。`,'good'); }
   }
-  log(`${e.name} を撃破！ 経験値+${gainXp}`,'good'); playSfx('win');
+  log(`${e.name} を撃破！ 経験値+${gainXp}`,'good'); try{ playSfx('win'); }catch(_){ }
   checkLevelUp(); renderAll(); scheduleSave();
   const nextDelay = state.pendingDarkSwordSaintDelay ? 5000 : 850;
   state.pendingDarkSwordSaintDelay = false;
@@ -2440,144 +2440,155 @@ function applyVolume(){
   updateBgmVolume();
 }
 
+
 function ensureSfxReady(){
   if(state.mobileMuted) return false;
   try{
     const C = window.AudioContext || window.webkitAudioContext;
     if(C && !state.audio){
       state.audio = new C();
+    }
+    if(state.audio && !state.masterGain){
       state.masterGain = state.audio.createGain();
       state.masterGain.connect(state.audio.destination);
-      applyVolume();
     }
     if(state.audio && state.audio.state === 'suspended'){
-      const p = state.audio.resume();
-      if(p && typeof p.then === 'function'){
-        p.then(()=>{ state.audioUnlocked = true; unlockSfxForIOS(); }).catch(()=>{});
-      }
+      try{
+        const p = state.audio.resume();
+        if(p && typeof p.catch === 'function') p.catch(()=>{});
+      }catch(_){}
     }
-    if(!state.audio || state.audio.state === 'running'){
-      state.audioUnlocked = true;
-      unlockSfxForIOS();
+    if(state.masterGain){
+      state.masterGain.gain.value = state.mobileMuted ? 0 : Math.max(0, Math.min(2, Number(state.volume)||1));
     }
-    return !!state.audio && !!state.masterGain && state.audio.state === 'running' && !state.mobileMuted;
-  }catch(e){
+    state.audioUnlocked = true;
+    return !!state.audio && !!state.masterGain && !state.mobileMuted;
+  }catch(_){
     return false;
   }
 }
 
 function tone(freq=440, dur=.08, type='sine', vol=.05, delay=0){
-  if(!state.audio || !state.masterGain || state.mobileMuted) return;
-  const ctx=state.audio;
-  if(ctx.state === 'suspended'){
-    try{ ctx.resume(); }catch(e){}
-  }
-  const o=ctx.createOscillator(), g=ctx.createGain();
-  o.type=type; o.frequency.value=freq; g.gain.value=0;
-  o.connect(g); g.connect(state.masterGain);
-  const t=ctx.currentTime + Math.max(0, delay);
-  g.gain.setValueAtTime(0.0001,t);
-  g.gain.linearRampToValueAtTime(vol,t+.008);
-  g.gain.exponentialRampToValueAtTime(.0001,t+Math.max(.025,dur));
-  o.start(t); o.stop(t+dur+.03);
+  try{
+    if(!ensureSfxReady()) return;
+    const ctx = state.audio;
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = type;
+    o.frequency.value = freq;
+    g.gain.value = 0.0001;
+    o.connect(g);
+    g.connect(state.masterGain);
+    const t = ctx.currentTime + Math.max(0, delay||0);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(Math.max(0.0001, vol||0.01), t + .008);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + Math.max(.025, dur||.05));
+    o.start(t);
+    o.stop(t + (dur||.05) + .03);
+  }catch(_){}
 }
 
 function noiseBurst(dur=.06, vol=.025, delay=0, filterFreq=1400){
-  if(!state.audio || !state.masterGain || state.mobileMuted) return;
-  const ctx=state.audio;
-  if(ctx.state === 'suspended'){
-    try{ ctx.resume(); }catch(e){}
-  }
-  const len=Math.max(1, Math.floor(ctx.sampleRate*dur));
-  const buffer=ctx.createBuffer(1,len,ctx.sampleRate);
-  const data=buffer.getChannelData(0);
-  for(let i=0;i<len;i++) data[i]=(Math.random()*2-1)*(1-i/len);
-  const src=ctx.createBufferSource();
-  const filter=ctx.createBiquadFilter();
-  const g=ctx.createGain();
-  filter.type='highpass'; filter.frequency.value=filterFreq;
-  g.gain.value=vol;
-  src.buffer=buffer;
-  src.connect(filter); filter.connect(g); g.connect(state.masterGain);
-  const t=ctx.currentTime + Math.max(0, delay);
-  src.start(t);
+  try{
+    if(!ensureSfxReady()) return;
+    const ctx = state.audio;
+    const len = Math.max(1, Math.floor(ctx.sampleRate * dur));
+    const buffer = ctx.createBuffer(1, len, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for(let i=0;i<len;i++) data[i] = (Math.random()*2-1) * (1-i/len);
+    const src = ctx.createBufferSource();
+    const filter = ctx.createBiquadFilter();
+    const g = ctx.createGain();
+    filter.type = 'highpass';
+    filter.frequency.value = filterFreq;
+    g.gain.value = vol;
+    src.buffer = buffer;
+    src.connect(filter);
+    filter.connect(g);
+    g.connect(state.masterGain);
+    src.start(ctx.currentTime + Math.max(0, delay||0));
+  }catch(_){}
 }
 
 const SFX_VOL = 0.5;
 const SFX_COMBAT_VOL = 0.25;
 function sv(v, kind){
-  const combatKinds = new Set(['slash','fire','thunder','heavy','hit','guard','dance']);
-  const rate = combatKinds.has(kind) ? SFX_COMBAT_VOL : SFX_VOL;
-  return Math.max(0, Math.min(1, v * rate));
+  try{
+    const combatKinds = new Set(['slash','fire','thunder','heavy','hit','guard','dance']);
+    const rate = combatKinds.has(kind) ? SFX_COMBAT_VOL : SFX_VOL;
+    return Math.max(0, Math.min(1, v * rate));
+  }catch(_){ return 0.05; }
 }
 
 function playSfx(kind){
-  resumeAudioContextForSfx();
-  if(!ensureSfxReady()) return;
-  // v73: BGMは5%。戦闘SEは常時25%、UI/演出SEは50%。
-  switch(kind){
-    case 'slash':
-      noiseBurst(.075, sv(.18, kind), 0, 1700);
-      tone(720,.065,'triangle',sv(.28, kind),0);
-      tone(1180,.055,'triangle',sv(.18, kind),.045);
-      break;
-    case 'fire':
-      noiseBurst(.14, sv(.18, kind), 0, 550);
-      tone(170,.18,'sawtooth',sv(.25, kind),0);
-      tone(420,.10,'sawtooth',sv(.16, kind),.055);
-      break;
-    case 'thunder':
-      noiseBurst(.09, sv(.20, kind),0,2200);
-      tone(95,.09,'square',sv(.24, kind),0);
-      tone(1480,.06,'square',sv(.18, kind),.045);
-      break;
-    case 'heavy':
-      noiseBurst(.13, sv(.24, kind),0,850);
-      tone(120,.20,'sawtooth',sv(.30, kind),0);
-      tone(70,.14,'square',sv(.18, kind),.08);
-      break;
-    case 'hit':
-      noiseBurst(.055,sv(.12, kind),0,700);
-      tone(170,.065,'square',sv(.18, kind),0);
-      break;
-    case 'guard':
-      tone(520,.08,'triangle',sv(.22, kind),0);
-      tone(390,.07,'triangle',sv(.16, kind),.045);
-      break;
-    case 'win':
-      tone(740,.11,'sine',sv(.18, kind),0);
-      tone(980,.13,'sine',sv(.16, kind),.09);
-      break;
-    case 'level':
-      tone(660,.11,'triangle',sv(.22, kind),0);
-      tone(880,.14,'triangle',sv(.20, kind),.09);
-      tone(1320,.17,'sine',sv(.16, kind),.18);
-      break;
-    case 'down':
-      tone(110,.28,'sawtooth',sv(.22, kind),0);
-      tone(80,.22,'sawtooth',sv(.16, kind),.12);
-      break;
-    case 'dance':
-      noiseBurst(.11,sv(.18, kind),0,1600);
-      tone(360,.18,'sawtooth',sv(.26, kind),0);
-      tone(720,.13,'triangle',sv(.18, kind),.08);
-      break;
-    case 'cutin':
-      noiseBurst(.12,sv(.26, kind),0,2500);
-      tone(960,.16,'sawtooth',sv(.34, kind),0);
-      tone(420,.18,'triangle',sv(.24, kind),.12);
-      tone(1280,.12,'sine',sv(.20, kind),.22);
-      break;
-    default:
-      tone(520,.055,'triangle',sv(.14, kind),0);
-  }
+  try{
+    if(!ensureSfxReady()) return;
+    switch(kind){
+      case 'slash':
+        noiseBurst(.075, sv(.18, kind), 0, 1700);
+        tone(720,.065,'triangle',sv(.28, kind),0);
+        tone(1180,.055,'triangle',sv(.18, kind),.045);
+        break;
+      case 'fire':
+        noiseBurst(.14, sv(.18, kind), 0, 550);
+        tone(170,.18,'sawtooth',sv(.25, kind),0);
+        tone(420,.10,'sawtooth',sv(.16, kind),.055);
+        break;
+      case 'thunder':
+        noiseBurst(.09, sv(.20, kind),0,2200);
+        tone(95,.09,'square',sv(.24, kind),0);
+        tone(1480,.06,'square',sv(.18, kind),.045);
+        break;
+      case 'heavy':
+        noiseBurst(.13, sv(.24, kind),0,850);
+        tone(120,.20,'sawtooth',sv(.30, kind),0);
+        tone(70,.14,'square',sv(.18, kind),.08);
+        break;
+      case 'hit':
+        noiseBurst(.055,sv(.12, kind),0,700);
+        tone(170,.065,'square',sv(.18, kind),0);
+        break;
+      case 'guard':
+        tone(520,.08,'triangle',sv(.22, kind),0);
+        tone(390,.07,'triangle',sv(.16, kind),.045);
+        break;
+      case 'win':
+        tone(740,.11,'sine',sv(.18, kind),0);
+        tone(980,.13,'sine',sv(.16, kind),.09);
+        break;
+      case 'level':
+        tone(660,.11,'triangle',sv(.22, kind),0);
+        tone(880,.14,'triangle',sv(.20, kind),.09);
+        tone(1320,.17,'sine',sv(.16, kind),.18);
+        break;
+      case 'down':
+        tone(110,.28,'sawtooth',sv(.22, kind),0);
+        tone(80,.22,'sawtooth',sv(.16, kind),.12);
+        break;
+      case 'dance':
+        noiseBurst(.11,sv(.18, kind),0,1600);
+        tone(360,.18,'sawtooth',sv(.26, kind),0);
+        tone(720,.13,'triangle',sv(.18, kind),.08);
+        break;
+      case 'cutin':
+        noiseBurst(.12,sv(.26, kind),0,2500);
+        tone(960,.16,'sawtooth',sv(.34, kind),0);
+        tone(420,.18,'triangle',sv(.24, kind),.12);
+        tone(1280,.12,'sine',sv(.20, kind),.22);
+        break;
+      default:
+        tone(520,.055,'triangle',sv(.14, kind),0);
+    }
+  }catch(_){}
 }
 
 function playUiClick(){
-  resumeAudioContextForSfx();
-  if(!ensureSfxReady()) return;
-  tone(520,.045,'triangle',sv(.12, 'ui'));
+  try{
+    if(!ensureSfxReady()) return;
+    tone(520,.045,'triangle',sv(.12, 'ui'));
+  }catch(_){}
 }
+
 function stopBgm(){
   // 旧オシレーターBGM用の停止処理。HTMLAudio BGMは止めない。
   if(state.bgmTimer){ clearInterval(state.bgmTimer); state.bgmTimer=null; }
@@ -3371,7 +3382,7 @@ init();
 /* MBH ver.0.6.5: clean menu controller. No redirect URL params. No BGM assets. */
 (function(){
   'use strict';
-  const BUILD='0.6.12';
+  const BUILD='0.6.18';
   const $=(s,r=document)=>r.querySelector(s);
   const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
   const safe=(fn)=>{ try{ return fn&&fn(); }catch(e){ console.error('[MBH0.6.5]', e); return null; } };
@@ -3572,7 +3583,7 @@ init();
   }
 
   function boot054(){
-    syncVersion054();
+    /* syncVersion removed */
     ensureBattleVisible054();
     ensureMenuDom054();
     bindMenu054();
@@ -3592,7 +3603,7 @@ init();
 /* MBH ver.0.6.5: single-click menu/debug stabilizer */
 (function(){
   'use strict';
-  const BUILD='0.6.12';
+  const BUILD='0.6.18';
   const $=(s,r=document)=>r.querySelector(s);
   const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
   const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.error('[MBH0.6.5]', e); return null; } };
@@ -3718,7 +3729,7 @@ init();
   }
 
   function boot055(){
-    syncVersion055();
+    /* syncVersion removed */
     ensureMenuDom055();
     bind055();
     setPage055((typeof state!=='undefined'&&state.menuPage)||'stats');
@@ -3740,7 +3751,7 @@ init();
 /* MBH ver.0.6.5: restore effect panels and sell EXP display */
 (function(){
   'use strict';
-  const BUILD='0.6.12';
+  const BUILD='0.6.18';
   const $=(s,r=document)=>r.querySelector(s);
   const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
   const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.error('[MBH0.6.5]', e); return null; } };
@@ -3871,7 +3882,7 @@ init();
     }
   }
   function boot056(){
-    syncVersion056();
+    /* syncVersion removed */
     hideHeaderMats056();
     patchFunctions056();
     ensureStatusHeight056();
@@ -3891,7 +3902,7 @@ init();
 /* MBH ver.0.6.5: mobile tap recovery + status detail outside-close */
 (function(){
   'use strict';
-  const BUILD='0.6.12';
+  const BUILD='0.6.18';
   const $=(s,r=document)=>r.querySelector(s);
   const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
   const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.error('[MBH0.6.5]', e); return null; } };
@@ -4006,7 +4017,7 @@ init();
   }
 
   function boot058(){
-    syncVersion058();
+    /* syncVersion removed */
     installStatusPanelOverride058();
     installOutsideClose058();
     installMobileButtonTap058();
@@ -4022,7 +4033,7 @@ init();
 /* MBH ver.0.6.5: inventory lock restore + slot filter fit + auto-lock valuables */
 (function(){
   'use strict';
-  const BUILD='0.6.12';
+  const BUILD='0.6.18';
   const $id=(id)=>document.getElementById(id);
   const $q=(s,r=document)=>r.querySelector(s);
   const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
@@ -4335,7 +4346,7 @@ init();
   }
 
   function patch059(){
-    syncVersion059();
+    /* syncVersion removed */
     normalizeLocks059();
     patchMakers059();
     window.showInventoryActionMenu=showInventoryActionMenu059;
@@ -4373,7 +4384,7 @@ init();
 /* MBH ver.0.6.5: inventory filter single-source cleanup */
 (function(){
   'use strict';
-  const BUILD='0.6.12';
+  const BUILD='0.6.18';
   const $=(id)=>document.getElementById(id);
   const $$=(sel,root=document)=>Array.from(root.querySelectorAll(sel));
   const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.error('[MBH0.6.5]', e); return null; } };
@@ -4397,7 +4408,7 @@ init();
     keep.innerHTML=labels.map(([v,t])=>`<button type="button" data-slot-filter="${v}" title="${v==='all'?'全て':v==='dark'?'闇装備':v}" class="${v===current?'active':''}">${t}</button>`).join('');
   }
   function boot060(){
-    syncVersion060();
+    /* syncVersion removed */
     removeDuplicateSlotFilters060();
     if(typeof renderInventory==='function') safe(()=>renderInventory());
     setTimeout(removeDuplicateSlotFilters060, 80);
@@ -4411,7 +4422,7 @@ init();
 /* ver0.6.5: debug enemy level +/-1,+/-10 and next specified boss buttons */
 (function(){
   'use strict';
-  const BUILD='0.6.12';
+  const BUILD='0.6.18';
   const $=(id)=>document.getElementById(id);
   const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.error('[MBH0.6.5]',e); return null; } };
 
@@ -4557,7 +4568,7 @@ init();
     document.head.appendChild(st);
   }
 
-  function boot061(){ syncVersion061(); installStyle061(); installDebug061(); }
+  function boot061(){ /* syncVersion removed */ installStyle061(); installDebug061(); }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot061,{once:true}); else setTimeout(boot061,0);
   window.addEventListener('load',()=>setTimeout(boot061,80),{once:true});
 })();
@@ -4566,7 +4577,7 @@ init();
 /* MBH ver.0.6.5: UI label, mobile audio background stop, invincible debug, dark grant repair, SP expbar */
 (function(){
   'use strict';
-  const BUILD='0.6.12';
+  const BUILD='0.6.18';
   const $=(id)=>document.getElementById(id);
   const $$=(sel,root=document)=>Array.from(root.querySelectorAll(sel));
   const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.error('[MBH0.6.5]',e); return null; } };
@@ -4869,7 +4880,7 @@ init();
   }
 
   function boot062(){
-    syncVersion062();
+    /* syncVersion removed */
     fixEquipLabels062();
     installMobileAudioGuard062();
     installInvincibleDebug062();
@@ -4898,7 +4909,7 @@ init();
 /* MBH ver.0.6.5: legal modal front-layer fix */
 (function(){
   'use strict';
-  const BUILD='0.6.12';
+  const BUILD='0.6.18';
   const $=(id)=>document.getElementById(id);
   function safe(fn){try{return fn&&fn();}catch(e){console.error('[MBH0.6.5 legal]', e);}}
   function setBuild(){
@@ -4936,7 +4947,7 @@ init();
     liftLegal();
   };
   function bind(){
-    setBuild();
+    /* setBuild removed */
     liftLegal();
     [['creditBtn','credit'],['termsBtn','terms'],['privacyBtn','privacy']].forEach(([id,type])=>{
       const b=$(id); if(!b || b.dataset.mbh064Legal==='1') return;
@@ -5130,7 +5141,7 @@ setTimeout(installHolyDebug066, 300);
 /* MBH ver.0.6.9: 天聖騎士HP10倍・カットイン画像表示修正・バフ一覧同期 */
 (function(){
   'use strict';
-  const BUILD='0.6.12';
+  const BUILD='0.6.18';
   const $id=(id)=>document.getElementById(id);
   const $$=(sel,root=document)=>Array.from(root.querySelectorAll(sel));
   const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.error('[MBH0.6.9]', e); return null; } };
@@ -5262,20 +5273,20 @@ setTimeout(installHolyDebug066, 300);
   }
 
   function boot069(){
-    syncVersion069();
+    /* syncVersion removed */
     ensureEnemyTenseiBadges069();
     safe(()=>{ if(typeof renderStatusLists==='function') renderStatusLists(); });
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', boot069, {once:true}); else setTimeout(boot069, 0);
   window.addEventListener('load', ()=>setTimeout(boot069, 80), {once:true});
-  setInterval(syncVersion069, 1000);
+  /* version interval removed */
 })();
 
 
 /* MBH ver.0.6.11: 天聖騎士 次敵予約・覚醒吸収・聖剣解放カウント非表示・闇装備名補正 */
 (function(){
   'use strict';
-  const BUILD='0.6.12';
+  const BUILD='0.6.18';
   const $id=(id)=>document.getElementById(id);
   const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.error('[MBH0.6.11]', e); return null; } };
 
@@ -5386,17 +5397,17 @@ setTimeout(installHolyDebug066, 300);
     statusTooltipHtml.__mbh0610Wrapped=true;
   }
 
-  function boot0610(){ syncVersion0610(); bindTenseiButton0610(); normalizeAllDarkNames0610(); cleanHolyReleaseBadges0610(); safe(()=>renderAll()); safe(()=>scheduleSave()); }
+  function boot0610(){ /* syncVersion removed */ bindTenseiButton0610(); normalizeAllDarkNames0610(); cleanHolyReleaseBadges0610(); safe(()=>renderAll()); safe(()=>scheduleSave()); }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', boot0610, {once:true}); else setTimeout(boot0610,0);
   window.addEventListener('load', ()=>setTimeout(boot0610,120), {once:true});
-  setInterval(()=>{ syncVersion0610(); bindTenseiButton0610(); cleanHolyReleaseBadges0610(); }, 1000);
+  setInterval(()=>{ /* syncVersion removed */ bindTenseiButton0610(); cleanHolyReleaseBadges0610(); }, 1000);
 })();
 
 
 /* MBH ver.0.6.11: SE復旧・天聖騎士調整・SP操作改善・装備比較強化 */
 (function(){
   'use strict';
-  const BUILD='0.6.12';
+  const BUILD='0.6.18';
   const $id=(id)=>document.getElementById(id);
   const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.error('[MBH0.6.11]', e); return null; } };
   function syncVersion0611(){
@@ -5532,18 +5543,18 @@ setTimeout(installHolyDebug066, 300);
   }
   try{ window.showInventoryActionMenu=showInventoryActionMenu0611; showInventoryActionMenu=showInventoryActionMenu0611; }catch(e){ window.showInventoryActionMenu=showInventoryActionMenu0611; }
 
-  function boot0611(){ syncVersion0611(); rebindGrantButtons0611(); installCheckboxFix0611(); cleanHolyReleaseBadges0611(); safe(()=>renderAll()); }
+  function boot0611(){ /* syncVersion removed */ rebindGrantButtons0611(); installCheckboxFix0611(); cleanHolyReleaseBadges0611(); safe(()=>renderAll()); }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', boot0611, {once:true}); else setTimeout(boot0611,0);
   window.addEventListener('load', ()=>setTimeout(boot0611,120), {once:true});
-  setInterval(()=>{ syncVersion0611(); rebindGrantButtons0611(); installCheckboxFix0611(); cleanHolyReleaseBadges0611(); }, 1000);
+  setInterval(()=>{ /* syncVersion removed */ rebindGrantButtons0611(); installCheckboxFix0611(); cleanHolyReleaseBadges0611(); }, 1000);
 })();
 
 
-/* MBH ver.0.6.12: version lock / layout recovery / tensei final fixes */
+/* MBH ver.0.6.14: version lock / layout recovery / tensei final fixes */
 (function(){
   'use strict';
-  const BUILD='0.6.12';
-  const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.error('[MBH0.6.12]', e); return null; } };
+  const BUILD='0.6.18';
+  const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.error('[MBH0.6.14]', e); return null; } };
   const byId=(id)=>document.getElementById(id);
 
   function syncVersion0612(){
@@ -5672,9 +5683,686 @@ setTimeout(installHolyDebug066, 300);
   }
 
   function boot0612(){
-    syncVersion0612(); bindTenseiButton0612(); bindGrantButtons0612(); installCheckboxFix0612(); cleanHolyReleaseBadges0612(); fixCurrentTenseiHp0612(); safe(()=>renderAll());
+    /* syncVersion removed */ bindTenseiButton0612(); bindGrantButtons0612(); installCheckboxFix0612(); cleanHolyReleaseBadges0612(); fixCurrentTenseiHp0612(); safe(()=>renderAll());
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', boot0612, {once:true}); else setTimeout(boot0612,0);
   window.addEventListener('load', ()=>setTimeout(boot0612,120), {once:true});
   setInterval(boot0612, 2500);
+})();
+
+
+/* MBH ver.0.6.14: footer restore / stable audio / debug viewport fix */
+(function(){
+  'use strict';
+  const BUILD='0.6.18';
+  const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.error('[MBH0.6.14]', e); return null; } };
+  function syncVersion0613(){
+    window.APP_VERSION=BUILD; window.GAME_VERSION=BUILD;
+    if(document.documentElement){ document.documentElement.dataset.buildVersion=BUILD; document.documentElement.dataset.buildDate='2026-06-20'; }
+    document.querySelectorAll('.build-version').forEach(el=>{ el.textContent='ver.'+BUILD; });
+    document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent='Build: ver.'+BUILD+' debug'; });
+    document.querySelectorAll('.debug-trace-title').forEach(el=>{ el.textContent='進行デバッグログ ver.'+BUILD; });
+  }
+
+  function setTopbarHeightVar0613(){
+    const top=document.querySelector('.topbar');
+    if(!top) return;
+    const h=Math.ceil(top.getBoundingClientRect().height || 58);
+    document.documentElement.style.setProperty('--mbh-topbar-real-h', h+'px');
+  }
+
+  // 汎用クリックでBGMを頭出ししないため、AudioContextの解除だけを行う。
+  window.mbhUnlockAudioContextOnly0613=function(){
+    safe(()=>{
+      const C=window.AudioContext||window.webkitAudioContext;
+      if(C && !state.audio){
+        state.audio=new C();
+        state.masterGain=state.audio.createGain();
+        state.masterGain.connect(state.audio.destination);
+        if(typeof applyVolume==='function') applyVolume();
+      }
+      if(typeof ensureBgmAudio==='function') ensureBgmAudio();
+      if(state.audio && state.audio.state==='suspended'){
+        const p=state.audio.resume();
+        if(p && typeof p.then==='function') p.then(()=>{ state.audioUnlocked=true; }).catch(()=>{});
+      }else{
+        state.audioUnlocked=true;
+      }
+    });
+  };
+
+  if(typeof startAudio==='function' && !startAudio.__mbh0613Stable){
+    startAudio=function(){
+      try{
+        const C=window.AudioContext||window.webkitAudioContext;
+        if(C && !state.audio){
+          state.audio=new C();
+          state.masterGain=state.audio.createGain();
+          state.masterGain.connect(state.audio.destination);
+          if(typeof applyVolume==='function') applyVolume();
+        }
+        if(typeof ensureBgmAudio==='function') ensureBgmAudio();
+        const unlock=()=>{
+          safe(()=>{ if(typeof primeAudio==='function') primeAudio(); });
+          state.audioUnlocked=!state.audio || state.audio.state==='running';
+          safe(()=>{ if(!state.mobileMuted && typeof unlockSfxForIOS==='function') unlockSfxForIOS(); });
+          const hint=document.getElementById('audioHint'); if(hint) hint.classList.add('hidden');
+          // ここではBGM再生を呼ばない。ミュート解除・戦闘状態変更側だけで再生する。
+        };
+        if(state.audio && state.audio.state==='suspended'){
+          const p=state.audio.resume();
+          if(p && typeof p.then==='function') p.then(unlock).catch(()=>{ state.audioUnlocked=false; });
+          else unlock();
+        }else unlock();
+      }catch(e){ state.audioUnlocked=false; console.warn(e); }
+    };
+    startAudio.__mbh0613Stable=true;
+  }
+
+  function targetBgmForMode0613(mode){
+    if(typeof ensureBgmAudio==='function') ensureBgmAudio();
+    if(mode==='dance') return state.swordDanceBgm;
+    if(mode==='dark_sword_saint') return state.darkSwordSaintBgm;
+    if(mode==='tensei_knight') return state.tenseiKnightBgm;
+    if(mode==='boss') return state.bossBgm;
+    return state.normalBgm;
+  }
+  function pauseBgmExcept0613(target){
+    [state.normalBgm,state.swordDanceBgm,state.darkSwordSaintBgm,state.tenseiKnightBgm,state.bossBgm].forEach(a=>{
+      if(a && a!==target){ try{ a.pause(); }catch(_){} }
+    });
+    if(state.darkSwordSaintVoice){ try{ state.darkSwordSaintVoice.pause(); state.darkSwordSaintVoice.currentTime=0; }catch(_){} }
+  }
+
+  if(typeof playBgm==='function' && !playBgm.__mbh0613Stable){
+    playBgm=function(){
+      if(!state.audioUnlocked || state.mobileMuted) return;
+      if(typeof ensureBgmAudio==='function') ensureBgmAudio();
+      if(typeof updateBgmVolume==='function') updateBgmVolume();
+      const mode=state.bgmMode || 'normal';
+      const target=targetBgmForMode0613(mode);
+      if(!target) return;
+      pauseBgmExcept0613(target);
+      // 同じBGMが再生中なら何もしない。これでクリック時の先頭戻りを止める。
+      if(!target.paused && !target.ended) return;
+      if(target.ended){ try{ target.currentTime=0; }catch(_){} }
+      if(typeof safePlayAudio==='function') safePlayAudio(target); else safe(()=>target.play());
+    };
+    playBgm.__mbh0613Stable=true;
+  }
+
+  if(typeof setBgmMode==='function' && !setBgmMode.__mbh0613Stable){
+    setBgmMode=function(mode){
+      const next=mode || 'normal';
+      const changed=state.bgmMode!==next;
+      state.bgmMode=next;
+      if(!state.audioUnlocked || state.mobileMuted) return;
+      if(changed || !targetBgmForMode0613(next) || targetBgmForMode0613(next).paused) playBgm();
+    };
+    setBgmMode.__mbh0613Stable=true;
+  }
+
+  if(typeof setMobileMuted==='function' && !setMobileMuted.__mbh0613Stable){
+    setMobileMuted=function(flag){
+      state.mobileMuted=!!flag;
+      if(typeof applyVolume==='function') applyVolume();
+      if(typeof updateMuteButton==='function') updateMuteButton();
+      if(state.mobileMuted){
+        if(typeof stopAllAudioForMute==='function') stopAllAudioForMute();
+      }else{
+        startAudio();
+        state.audioUnlocked=true;
+        playBgm();
+      }
+      if(typeof scheduleSave==='function') scheduleSave();
+    };
+    setMobileMuted.__mbh0613Stable=true;
+  }
+
+  // 0.6.11の汎用操作アンロックがBGM再生まで進まないよう、後段で再度安定化。
+  ['pointerdown','touchstart','click','keydown'].forEach(ev=>{
+    document.addEventListener(ev,()=>{
+      if(state && !state.mobileMuted) window.mbhUnlockAudioContextOnly0613();
+    },{capture:true,passive:true});
+  });
+
+  function boot0613(){
+    /* syncVersion removed */
+    setTopbarHeightVar0613();
+    safe(()=>{ if(typeof renderStatusLists==='function') renderStatusLists(); });
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', boot0613, {once:true}); else setTimeout(boot0613,0);
+  window.addEventListener('load',()=>setTimeout(boot0613,120),{once:true});
+  window.addEventListener('resize',setTopbarHeightVar0613);
+  /* version interval removed */
+})();
+
+
+/* MBH ver.0.6.14b: hard audio/debug repair */
+(function(){
+  'use strict';
+  const BUILD='0.6.18';
+  const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.error('[MBH0.6.14b]', e); return null; } };
+  function syncVersion0614b(){
+    window.APP_VERSION=BUILD; window.GAME_VERSION=BUILD;
+    if(document.documentElement){ document.documentElement.dataset.buildVersion=BUILD; document.documentElement.dataset.buildDate='2026-06-20'; }
+    document.querySelectorAll('.build-version').forEach(el=>{ el.textContent='ver.'+BUILD; });
+    document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent='Build: ver.'+BUILD+' debug'; });
+    document.querySelectorAll('.debug-trace-title').forEach(el=>{ el.textContent='進行デバッグログ ver.'+BUILD; });
+  }
+  function ensureAudioCtx0614b(){
+    if(state.mobileMuted) return false;
+    try{
+      const C=window.AudioContext||window.webkitAudioContext;
+      if(C && !state.audio){
+        state.audio=new C();
+        state.masterGain=state.audio.createGain();
+        state.masterGain.connect(state.audio.destination);
+      }
+      if(typeof applyVolume==='function') applyVolume();
+      if(typeof ensureBgmAudio==='function') ensureBgmAudio();
+      if(state.audio && state.audio.state==='suspended'){
+        const p=state.audio.resume();
+        if(p && typeof p.then==='function') p.then(()=>{ state.audioUnlocked=true; }).catch(()=>{});
+      }
+      if(!state.audio || state.audio.state==='running') state.audioUnlocked=true;
+      return !state.audio || state.audio.state==='running';
+    }catch(e){ return false; }
+  }
+  function targetBgm0614b(mode){
+    safe(()=>{ if(typeof ensureBgmAudio==='function') ensureBgmAudio(); });
+    if(mode==='dance') return state.swordDanceBgm;
+    if(mode==='dark_sword_saint') return state.darkSwordSaintBgm;
+    if(mode==='tensei_knight') return state.tenseiKnightBgm;
+    if(mode==='boss') return state.bossBgm;
+    return state.normalBgm;
+  }
+  function mode0614b(mode){
+    if((state.deathDance || (state.deathDanceCutin && !state.darkSwordCutinActive)) && mode !== 'dance') return 'dance';
+    return mode || 'normal';
+  }
+  function allBgm0614b(){
+    safe(()=>{ if(typeof ensureBgmAudio==='function') ensureBgmAudio(); });
+    return [state.normalBgm,state.swordDanceBgm,state.darkSwordSaintBgm,state.tenseiKnightBgm,state.bossBgm].filter(Boolean);
+  }
+  function pauseExcept0614b(target){
+    allBgm0614b().forEach(a=>{ if(a && a!==target && !a.paused){ try{ a.pause(); }catch(_){} } });
+    if(state.darkSwordSaintVoice){ try{ state.darkSwordSaintVoice.pause(); state.darkSwordSaintVoice.currentTime=0; }catch(_){} }
+  }
+  function playNoReset0614b(a){
+    if(!a || state.mobileMuted) return;
+    try{ const p=a.play(); if(p && typeof p.then==='function') p.then(()=>{ state.audioUnlocked=true; }).catch(()=>{}); }catch(_){}
+  }
+
+  window.mbhUnlockAudioContextOnly0614=function(){ ensureAudioCtx0614b(); };
+  window.mbhUnlockAudioContextOnly0613=window.mbhUnlockAudioContextOnly0614;
+  startAudio=function(){ ensureAudioCtx0614b(); const hint=document.getElementById('audioHint'); if(hint) hint.classList.add('hidden'); };
+  ensureSfxReady=function(){ return !state.mobileMuted && ensureAudioCtx0614b(); };
+  setBgmMode=function(mode){
+    const requested=mode || 'normal';
+    const next=mode0614b(requested);
+    if(next==='dance' && requested!=='dance') state.__mbhPendingBgmMode=requested;
+    const changed=state.bgmMode!==next;
+    state.bgmMode=next;
+    if(!state.audioUnlocked || state.mobileMuted) return;
+    const target=targetBgm0614b(next);
+    if(changed || !target || target.paused || target.ended) playBgm();
+  };
+  playBgm=function(){
+    if(state.mobileMuted) return;
+    ensureAudioCtx0614b();
+    if(!state.audioUnlocked) return;
+    if(typeof updateBgmVolume==='function') updateBgmVolume();
+    const mode=mode0614b(state.bgmMode || 'normal');
+    state.bgmMode=mode;
+    const target=targetBgm0614b(mode);
+    if(!target) return;
+    pauseExcept0614b(target);
+    if(!target.paused && !target.ended) return;
+    if(target.ended){ try{ target.currentTime=0; }catch(_){} }
+    playNoReset0614b(target);
+  };
+  stopAllAudioForMute=function(){
+    safe(()=>{ if(typeof stopBgm==='function') stopBgm(); });
+    allBgm0614b().forEach(a=>{ try{ a.pause(); }catch(_){} });
+    if(state.darkSwordSaintVoice){ try{ state.darkSwordSaintVoice.pause(); state.darkSwordSaintVoice.currentTime=0; }catch(_){} }
+    if(state.masterGain) state.masterGain.gain.value=0;
+    if(state.audio && state.audio.state==='running'){ try{ state.audio.suspend(); }catch(_){} }
+  };
+  setMobileMuted=function(flag){
+    state.mobileMuted=!!flag;
+    if(typeof applyVolume==='function') applyVolume();
+    if(typeof updateMuteButton==='function') updateMuteButton();
+    if(state.mobileMuted) stopAllAudioForMute();
+    else { ensureAudioCtx0614b(); state.audioUnlocked=true; playBgm(); }
+    if(typeof scheduleSave==='function') scheduleSave();
+  };
+  ['pointerdown','touchstart','click','keydown'].forEach(ev=>{
+    document.addEventListener(ev,()=>{ if(state && !state.mobileMuted) ensureAudioCtx0614b(); },{capture:true,passive:true});
+  });
+  if(typeof endDeathDance==='function' && !endDeathDance.__mbh0614bWrapped){
+    const old=endDeathDance;
+    endDeathDance=function(){
+      const ret=old.apply(this, arguments);
+      if(!state.deathDance && !state.deathDanceCutin){
+        const pending=state.__mbhPendingBgmMode; state.__mbhPendingBgmMode=null;
+        if(pending) setBgmMode(pending);
+      }
+      return ret;
+    };
+    endDeathDance.__mbh0614bWrapped=true;
+  }
+  function setTopbarVar0614b(){
+    const top=document.querySelector('.topbar');
+    const h=Math.ceil(top?.getBoundingClientRect?.().height || 58);
+    document.documentElement.style.setProperty('--mbh-topbar-real-h', h+'px');
+  }
+  function boot(){ syncVersion0614b(); setTopbarVar0614b(); }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', boot, {once:true}); else setTimeout(boot,0);
+  window.addEventListener('load',()=>setTimeout(boot,100),{once:true});
+  window.addEventListener('resize',setTopbarVar0614b);
+  /* version interval removed */
+})();
+
+/* MBH ver.0.6.18: hard SE isolation + death dance BGM return */
+(function(){
+  'use strict';
+  const BUILD='0.6.18';
+  const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.error('[MBH0.6.18]', e); return null; } };
+  function syncVersion0615(){
+    window.APP_VERSION=BUILD; window.GAME_VERSION=BUILD;
+    if(document.documentElement){ document.documentElement.dataset.buildVersion=BUILD; document.documentElement.dataset.buildDate='2026-06-20'; }
+    document.querySelectorAll('.build-version').forEach(el=>{ el.textContent='ver.'+BUILD; });
+    document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent='Build: ver.'+BUILD+' debug'; });
+    document.querySelectorAll('.debug-trace-title').forEach(el=>{ el.textContent='進行デバッグログ ver.'+BUILD; });
+  }
+
+  function ensureSfxCtx0615(){
+    if(!state || state.mobileMuted) return false;
+    try{
+      const C=window.AudioContext||window.webkitAudioContext;
+      if(C && !state.sfxAudio){
+        state.sfxAudio=new C();
+        state.sfxGain=state.sfxAudio.createGain();
+        state.sfxGain.connect(state.sfxAudio.destination);
+      }
+      if(state.sfxGain){
+        const v=Math.max(0, Math.min(2, Number(state.volume ?? 1)));
+        state.sfxGain.gain.value = state.mobileMuted ? 0 : v;
+      }
+      if(state.sfxAudio && state.sfxAudio.state==='suspended'){
+        const p=state.sfxAudio.resume();
+        if(p && typeof p.then==='function') p.then(()=>{ state.sfxUnlocked=true; }).catch(()=>{});
+      }
+      if(!state.sfxAudio || state.sfxAudio.state==='running') state.sfxUnlocked=true;
+      return !!state.sfxAudio && state.sfxAudio.state==='running' && !!state.sfxGain && !state.mobileMuted;
+    }catch(e){ return false; }
+  }
+
+  function ensureBgmCtxOnly0615(){
+    if(!state || state.mobileMuted) return false;
+    safe(()=>{ if(typeof ensureBgmAudio==='function') ensureBgmAudio(); });
+    safe(()=>{ if(typeof updateBgmVolume==='function') updateBgmVolume(); });
+    try{
+      const C=window.AudioContext||window.webkitAudioContext;
+      if(C && !state.audio){
+        state.audio=new C();
+        state.masterGain=state.audio.createGain();
+        state.masterGain.connect(state.audio.destination);
+      }
+      if(state.masterGain){ state.masterGain.gain.value = state.mobileMuted ? 0 : Math.max(0, Math.min(2, Number(state.volume ?? 1))); }
+      if(state.audio && state.audio.state==='suspended'){
+        const p=state.audio.resume();
+        if(p && typeof p.then==='function') p.then(()=>{ state.audioUnlocked=true; }).catch(()=>{});
+      }
+      if(!state.audio || state.audio.state==='running') state.audioUnlocked=true;
+      return !state.audio || state.audio.state==='running';
+    }catch(e){ return false; }
+  }
+
+  window.mbhUnlockSfx0615=function(){ ensureSfxCtx0615(); };
+  window.mbhUnlockAudioContextOnly0614=function(){ ensureBgmCtxOnly0615(); ensureSfxCtx0615(); };
+  window.mbhUnlockAudioContextOnly0613=window.mbhUnlockAudioContextOnly0614;
+
+  ensureSfxReady=function(){ return ensureSfxCtx0615(); };
+  startAudio=function(){
+    ensureBgmCtxOnly0615();
+    ensureSfxCtx0615();
+    const hint=document.getElementById('audioHint'); if(hint) hint.classList.add('hidden');
+  };
+
+  // SEはBGM用AudioContextから完全分離。どこかをクリックしてもBGM処理に巻き込まれて止まらない。
+  tone=function(freq=440, dur=.08, type='sine', vol=.05, delay=0){
+    if(!ensureSfxCtx0615()) return;
+    const ctx=state.sfxAudio, out=state.sfxGain;
+    const o=ctx.createOscillator(), g=ctx.createGain();
+    o.type=type; o.frequency.value=freq; g.gain.value=0;
+    o.connect(g); g.connect(out);
+    const t=ctx.currentTime + Math.max(0, delay);
+    const volume=Math.max(0.0001, Math.min(1, Number(vol)||0.0001));
+    g.gain.setValueAtTime(0.0001,t);
+    g.gain.linearRampToValueAtTime(volume,t+.008);
+    g.gain.exponentialRampToValueAtTime(.0001,t+Math.max(.025,dur));
+    o.start(t); o.stop(t+dur+.03);
+  };
+  noiseBurst=function(dur=.06, vol=.025, delay=0, filterFreq=1400){
+    if(!ensureSfxCtx0615()) return;
+    const ctx=state.sfxAudio, out=state.sfxGain;
+    const len=Math.max(1, Math.floor(ctx.sampleRate*dur));
+    const buffer=ctx.createBuffer(1,len,ctx.sampleRate);
+    const data=buffer.getChannelData(0);
+    for(let i=0;i<len;i++) data[i]=(Math.random()*2-1)*(1-i/len);
+    const src=ctx.createBufferSource();
+    const filter=ctx.createBiquadFilter();
+    const g=ctx.createGain();
+    filter.type='highpass'; filter.frequency.value=filterFreq;
+    g.gain.value=Math.max(0, Math.min(1, Number(vol)||0));
+    src.buffer=buffer;
+    src.connect(filter); filter.connect(g); g.connect(out);
+    src.start(ctx.currentTime + Math.max(0, delay));
+  };
+  playUiClick=function(){
+    if(!ensureSfxCtx0615()) return;
+    tone(520,.055,'triangle',Math.max(0.04, (typeof sv==='function' ? sv(.18,'ui') : .09)),0);
+  };
+
+  const oldApplyVolume=typeof applyVolume==='function' ? applyVolume : null;
+  applyVolume=function(){
+    if(oldApplyVolume) safe(()=>oldApplyVolume());
+    if(state?.sfxGain){ state.sfxGain.gain.value = state.mobileMuted ? 0 : Math.max(0, Math.min(2, Number(state.volume ?? 1))); }
+  };
+
+  const oldStopMute=typeof stopAllAudioForMute==='function' ? stopAllAudioForMute : null;
+  stopAllAudioForMute=function(){
+    if(oldStopMute) safe(()=>oldStopMute());
+    if(state?.sfxGain) state.sfxGain.gain.value=0;
+    if(state?.sfxAudio && state.sfxAudio.state==='running') safe(()=>state.sfxAudio.suspend());
+  };
+
+  const oldSetMobileMuted=typeof setMobileMuted==='function' ? setMobileMuted : null;
+  setMobileMuted=function(flag){
+    state.mobileMuted=!!flag;
+    if(typeof updateMuteButton==='function') updateMuteButton();
+    if(state.mobileMuted){
+      stopAllAudioForMute();
+    }else{
+      ensureBgmCtxOnly0615();
+      ensureSfxCtx0615();
+      state.audioUnlocked=true; state.sfxUnlocked=true;
+      if(typeof applyVolume==='function') applyVolume();
+      if(typeof playBgm==='function') playBgm();
+      // ミュート解除が成功したことを耳で確認できる短いSE。
+      setTimeout(()=>{ playUiClick(); }, 0);
+    }
+    if(typeof scheduleSave==='function') scheduleSave();
+  };
+
+  function battleBgmMode0615(){
+    if(typeof isTenseiKnight==='function' && isTenseiKnight() && state.enemyHp>0) return 'tensei_knight';
+    if(typeof isDarkSwordSaint==='function' && isDarkSwordSaint() && state.enemyHp>0) return 'dark_sword_saint';
+    if(state.enemy && state.enemy.type==='ボス' && state.enemyHp>0) return 'boss';
+    return 'normal';
+  }
+
+  if(typeof endDeathDance==='function'){
+    endDeathDance=function(){
+      state.deathDance=false;
+      safe(()=>els.heroCard.classList.remove('deathdance'));
+      safe(()=>els.deathAura.classList.add('hidden'));
+      safe(()=>els.deathDanceStatus.classList.add('hidden'));
+      safe(()=>renderStatusLists());
+      setBgmMode(battleBgmMode0615());
+      safe(()=>banner('死線の剣舞 終了'));
+      safe(()=>log('死線の剣舞が終了。','skilllog'));
+    };
+  }
+
+  // ユーザー操作ではSEの解除だけ行う。BGMを頭出ししない。
+  ['pointerdown','touchstart','click','keydown'].forEach(ev=>{
+    document.addEventListener(ev,()=>{ if(state && !state.mobileMuted) ensureSfxCtx0615(); },{capture:true,passive:true});
+  });
+
+  function boot(){ /* syncVersion removed */ if(!state.mobileMuted) { ensureBgmCtxOnly0615(); ensureSfxCtx0615(); } }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', boot, {once:true}); else setTimeout(boot,0);
+  window.addEventListener('load',()=>setTimeout(boot,100),{once:true});
+  /* version interval removed */
+})();
+
+
+/* MBH ver.0.6.18: SE hard fix - no AudioContext, no state.sfx, no masterGain */
+(function(){
+  'use strict';
+  const BUILD='0.6.18';
+  const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.error('[MBH0.6.18]', e); return null; } };
+
+  function syncVersion0618(){
+    window.APP_VERSION=BUILD;
+    window.GAME_VERSION=BUILD;
+    if(document.documentElement){
+      document.documentElement.dataset.buildVersion=BUILD;
+      document.documentElement.dataset.buildDate='2026-06-20';
+    }
+    document.querySelectorAll('.build-version').forEach(el=>{ el.textContent='ver.'+BUILD; });
+    document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent='Build: ver.'+BUILD+' debug'; });
+    document.querySelectorAll('.debug-trace-title').forEach(el=>{ el.textContent='進行デバッグログ ver.'+BUILD; });
+  }
+
+  const SE = window.__mbhSe0618 || (window.__mbhSe0618 = {
+    enabled:false,
+    unlocked:false,
+    urls:{},
+    pools:{},
+    last:{},
+  });
+
+  function seVolume0618(kind){
+    const base = Math.max(0, Math.min(2, Number((typeof state!=='undefined' && state.volume != null) ? state.volume : 1)));
+    const combat = new Set(['slash','fire','thunder','heavy','hit','guard','dance','cutin','down']);
+    return Math.max(0, Math.min(1, base * (combat.has(kind) ? 0.22 : 0.45)));
+  }
+
+  function wavUrl0618(kind){
+    kind = String(kind || 'ui');
+    if(SE.urls[kind]) return SE.urls[kind];
+
+    const sr = 22050;
+    const defs = {
+      ui:[[520,.045,.18,'tri',0],[760,.035,.10,'sin',.03]],
+      slash:[[680,.055,.18,'tri',0],[1180,.045,.10,'tri',.035],['noise',.055,.10,0]],
+      fire:[[160,.14,.16,'saw',0],[420,.08,.09,'saw',.045],['noise',.12,.10,0]],
+      thunder:[[95,.07,.16,'sqr',0],[1480,.045,.12,'sqr',.035],['noise',.075,.13,0]],
+      heavy:[[120,.17,.18,'saw',0],[70,.10,.10,'sqr',.075],['noise',.12,.12,0]],
+      hit:[[170,.055,.13,'sqr',0],['noise',.045,.08,0]],
+      guard:[[520,.07,.16,'tri',0],[390,.06,.10,'tri',.04]],
+      win:[[740,.10,.13,'sin',0],[980,.12,.11,'sin',.08]],
+      level:[[660,.10,.16,'tri',0],[880,.12,.14,'tri',.08],[1320,.14,.10,'sin',.16]],
+      down:[[110,.24,.16,'saw',0],[80,.18,.11,'saw',.10]],
+      dance:[[360,.16,.18,'saw',0],[720,.11,.10,'tri',.07],['noise',.08,.10,0]],
+      cutin:[[960,.14,.20,'saw',0],[420,.16,.14,'tri',.10],[1280,.10,.10,'sin',.20],['noise',.10,.14,0]],
+    };
+    const spec = defs[kind] || defs.ui;
+    let total = 0.12;
+    for(const s of spec){
+      const delay = Number(s[4] || s[3] || 0);
+      const dur = Number(s[1] || .05);
+      total = Math.max(total, delay + dur + .06);
+    }
+    const len = Math.ceil(sr * total);
+    const data = new Float32Array(len);
+    const rnd = (n)=> {
+      let x = Math.sin((n + 1) * 12.9898) * 43758.5453;
+      return (x - Math.floor(x)) * 2 - 1;
+    };
+    function wave(type, phase){
+      if(type === 'sqr') return phase % 1 < .5 ? 1 : -1;
+      if(type === 'tri') return 1 - 4 * Math.abs(Math.round(phase - .25) - (phase - .25));
+      if(type === 'saw') return 2 * (phase % 1) - 1;
+      return Math.sin(phase * Math.PI * 2);
+    }
+    for(const s of spec){
+      if(s[0] === 'noise'){
+        const dur = s[1], amp = s[2], delay = s[3] || 0;
+        const start = Math.floor(delay * sr);
+        const nlen = Math.floor(dur * sr);
+        for(let i=0;i<nlen && start+i<len;i++){
+          const env = 1 - i / Math.max(1,nlen);
+          data[start+i] += rnd(i+start) * amp * env;
+        }
+      }else{
+        const freq = s[0], dur = s[1], amp = s[2], type = s[3] || 'sin', delay = s[4] || 0;
+        const start = Math.floor(delay * sr);
+        const nlen = Math.floor(dur * sr);
+        for(let i=0;i<nlen && start+i<len;i++){
+          const t = i / sr;
+          const env = Math.sin(Math.PI * Math.min(1, i / Math.max(1,nlen)));
+          data[start+i] += wave(type, freq * t) * amp * env;
+        }
+      }
+    }
+    const bytes = new Uint8Array(44 + len * 2);
+    const dv = new DataView(bytes.buffer);
+    function str(off, s){ for(let i=0;i<s.length;i++) bytes[off+i]=s.charCodeAt(i); }
+    str(0,'RIFF'); dv.setUint32(4,36+len*2,true); str(8,'WAVE'); str(12,'fmt ');
+    dv.setUint32(16,16,true); dv.setUint16(20,1,true); dv.setUint16(22,1,true);
+    dv.setUint32(24,sr,true); dv.setUint32(28,sr*2,true); dv.setUint16(32,2,true); dv.setUint16(34,16,true);
+    str(36,'data'); dv.setUint32(40,len*2,true);
+    let off=44;
+    for(let i=0;i<len;i++,off+=2){
+      const v = Math.max(-1, Math.min(1, data[i] || 0));
+      dv.setInt16(off, v < 0 ? v * 32768 : v * 32767, true);
+    }
+    let bin = '';
+    const chunk = 0x8000;
+    for(let i=0;i<bytes.length;i+=chunk){
+      bin += String.fromCharCode.apply(null, bytes.subarray(i, i+chunk));
+    }
+    SE.urls[kind] = 'data:audio/wav;base64,' + btoa(bin);
+    return SE.urls[kind];
+  }
+
+  function pool0618(kind){
+    kind = String(kind || 'ui');
+    if(!SE.pools[kind]){
+      const url = wavUrl0618(kind);
+      SE.pools[kind] = Array.from({length:6}, ()=>{
+        const a = new Audio(url);
+        a.preload = 'auto';
+        a.crossOrigin = 'anonymous';
+        return a;
+      });
+    }
+    return SE.pools[kind];
+  }
+
+  function allowSe0618(){
+    if(typeof state==='undefined') return false;
+    return !!SE.enabled && !state.mobileMuted;
+  }
+
+  function unlockSe0618(){
+    if(typeof state==='undefined') return false;
+    if(state.mobileMuted) return false;
+    SE.enabled = true;
+    try{
+      const a = pool0618('ui')[0];
+      a.volume = 0;
+      a.currentTime = 0;
+      const p = a.play();
+      if(p && typeof p.then === 'function'){
+        p.then(()=>{ try{ a.pause(); a.currentTime=0; a.volume=seVolume0618('ui'); }catch(_){} SE.unlocked=true; }).catch(()=>{});
+      }else{
+        SE.unlocked=true;
+      }
+    }catch(_){}
+    return true;
+  }
+
+  function playSe0618(kind){
+    kind = String(kind || 'ui');
+    if(!allowSe0618()) return;
+    unlockSe0618();
+    const now = performance.now ? performance.now() : Date.now();
+    if(kind === 'ui' && SE.last.ui && now - SE.last.ui < 35) return;
+    SE.last[kind] = now;
+    const p = pool0618(kind);
+    let a = p.find(x=>x.paused || x.ended) || p[0].cloneNode(true);
+    try{
+      a.volume = seVolume0618(kind);
+      a.currentTime = 0;
+      const pr = a.play();
+      if(pr && typeof pr.catch === 'function') pr.catch(()=>{});
+    }catch(_){}
+  }
+
+  ensureSfxReady = function(){
+    return unlockSe0618();
+  };
+  tone = function(){ playSe0618('ui'); };
+  noiseBurst = function(){ playSe0618('hit'); };
+  playSfx = function(kind){ playSe0618(kind || 'ui'); };
+  playUiClick = function(){ playSe0618('ui'); };
+
+  const oldApplyVolume0618 = typeof applyVolume === 'function' ? applyVolume : null;
+  applyVolume = function(){
+    if(oldApplyVolume0618) safe(()=>oldApplyVolume0618());
+  };
+
+  const oldStopAllAudioForMute0618 = typeof stopAllAudioForMute === 'function' ? stopAllAudioForMute : null;
+  stopAllAudioForMute = function(){
+    SE.enabled = false;
+    if(oldStopAllAudioForMute0618) safe(()=>oldStopAllAudioForMute0618());
+    Object.values(SE.pools).flat().forEach(a=>{ try{ a.pause(); a.currentTime=0; }catch(_){} });
+  };
+
+  setMobileMuted = function(flag){
+    state.mobileMuted = !!flag;
+    safe(()=>updateMuteButton());
+    if(state.mobileMuted){
+      SE.enabled = false;
+      stopAllAudioForMute();
+    }else{
+      SE.enabled = true;
+      safe(()=>{ if(typeof ensureBgmAudio==='function') ensureBgmAudio(); });
+      safe(()=>{ if(typeof updateBgmVolume==='function') updateBgmVolume(); });
+      safe(()=>{ if(typeof startAudio==='function') startAudio(); });
+      unlockSe0618();
+      state.audioUnlocked = true;
+      safe(()=>{ if(typeof playBgm==='function') playBgm(); });
+      setTimeout(()=>playSe0618('ui'),0);
+      setTimeout(()=>playSe0618('level'),90);
+    }
+    safe(()=>scheduleSave());
+  };
+
+  // どこをクリックしても「SEを殺す」のではなく、HTMLAudio SEの許可だけを維持する。
+  ['pointerdown','touchstart','mousedown','mouseup','click','keydown'].forEach(ev=>{
+    document.addEventListener(ev,()=>{
+      if(typeof state!=='undefined' && !state.mobileMuted && SE.enabled){
+        unlockSe0618();
+      }
+    },{capture:true,passive:true});
+  });
+
+  window.mbhSfxTest0618 = function(){
+    if(typeof state!=='undefined'){
+      state.mobileMuted=false;
+      SE.enabled=true;
+      safe(()=>updateMuteButton());
+      unlockSe0618();
+      playSe0618('level');
+      setTimeout(()=>playSe0618('slash'),120);
+      setTimeout(()=>playSe0618('ui'),260);
+    }
+  };
+
+  function boot0618(){
+    /* syncVersion removed */
+    if(typeof state!=='undefined' && !state.mobileMuted){
+      SE.enabled = true;
+      unlockSe0618();
+    }
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', boot0618, {once:true}); else setTimeout(boot0618,0);
+  window.addEventListener('load',()=>setTimeout(boot0618,100),{once:true});
+  /* version interval removed */
 })();
