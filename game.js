@@ -42,8 +42,8 @@ const DARK_SWORD_SAINT_CUTIN = {quote:'私を超えてみせろ。', img:'assets
 const DARK_SWORD_TECHNIQUE_CUTIN = {quote:'', img:'assets/cutin_dark_sword_technique.png'};
 const TENSEI_KNIGHT_CUTIN = {quote:'勇者の力、ここに覚醒する。', img:'assets/cutin_hero_awakening.png'};
 const HOLY_SWORD_RELEASE_CUTIN = {quote:'聖剣解放。すべてを砕く光となれ。', img:'assets/cutin_holy_sword_release.png'};
-const GAME_VERSION = '0.6.19';
-window.APP_VERSION = '0.6.19'; window.GAME_VERSION = '0.6.19';
+const GAME_VERSION = '0.6.20';
+window.APP_VERSION = '0.6.20'; window.GAME_VERSION = '0.6.20';
 
 const DARK_SWORD_SAINT = {
   id:'dark_sword_saint', name:'暗黒剣聖', type:'裏ボス', img:'assets/enemy_dark_sword_saint.png', element:'dark',
@@ -3369,7 +3369,7 @@ init();
 /* MBH ver.0.6.5: clean menu controller. No redirect URL params. No BGM assets. */
 (function(){
   'use strict';
-  const BUILD='0.6.19';
+  const BUILD='0.6.20';
   const $=(s,r=document)=>r.querySelector(s);
   const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
   const safe=(fn)=>{ try{ return fn&&fn(); }catch(e){ console.error('[MBH0.6.5]', e); return null; } };
@@ -3590,7 +3590,7 @@ init();
 /* MBH ver.0.6.5: single-click menu/debug stabilizer */
 (function(){
   'use strict';
-  const BUILD='0.6.19';
+  const BUILD='0.6.20';
   const $=(s,r=document)=>r.querySelector(s);
   const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
   const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.error('[MBH0.6.5]', e); return null; } };
@@ -3738,7 +3738,7 @@ init();
 /* MBH ver.0.6.5: restore effect panels and sell EXP display */
 (function(){
   'use strict';
-  const BUILD='0.6.19';
+  const BUILD='0.6.20';
   const $=(s,r=document)=>r.querySelector(s);
   const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
   const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.error('[MBH0.6.5]', e); return null; } };
@@ -3889,7 +3889,7 @@ init();
 /* MBH ver.0.6.5: mobile tap recovery + status detail outside-close */
 (function(){
   'use strict';
-  const BUILD='0.6.19';
+  const BUILD='0.6.20';
   const $=(s,r=document)=>r.querySelector(s);
   const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
   const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.error('[MBH0.6.5]', e); return null; } };
@@ -4020,7 +4020,7 @@ init();
 /* MBH ver.0.6.5: inventory lock restore + slot filter fit + auto-lock valuables */
 (function(){
   'use strict';
-  const BUILD='0.6.19';
+  const BUILD='0.6.20';
   const $id=(id)=>document.getElementById(id);
   const $q=(s,r=document)=>r.querySelector(s);
   const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
@@ -4371,7 +4371,7 @@ init();
 /* MBH ver.0.6.5: inventory filter single-source cleanup */
 (function(){
   'use strict';
-  const BUILD='0.6.19';
+  const BUILD='0.6.20';
   const $=(id)=>document.getElementById(id);
   const $$=(sel,root=document)=>Array.from(root.querySelectorAll(sel));
   const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.error('[MBH0.6.5]', e); return null; } };
@@ -4409,7 +4409,7 @@ init();
 /* ver0.6.5: debug enemy level +/-1,+/-10 and next specified boss buttons */
 (function(){
   'use strict';
-  const BUILD='0.6.19';
+  const BUILD='0.6.20';
   const $=(id)=>document.getElementById(id);
   const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.error('[MBH0.6.5]',e); return null; } };
 
@@ -4564,7 +4564,7 @@ init();
 /* MBH ver.0.6.5: UI label, mobile audio background stop, invincible debug, dark grant repair, SP expbar */
 (function(){
   'use strict';
-  const BUILD='0.6.19';
+  const BUILD='0.6.20';
   const $=(id)=>document.getElementById(id);
   const $$=(sel,root=document)=>Array.from(root.querySelectorAll(sel));
   const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.error('[MBH0.6.5]',e); return null; } };
@@ -4875,7 +4875,7 @@ init();
 /* MBH ver.0.6.5: legal modal front-layer fix */
 (function(){
   'use strict';
-  const BUILD='0.6.19';
+  const BUILD='0.6.20';
   const $=(id)=>document.getElementById(id);
   function safe(fn){try{return fn&&fn();}catch(e){console.error('[MBH0.6.5 legal]', e);}}
   function setBuild(){
@@ -5107,7 +5107,7 @@ setTimeout(installHolyDebug066, 300);
 /* MBH ver.0.6.9: 天聖騎士HP10倍・カットイン画像表示修正・バフ一覧同期 */
 (function(){
   'use strict';
-  const BUILD='0.6.19';
+  const BUILD='0.6.20';
   const $id=(id)=>document.getElementById(id);
   const $$=(sel,root=document)=>Array.from(root.querySelectorAll(sel));
   const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.error('[MBH0.6.9]', e); return null; } };
@@ -5252,7 +5252,7 @@ setTimeout(installHolyDebug066, 300);
 /* MBH ver.0.6.11: 天聖騎士 次敵予約・覚醒吸収・聖剣解放カウント非表示・闇装備名補正 */
 (function(){
   'use strict';
-  const BUILD='0.6.19';
+  const BUILD='0.6.20';
   const $id=(id)=>document.getElementById(id);
   const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.error('[MBH0.6.11]', e); return null; } };
 
@@ -5531,4 +5531,180 @@ function setTenseiNext(){state.debugForcedBossNext={id:'tensei_knight',level:Mat
 function bindDebug(){const btn=document.getElementById('debugTenseiKnight');if(btn&&!btn.__tkLatest){btn.textContent='天聖騎士 次の敵';btn.onclick=function(e){if(e){e.preventDefault();e.stopPropagation();}if(typeof playUiClick==='function')safe(()=>playUiClick());setTenseiNext();return false;};btn.__tkLatest=true;}}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bindDebug,{once:true});else setTimeout(bindDebug,0);setTimeout(bindDebug,800);
 setTimeout(()=>safe(()=>{if(typeof renderStatusLists==='function')renderStatusLists();boostTenseiBgmVolume();}),500);
+})();
+
+
+/* MBH 0.6.20: デバッグ外クリック・SPチェックボックス・聖剣解放調整 */
+(function(){
+'use strict';
+const safe=(fn)=>{try{return fn&&fn();}catch(e){console.error('[MBH 0.6.20]',e);return null;}};
+const now=()=>performance&&performance.now?performance.now():Date.now();
+function isTK(){try{return !!(state&&state.enemy&&state.enemy.id==='tensei_knight');}catch(_){return false;}}
+function tkStatus(){
+ if(!isTK())return null;
+ if(typeof ensureStatusContainers==='function')ensureStatusContainers();
+ const s=state.enemyStatuses||(state.enemyStatuses={});
+ if(!s.holyReleasePower)s.holyReleasePower=1;
+ if(!s.holyReleaseCount)s.holyReleaseCount=0;
+ if(!s.holyLastReleaseAt)s.holyLastReleaseAt=0;
+ return s;
+}
+function installDebugOutsideClose(){
+ const panel=document.getElementById('debugPanel');
+ if(!panel||panel.__mbhOutsideClose020)return;
+ panel.__mbhOutsideClose020=true;
+ const close=(e)=>{
+  try{
+   if(panel.classList.contains('hidden'))return;
+   const btn=document.getElementById('debugBtn');
+   const t=e.target;
+   if(panel.contains(t))return;
+   if(btn&&btn.contains(t))return;
+   panel.classList.add('hidden');
+  }catch(err){console.error(err);}
+ };
+ document.addEventListener('pointerdown',close,{capture:true,passive:true});
+ document.addEventListener('touchstart',close,{capture:true,passive:true});
+ document.addEventListener('click',close,{capture:true,passive:true});
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installDebugOutsideClose,{once:true});else setTimeout(installDebugOutsideClose,0);
+function installCheckboxTouchFix(){
+ if(document.__mbhCheckboxFix020)return;
+ document.__mbhCheckboxFix020=true;
+ const stop=(e)=>{
+  const input=e.target&&e.target.closest?e.target.closest('input[type="checkbox"]'):null;
+  if(!input)return;
+  e.stopPropagation();
+ };
+ const toggle=(e)=>{
+  const label=e.target&&e.target.closest?e.target.closest('label'):null;
+  if(!label)return;
+  const input=label.querySelector('input[type="checkbox"]');
+  if(!input||e.target===input)return;
+  e.preventDefault();e.stopPropagation();
+  input.checked=!input.checked;
+  input.dispatchEvent(new Event('change',{bubbles:true}));
+ };
+ document.addEventListener('pointerdown',stop,{capture:true,passive:false});
+ document.addEventListener('touchstart',stop,{capture:true,passive:false});
+ document.addEventListener('click',stop,{capture:true,passive:false});
+ document.addEventListener('touchend',toggle,{capture:true,passive:false});
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installCheckboxTouchFix,{once:true});else setTimeout(installCheckboxTouchFix,0);
+function showHolyReleaseCutin020(after){
+ try{
+  if(els&&els.deathDanceCutin){
+   els.deathDanceCutin.classList.remove('dark-cutin','hero-cutin');
+   els.deathDanceCutin.classList.add('hero-cutin','holy-cutin');
+   if(els.deathDanceCutinImg)els.deathDanceCutinImg.src='assets/cutin_holy_sword_release.png';
+   if(els.deathDanceCutinQuote)els.deathDanceCutinQuote.textContent='聖剣解放。すべてを砕く光となれ。';
+   if(els.deathDanceCutinTitle)els.deathDanceCutinTitle.textContent='聖剣解放';
+   els.deathDanceCutin.classList.remove('hidden');
+   void els.deathDanceCutin.offsetWidth;
+   els.deathDanceCutin.classList.add('show');
+  }
+  if(typeof playSfx==='function')safe(()=>playSfx('cutin'));
+  setTimeout(()=>{
+   try{
+    if(els&&els.deathDanceCutin){
+     els.deathDanceCutin.classList.remove('show','holy-cutin');
+     els.deathDanceCutin.classList.add('hidden');
+    }
+   }catch(_){}
+   after&&after();
+  },1800);
+ }catch(e){console.error(e);after&&after();}
+}
+function applyHolyReleaseDamage020(){
+ if(!isTK()||!state.enemy||state.enemyHp<=0)return;
+ const s=tkStatus();if(!s)return;
+ s.holyReleaseCount=(s.holyReleaseCount||0)+1;
+ s.holyReleasePower=Math.pow(2,Math.max(0,s.holyReleaseCount-1));
+ s.holyLastReleaseAt=now();
+ const st=typeof calcStats==='function'?calcStats():{holyDamageReduce:0};
+ let dmg=Math.max(1,Math.floor(((state.enemy.atk||1)*3.2+(state.enemy.level||1)*16)*s.holyReleasePower));
+ dmg=Math.max(1,Math.floor(dmg*(1-Math.min(.95,st.holyDamageReduce||0))));
+ if(state.debug&&state.debug.killHero)dmg=Math.max(dmg,state.hp+999999);
+ if(typeof applyDarkShieldToDamage==='function')dmg=applyDarkShieldToDamage(dmg);
+ if(typeof showHeroFloat==='function')showHeroFloat(`聖剣解放 ${dmg.toLocaleString()}`,'holy damage');
+ if(state.hp-dmg<=0){
+  if(!state.debug?.killHero&&typeof tryHeroDeathDance==='function'&&tryHeroDeathDance()){if(typeof renderBattle==='function')renderBattle();}
+  else{state.hp=0;if(typeof renderBattle==='function')renderBattle();if(typeof handleHeroDeath==='function')handleHeroDeath();}
+ }else{
+  state.hp=Math.max(0,state.hp-dmg);
+  if(typeof log==='function')log(`天聖騎士の聖剣解放！ 倍率x${s.holyReleasePower} / ${dmg.toLocaleString()}ダメージ`,'danger');
+  if(typeof renderBattle==='function')renderBattle();
+ }
+ s.holyReleaseHealUntil=now()+5000;
+ s.holyReleaseHealLast=0;
+ if(typeof renderStatusLists==='function')renderStatusLists();
+}
+function startHolyRelease020(){
+ if(!isTK())return;
+ const s=tkStatus();if(!s)return;
+ if(s.holyReleaseCasting)return;
+ const n=now();
+ if(s.holyLastReleaseAt&&n-s.holyLastReleaseAt<10000)return;
+ s.holyReleaseCasting=true;
+ if(typeof banner==='function')banner('聖剣解放！',1200);
+ showHolyReleaseCutin020(()=>{
+  try{applyHolyReleaseDamage020();}finally{const ss=tkStatus();if(ss)ss.holyReleaseCasting=false;}
+ });
+}
+const rawEnemyAttack020=typeof enemyAttack==='function'?enemyAttack:null;
+if(rawEnemyAttack020&&!rawEnemyAttack020.__mbh020){
+ enemyAttack=function(t){
+  if(isTK()){
+   const s=tkStatus();const n=now();
+   if(s&&!s.holyReleaseCasting&&(!s.holyLastReleaseAt||n-s.holyLastReleaseAt>=10000)){
+    startHolyRelease020();
+    return;
+   }
+  }
+  return rawEnemyAttack020.apply(this,arguments);
+ };
+ enemyAttack.__mbh020=true;
+}
+const rawSetEnemy020=typeof setEnemy==='function'?setEnemy:null;
+if(rawSetEnemy020&&!rawSetEnemy020.__mbh020){
+ setEnemy=function(e){
+  const r=rawSetEnemy020.apply(this,arguments);
+  if(e&&e.id==='tensei_knight'){
+   const s=tkStatus();
+   if(s){s.holyReleasePower=1;s.holyReleaseCount=0;s.holyLastReleaseAt=now();s.holyReleaseCasting=false;}
+   if(typeof renderStatusLists==='function')renderStatusLists();
+  }
+  return r;
+ };
+ setEnemy.__mbh020=true;
+}
+const rawStatusTooltipHtml020=typeof statusTooltipHtml==='function'?statusTooltipHtml:null;
+if(rawStatusTooltipHtml020&&!rawStatusTooltipHtml020.__mbh020){
+ statusTooltipHtml=function(kind,target){
+  if(kind==='holy_release'){
+   const s=state.enemyStatuses||{},pow=s.holyReleasePower||1,cnt=s.holyReleaseCount||0;
+   const left=s.holyLastReleaseAt?Math.max(0,Math.ceil((10000-(now()-s.holyLastReleaseAt))/1000)):0;
+   return `<b>聖剣解放</b><br>現在倍率：x${pow}<br>発動回数：${cnt}回<br>次回まで：約${left}秒<br>発動間隔：10秒。<br>カットイン後に「聖剣解放 9999」形式でダメージ表示。<br>発動ごとに威力が2倍。<br>発動後5秒間、0.2秒ごとに最大HPの3%を回復。`;
+  }
+  return rawStatusTooltipHtml020.apply(this,arguments);
+ };
+ statusTooltipHtml.__mbh020=true;
+}
+const rawRenderStatusLists020=typeof renderStatusLists==='function'?renderStatusLists:null;
+if(rawRenderStatusLists020&&!rawRenderStatusLists020.__mbh020){
+ renderStatusLists=function(){
+  const r=rawRenderStatusLists020.apply(this,arguments);
+  try{
+   if(isTK()&&els&&els.enemyStatusList){
+    const s=tkStatus()||{};
+    let html=els.enemyStatusList.innerHTML||'';
+    html=html.replace(/⚔️聖剣解放[^<]*/g,`⚔️聖剣解放 x${s.holyReleasePower||1}${s.holyReleaseCasting?'：詠唱中':(((s.holyReleaseHealUntil||0)>now())?'：回復中':'')}`);
+    els.enemyStatusList.innerHTML=html;
+    if(typeof bindStatusBadgeEvents==='function')bindStatusBadgeEvents();
+   }
+  }catch(e){console.error(e);}
+  return r;
+ };
+ renderStatusLists.__mbh020=true;
+}
 })();
