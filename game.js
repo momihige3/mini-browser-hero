@@ -42,8 +42,7 @@ const DARK_SWORD_SAINT_CUTIN = {quote:'私を超えてみせろ。', img:'assets
 const DARK_SWORD_TECHNIQUE_CUTIN = {quote:'', img:'assets/cutin_dark_sword_technique.png'};
 const TENSEI_KNIGHT_CUTIN = {quote:'勇者の力、ここに覚醒する。', img:'assets/cutin_hero_awakening.png'};
 const HOLY_SWORD_RELEASE_CUTIN = {quote:'聖剣解放。すべてを砕く光となれ。', img:'assets/cutin_holy_sword_release.png'};
-const GAME_VERSION = '0.6.21';
-window.APP_VERSION = '0.6.21'; window.GAME_VERSION = '0.6.21';
+const GAME_VERSION = String(window.APP_VERSION || document.documentElement.dataset.buildVersion);
 
 const DARK_SWORD_SAINT = {
   id:'dark_sword_saint', name:'暗黒剣聖', type:'裏ボス', img:'assets/enemy_dark_sword_saint.png', element:'dark',
@@ -325,7 +324,7 @@ function sanitizeAllEquipmentDeathDanceChance(){
       it.deathDanceChance = 0.10;
       it.masterRegen = true;
       it.unsellable = true;
-      return it;
+      return syncMasterAmuletLevel(it);
     }
     if(it.specialFrame === 'darkholy'){
       if((it.deathDanceChance||0) > 0.25) it.deathDanceChance = 0.25;
@@ -2102,6 +2101,7 @@ function checkLevelUp(){
       banner('暗黒剣聖の試練！', 1800);
     }
   }
+  syncAllMasterAmuletLevels();
 }
 function showLevelUp(){ els.levelEffect.classList.remove('hidden'); playSfx('level'); setTimeout(()=>els.levelEffect.classList.add('hidden'),1150); }
 function startDown(){
@@ -2692,8 +2692,19 @@ function makeMasterAmulet(){
   it.masterRegen = true;
   it.unsellable = true;
   it.level = 0; it.itemLevel = 1;
-  it.flavor = '師匠より託された護符。10秒ごとにHP回復（Lvで成長、最大10%）。敵撃破時HP25%回復。死線の剣舞発動率+10%。';
+  it.flavor = '師匠より託された護符。強化値は主人公Lvと同期。10秒ごとにHP回復（Lvで成長、最大10%）。敵撃破時HP25%回復。死線の剣舞発動率+10%。';
+  return syncMasterAmuletLevel(it);
+}
+function syncMasterAmuletLevel(it){
+  if(!it || it.name !== '師匠のアミュレット') return it;
+  const heroLevel = Math.max(1, Math.floor(Number(state?.level)||1));
+  it.level = heroLevel;
+  it.itemLevel = heroLevel;
   return it;
+}
+function syncAllMasterAmuletLevels(){
+  Object.values(state?.equip||{}).forEach(syncMasterAmuletLevel);
+  if(Array.isArray(state?.inventory)) state.inventory.forEach(syncMasterAmuletLevel);
 }
 function ensureStarterEquipment(force=false){
   const hasMaster = Object.values(state.equip||{}).some(it=>it && it.name==='師匠のアミュレット') || (state.inventory||[]).some(it=>it && it.name==='師匠のアミュレット');
@@ -2843,7 +2854,7 @@ function makeDebugAccessory(slot){
   return it;
 }
 
-function renderAll(){ renderBattle(); renderStats(); renderEquip(); renderInventory(); }
+function renderAll(){ syncAllMasterAmuletLevels(); renderBattle(); renderStats(); renderEquip(); renderInventory(); }
 function ensureEnemyDebugStatsLine(){
   if(!els.enemyCard) return null;
   let line = document.getElementById('enemyDebugStatsLine');
@@ -3305,7 +3316,7 @@ init();
 /* MBH ver.0.6.5: clean menu controller. No redirect URL params. No BGM assets. */
 (function(){
   'use strict';
-  const BUILD='0.6.21';
+  const BUILD=GAME_VERSION;
   const $=(s,r=document)=>r.querySelector(s);
   const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
   const safe=(fn)=>{ try{ return fn&&fn(); }catch(e){ console.error('[MBH0.6.5]', e); return null; } };
@@ -3526,7 +3537,7 @@ init();
 /* MBH ver.0.6.5: single-click menu/debug stabilizer */
 (function(){
   'use strict';
-  const BUILD='0.6.21';
+  const BUILD=GAME_VERSION;
   const $=(s,r=document)=>r.querySelector(s);
   const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
   const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.error('[MBH0.6.5]', e); return null; } };
@@ -3674,7 +3685,7 @@ init();
 /* MBH ver.0.6.5: restore effect panels and sell EXP display */
 (function(){
   'use strict';
-  const BUILD='0.6.21';
+  const BUILD=GAME_VERSION;
   const $=(s,r=document)=>r.querySelector(s);
   const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
   const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.error('[MBH0.6.5]', e); return null; } };
@@ -3825,7 +3836,7 @@ init();
 /* MBH ver.0.6.5: mobile tap recovery + status detail outside-close */
 (function(){
   'use strict';
-  const BUILD='0.6.21';
+  const BUILD=GAME_VERSION;
   const $=(s,r=document)=>r.querySelector(s);
   const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
   const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.error('[MBH0.6.5]', e); return null; } };
@@ -3956,7 +3967,7 @@ init();
 /* MBH ver.0.6.5: inventory lock restore + slot filter fit + auto-lock valuables */
 (function(){
   'use strict';
-  const BUILD='0.6.21';
+  const BUILD=GAME_VERSION;
   const $id=(id)=>document.getElementById(id);
   const $q=(s,r=document)=>r.querySelector(s);
   const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
@@ -4313,7 +4324,7 @@ init();
 /* MBH ver.0.6.5: inventory filter single-source cleanup */
 (function(){
   'use strict';
-  const BUILD='0.6.21';
+  const BUILD=GAME_VERSION;
   const $=(id)=>document.getElementById(id);
   const $$=(sel,root=document)=>Array.from(root.querySelectorAll(sel));
   const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.error('[MBH0.6.5]', e); return null; } };
@@ -4351,7 +4362,7 @@ init();
 /* ver0.6.5: debug enemy level +/-1,+/-10 and next specified boss buttons */
 (function(){
   'use strict';
-  const BUILD='0.6.21';
+  const BUILD=GAME_VERSION;
   const $=(id)=>document.getElementById(id);
   const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.error('[MBH0.6.5]',e); return null; } };
 
@@ -4506,7 +4517,7 @@ init();
 /* MBH ver.0.6.5: UI label, mobile audio background stop, invincible debug, dark grant repair, SP expbar */
 (function(){
   'use strict';
-  const BUILD='0.6.21';
+  const BUILD=GAME_VERSION;
   const $=(id)=>document.getElementById(id);
   const $$=(sel,root=document)=>Array.from(root.querySelectorAll(sel));
   const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.error('[MBH0.6.5]',e); return null; } };
@@ -4817,7 +4828,7 @@ init();
 /* MBH ver.0.6.5: legal modal front-layer fix */
 (function(){
   'use strict';
-  const BUILD='0.6.21';
+  const BUILD=GAME_VERSION;
   const $=(id)=>document.getElementById(id);
   function safe(fn){try{return fn&&fn();}catch(e){console.error('[MBH0.6.5 legal]', e);}}
   function setBuild(){
@@ -4996,7 +5007,7 @@ setTimeout(installHolyDebug066, 300);
 /* MBH ver.0.6.9: 天聖騎士HP10倍・カットイン画像表示修正・バフ一覧同期 */
 (function(){
   'use strict';
-  const BUILD='0.6.21';
+  const BUILD=GAME_VERSION;
   const $id=(id)=>document.getElementById(id);
   const $$=(sel,root=document)=>Array.from(root.querySelectorAll(sel));
   const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.error('[MBH0.6.9]', e); return null; } };
@@ -5141,7 +5152,7 @@ setTimeout(installHolyDebug066, 300);
 /* MBH ver.0.6.11: 天聖騎士 次敵予約・覚醒吸収・聖剣解放カウント非表示・闇装備名補正 */
 (function(){
   'use strict';
-  const BUILD='0.6.21';
+  const BUILD=GAME_VERSION;
   const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.error('[MBH0.6.11]', e); return null; } };
 
   function syncVersion0610(){
@@ -5367,10 +5378,10 @@ setTimeout(()=>safe(()=>{if(typeof renderStatusLists==='function')renderStatusLi
 })();
 
 
-/* MBH 0.6.21: デバッグ外クリック・SPチェックボックス・聖剣解放調整 */
+/* MBH current: デバッグ外クリック・SPチェックボックス・聖剣解放調整 */
 (function(){
 'use strict';
-const safe=(fn)=>{try{return fn&&fn();}catch(e){console.error('[MBH 0.6.21]',e);return null;}};
+const safe=(fn)=>{try{return fn&&fn();}catch(e){console.error(`[MBH ${GAME_VERSION}]`,e);return null;}};
 const now=()=>performance&&performance.now?performance.now():Date.now();
 function isTK(){try{return !!(state&&state.enemy&&state.enemy.id==='tensei_knight');}catch(_){return false;}}
 function tkStatus(){
@@ -5542,7 +5553,7 @@ if(rawRenderStatusLists020&&!rawRenderStatusLists020.__mbh020){
 }
 })();
 
-/* MBH 0.6.21 hotfix */
+/* MBH current hotfix */
 (function(){
 if(typeof statusTooltipHtml==='function'&&!statusTooltipHtml.__mbh021){
  const raw=statusTooltipHtml;

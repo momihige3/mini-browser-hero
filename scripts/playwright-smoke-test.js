@@ -9,6 +9,7 @@ const HOST = '127.0.0.1';
 const PORT = 8765;
 const BASE_URL = `http://${HOST}:${PORT}`;
 const PROJECT_ROOT = path.resolve(__dirname, '..');
+const PROJECT_VERSION = require('../package.json').version;
 
 const MIME_TYPES = {
   '.css': 'text/css; charset=utf-8',
@@ -145,6 +146,67 @@ async function run() {
       throw new Error(`戦闘進行を確認できませんでした: ${JSON.stringify({ initialBattle, currentBattle, consoleErrors, pageErrors, failedLocalRequests }, null, 2)}\n${error.message}`);
     }
 
+    const masterAmulet = await page.evaluate(() => {
+      const findMaster = () => Object.values(state.equip || {}).find(item => item?.name === '師匠のアミュレット')
+        || (state.inventory || []).find(item => item?.name === '師匠のアミュレット');
+      const before = findMaster();
+      if (!before) throw new Error('師匠のアミュレットが見つかりません。');
+      state.level = 36;
+      state.xp = effectiveXpNext();
+      before.level = 0;
+      before.itemLevel = 1;
+      checkLevelUp();
+      renderAll();
+      const after = findMaster();
+      const displayedName = Array.from(document.querySelectorAll('#equipList .equip b, #inventory .item b'))
+        .map(element => element.textContent?.trim() || '')
+        .find(text => text.includes('師匠のアミュレット')) || '';
+      return {
+        displayedName,
+        heroLevel: state.level,
+        itemLevel: after?.itemLevel,
+        plusLevel: after?.level,
+      };
+    });
+    if (masterAmulet.heroLevel !== 37 || masterAmulet.plusLevel !== 37 || masterAmulet.itemLevel !== 37 || !masterAmulet.displayedName.includes('+37')) {
+      throw new Error(`師匠のアミュレットが主人公Lvと同期していません: ${JSON.stringify(masterAmulet)}`);
+    }
+
+    await page.evaluate(() => {
+      const master = Object.values(state.equip || {}).find(item => item?.name === '師匠のアミュレット')
+        || (state.inventory || []).find(item => item?.name === '師匠のアミュレット');
+      master.level = 0;
+      master.itemLevel = 1;
+      saveGame();
+    });
+    await page.reload({ waitUntil: 'domcontentloaded', timeout: 15000 });
+    await page.waitForFunction(() => typeof state !== 'undefined' && typeof renderAll === 'function' && Boolean(state.enemy), null, { timeout: 10000 });
+    const masterAmuletReload = await page.evaluate(() => {
+      const master = Object.values(state.equip || {}).find(item => item?.name === '師匠のアミュレット')
+        || (state.inventory || []).find(item => item?.name === '師匠のアミュレット');
+      return {
+        heroLevel: state.level,
+        itemLevel: master?.itemLevel,
+        plusLevel: master?.level,
+      };
+    });
+    if (masterAmuletReload.heroLevel !== 37 || masterAmuletReload.plusLevel !== 37 || masterAmuletReload.itemLevel !== 37) {
+      throw new Error(`既存セーブ読込時に師匠のアミュレットが補正されません: ${JSON.stringify(masterAmuletReload)}`);
+    }
+
+    await page.waitForTimeout(700);
+    const versionState = await page.evaluate(() => ({
+      appVersion: window.APP_VERSION,
+      datasetVersion: document.documentElement.dataset.buildVersion,
+      debugVersion: document.querySelector('.debug-version')?.textContent?.trim() || '',
+      gameVersion: window.GAME_VERSION,
+      labelVersion: document.querySelector('.build-version')?.textContent?.trim() || '',
+    }));
+    if (versionState.appVersion !== PROJECT_VERSION || versionState.gameVersion !== PROJECT_VERSION || versionState.datasetVersion !== PROJECT_VERSION
+      || !versionState.labelVersion.includes(PROJECT_VERSION) || !versionState.debugVersion.includes(PROJECT_VERSION)) {
+      throw new Error(`バージョン表記が単一値へ同期していません: ${JSON.stringify({ expected: PROJECT_VERSION, versionState })}`);
+    }
+
     await page.evaluate(() => {
       grantHolySet();
       setMenuPage('inventory');
@@ -244,6 +306,9 @@ async function run() {
       url: page.url(),
       initialBattle,
       ...result,
+      masterAmulet,
+      masterAmuletReload,
+      versionState,
       holyEquip,
       holyInventory,
       holyMobile,
