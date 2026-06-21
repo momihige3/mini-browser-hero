@@ -1898,31 +1898,59 @@ function applyDarkSwordDanceHit(i, total, mode='finish'){
   }
   renderBattle();
 }
+let cutinDisplayToken = 0;
+function showSharedCutin({img, quote='', title='', mode='hero', alt='カットイン'}, onShown){
+  const cutin = els.deathDanceCutin;
+  const image = els.deathDanceCutinImg;
+  if(!cutin || !image || !img) return null;
+  const token = ++cutinDisplayToken;
+  cutin.classList.remove('show','hero-cutin','dark-cutin','holy-cutin');
+  cutin.classList.add('hidden','cutin-loading',`${mode}-cutin`);
+  if(els.deathDanceCutinQuote) els.deathDanceCutinQuote.textContent = quote;
+  if(els.deathDanceCutinTitle) els.deathDanceCutinTitle.textContent = title;
+  image.alt = alt;
+  let revealed = false;
+  const reveal = ()=>{
+    if(revealed || token !== cutinDisplayToken) return;
+    revealed = true;
+    image.onload = null;
+    image.onerror = null;
+    cutin.classList.remove('hidden','cutin-loading');
+    void cutin.offsetWidth;
+    cutin.classList.add('show');
+    if(typeof onShown === 'function') onShown();
+  };
+  image.onload = reveal;
+  image.onerror = reveal;
+  image.src = img;
+  if(typeof image.decode === 'function') image.decode().then(reveal).catch(()=>{ if(image.complete) reveal(); });
+  else if(image.complete) queueMicrotask(reveal);
+  return token;
+}
+function scheduleSharedCutinHide(token, delay, after){
+  return setTimeout(()=>{
+    if(token === cutinDisplayToken) hideDeathDanceCutin(token);
+    if(typeof after === 'function') after();
+  }, delay);
+}
 function showDarkSwordDanceCutin(){
-  if(!els.deathDanceCutin) return;
-  els.deathDanceCutin.classList.remove('hero-cutin');
-  els.deathDanceCutin.classList.add('dark-cutin');
-  if(els.deathDanceCutinImg) els.deathDanceCutinImg.src = DARK_SWORD_SAINT_CUTIN.img;
-  if(els.deathDanceCutinQuote) els.deathDanceCutinQuote.textContent = DARK_SWORD_SAINT_CUTIN.quote;
-  if(els.deathDanceCutinTitle) els.deathDanceCutinTitle.textContent = '暗黒剣舞';
-  els.deathDanceCutin.classList.remove('hidden');
-  void els.deathDanceCutin.offsetWidth;
-  els.deathDanceCutin.classList.add('show');
-  playSfx('cutin');
-  playDarkSwordSaintVoice();
+  showSharedCutin({
+    img:DARK_SWORD_SAINT_CUTIN.img,
+    quote:DARK_SWORD_SAINT_CUTIN.quote,
+    title:'暗黒剣舞',
+    mode:'dark',
+    alt:'暗黒剣舞カットイン'
+  }, ()=>{ playSfx('cutin'); playDarkSwordSaintVoice(); });
 }
 
 function showDarkSwordTechniqueCutin(){
-  if(!els.deathDanceCutin) return;
-  els.deathDanceCutin.classList.remove('hero-cutin');
-  els.deathDanceCutin.classList.add('dark-cutin');
-  if(els.deathDanceCutinImg) els.deathDanceCutinImg.src = DARK_SWORD_TECHNIQUE_CUTIN.img;
-  if(els.deathDanceCutinQuote) els.deathDanceCutinQuote.textContent = DARK_SWORD_TECHNIQUE_CUTIN.quote;
-  if(els.deathDanceCutinTitle) els.deathDanceCutinTitle.textContent = '暗黒剣技';
-  els.deathDanceCutin.classList.remove('hidden');
-  void els.deathDanceCutin.offsetWidth;
-  els.deathDanceCutin.classList.add('show');
-  playSfx('cutin');
+  showSharedCutin({
+    img:DARK_SWORD_TECHNIQUE_CUTIN.img,
+    quote:DARK_SWORD_TECHNIQUE_CUTIN.quote,
+    title:'暗黒剣技',
+    mode:'dark',
+    alt:'暗黒剣技カットイン'
+  }, ()=>playSfx('cutin'));
 }
 function updateEnemyLevelProgressionOnDefeat(e){
   // ver.0.6.5: 雑魚撃破は10%で敵レベル+1。ボス撃破は確定+1。
@@ -2158,21 +2186,16 @@ function startDeathDance(){
   return true;
 }
 function showDeathDanceCutin(){
-  if(!els.deathDanceCutin) return;
-  els.deathDanceCutin.classList.remove('dark-cutin');
-  els.deathDanceCutin.classList.add('hero-cutin');
   const data = DEATH_DANCE_CUTINS[Math.floor(Math.random() * DEATH_DANCE_CUTINS.length)];
-  if(els.deathDanceCutinImg) els.deathDanceCutinImg.src = data.img;
-  if(els.deathDanceCutinQuote) els.deathDanceCutinQuote.textContent = data.quote;
-  if(els.deathDanceCutinTitle) els.deathDanceCutinTitle.textContent = '死線の剣舞';
-  els.deathDanceCutin.classList.remove('hidden');
-  void els.deathDanceCutin.offsetWidth;
-  els.deathDanceCutin.classList.add('show');
-  playSfx('cutin');
+  showSharedCutin({img:data.img, quote:data.quote, title:'死線の剣舞', mode:'hero', alt:'死線の剣舞カットイン'}, ()=>playSfx('cutin'));
 }
-function hideDeathDanceCutin(){
+function hideDeathDanceCutin(expectedToken=null){
   if(!els.deathDanceCutin) return;
+  if(expectedToken != null && expectedToken !== cutinDisplayToken) return;
+  cutinDisplayToken++;
+  if(els.deathDanceCutinImg){ els.deathDanceCutinImg.onload=null; els.deathDanceCutinImg.onerror=null; }
   els.deathDanceCutin.classList.remove('show');
+  els.deathDanceCutin.classList.remove('cutin-loading');
   els.deathDanceCutin.classList.add('hidden');
   if(!state.darkSwordCutinActive){ els.deathDanceCutin.classList.remove('dark-cutin'); }
 }
@@ -4896,11 +4919,14 @@ function isTenseiKnight(e=state.enemy){ return !!e && e.id === 'tensei_knight'; 
 function showHolyCutin(kind){
   const data = kind === 'release' ? HOLY_SWORD_RELEASE_CUTIN : TENSEI_KNIGHT_CUTIN;
   try{
-    if(els.deathDanceCutinImg) els.deathDanceCutinImg.src = data.img;
-    if(els.deathDanceCutinQuote) els.deathDanceCutinQuote.textContent = data.quote;
-    if(els.deathDanceCutinTitle) els.deathDanceCutinTitle.textContent = kind === 'release' ? '聖剣解放' : '勇者の覚醒';
-    if(els.deathDanceCutin) els.deathDanceCutin.classList.remove('hidden');
-    setTimeout(()=>{ try{ if(els.deathDanceCutin) els.deathDanceCutin.classList.add('hidden'); }catch(e){} }, 1400);
+    const token = showSharedCutin({
+      img:data.img,
+      quote:data.quote,
+      title:kind === 'release' ? '聖剣解放' : '勇者の覚醒',
+      mode:'holy',
+      alt:kind === 'release' ? '聖剣解放カットイン' : '勇者の覚醒カットイン'
+    });
+    if(token != null) scheduleSharedCutinHide(token, 1400);
   }catch(e){}
 }
 function processTenseiKnight(now){
@@ -5055,25 +5081,15 @@ setTimeout(installHolyDebug066, 300);
   }
 
   function setCutinVisible069(kind, data){
-    const cutin = $id('deathDanceCutin');
-    const img = $id('deathDanceCutinImg');
-    const quote = $id('deathDanceCutinQuote');
-    const title = document.querySelector('.death-dance-cutin-title');
-    if(!cutin || !img) return false;
-    if(data && data.img) img.src = data.img;
-    img.alt = kind === 'release' ? '聖剣解放カットイン' : '勇者の覚醒カットイン';
-    if(quote) quote.textContent = (data && data.quote) || (kind === 'release' ? '聖剣解放。すべてを砕く光となれ。' : '勇者の力、ここに覚醒する。');
-    if(title) title.textContent = kind === 'release' ? '聖剣解放' : '勇者の覚醒';
-    cutin.classList.remove('hidden');
-    cutin.classList.remove('show');
-    // アニメーションを確実に再発火。
-    void cutin.offsetWidth;
-    cutin.classList.add('show','holy-cutin');
-    clearTimeout(window.__mbhHolyCutinTimer069);
-    window.__mbhHolyCutinTimer069 = setTimeout(()=>{
-      cutin.classList.add('hidden');
-      cutin.classList.remove('show','holy-cutin');
-    }, 1550);
+    const token = showSharedCutin({
+      img:(data && data.img) || (kind === 'release' ? 'assets/cutin_holy_sword_release.png' : 'assets/cutin_hero_awakening.png'),
+      quote:(data && data.quote) || (kind === 'release' ? '聖剣解放。すべてを砕く光となれ。' : '勇者の力、ここに覚醒する。'),
+      title:kind === 'release' ? '聖剣解放' : '勇者の覚醒',
+      mode:'holy',
+      alt:kind === 'release' ? '聖剣解放カットイン' : '勇者の覚醒カットイン'
+    });
+    if(token == null) return false;
+    scheduleSharedCutinHide(token, 1550);
     return true;
   }
 
@@ -5437,26 +5453,15 @@ function installCheckboxTouchFix(){
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installCheckboxTouchFix,{once:true});else setTimeout(installCheckboxTouchFix,0);
 function showHolyReleaseCutin020(after){
  try{
-  if(els&&els.deathDanceCutin){
-   els.deathDanceCutin.classList.remove('dark-cutin','hero-cutin');
-   els.deathDanceCutin.classList.add('hero-cutin','holy-cutin');
-   if(els.deathDanceCutinImg)els.deathDanceCutinImg.src='assets/cutin_holy_sword_release.png';
-   if(els.deathDanceCutinQuote)els.deathDanceCutinQuote.textContent='聖剣解放。すべてを砕く光となれ。';
-   if(els.deathDanceCutinTitle)els.deathDanceCutinTitle.textContent='聖剣解放';
-   els.deathDanceCutin.classList.remove('hidden');
-   void els.deathDanceCutin.offsetWidth;
-   els.deathDanceCutin.classList.add('show');
-  }
-  if(typeof playSfx==='function')safe(()=>playSfx('cutin'));
-  setTimeout(()=>{
-   try{
-    if(els&&els.deathDanceCutin){
-     els.deathDanceCutin.classList.remove('show','holy-cutin');
-     els.deathDanceCutin.classList.add('hidden');
-    }
-   }catch(_){}
-   after&&after();
-  },1800);
+  const token=showSharedCutin({
+   img:'assets/cutin_holy_sword_release.png',
+   quote:'聖剣解放。すべてを砕く光となれ。',
+   title:'聖剣解放',
+   mode:'holy',
+   alt:'聖剣解放カットイン'
+  },()=>{if(typeof playSfx==='function')safe(()=>playSfx('cutin'));});
+  if(token==null){after&&after();return;}
+  scheduleSharedCutinHide(token,1800,after);
  }catch(e){console.error(e);after&&after();}
 }
 function applyHolyReleaseDamage020(){

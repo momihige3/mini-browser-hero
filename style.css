@@ -4564,3 +4564,43 @@ html[data-build-version="0.6.15"] .monster-records,
   .debug-panel.hidden{display:none!important;}
   .debug-panel button,.debug-panel label{width:100%!important;min-height:38px!important;margin:0 0 7px!important;}
 }
+
+/* Current cut-in transition and Holy Sword Release full-image layout. */
+.death-dance-cutin.holy-cutin .death-dance-cutin-strip{
+  width:min(96vw,1280px)!important;
+  height:clamp(280px,46vh,520px)!important;
+  overflow:hidden!important;
+}
+.death-dance-cutin.holy-cutin .death-dance-cutin-strip img{
+  left:50%!important;
+  top:50%!important;
+  width:100%!important;
+  height:100%!important;
+  object-fit:contain!important;
+  object-position:center!important;
+  transform:translate(-50%,-50%) skewX(8deg)!important;
+}
+.death-dance-cutin.holy-cutin .death-dance-cutin-quote{
+  right:3%!important;
+  max-width:44%!important;
+}
+.death-dance-cutin.cutin-loading .death-dance-cutin-strip img{
+  opacity:0!important;
+  visibility:hidden!important;
+}
+@media(max-width:760px){
+  .death-dance-cutin.holy-cutin .death-dance-cutin-strip{
+    width:calc(100vw - 72px)!important;
+    height:clamp(250px,44vh,390px)!important;
+  }
+  .death-dance-cutin.holy-cutin .death-dance-cutin-strip img{
+    left:50%!important;
+    width:100%!important;
+    height:100%!important;
+    object-fit:contain!important;
+  }
+  .death-dance-cutin.holy-cutin .death-dance-cutin-quote{
+    max-width:46%!important;
+    font-size:clamp(17px,5vw,30px)!important;
+  }
+}

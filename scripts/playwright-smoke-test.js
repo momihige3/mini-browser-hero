@@ -207,6 +207,79 @@ async function run() {
       throw new Error(`バージョン表記が単一値へ同期していません: ${JSON.stringify({ expected: PROJECT_VERSION, versionState })}`);
     }
 
+    await page.evaluate(() => showSharedCutin({
+      img: 'assets/cutin_eye_1.jpg',
+      quote: '切替前',
+      title: '切替前',
+      mode: 'hero',
+    }));
+    await page.waitForFunction(() => document.querySelector('#deathDanceCutin')?.classList.contains('show'));
+    const delayedCutinUrl = `${BASE_URL}/assets/cutin_dark_sword_dance.png?cutin-transition-test=1`;
+    await page.route(delayedCutinUrl, async route => {
+      await new Promise(resolve => setTimeout(resolve, 300));
+      await route.continue();
+    });
+    await page.evaluate(url => showSharedCutin({
+      img: url,
+      quote: '切替後',
+      title: '暗黒剣舞',
+      mode: 'dark',
+    }), delayedCutinUrl);
+    const cutinPending = await page.evaluate(() => {
+      const cutin = document.querySelector('#deathDanceCutin');
+      const image = document.querySelector('#deathDanceCutinImg');
+      return {
+        cutinHidden: Boolean(cutin?.classList.contains('hidden')),
+        imageHidden: image ? getComputedStyle(image).visibility === 'hidden' : false,
+        loading: Boolean(cutin?.classList.contains('cutin-loading')),
+        shown: Boolean(cutin?.classList.contains('show')),
+      };
+    });
+    if (!cutinPending.cutinHidden || !cutinPending.imageHidden || !cutinPending.loading || cutinPending.shown) {
+      throw new Error(`カットイン画像の切替中に旧画像が露出します: ${JSON.stringify(cutinPending)}`);
+    }
+    await page.waitForFunction(url => {
+      const cutin = document.querySelector('#deathDanceCutin');
+      const image = document.querySelector('#deathDanceCutinImg');
+      return Boolean(cutin?.classList.contains('show') && !cutin.classList.contains('hidden')
+        && image?.complete && image.naturalWidth > 0 && image.currentSrc === url);
+    }, delayedCutinUrl, { timeout: 5000 });
+    await page.unroute(delayedCutinUrl);
+    const cutinTransition = await page.evaluate(() => ({
+      image: document.querySelector('#deathDanceCutinImg')?.currentSrc || '',
+      loading: document.querySelector('#deathDanceCutin')?.classList.contains('cutin-loading') || false,
+      title: document.querySelector('.death-dance-cutin-title')?.textContent?.trim() || '',
+    }));
+
+    await page.evaluate(() => showSharedCutin({
+      img: HOLY_SWORD_RELEASE_CUTIN.img,
+      quote: HOLY_SWORD_RELEASE_CUTIN.quote,
+      title: '聖剣解放',
+      mode: 'holy',
+    }));
+    await page.waitForFunction(() => {
+      const cutin = document.querySelector('#deathDanceCutin');
+      const image = document.querySelector('#deathDanceCutinImg');
+      return Boolean(cutin?.classList.contains('show') && image?.complete && image.naturalWidth > 0);
+    });
+    const holyCutinLayout = await page.evaluate(() => {
+      const strip = document.querySelector('.death-dance-cutin-strip');
+      const image = document.querySelector('#deathDanceCutinImg');
+      const stripRect = strip?.getBoundingClientRect();
+      const style = image ? getComputedStyle(image) : null;
+      return {
+        imageComplete: Boolean(image?.complete && image.naturalWidth > 0),
+        objectFit: style?.objectFit || '',
+        stripHeight: Math.round(stripRect?.height || 0),
+        title: document.querySelector('.death-dance-cutin-title')?.textContent?.trim() || '',
+      };
+    });
+    if (!holyCutinLayout.imageComplete || holyCutinLayout.objectFit !== 'contain' || holyCutinLayout.stripHeight < 280
+      || holyCutinLayout.title !== '聖剣解放') {
+      throw new Error(`聖剣解放カットインの全体表示が不正です: ${JSON.stringify(holyCutinLayout)}`);
+    }
+    await page.evaluate(() => hideDeathDanceCutin());
+
     await page.evaluate(() => {
       grantHolySet();
       setMenuPage('inventory');
@@ -261,6 +334,29 @@ async function run() {
     }
 
     await page.setViewportSize({ width: 390, height: 844 });
+    await page.evaluate(() => showSharedCutin({
+      img: HOLY_SWORD_RELEASE_CUTIN.img,
+      quote: HOLY_SWORD_RELEASE_CUTIN.quote,
+      title: '聖剣解放',
+      mode: 'holy',
+    }));
+    await page.waitForFunction(() => document.querySelector('#deathDanceCutin')?.classList.contains('show'));
+    await page.waitForTimeout(550);
+    const holyCutinMobile = await page.evaluate(() => {
+      const strip = document.querySelector('.death-dance-cutin-strip');
+      const image = document.querySelector('#deathDanceCutinImg');
+      const rect = strip?.getBoundingClientRect();
+      return {
+        fitsViewport: Boolean(rect && rect.left >= -1 && rect.right <= window.innerWidth + 1),
+        objectFit: image ? getComputedStyle(image).objectFit : '',
+        stripHeight: Math.round(rect?.height || 0),
+        stripWidth: Math.round(rect?.width || 0),
+      };
+    });
+    if (!holyCutinMobile.fitsViewport || holyCutinMobile.objectFit !== 'contain' || holyCutinMobile.stripHeight < 250) {
+      throw new Error(`スマートフォン幅の聖剣解放カットインが不正です: ${JSON.stringify(holyCutinMobile)}`);
+    }
+    await page.evaluate(() => hideDeathDanceCutin());
     await page.locator('#equipToggleBtn').click();
     await holyFilter.waitFor({ state: 'visible', timeout: 5000 });
     const holyMobile = await page.evaluate(() => {
@@ -309,6 +405,10 @@ async function run() {
       masterAmulet,
       masterAmuletReload,
       versionState,
+      cutinPending,
+      cutinTransition,
+      holyCutinLayout,
+      holyCutinMobile,
       holyEquip,
       holyInventory,
       holyMobile,
