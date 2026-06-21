@@ -145,6 +145,80 @@ async function run() {
       throw new Error(`戦闘進行を確認できませんでした: ${JSON.stringify({ initialBattle, currentBattle, consoleErrors, pageErrors, failedLocalRequests }, null, 2)}\n${error.message}`);
     }
 
+    await page.evaluate(() => {
+      grantHolySet();
+      setMenuPage('inventory');
+      renderAll();
+    });
+    const holyFilter = page.locator('#inventorySlotFilter059 [data-slot-filter="holy"]');
+    await holyFilter.waitFor({ state: 'visible', timeout: 5000 });
+    await holyFilter.click();
+    await page.waitForFunction(() => {
+      const items = Array.from(document.querySelectorAll('#inventory .item'));
+      return items.length === 7 && items.every(item => item.classList.contains('holy'));
+    }, null, { timeout: 5000 });
+
+    const holyInventory = await page.evaluate(() => {
+      const filter = document.querySelector('#inventorySlotFilter059 [data-slot-filter="holy"]');
+      const items = Array.from(document.querySelectorAll('#inventory .item'));
+      const name = items[0]?.querySelector('b');
+      const style = name ? getComputedStyle(name) : null;
+      return {
+        filterActive: Boolean(filter?.classList.contains('active')),
+        filterLabel: filter?.textContent?.trim() || '',
+        itemCount: items.length,
+        allHoly: items.every(item => item.classList.contains('holy')),
+        rainbowBackground: style?.backgroundImage || '',
+        textFillColor: style?.webkitTextFillColor || style?.color || '',
+      };
+    });
+    if (!holyInventory.filterActive || holyInventory.itemCount !== 7 || !holyInventory.allHoly) {
+      throw new Error(`聖剣フィルターの表示が不正です: ${JSON.stringify(holyInventory)}`);
+    }
+    if (!holyInventory.rainbowBackground.includes('linear-gradient')) {
+      throw new Error(`倉庫の聖剣名が虹色表示ではありません: ${JSON.stringify(holyInventory)}`);
+    }
+
+    await page.evaluate(() => {
+      const holyItem = state.inventory.find(item => item?.specialFrame === 'holy');
+      if (!holyItem) throw new Error('装備確認用の聖剣が見つかりません。');
+      equipItem(holyItem);
+      renderEquip();
+    });
+    const holyEquip = await page.evaluate(() => {
+      const name = document.querySelector('#equipList .equip.holy > b');
+      const style = name ? getComputedStyle(name) : null;
+      return {
+        found: Boolean(name),
+        rainbowBackground: style?.backgroundImage || '',
+        text: name?.textContent?.trim() || '',
+      };
+    });
+    if (!holyEquip.found || !holyEquip.rainbowBackground.includes('linear-gradient')) {
+      throw new Error(`装備欄の聖剣名が虹色表示ではありません: ${JSON.stringify(holyEquip)}`);
+    }
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.locator('#equipToggleBtn').click();
+    await holyFilter.waitFor({ state: 'visible', timeout: 5000 });
+    const holyMobile = await page.evaluate(() => {
+      const bar = document.querySelector('#inventorySlotFilter059');
+      const buttons = Array.from(bar?.querySelectorAll('[data-slot-filter]') || []);
+      const barRect = bar?.getBoundingClientRect();
+      return {
+        buttonCount: buttons.length,
+        filterVisible: Boolean(barRect && barRect.width > 0 && barRect.height > 0),
+        fitsViewport: Boolean(barRect && barRect.left >= 0 && barRect.right <= window.innerWidth),
+        buttonsFitBar: Boolean(barRect && buttons.every(button => {
+          const rect = button.getBoundingClientRect();
+          return rect.left >= barRect.left - 1 && rect.right <= barRect.right + 1;
+        })),
+      };
+    });
+    if (holyMobile.buttonCount !== 11 || !holyMobile.filterVisible || !holyMobile.fitsViewport || !holyMobile.buttonsFitBar) {
+      throw new Error(`スマートフォン幅の聖剣フィルター配置が不正です: ${JSON.stringify(holyMobile)}`);
+    }
+
     const result = await page.evaluate(() => ({
       brand: document.querySelector('.brand')?.textContent?.trim() || '',
       enemyName: document.querySelector('#enemyName')?.textContent?.trim() || '',
@@ -170,6 +244,9 @@ async function run() {
       url: page.url(),
       initialBattle,
       ...result,
+      holyEquip,
+      holyInventory,
+      holyMobile,
       consoleErrors,
       pageErrors,
       failedLocalRequests,

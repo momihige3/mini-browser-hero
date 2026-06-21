@@ -3976,7 +3976,7 @@ html[data-build-version="0.6.5"] #statusDetailPanel.mbh-no-close-button .status-
 .inventory-slot-filter-bar,
 .mbh059-slot-filter{
   display:grid!important;
-  grid-template-columns:repeat(10,minmax(0,1fr))!important;
+  grid-template-columns:repeat(11,minmax(0,1fr))!important;
   gap:4px!important;
   width:100%!important;
   max-width:100%!important;
@@ -4042,7 +4042,7 @@ html[data-build-version="0.6.5"] .inventory-panel .inventory-slot-filter-bar:not
 html[data-build-version="0.6.5"] #inventorySlotFilter059.inventory-slot-filter-bar,
 html[data-build-version="0.6.5"] #inventorySlotFilter059.mbh059-slot-filter{
   display:grid!important;
-  grid-template-columns:repeat(10,minmax(0,1fr))!important;
+  grid-template-columns:repeat(11,minmax(0,1fr))!important;
   gap:3px!important;
   width:100%!important;
   max-width:100%!important;
@@ -4077,6 +4077,35 @@ html[data-build-version="0.6.5"] #inventorySlotFilter059 button[data-slot-filter
 @media(max-width:760px){
   html[data-build-version="0.6.5"] #inventorySlotFilter059.inventory-slot-filter-bar{gap:2px!important;padding:3px!important;}
   html[data-build-version="0.6.5"] #inventorySlotFilter059 button{font-size:clamp(7px,2.3vw,10px)!important;padding:7px 0!important;}
+}
+
+/* Holy Sword equipment: rainbow names with a gold fallback. */
+.item.holy,
+.equip.holy{
+  border-color:#ffe36e!important;
+  box-shadow:0 0 13px rgba(255,227,110,.52), inset 0 0 10px rgba(255,255,255,.16)!important;
+}
+.item.holy>b,
+.equip.holy>b{
+  color:#ffe36e!important;
+  font-weight:900!important;
+}
+@supports ((-webkit-background-clip:text) or (background-clip:text)){
+  .item.holy>b,
+  .equip.holy>b{
+    background:linear-gradient(90deg,#ff595e,#ffca3a,#8ac926,#52b8ff,#6a4cff,#d85cff,#ff595e);
+    background-size:240% 100%;
+    -webkit-background-clip:text;
+    background-clip:text;
+    -webkit-text-fill-color:transparent;
+    color:transparent!important;
+    animation:holy-item-rainbow 4s linear infinite;
+  }
+}
+@keyframes holy-item-rainbow{to{background-position:240% 0;}}
+@media(prefers-reduced-motion:reduce){
+  .item.holy>b,
+  .equip.holy>b{animation:none!important;background-position:50% 0!important;}
 }
 
 

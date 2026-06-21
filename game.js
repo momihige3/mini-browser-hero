@@ -2928,7 +2928,11 @@ function renderMonsterRecords(){
   }).join('');
 }
 function itemFrameClass(it){ return it ? (it.specialFrame || it.rarity || '') : ''; }
-function itemNameColor(it){ return it?.specialFrame === 'darkholy' ? '#b86cff' : rarityColor(it?.rarity); }
+function itemNameColor(it){
+  if(it?.specialFrame === 'darkholy') return '#b86cff';
+  if(it?.specialFrame === 'holy') return '#ffe36e';
+  return rarityColor(it?.rarity);
+}
 function renderEquip(){
   els.equipList.innerHTML='';
   slots.forEach(slot=>{ const it=state.equip[slot]; const div=document.createElement('div'); div.className='equip'+(it?` ${itemFrameClass(it)} ${it.rarity}`:'')+(state.selectedEquip===slot?' selected':''); div.innerHTML=it?`<b style="color:${itemNameColor(it)}">${slot}: ${formatItemNameWithPlus(it)}</b><small>${itemSummary(it)}</small>`:`<b>${slot}: 未装備</b>`; div.onclick=()=>{state.selectedEquip=slot; renderEquip();}; if(it){ div.onmousemove=(e)=>showTip(e,it); div.onmouseleave=()=>els.tooltip.classList.add('hidden'); } els.equipList.appendChild(div); });
@@ -3973,6 +3977,11 @@ init();
     const name=String(it.name||'');
     return it.specialFrame==='darkholy' || /^闇/.test(name) || /^暗黒/.test(name) || name.includes('闇の') || name.includes('暗黒の');
   }
+  function isHolyItem059(it){
+    if(!it) return false;
+    const name=String(it.name||'');
+    return it.specialFrame==='holy' || /^(聖剣|聖盾|聖兜|聖鎧|聖籠手|聖靴|聖アミュレット)/.test(name);
+  }
   function isAutoLockItem059(it){
     if(!it) return false;
     const name=String(it.name||'');
@@ -4001,6 +4010,7 @@ init();
     const f=getSlotFilter059();
     if(f==='all') return true;
     if(f==='dark') return isDarkItem059(it);
+    if(f==='holy') return isHolyItem059(it);
     return String(it?.slot||'')===f;
   }
   function rarityTargets059(){
@@ -4045,9 +4055,9 @@ init();
     bar.id='inventorySlotFilter059';
     bar.className='inventory-slot-filter-bar mbh059-slot-filter';
     const filters=[
-      ['all','すべて'],['武器','武器'],['盾','盾'],['兜','兜'],['鎧','鎧'],['腕','腕'],['足','足'],['リング','指輪'],['アミュレット','護符'],['dark','闇']
+      ['all','すべて'],['武器','武器'],['盾','盾'],['兜','兜'],['鎧','鎧'],['腕','腕'],['足','足'],['リング','指輪'],['アミュレット','護符'],['dark','闇'],['holy','聖剣']
     ];
-    bar.innerHTML=filters.map(([v,t])=>`<button type="button" data-slot-filter="${v}" title="${v==='all'?'すべて':v==='dark'?'闇装備':v}">${t}</button>`).join('');
+    bar.innerHTML=filters.map(([v,t])=>`<button type="button" data-slot-filter="${v}" title="${v==='all'?'すべて':v==='dark'?'闇装備':v==='holy'?'聖剣シリーズ':v}">${t}</button>`).join('');
     if(bar.dataset.mbh059Bound!=='1'){
       bar.dataset.mbh059Bound='1';
       bar.addEventListener('click',(e)=>{
@@ -4322,9 +4332,9 @@ init();
     bars.forEach(bar=>{ if(bar!==keep) bar.remove(); });
     keep.id='inventorySlotFilter059';
     keep.className='inventory-slot-filter-bar mbh059-slot-filter';
-    const labels=[['all','全て'],['武器','武器'],['盾','盾'],['兜','兜'],['鎧','鎧'],['腕','腕'],['足','足'],['リング','指輪'],['アミュレット','護符'],['dark','闇']];
+    const labels=[['all','全て'],['武器','武器'],['盾','盾'],['兜','兜'],['鎧','鎧'],['腕','腕'],['足','足'],['リング','指輪'],['アミュレット','護符'],['dark','闇'],['holy','聖剣']];
     const current=localStorage.getItem('mbh-inventory-slot-filter') || 'all';
-    keep.innerHTML=labels.map(([v,t])=>`<button type="button" data-slot-filter="${v}" title="${v==='all'?'全て':v==='dark'?'闇装備':v}" class="${v===current?'active':''}">${t}</button>`).join('');
+    keep.innerHTML=labels.map(([v,t])=>`<button type="button" data-slot-filter="${v}" title="${v==='all'?'全て':v==='dark'?'闇装備':v==='holy'?'聖剣シリーズ':v}" class="${v===current?'active':''}">${t}</button>`).join('');
   }
   function boot060(){
     /* syncVersion removed */
