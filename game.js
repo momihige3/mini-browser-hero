@@ -88,7 +88,7 @@ const state = {
   level:1, xp:0, xpNext:1000, chests:0, mats:3, defeated:0,
   base:{hp:520, atk:48, def:14}, hp:520, enemy:null, enemyHp:1,
   inventory:[], equip:{}, down:false, downUntil:0, deathDance:false, deathDanceUntil:0, deathDanceBattleCount:0, deathDanceCutin:false, deathDanceCutinTimer:null, deathDanceSeqTimers:[], lastHeroAttack:0, lastEnemyAttack:0,
-  log:[], debug:{killEnemy:false, killHero:false}, audio:null, masterGain:null, bgmGain:null, bgmTimer:null, bgmMode:'normal', normalBgm:null, swordDanceBgm:null, darkSwordSaintBgm:null, tenseiKnightBgm:null, bossBgm:null, darkSwordSaintVoice:null, darkSwordReviveTimer:null, darkSwordComboTimers:[], darkSwordCutinActive:false, audioUnlocked:false, mobileMuted:true, menuPage:'stats', inventoryMenuItemId:null, enemyRecords:{}, forceFirstEnemy:false, bgmPausedByVisibility:false, heroStatuses:null, enemyStatuses:null, darkShieldStacks:0, dropToastTimer:null, dropToastQueueTimers:[], winStreak:0, bestWinStreak:0, forceNextDarkSwordSaint:false, pendingBossForNext:null, darkSwordSaintFirstEncountered:false, darkSwordSaintLevel:1, darkSwordSaintKills:0, darkSwordSaintLastLevelTrigger:0, darkSwordSaintReturn:null, debugForcedBossNext:null, tenseiKnightLevel:1, tenseiKnightKills:0
+  log:[], debug:{killEnemy:false, killHero:false}, audio:null, masterGain:null, bgmMode:'normal', normalBgm:null, swordDanceBgm:null, darkSwordSaintBgm:null, tenseiKnightBgm:null, bossBgm:null, darkSwordSaintVoice:null, darkSwordReviveTimer:null, darkSwordComboTimers:[], darkSwordCutinActive:false, audioUnlocked:false, mobileMuted:true, menuPage:'stats', inventoryMenuItemId:null, enemyRecords:{}, forceFirstEnemy:false, bgmPausedByVisibility:false, heroStatuses:null, enemyStatuses:null, darkShieldStacks:0, dropToastTimer:null, dropToastQueueTimers:[], winStreak:0, bestWinStreak:0, forceNextDarkSwordSaint:false, pendingBossForNext:null, darkSwordSaintFirstEncountered:false, darkSwordSaintLevel:1, darkSwordSaintKills:0, darkSwordSaintLastLevelTrigger:0, darkSwordSaintReturn:null, debugForcedBossNext:null, tenseiKnightLevel:1, tenseiKnightKills:0
 };
 
 const SAVE_KEY = 'mini-browser-hero-save-v36';
@@ -152,10 +152,9 @@ function setMobileMuted(flag){
   applyVolume();
   updateMuteButton();
   if(state.mobileMuted){
-    try{ updateBgmVolume(); if(state.masterGain) state.masterGain.gain.value = 0; }catch(_){}
+    stopAllAudioForMute();
   }else{
     startAudio();
-    if(state.audioUnlocked) playBgm();
   }
   scheduleSave();
 }
@@ -427,7 +426,7 @@ function bind(){
   window.addEventListener('focus', ()=>{});
   setTimeout(()=>{ if(!state.mobileMuted) startAudio(); }, 300);
   els.debugBtn.onclick = () => { els.debugPanel.classList.toggle('hidden'); startAudio(); playUiClick(); };
-  if(els.muteBtn) els.muteBtn.onclick = (e) => { e.preventDefault(); setMobileMuted(!state.mobileMuted); if(!state.mobileMuted) startAudio(); playUiClick(); };
+  if(els.muteBtn) els.muteBtn.onclick = (e) => { e.preventDefault(); setMobileMuted(!state.mobileMuted); playUiClick(); };
   if(els.creditBtn) els.creditBtn.onclick = () => { playUiClick(); openLegalModal('credit'); };
   if(els.termsBtn) els.termsBtn.onclick = () => { playUiClick(); openLegalModal('terms'); };
   if(els.privacyBtn) els.privacyBtn.onclick = () => { playUiClick(); openLegalModal('privacy'); };
@@ -814,7 +813,7 @@ function spawnWeakEnemyAfterEscape(){
   if(els.downOverlay) els.downOverlay.classList.add('hidden');
   if(els.enemyCard) els.enemyCard.classList.remove('defeated-gone');
   spawnEnemy(false);
-  setBgmMode(isDarkSwordSaint() ? 'dark_sword_saint' : (state.enemy && state.enemy.type === 'ボス' ? 'boss' : 'normal'));
+  setBgmMode(bgmModeForEnemy(state.enemy));
   renderAll();
   scheduleSave();
 }
@@ -834,7 +833,7 @@ function spawnEnemyAfterDefeat(){
   if(els.downOverlay) els.downOverlay.classList.add('hidden');
   if(els.enemyCard) els.enemyCard.classList.remove('defeated-gone');
   spawnEnemy(false);
-  setBgmMode(isDarkSwordSaint() ? 'dark_sword_saint' : (state.enemy && state.enemy.type === 'ボス' ? 'boss' : 'normal'));
+  setBgmMode(bgmModeForEnemy(state.enemy));
   renderAll();
   scheduleSave();
 }
@@ -1432,7 +1431,6 @@ function setEnemy(e){
     state.enemyStatuses.holyProtection = true;
     state.enemyStatuses.holyReleaseHealUntil = 0;
     state.enemyStatuses.holyAilmentReduce = .90;
-    setBgmMode('tensei_knight');
   }else if(isDarkSwordSaint(e)){
     state.darkSwordSaintFirstEncountered = true;
     state.enemyStatuses.darkAuraStacks = 10;
@@ -1441,12 +1439,8 @@ function setEnemy(e){
     state.enemyStatuses.darkDanceCount = 0;
     state.enemyStatuses.darkOneDamageCount = 0;
     state.enemyStatuses.darkTechniqueAwakened = false;
-    setBgmMode('dark_sword_saint');
-  }else if(e && e.type === 'ボス'){
-    setBgmMode('boss');
-  }else{
-    setBgmMode('normal');
   }
+  setBgmMode(bgmModeForEnemy(e));
   markEnemySeen(e);
   els.enemyImg.src=e.img; els.enemyCard.className='card enemy-card enter';
   setTimeout(()=>els.enemyCard.classList.remove('enter'),600);
@@ -2210,7 +2204,7 @@ function endDeathDance(){
   els.deathAura.classList.add('hidden');
   els.deathDanceStatus.classList.add('hidden');
   renderStatusLists();
-  setBgmMode(isDarkSwordSaint() && state.enemyHp > 0 ? 'dark_sword_saint' : 'normal');
+  setBgmMode(bgmModeForEnemy(state.enemy));
   banner('死線の剣舞 終了');
   log('死線の剣舞が終了。','skilllog');
 }
@@ -2292,32 +2286,36 @@ function unlockSfxForIOS(){
     state.audioUnlocked = true;
   }catch(e){}
 }
+const BGM_CONFIG = Object.freeze({
+  normal:{stateKey:'normalBgm', src:'Petals_on_the_Water.mp3', volumeScale:.05},
+  boss:{stateKey:'bossBgm', src:'Before_the_Gate_Falls.mp3', volumeScale:.05},
+  dark_sword_saint:{stateKey:'darkSwordSaintBgm', src:'March_of_the_Iron_Saint.mp3', volumeScale:.05},
+  tensei_knight:{stateKey:'tenseiKnightBgm', src:'Judicium_Divinum.mp3', volumeScale:.08},
+  dance:{stateKey:'swordDanceBgm', src:'Steel_At_The_Gate.mp3', volumeScale:.05},
+});
+function createBgmAudio(src){
+  const audio = new Audio(src);
+  audio.loop = true;
+  audio.preload = 'auto';
+  return audio;
+}
+function bgmModeForEnemy(enemy=state.enemy){
+  if(enemy && enemy.id === 'tensei_knight') return 'tensei_knight';
+  if(enemy && enemy.id === 'dark_sword_saint') return 'dark_sword_saint';
+  if(enemy && (enemy.type === 'ボス' || enemy.type === '裏ボス')) return 'boss';
+  return 'normal';
+}
+function bgmAudioForMode(mode=state.bgmMode){
+  const config = BGM_CONFIG[mode] || BGM_CONFIG.normal;
+  return state[config.stateKey] || null;
+}
+function allBgmAudio(){
+  return Object.values(BGM_CONFIG).map(config=>state[config.stateKey]).filter(Boolean);
+}
 function ensureBgmAudio(){
-  if(!state.normalBgm){
-    state.normalBgm = new Audio('Petals_on_the_Water.mp3');
-    state.normalBgm.loop = true;
-    state.normalBgm.preload = 'auto';
-  }
-  if(!state.swordDanceBgm){
-    state.swordDanceBgm = new Audio('Steel_At_The_Gate.mp3');
-    state.swordDanceBgm.loop = true;
-    state.swordDanceBgm.preload = 'auto';
-  }
-  if(!state.darkSwordSaintBgm){
-    state.darkSwordSaintBgm = new Audio('March_of_the_Iron_Saint.mp3');
-    state.darkSwordSaintBgm.loop = true;
-    state.darkSwordSaintBgm.preload = 'auto';
-  }
-  if(!state.tenseiKnightBgm){
-    state.tenseiKnightBgm = new Audio('Judicium_Divinum.mp3');
-    state.tenseiKnightBgm.loop = true;
-    state.tenseiKnightBgm.preload = 'auto';
-  }
-  if(!state.bossBgm){
-    state.bossBgm = new Audio('Before_the_Gate_Falls.mp3');
-    state.bossBgm.loop = true;
-    state.bossBgm.preload = 'auto';
-  }
+  Object.values(BGM_CONFIG).forEach(config=>{
+    if(!state[config.stateKey]) state[config.stateKey] = createBgmAudio(config.src);
+  });
   if(!state.darkSwordSaintVoice){
     state.darkSwordSaintVoice = new Audio('DarkKnigtVoice.mp3');
     state.darkSwordSaintVoice.loop = false;
@@ -2326,16 +2324,15 @@ function ensureBgmAudio(){
   updateBgmVolume();
 }
 function updateBgmVolume(){
-  const v = state.mobileMuted ? 0 : Math.max(0, Math.min(2, state.volume)) * 0.05;
-  if(state.normalBgm) state.normalBgm.volume = v;
-  if(state.swordDanceBgm) state.swordDanceBgm.volume = v;
-  if(state.darkSwordSaintBgm) state.darkSwordSaintBgm.volume = v;
-  if(state.tenseiKnightBgm) state.tenseiKnightBgm.volume = v;
-  if(state.bossBgm) state.bossBgm.volume = v;
+  const volume = Math.max(0, Math.min(2, Number(state.volume)||0));
+  Object.values(BGM_CONFIG).forEach(config=>{
+    const audio = state[config.stateKey];
+    if(audio) audio.volume = state.mobileMuted ? 0 : volume * config.volumeScale;
+  });
   if(state.darkSwordSaintVoice) state.darkSwordSaintVoice.volume = state.mobileMuted ? 0 : Math.max(0, Math.min(2, state.volume)) * 0.25;
 }
 function safePlayAudio(a){
-  if(!a || state.mobileMuted) return;
+  if(!a || state.mobileMuted || !a.paused) return;
   try{
     const p = a.play();
     if(p && typeof p.catch === 'function') p.catch(()=>{});
@@ -2346,35 +2343,23 @@ function playDarkSwordSaintVoice(){
   ensureBgmAudio();
   updateBgmVolume();
   if(!state.darkSwordSaintVoice) return;
-  try{ state.darkSwordSaintVoice.pause(); state.darkSwordSaintVoice.currentTime = 0; }catch(e){}
+  try{ pauseHtmlAudio(state.darkSwordSaintVoice); state.darkSwordSaintVoice.load(); }catch(e){}
   safePlayAudio(state.darkSwordSaintVoice);
 }
-function pauseNormalBgm(){
-  if(state.normalBgm) state.normalBgm.pause();
+function pauseHtmlAudio(a){
+  if(!a) return;
+  try{ if(!a.paused) a.pause(); }catch(e){}
+}
+function pauseAllBgm(){
+  allBgmAudio().forEach(pauseHtmlAudio);
 }
 function stopAllBgm(){
-  stopBgm();
-  if(state.normalBgm) state.normalBgm.pause();
-  if(state.swordDanceBgm){ state.swordDanceBgm.pause(); state.swordDanceBgm.currentTime = 0; }
-  if(state.darkSwordSaintBgm){ state.darkSwordSaintBgm.pause(); state.darkSwordSaintBgm.currentTime = 0; }
-  if(state.bossBgm){ state.bossBgm.pause(); state.bossBgm.currentTime = 0; }
-  if(state.darkSwordSaintVoice){ state.darkSwordSaintVoice.pause(); state.darkSwordSaintVoice.currentTime = 0; }
-}
-
-function stopHtmlAudio(a, reset=false){
-  if(!a) return;
-  try{ a.pause(); }catch(e){}
-  if(reset){ try{ a.currentTime = 0; }catch(e){} }
+  pauseAllBgm();
+  pauseHtmlAudio(state.darkSwordSaintVoice);
 }
 function stopAllAudioForMute(){
-  // iOS Safari対策：音量0だけでは鳴り続けることがあるため、再生自体を止める。
-  stopBgm();
   ensureBgmAudio();
-  stopHtmlAudio(state.normalBgm, false);
-  stopHtmlAudio(state.swordDanceBgm, true);
-  stopHtmlAudio(state.darkSwordSaintBgm, false);
-  stopHtmlAudio(state.bossBgm, false);
-  stopHtmlAudio(state.darkSwordSaintVoice, true);
+  stopAllBgm();
   if(state.masterGain) state.masterGain.gain.value = 0;
   if(state.audio && state.audio.state === 'running'){
     try{ state.audio.suspend(); }catch(e){}
@@ -2385,11 +2370,7 @@ function pauseBgmForPageHidden(){
   if(!isTouchDevice || !isTouchDevice()) return;
   ensureBgmAudio();
   state.bgmPausedByVisibility = true;
-  if(state.normalBgm) state.normalBgm.pause();
-  if(state.swordDanceBgm) state.swordDanceBgm.pause();
-  if(state.darkSwordSaintBgm) state.darkSwordSaintBgm.pause();
-  if(state.bossBgm) state.bossBgm.pause();
-  if(state.darkSwordSaintVoice) state.darkSwordSaintVoice.pause();
+  stopAllBgm();
 }
 function resumeBgmForPageVisible(){
   if(!state.bgmPausedByVisibility) return;
@@ -2591,12 +2572,8 @@ function playUiClick(){
   }catch(_){}
 }
 
-function stopBgm(){
-  // 旧オシレーターBGM用の停止処理。HTMLAudio BGMは止めない。
-  if(state.bgmTimer){ clearInterval(state.bgmTimer); state.bgmTimer=null; }
-}
 function setBgmMode(mode){
-  state.bgmMode = mode || 'normal';
+  state.bgmMode = BGM_CONFIG[mode] ? mode : 'normal';
   if(!state.audioUnlocked || state.mobileMuted) return;
   playBgm();
 }
@@ -2604,56 +2581,11 @@ function playBgm(){
   if(!state.audioUnlocked || state.mobileMuted) return;
   ensureBgmAudio();
   updateBgmVolume();
-  stopBgm();
-  if(state.bgmMode === 'dance'){
-    if(state.normalBgm) state.normalBgm.pause();
-    if(state.darkSwordSaintBgm) state.darkSwordSaintBgm.pause();
-    if(state.tenseiKnightBgm) state.tenseiKnightBgm.pause();
-    if(state.swordDanceBgm){
-      // 剣舞BGM再生中にメニュー/ボタン操作で startAudio() や playBgm() が再実行されても、
-      // currentTime を 0 に戻さない。未再生・停止中の時だけ先頭から再生する。
-      if(state.swordDanceBgm.ended || (state.swordDanceBgm.paused && (!state.swordDanceBgm.currentTime || state.swordDanceBgm.currentTime <= 0.05))){
-        try{ state.swordDanceBgm.currentTime = 0; }catch(e){}
-      }
-      safePlayAudio(state.swordDanceBgm);
-    }
-  }else if(state.bgmMode === 'dark_sword_saint'){
-    if(state.normalBgm) state.normalBgm.pause();
-    if(state.swordDanceBgm){ state.swordDanceBgm.pause(); try{ state.swordDanceBgm.currentTime = 0; }catch(e){} }
-    if(state.darkSwordSaintBgm){
-      if(state.darkSwordSaintBgm.ended || (state.darkSwordSaintBgm.paused && (!state.darkSwordSaintBgm.currentTime || state.darkSwordSaintBgm.currentTime <= 0.05))){
-        try{ state.darkSwordSaintBgm.currentTime = 0; }catch(e){}
-      }
-      safePlayAudio(state.darkSwordSaintBgm);
-    }
-  }else if(state.bgmMode === 'tensei_knight'){
-    if(state.normalBgm) state.normalBgm.pause();
-    if(state.swordDanceBgm){ state.swordDanceBgm.pause(); try{ state.swordDanceBgm.currentTime = 0; }catch(e){} }
-    if(state.darkSwordSaintBgm){ state.darkSwordSaintBgm.pause(); try{ state.darkSwordSaintBgm.currentTime = 0; }catch(e){} }
-    if(state.tenseiKnightBgm){ state.tenseiKnightBgm.pause(); try{ state.tenseiKnightBgm.currentTime = 0; }catch(e){} }
-    if(state.bossBgm){ state.bossBgm.pause(); try{ state.bossBgm.currentTime = 0; }catch(e){} }
-    if(state.tenseiKnightBgm){
-      if(state.tenseiKnightBgm.ended || (state.tenseiKnightBgm.paused && (!state.tenseiKnightBgm.currentTime || state.tenseiKnightBgm.currentTime <= 0.05))){ try{ state.tenseiKnightBgm.currentTime = 0; }catch(e){} }
-      safePlayAudio(state.tenseiKnightBgm);
-    }
-  }else if(state.bgmMode === 'boss'){
-    if(state.normalBgm) state.normalBgm.pause();
-    if(state.swordDanceBgm){ state.swordDanceBgm.pause(); try{ state.swordDanceBgm.currentTime = 0; }catch(e){} }
-    if(state.darkSwordSaintBgm){ state.darkSwordSaintBgm.pause(); try{ state.darkSwordSaintBgm.currentTime = 0; }catch(e){} }
-    if(state.bossBgm){
-      if(state.bossBgm.ended || (state.bossBgm.paused && (!state.bossBgm.currentTime || state.bossBgm.currentTime <= 0.05))){
-        try{ state.bossBgm.currentTime = 0; }catch(e){}
-      }
-      safePlayAudio(state.bossBgm);
-    }
-  }else{
-    if(state.swordDanceBgm){ state.swordDanceBgm.pause(); try{ state.swordDanceBgm.currentTime = 0; }catch(e){} }
-    if(state.darkSwordSaintBgm){ state.darkSwordSaintBgm.pause(); try{ state.darkSwordSaintBgm.currentTime = 0; }catch(e){} }
-    if(state.tenseiKnightBgm){ state.tenseiKnightBgm.pause(); try{ state.tenseiKnightBgm.currentTime = 0; }catch(e){} }
-    if(state.bossBgm){ state.bossBgm.pause(); try{ state.bossBgm.currentTime = 0; }catch(e){} }
-  if(state.darkSwordSaintVoice){ state.darkSwordSaintVoice.pause(); try{ state.darkSwordSaintVoice.currentTime = 0; }catch(e){} }
-    safePlayAudio(state.normalBgm);
-  }
+  const current = bgmAudioForMode();
+  allBgmAudio().forEach(audio=>{
+    if(audio !== current) pauseHtmlAudio(audio);
+  });
+  safePlayAudio(current);
 }
 
 
@@ -3204,7 +3136,7 @@ function resetBattleState(forceFirst=false){
   clearDeathDanceSequence();
   resetTransientStatuses();
   state.deathDanceCutin=false; state.darkSwordCutinActive=false; state.deathDance=false; state.down=false;
-  state.bgmMode='normal'; stopAllBgm(); if(state.audioUnlocked && !state.mobileMuted) playBgm();
+  setBgmMode('normal');
   hideDeathDanceCutin();
   if(els.deathDanceStatus) els.deathDanceStatus.classList.add('hidden');
   if(els.deathAura) els.deathAura.classList.add('hidden');
@@ -4967,58 +4899,9 @@ function processTenseiKnight(now){
     log('天聖騎士が勇者の覚醒を発動！ 全身から聖なるオーラが噴き出す。','danger');
   }
 }
-function tenseiKnightAtkMul(){ return isTenseiKnight() && state.enemyStatuses?.holyAwakened ? 4 : 1; }
 function tenseiKnightIntervalMul(){ return isTenseiKnight() && state.enemyStatuses?.holyAwakened ? .5 : 1; }
-function startTenseiHolyReleaseHeal(){
-  if(!isTenseiKnight() || !state.enemyStatuses) return;
-  const started = performance.now();
-  state.enemyStatuses.holyReleaseHealUntil = started + 5000;
-  let ticks = 0;
-  const timer = setInterval(()=>{
-    try{
-      if(!isTenseiKnight() || !state.enemy || !state.enemyStatuses || state.enemyHp <= 0){ clearInterval(timer); return; }
-      ticks += 1;
-      const heal = Math.max(1, Math.floor(state.enemy.maxHp * 0.03));
-      if(state.enemyHp < state.enemy.maxHp){
-        state.enemyHp = Math.min(state.enemy.maxHp, state.enemyHp + heal);
-        showFloat(`+${heal}`, 'heal');
-        renderBattle();
-      }
-      if(ticks >= 25 || performance.now() >= state.enemyStatuses.holyReleaseHealUntil){
-        clearInterval(timer);
-        if(state.enemyStatuses) state.enemyStatuses.holyReleaseHealUntil = 0;
-        renderStatusLists();
-      }
-    }catch(e){ clearInterval(timer); }
-  }, 200);
-  renderStatusLists();
-}
 const __oldEnemyInterval066 = enemyInterval;
 enemyInterval = function(){ return Math.max(360, __oldEnemyInterval066() * tenseiKnightIntervalMul()); };
-const __oldEnemyAttack066 = enemyAttack;
-enemyAttack = function(now){
-  if(isTenseiKnight() && state.enemyStatuses){
-    state.enemyStatuses.holyReleaseCount = (state.enemyStatuses.holyReleaseCount||0) + 1;
-    if(state.enemyStatuses.holyReleaseCount >= 6){
-      state.enemyStatuses.holyReleaseCount = 0;
-      state.enemyStatuses.holyReleasePowerCount = (state.enemyStatuses.holyReleasePowerCount||0) + 1;
-      const holyReleasePowerMul = Math.pow(2, Math.max(0, state.enemyStatuses.holyReleasePowerCount - 1));
-      showHolyCutin('release');
-      startTenseiHolyReleaseHeal();
-      setTimeout(()=>{
-        const st=calcStats();
-        let dmg = Math.max(1, Math.floor((state.enemy.atk * 3.2 * tenseiKnightAtkMul() * holyReleasePowerMul) - st.def*.15 + rand(0,state.enemy.atk*.6)));
-        dmg = Math.max(1, Math.floor(dmg * (1 - (st.holyDamageReduce||0))));
-        if(state.debug.killHero) dmg = Math.max(dmg, state.hp + 999999);
-        if(state.hp - dmg <= 0){ if(tryHeroDeathDance()) return; state.hp=0; renderBattle(); handleHeroDeath(); return; }
-        state.hp=Math.max(0,state.hp-dmg); showHeroFloat(`聖剣 ${dmg}`,'holy'); playSfx('cutin'); log(`天聖騎士の聖剣解放！ 威力x${holyReleasePowerMul} ${dmg}ダメージ`,'danger'); renderBattle();
-      }, 500);
-      state.lastEnemyAttack = now || performance.now();
-      return;
-    }
-  }
-  return __oldEnemyAttack066.apply(this, arguments);
-};
 function makeHolyItem(slot, levelOverride){
   const lv = Math.max(1, Math.floor(Number(levelOverride)||Number(state.level)||1));
   const legendary = rarities.find(r=>r.id==='legendary') || {id:'legendary', name:'レジェンダリー', mult:3.2};
@@ -5034,13 +4917,9 @@ function makeHolyItem(slot, levelOverride){
   it.__dropPlusApplied=false; applyDropPlusToItem(it, lv); return it;
 }
 function grantHolySet(){ ['武器','盾','兜','鎧','腕','足','アミュレット'].forEach(slot=>state.inventory.unshift(makeHolyItem(slot, state.level))); renderAll(); log('デバッグ：聖剣シリーズ7種を倉庫に追加。','good'); scheduleSave(); }
-function forceSpawnTenseiKnight(){ const lv=Math.max(1, Math.floor(Number(state.tenseiKnightLevel)||1)); setEnemy(makeScaledEnemy(TENSEI_KNIGHT, lv)); banner('天聖騎士 降臨',1800); log(`デバッグ：天聖騎士Lv.${lv}と強制戦闘。`,'danger'); renderAll(); scheduleSave(); }
 function installHolyDebug066(){
   const p=document.getElementById('debugPanel'); if(!p) return;
   const close=document.getElementById('debugClose');
-  let b1=document.getElementById('debugTenseiKnight');
-  if(!b1){ b1=document.createElement('button'); b1.id='debugTenseiKnight'; b1.textContent='天聖騎士 強制戦闘'; p.insertBefore(b1, close); }
-  b1.onclick=()=>{playUiClick(); forceSpawnTenseiKnight();};
   let b2=document.getElementById('debugGrantHolySet');
   if(!b2){ b2=document.createElement('button'); b2.id='debugGrantHolySet'; b2.textContent='聖剣シリーズ7種付与'; p.insertBefore(b2, close); }
   b2.onclick=()=>{playUiClick(); grantHolySet();};
@@ -5253,7 +5132,6 @@ setTimeout(installHolyDebug066, 300);
 (function(){
   'use strict';
   const BUILD='0.6.21';
-  const $id=(id)=>document.getElementById(id);
   const safe=(fn)=>{ try{return fn&&fn();}catch(e){ console.error('[MBH0.6.11]', e); return null; } };
 
   function syncVersion0610(){
@@ -5263,23 +5141,6 @@ setTimeout(installHolyDebug066, 300);
     document.querySelectorAll('.build-version').forEach(el=>{ el.textContent='ver.'+BUILD; });
     document.querySelectorAll('.debug-version').forEach(el=>{ el.textContent='Build: ver.'+BUILD+' debug'; });
     document.querySelectorAll('.debug-trace-title').forEach(el=>{ el.textContent='進行デバッグログ ver.'+BUILD; });
-  }
-
-  // ボタン名は維持しつつ、押下時は「即時差し替え」ではなく次の敵として予約する。
-  window.forceSpawnTenseiKnight = function(){
-    const lv=Math.max(1, Math.floor(Number(state?.tenseiKnightLevel)||1));
-    state.debugForcedBossNext = {id:'tensei_knight', level:lv, from:'debug_next'};
-    safe(()=>banner('次の敵に天聖騎士をセット！', 1400));
-    safe(()=>log(`デバッグ：次の敵を天聖騎士Lv.${lv}にセット。現在の敵を倒すと出現する。`, 'danger'));
-    safe(()=>renderAll());
-    safe(()=>scheduleSave());
-  };
-
-  function bindTenseiButton0610(){
-    const b=$id('debugTenseiKnight');
-    if(!b) return;
-    b.textContent='天聖騎士召喚';
-    b.onclick=()=>{ safe(()=>playUiClick()); window.forceSpawnTenseiKnight(); };
   }
 
   // 既存のバッジから 0/6 などのカウント表示を消す。
@@ -5363,10 +5224,9 @@ setTimeout(installHolyDebug066, 300);
     statusTooltipHtml.__mbh0610Wrapped=true;
   }
 
-  function boot0610(){ /* syncVersion removed */ bindTenseiButton0610(); normalizeAllDarkNames0610(); cleanHolyReleaseBadges0610(); safe(()=>renderAll()); safe(()=>scheduleSave()); }
+  function boot0610(){ /* syncVersion removed */ normalizeAllDarkNames0610(); cleanHolyReleaseBadges0610(); safe(()=>renderAll()); safe(()=>scheduleSave()); }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', boot0610, {once:true}); else setTimeout(boot0610,0);
   window.addEventListener('load', ()=>setTimeout(boot0610,120), {once:true});
-  setInterval(()=>{ /* syncVersion removed */ bindTenseiButton0610(); cleanHolyReleaseBadges0610(); }, 1000);
 })();
 
 
@@ -5422,9 +5282,6 @@ function ensureTkStatus(){
  if(s.holyAwakened==null)s.holyAwakened=false;
  return s;
 }
-function boostTenseiBgmVolume(){try{const v=state.mobileMuted?0:Math.max(0,Math.min(2,Number(state.volume)||1))*.08;if(state.tenseiKnightBgm)state.tenseiKnightBgm.volume=v;}catch(_){}}
-const rawUpdateBgmVolume=typeof updateBgmVolume==='function'?updateBgmVolume:null;
-if(rawUpdateBgmVolume&&!rawUpdateBgmVolume.__tkBoost){updateBgmVolume=function(){const r=rawUpdateBgmVolume.apply(this,arguments);boostTenseiBgmVolume();return r;};updateBgmVolume.__tkBoost=true;}
 const rawSetEnemy=typeof setEnemy==='function'?setEnemy:null;
 if(rawSetEnemy&&!rawSetEnemy.__tkLatest){
  setEnemy=function(e){
@@ -5433,7 +5290,7 @@ if(rawSetEnemy&&!rawSetEnemy.__tkLatest){
    e.hp=e.maxHp;e.atk=Math.max(1,Math.floor((e.atk||1)*1.35));e.def=Math.max(0,Math.floor((e.def||0)*1.35));
   }
   const r=rawSetEnemy.apply(this,arguments);
-  if(isTK()){ensureTkStatus();if(typeof setBgmMode==='function')setBgmMode('tensei_knight');boostTenseiBgmVolume();}
+  if(isTK())ensureTkStatus();
   return r;
  };
  setEnemy.__tkLatest=true;
@@ -5441,40 +5298,6 @@ if(rawSetEnemy&&!rawSetEnemy.__tkLatest){
 const rawHasUnyieldingBuff=typeof hasUnyieldingBuff==='function'?hasUnyieldingBuff:null;
 hasUnyieldingBuff=function(){try{return isTK()||(rawHasUnyieldingBuff?rawHasUnyieldingBuff.apply(this,arguments):false);}catch(_){return isTK();}};
 
-function holySwordRelease(){
- if(!isTK()||!state.enemy||state.enemyHp<=0)return;
- const s=ensureTkStatus();if(!s)return;
- s.holyReleaseCount=(s.holyReleaseCount||0)+1;
- s.holyReleasePower=Math.pow(2,Math.max(0,s.holyReleaseCount-1));
- const st=typeof calcStats==='function'?calcStats():{holyDamageReduce:0};
- let dmg=Math.max(1,Math.floor(((state.enemy.atk||1)*3.2+(state.enemy.level||1)*16)*s.holyReleasePower));
- dmg=Math.max(1,Math.floor(dmg*(1-Math.min(.95,st.holyDamageReduce||0))));
- if(state.debug&&state.debug.killHero)dmg=Math.max(dmg,state.hp+999999);
- if(typeof applyDarkShieldToDamage==='function')dmg=applyDarkShieldToDamage(dmg);
- if(typeof showHeroFloat==='function')showHeroFloat(`聖剣解放 ${dmg.toLocaleString()}`,'holy damage');
- if(typeof playSfx==='function')safe(()=>playSfx('cutin'));
- if(state.hp-dmg<=0){
-  if(!state.debug?.killHero&&typeof tryHeroDeathDance==='function'&&tryHeroDeathDance()){if(typeof renderBattle==='function')renderBattle();}
-  else{state.hp=0;if(typeof renderBattle==='function')renderBattle();if(typeof handleHeroDeath==='function')handleHeroDeath();}
- }else{
-  state.hp=Math.max(0,state.hp-dmg);
-  if(typeof log==='function')log(`天聖騎士の聖剣解放！ 倍率x${s.holyReleasePower} / ${dmg.toLocaleString()}ダメージ`,'danger');
-  if(typeof renderBattle==='function')renderBattle();
- }
- s.holyReleaseHealUntil=now()+5000;s.holyReleaseHealLast=0;
- if(typeof renderStatusLists==='function')renderStatusLists();
-}
-const rawEnemyAttack=typeof enemyAttack==='function'?enemyAttack:null;
-if(rawEnemyAttack&&!rawEnemyAttack.__tkLatest){
- enemyAttack=function(t){
-  if(isTK()){
-   const s=ensureTkStatus();s.holyActionCount=(s.holyActionCount||0)+1;
-   if(s.holyActionCount>=4){s.holyActionCount=0;holySwordRelease();return;}
-  }
-  return rawEnemyAttack.apply(this,arguments);
- };
- enemyAttack.__tkLatest=true;
-}
 const rawProcessStatusDots=typeof processStatusDots==='function'?processStatusDots:null;
 if(rawProcessStatusDots&&!rawProcessStatusDots.__tkLatest){
  processStatusDots=function(t){
@@ -5530,7 +5353,7 @@ if(rawRenderStatusLists&&!rawRenderStatusLists.__tkLatest){
 function setTenseiNext(){state.debugForcedBossNext={id:'tensei_knight',level:Math.max(1,Math.floor(Number(state.tenseiKnightLevel)||1))};if(typeof banner==='function')banner('次の敵に天聖騎士をセット！',1400);if(typeof log==='function')log('デバッグ：天聖騎士を次の敵にセット。現在の敵を倒すと出現する。','danger');if(typeof scheduleSave==='function')scheduleSave();}
 function bindDebug(){const btn=document.getElementById('debugTenseiKnight');if(btn&&!btn.__tkLatest){btn.textContent='天聖騎士 次の敵';btn.onclick=function(e){if(e){e.preventDefault();e.stopPropagation();}if(typeof playUiClick==='function')safe(()=>playUiClick());setTenseiNext();return false;};btn.__tkLatest=true;}}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bindDebug,{once:true});else setTimeout(bindDebug,0);setTimeout(bindDebug,800);
-setTimeout(()=>safe(()=>{if(typeof renderStatusLists==='function')renderStatusLists();boostTenseiBgmVolume();}),500);
+setTimeout(()=>safe(()=>{if(typeof renderStatusLists==='function')renderStatusLists();}),500);
 })();
 
 
@@ -5711,7 +5534,6 @@ if(rawRenderStatusLists020&&!rawRenderStatusLists020.__mbh020){
 
 /* MBH 0.6.21 hotfix */
 (function(){
-const now=()=>performance&&performance.now?performance.now():Date.now();
 if(typeof statusTooltipHtml==='function'&&!statusTooltipHtml.__mbh021){
  const raw=statusTooltipHtml;
  statusTooltipHtml=function(kind,target){
@@ -5722,52 +5544,5 @@ if(typeof statusTooltipHtml==='function'&&!statusTooltipHtml.__mbh021){
   return r;
  };
  statusTooltipHtml.__mbh021=true;
-}
-if(typeof showHeroFloat==='function'&&!window.__mbh021Track){
- window.__mbh021Track=true;
- const raw=showHeroFloat;
- showHeroFloat=function(text,type){
-  try{
-   if(typeof text==='string'&&text.indexOf('聖剣解放')===0){
-    const s=state.enemyStatuses||(state.enemyStatuses={});
-    s.holyReleaseDamageAt=now();
-   }
-  }catch(e){}
-  return raw.apply(this,arguments);
- };
-}
-if(typeof enemyAttack==='function'&&!enemyAttack.__mbh021){
- const raw=enemyAttack;
- enemyAttack=function(){
-  try{
-   if(state&&state.enemy&&state.enemy.id==='tensei_knight'){
-    const s=state.enemyStatuses||(state.enemyStatuses={});
-    const last=s.holyReleaseDamageAt||0;
-    if(last && now()-last<10000){
-      return raw.apply(this,arguments);
-    }
-   }
-  }catch(e){}
-  return raw.apply(this,arguments);
- };
- enemyAttack.__mbh021=true;
-}
-if(typeof endDeathDance==='function'&&!endDeathDance.__mbh021){
- const raw=endDeathDance;
- endDeathDance=function(){
-  const r=raw.apply(this,arguments);
-  setTimeout(function(){
-   try{
-    if(!state||!state.enemy)return;
-    if(typeof setBgmMode!=='function')return;
-    if(state.enemy.id==='tensei_knight') setBgmMode('tensei_knight');
-    else if(state.enemy.id==='dark_sword_saint') setBgmMode('dark_sword_saint');
-    else if(state.enemy.boss) setBgmMode('boss');
-    else setBgmMode('normal');
-   }catch(e){}
-  },100);
-  return r;
- };
- endDeathDance.__mbh021=true;
 }
 })();
