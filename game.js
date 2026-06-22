@@ -3118,9 +3118,20 @@ function itemSummary(it){
 }
 
 function showTip(e,it){
-  const current=state.equip[it.slot]; let html=`<b style="color:${itemNameColor(it)}">${formatItemNameWithPlus(it)}</b><br>${it.slot} / ${it.rarityName}<br>${itemSummary(it)}<hr>`;
-  html+= current ? `現在: ${formatItemNameWithPlus(current)}<br>戦力差: ${Math.round(itemPower(it)-itemPower(current))}` : '現在: 未装備';
-  els.tooltip.innerHTML=html; els.tooltip.style.left=(e.clientX+14)+'px'; els.tooltip.style.top=(e.clientY+14)+'px'; els.tooltip.classList.remove('hidden');
+  const current=state.equip[it.slot];
+  const summaryHtml=(item)=>escapeHtml(itemSummary(item)||'追加能力なし').replace(/ \/ /g,'<br>');
+  let html=`<div class="inventory-tooltip-section"><strong>選択装備</strong><b style="color:${itemNameColor(it)}">${escapeHtml(formatItemNameWithPlus(it))}</b><small>${escapeHtml(it.slot)} / ${escapeHtml(it.rarityName||it.rarity)}</small><div>${summaryHtml(it)}</div></div>`;
+  if(current){
+    const diff=Math.round(itemPower(it)-itemPower(current));
+    html+=`<div class="inventory-tooltip-section current"><strong>現在装備</strong><b style="color:${itemNameColor(current)}">${escapeHtml(formatItemNameWithPlus(current))}</b><div>${summaryHtml(current)}</div><em>戦力差: ${diff>=0?'+':''}${diff}</em></div>`;
+  }else{
+    html+='<div class="inventory-tooltip-section current"><strong>現在装備</strong><div>未装備</div></div>';
+  }
+  els.tooltip.innerHTML=html;
+  els.tooltip.classList.remove('hidden');
+  const rect=els.tooltip.getBoundingClientRect();
+  els.tooltip.style.left=Math.max(8,Math.min(e.clientX+14,window.innerWidth-rect.width-8))+'px';
+  els.tooltip.style.top=Math.max(8,Math.min(e.clientY+14,window.innerHeight-rect.height-8))+'px';
 }
 
 function escapeHtml(v){ return String(v).replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }

@@ -4743,3 +4743,47 @@ html[data-build-version="0.6.15"] .monster-records,
 @media(max-width:760px){
   .inventory-action-menu-compare{width:calc(100vw - 16px)!important;max-height:72dvh!important;}
 }
+
+/* Current inventory scrolling and complete equipment comparison details. */
+.inventory-panel.active-page>.inventory,
+.side-panel .inventory{
+  flex:1 1 auto!important;
+  min-height:0!important;
+  max-height:none!important;
+  overflow-y:scroll!important;
+  overflow-x:hidden!important;
+  scrollbar-gutter:stable!important;
+  overscroll-behavior:contain!important;
+}
+.inventory-action-menu-compare,
+.tooltip{
+  scrollbar-width:thin!important;
+  scrollbar-color:#9d742a #111!important;
+}
+.inventory-action-menu-compare::-webkit-scrollbar,
+.tooltip::-webkit-scrollbar{width:8px!important;height:8px!important;}
+.inventory-action-menu-compare::-webkit-scrollbar-thumb,
+.tooltip::-webkit-scrollbar-thumb{background:#8b6628!important;border-radius:8px!important;}
+.inventory-action-menu-compare::-webkit-scrollbar-track,
+.tooltip::-webkit-scrollbar-track{background:#120b06!important;}
+.tooltip{
+  width:min(460px,calc(100vw - 16px))!important;
+  max-width:min(460px,calc(100vw - 16px))!important;
+  max-height:min(78dvh,720px)!important;
+  overflow:auto!important;
+  box-sizing:border-box!important;
+}
+.inventory-tooltip-section{
+  display:grid;
+  gap:4px;
+  padding:7px;
+  border:1px solid rgba(201,155,57,.45);
+  border-radius:6px;
+  background:rgba(0,0,0,.28);
+  line-height:1.35;
+}
+.inventory-tooltip-section+.inventory-tooltip-section{margin-top:8px;}
+.inventory-tooltip-section>strong{color:#ffd76b;}
+.inventory-tooltip-section>b{display:block;}
+.inventory-tooltip-section>small{color:#c8b98e;}
+.inventory-tooltip-section>em{color:#ffd76b;font-style:normal;font-weight:900;}

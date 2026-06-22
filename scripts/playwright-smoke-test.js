@@ -334,9 +334,12 @@ async function run() {
       throw new Error(`横長メニューレイアウトが不正です: ${JSON.stringify(wideMenuLayout)}`);
     }
 
+    await page.setViewportSize({ width: 1680, height: 710 });
     const inventoryFixture = await page.evaluate(() => {
       const current = makeDarkHolySword(state.level);
       const candidate = makeDebugSword();
+      current.flavor = Array.from({ length: 18 }, (_, index) => `current-effect-${index + 1}`).join(' / ');
+      candidate.flavor = Array.from({ length: 18 }, (_, index) => `selected-effect-${index + 1}`).join(' / ');
       state.equip['武器'] = current;
       state.inventory = [candidate];
       for (let i = 0; i < 120; i++) state.inventory.push(makeRandomItem());
@@ -344,6 +347,7 @@ async function run() {
       setMenuPage('inventory');
       renderAll();
       const anchor = document.querySelector(`#inventory [data-item-id="${candidate.id}"]`);
+      anchor?.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, clientX: 1080, clientY: 260 }));
       showInventoryActionMenu(candidate, anchor);
       return {
         currentName: formatItemNameWithPlus(current),
@@ -354,26 +358,54 @@ async function run() {
     });
     const inventoryUi = await page.evaluate(expected => {
       const inventory = document.querySelector('#inventory');
+      const menu = document.querySelector('#inventoryActionMenu');
       const columns = Array.from(document.querySelectorAll('#inventoryActionMenu .inventory-compare-col'));
       const before = inventory?.scrollTop || 0;
       if (inventory) inventory.scrollTop = inventory.scrollHeight;
       const after = inventory?.scrollTop || 0;
+      if (menu) menu.style.setProperty('max-height', '120px', 'important');
+      const menuBefore = menu?.scrollTop || 0;
+      if (menu) menu.scrollTop = menu.scrollHeight;
+      const menuAfter = menu?.scrollTop || 0;
+      const tooltip = document.querySelector('#tooltip');
+      const tooltipSections = Array.from(tooltip?.querySelectorAll('.inventory-tooltip-section') || []);
+      const tooltipRect = tooltip?.getBoundingClientRect();
+      const includesSummary = (section, summary) => summary.split(' / ').every(part => section?.textContent.includes(part));
       return {
         columns: columns.length,
         currentComplete: Boolean(columns[1]?.textContent.includes(expected.currentName)
           && columns[1]?.querySelector('pre')?.textContent === expected.currentSummary),
         overflowY: inventory ? getComputedStyle(inventory).overflowY : '',
+        scrollbarGutter: inventory ? getComputedStyle(inventory).scrollbarGutter : '',
         scrollbarColor: inventory ? getComputedStyle(inventory).scrollbarColor : '',
         scrollHeight: inventory?.scrollHeight || 0,
         clientHeight: inventory?.clientHeight || 0,
         scrolled: after > before,
+        menuOverflowY: menu ? getComputedStyle(menu).overflowY : '',
+        menuScrollbarColor: menu ? getComputedStyle(menu).scrollbarColor : '',
+        menuScrollHeight: menu?.scrollHeight || 0,
+        menuClientHeight: menu?.clientHeight || 0,
+        menuScrolled: menuAfter > menuBefore,
         selectedComplete: Boolean(columns[0]?.textContent.includes(expected.selectedName)
           && columns[0]?.querySelector('pre')?.textContent === expected.selectedSummary),
+        tooltipCurrentComplete: Boolean(tooltipSections[1]?.textContent.includes(expected.currentName)
+          && includesSummary(tooltipSections[1], expected.currentSummary)),
+        tooltipSelectedComplete: Boolean(tooltipSections[0]?.textContent.includes(expected.selectedName)
+          && includesSummary(tooltipSections[0], expected.selectedSummary)),
+        tooltipSectionCount: tooltipSections.length,
+        tooltipScrollbarColor: tooltip ? getComputedStyle(tooltip).scrollbarColor : '',
+        tooltipFitsViewport: Boolean(tooltipRect && tooltipRect.left >= 0 && tooltipRect.top >= 0
+          && tooltipRect.right <= window.innerWidth && tooltipRect.bottom <= window.innerHeight),
       };
     }, inventoryFixture);
     if (inventoryUi.columns !== 2 || !inventoryUi.currentComplete || !inventoryUi.selectedComplete
-      || !['auto', 'scroll'].includes(inventoryUi.overflowY) || inventoryUi.scrollHeight <= inventoryUi.clientHeight
-      || !inventoryUi.scrolled || inventoryUi.scrollbarColor === 'auto') {
+      || inventoryUi.overflowY !== 'scroll' || !inventoryUi.scrollbarGutter.includes('stable')
+      || inventoryUi.scrollHeight <= inventoryUi.clientHeight || !inventoryUi.scrolled
+      || inventoryUi.scrollbarColor === 'auto' || inventoryUi.menuOverflowY !== 'auto'
+      || inventoryUi.menuScrollbarColor === 'auto' || inventoryUi.menuScrollHeight <= inventoryUi.menuClientHeight
+      || !inventoryUi.menuScrolled || inventoryUi.tooltipSectionCount !== 2
+      || !inventoryUi.tooltipCurrentComplete || !inventoryUi.tooltipSelectedComplete
+      || inventoryUi.tooltipScrollbarColor === 'auto' || !inventoryUi.tooltipFitsViewport) {
       throw new Error(`倉庫スクロールまたは装備比較が不正です: ${JSON.stringify(inventoryUi)}`);
     }
     await page.evaluate(() => cancelInventoryActionMenu());
