@@ -503,12 +503,29 @@ async function run() {
       throw new Error(`スマートフォン幅の聖剣解放カットインが不正です: ${JSON.stringify(holyCutinMobile)}`);
     }
     await page.evaluate(() => hideDeathDanceCutin());
+    const mobileExpBeforeMenu = await page.evaluate(() => {
+      const bar = document.querySelector('#mobileExpBar');
+      const rect = bar?.getBoundingClientRect();
+      return {
+        visible: Boolean(rect && rect.width > 0 && rect.height > 0 && getComputedStyle(bar).display !== 'none'),
+        rect: rect ? { top: rect.top, bottom: rect.bottom } : null,
+      };
+    });
+    if (!mobileExpBeforeMenu.visible) throw new Error(`スマホ経験値バーが戦闘画面で表示されていません: ${JSON.stringify(mobileExpBeforeMenu)}`);
     await page.locator('#equipToggleBtn').click();
     await holyFilter.waitFor({ state: 'visible', timeout: 5000 });
     const holyMobile = await page.evaluate(() => {
       const bar = document.querySelector('#inventorySlotFilter059');
       const buttons = Array.from(bar?.querySelectorAll('[data-slot-filter]') || []);
       const barRect = bar?.getBoundingClientRect();
+      const side = document.querySelector('.side-panel.open');
+      const content = side?.querySelector(':scope > .menu-content-fixed');
+      const footer = side?.querySelector(':scope > .menu-footer');
+      const mobileExp = document.querySelector('#mobileExpBar');
+      const sideRect = side?.getBoundingClientRect();
+      const contentRect = content?.getBoundingClientRect();
+      const footerRect = footer?.getBoundingClientRect();
+      const footerButtons = Array.from(footer?.querySelectorAll('button') || []);
       return {
         buttonCount: buttons.length,
         filterVisible: Boolean(barRect && barRect.width > 0 && barRect.height > 0),
@@ -517,9 +534,23 @@ async function run() {
           const rect = button.getBoundingClientRect();
           return rect.left >= barRect.left - 1 && rect.right <= barRect.right + 1;
         })),
+        expHiddenWhileMenuOpen: mobileExp ? getComputedStyle(mobileExp).display === 'none' : false,
+        footerButtonCount: footerButtons.length,
+        footerButtonsVisible: footerButtons.every(button => {
+          const rect = button.getBoundingClientRect();
+          return rect.width > 0 && rect.height > 0;
+        }),
+        footerInsideMenu: Boolean(sideRect && footerRect && footerRect.left >= sideRect.left - 1
+          && footerRect.right <= sideRect.right + 1 && footerRect.bottom <= sideRect.bottom + 1),
+        footerInsideViewport: Boolean(footerRect && footerRect.top >= 0 && footerRect.bottom <= window.innerHeight + 1),
+        contentDoesNotCoverFooter: Boolean(contentRect && footerRect && contentRect.bottom <= footerRect.top + 1),
+        menuDisplay: side ? getComputedStyle(side).display : '',
       };
     });
-    if (holyMobile.buttonCount !== 11 || !holyMobile.filterVisible || !holyMobile.fitsViewport || !holyMobile.buttonsFitBar) {
+    if (holyMobile.buttonCount !== 11 || !holyMobile.filterVisible || !holyMobile.fitsViewport || !holyMobile.buttonsFitBar
+      || !holyMobile.expHiddenWhileMenuOpen || holyMobile.footerButtonCount !== 3
+      || !holyMobile.footerButtonsVisible || !holyMobile.footerInsideMenu || !holyMobile.footerInsideViewport
+      || !holyMobile.contentDoesNotCoverFooter || holyMobile.menuDisplay !== 'flex') {
       throw new Error(`スマートフォン幅の聖剣フィルター配置が不正です: ${JSON.stringify(holyMobile)}`);
     }
 
@@ -560,6 +591,7 @@ async function run() {
       holyEquip,
       holyInventory,
       holyMobile,
+      mobileExpBeforeMenu,
       consoleErrors,
       pageErrors,
       failedLocalRequests,

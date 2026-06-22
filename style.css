@@ -4792,3 +4792,44 @@ html[data-build-version="0.6.15"] .monster-records,
 .inventory-tooltip-section>b{display:block;}
 .inventory-tooltip-section>small{color:#c8b98e;}
 .inventory-tooltip-section>em{color:#ffd76b;font-style:normal;font-weight:900;}
+
+/* Current compact menu stacking and footer containment. */
+@media (max-width:1279px), (max-height:700px){
+  body.mbh-menu-open .mobile-exp-bar{
+    display:none!important;
+  }
+  html body .side-panel.open{
+    display:flex!important;
+    flex-direction:column!important;
+    min-height:0!important;
+    overflow:hidden!important;
+  }
+  .side-panel.open>.mobile-menu-tabs{
+    flex:0 0 auto!important;
+    min-width:0!important;
+  }
+  .side-panel.open>.menu-content-fixed{
+    display:block!important;
+    flex:1 1 auto!important;
+    width:100%!important;
+    height:auto!important;
+    min-width:0!important;
+    min-height:0!important;
+    overflow:hidden!important;
+  }
+  .side-panel.open>.menu-footer{
+    display:flex!important;
+    flex:0 0 auto!important;
+    align-self:stretch!important;
+    width:100%!important;
+    min-width:0!important;
+    min-height:44px!important;
+    margin:0!important;
+    overflow:visible!important;
+  }
+  .side-panel.open>.menu-footer button{
+    min-width:0!important;
+    white-space:normal!important;
+    overflow-wrap:anywhere!important;
+  }
+}

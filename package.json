@@ -1,6 +1,6 @@
 {
   "name": "mini-browser-hero",
-  "version": "0.6.26",
+  "version": "0.6.27",
   "private": true,
   "scripts": {
     "test:e2e": "node scripts/playwright-smoke-test.js"
