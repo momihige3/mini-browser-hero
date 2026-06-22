@@ -4183,7 +4183,7 @@ init();
     if(els?.tooltip) els.tooltip.classList.add('hidden');
   }
   function positionAction059(menu, anchor){
-    const width=Math.min(330, window.innerWidth-16);
+    const width=Math.min(680, window.innerWidth-16);
     menu.style.width=width+'px';
     if((typeof isTouchDevice==='function' && isTouchDevice()) || window.innerWidth<=760){
       menu.style.left='50%';
@@ -4222,14 +4222,20 @@ init();
     const diff=current && typeof itemPower==='function' ? Math.round(itemPower(it)-itemPower(current)) : 0;
     const locked=!!it.locked;
     const auto=isAutoLockItem059(it);
+    const selectedSummary=summary059(it);
+    const currentSummary=current ? summary059(current) : '未装備';
+    menu.className='inventory-action-menu mbh059-action-menu inventory-action-menu-compare';
     menu.innerHTML=`
       <div class="inventory-action-title">
         <b>${locked?'🔒 ':''}${escapeHtml(fmtName059(it))}</b>
         <small>${escapeHtml(it.slot||'')} / ${escapeHtml(it.rarityName||it.rarity||'')}</small>
       </div>
       <div class="inventory-action-summary">
-        ${escapeHtml(summary059(it))}
-        ${current?`<br>現在: ${escapeHtml(fmtName059(current))} / 戦力差: ${diff>=0?'+':''}${diff}`:'<br>現在: 未装備'}
+        <div class="inventory-compare-box">
+          <div class="inventory-compare-col"><strong>選択装備</strong><b>${escapeHtml(fmtName059(it))}</b><pre>${escapeHtml(selectedSummary)}</pre></div>
+          <div class="inventory-compare-col"><strong>現在装備</strong><b>${current?escapeHtml(fmtName059(current)):'未装備'}</b><pre>${escapeHtml(currentSummary)}</pre></div>
+        </div>
+        ${current?`<div class="inventory-power-diff">戦力差: ${diff>=0?'+':''}${diff}</div>`:''}
         ${auto?'<br><span class="auto-lock-note">自動ロック対象</span>':''}
       </div>
       <div class="inventory-action-buttons">

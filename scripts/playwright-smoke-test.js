@@ -280,6 +280,104 @@ async function run() {
     }
     await page.evaluate(() => hideDeathDanceCutin());
 
+    await page.evaluate(() => setMenuPage('stats'));
+    const wideTabs = page.locator('.side-panel > .mobile-menu-tabs [data-menu-page]');
+    if (await wideTabs.count() !== 3) throw new Error('横長画面のページ切替ボタンが3個ではありません。');
+    for (const pageName of ['stats', 'equip', 'inventory']) {
+      const tab = page.locator(`.side-panel > .mobile-menu-tabs [data-menu-page="${pageName}"]`);
+      await tab.waitFor({ state: 'visible', timeout: 5000 });
+      await tab.click();
+      await page.waitForFunction(name => {
+        const active = document.querySelector('.side-panel > .menu-content-fixed > .panel.active-page');
+        const expected = name === 'stats' ? 'hero-stats' : name === 'equip' ? 'equip-panel' : 'inventory-panel';
+        return Boolean(active?.classList.contains(expected) && getComputedStyle(active).display !== 'none');
+      }, pageName);
+    }
+    await page.locator('.side-panel > .mobile-menu-tabs [data-menu-page="stats"]').click();
+    const wideMenuLayout = await page.evaluate(() => {
+      const side = document.querySelector('.side-panel');
+      const footer = document.querySelector('.side-panel > .menu-footer');
+      const records = document.querySelector('.hero-stats.active-page .monster-record-list');
+      const panels = Array.from(document.querySelectorAll('.side-panel > .menu-content-fixed > .panel'));
+      const sideRect = side?.getBoundingClientRect();
+      const footerRect = footer?.getBoundingClientRect();
+      const recordsRect = records?.getBoundingClientRect();
+      return {
+        activePanelCount: panels.filter(panel => getComputedStyle(panel).display !== 'none').length,
+        footerInside: Boolean(sideRect && footerRect && footerRect.left >= sideRect.left - 1 && footerRect.right <= sideRect.right + 1
+          && footerRect.bottom <= sideRect.bottom + 1),
+        recordsFooterGap: footerRect && recordsRect ? Math.round(footerRect.top - recordsRect.bottom) : 9999,
+        recordsHeight: Math.round(recordsRect?.height || 0),
+        sideRect: sideRect ? {left:Math.round(sideRect.left), top:Math.round(sideRect.top), right:Math.round(sideRect.right), bottom:Math.round(sideRect.bottom)} : null,
+        footerRect: footerRect ? {left:Math.round(footerRect.left), top:Math.round(footerRect.top), right:Math.round(footerRect.right), bottom:Math.round(footerRect.bottom), height:Math.round(footerRect.height)} : null,
+        footerStyle: footer ? {
+          display:getComputedStyle(footer).display,
+          gridColumn:getComputedStyle(footer).gridColumn,
+          gridRow:getComputedStyle(footer).gridRow,
+          left:getComputedStyle(footer).left,
+          margin:getComputedStyle(footer).margin,
+          offsetLeft:footer.offsetLeft,
+          parentClass:footer.parentElement?.className || '',
+          position:getComputedStyle(footer).position,
+          transform:getComputedStyle(footer).transform,
+        } : null,
+        sideGrid: side ? {columns:getComputedStyle(side).gridTemplateColumns, display:getComputedStyle(side).display,
+          direction:getComputedStyle(side).direction, offsetLeft:side.offsetLeft, rows:getComputedStyle(side).gridTemplateRows,
+          transform:getComputedStyle(side).transform} : null,
+        recordsRect: recordsRect ? {top:Math.round(recordsRect.top), bottom:Math.round(recordsRect.bottom)} : null,
+        tabsVisible: Array.from(document.querySelectorAll('.side-panel > .mobile-menu-tabs button'))
+          .every(button => getComputedStyle(button).display !== 'none' && button.getBoundingClientRect().height > 0),
+      };
+    });
+    if (!wideMenuLayout.tabsVisible || wideMenuLayout.activePanelCount !== 1 || !wideMenuLayout.footerInside
+      || wideMenuLayout.recordsFooterGap > 40 || wideMenuLayout.recordsHeight < 300) {
+      throw new Error(`横長メニューレイアウトが不正です: ${JSON.stringify(wideMenuLayout)}`);
+    }
+
+    const inventoryFixture = await page.evaluate(() => {
+      const current = makeDarkHolySword(state.level);
+      const candidate = makeDebugSword();
+      state.equip['武器'] = current;
+      state.inventory = [candidate];
+      for (let i = 0; i < 120; i++) state.inventory.push(makeRandomItem());
+      localStorage.setItem('mbh-inventory-slot-filter', 'all');
+      setMenuPage('inventory');
+      renderAll();
+      const anchor = document.querySelector(`#inventory [data-item-id="${candidate.id}"]`);
+      showInventoryActionMenu(candidate, anchor);
+      return {
+        currentName: formatItemNameWithPlus(current),
+        currentSummary: itemSummary(current),
+        selectedName: formatItemNameWithPlus(candidate),
+        selectedSummary: itemSummary(candidate),
+      };
+    });
+    const inventoryUi = await page.evaluate(expected => {
+      const inventory = document.querySelector('#inventory');
+      const columns = Array.from(document.querySelectorAll('#inventoryActionMenu .inventory-compare-col'));
+      const before = inventory?.scrollTop || 0;
+      if (inventory) inventory.scrollTop = inventory.scrollHeight;
+      const after = inventory?.scrollTop || 0;
+      return {
+        columns: columns.length,
+        currentComplete: Boolean(columns[1]?.textContent.includes(expected.currentName)
+          && columns[1]?.querySelector('pre')?.textContent === expected.currentSummary),
+        overflowY: inventory ? getComputedStyle(inventory).overflowY : '',
+        scrollbarColor: inventory ? getComputedStyle(inventory).scrollbarColor : '',
+        scrollHeight: inventory?.scrollHeight || 0,
+        clientHeight: inventory?.clientHeight || 0,
+        scrolled: after > before,
+        selectedComplete: Boolean(columns[0]?.textContent.includes(expected.selectedName)
+          && columns[0]?.querySelector('pre')?.textContent === expected.selectedSummary),
+      };
+    }, inventoryFixture);
+    if (inventoryUi.columns !== 2 || !inventoryUi.currentComplete || !inventoryUi.selectedComplete
+      || !['auto', 'scroll'].includes(inventoryUi.overflowY) || inventoryUi.scrollHeight <= inventoryUi.clientHeight
+      || !inventoryUi.scrolled || inventoryUi.scrollbarColor === 'auto') {
+      throw new Error(`倉庫スクロールまたは装備比較が不正です: ${JSON.stringify(inventoryUi)}`);
+    }
+    await page.evaluate(() => cancelInventoryActionMenu());
+
     await page.evaluate(() => {
       grantHolySet();
       setMenuPage('inventory');
@@ -409,6 +507,8 @@ async function run() {
       cutinTransition,
       holyCutinLayout,
       holyCutinMobile,
+      wideMenuLayout,
+      inventoryUi,
       holyEquip,
       holyInventory,
       holyMobile,
