@@ -3130,8 +3130,21 @@ function showTip(e,it){
   els.tooltip.innerHTML=html;
   els.tooltip.classList.remove('hidden');
   const rect=els.tooltip.getBoundingClientRect();
-  els.tooltip.style.left=Math.max(8,Math.min(e.clientX+14,window.innerWidth-rect.width-8))+'px';
-  els.tooltip.style.top=Math.max(8,Math.min(e.clientY+14,window.innerHeight-rect.height-8))+'px';
+  const pad=8;
+  const gap=18;
+  const fitsRight=e.clientX+gap+rect.width<=window.innerWidth-pad;
+  const fitsLeft=e.clientX-gap-rect.width>=pad;
+  const left=fitsRight
+    ? e.clientX+gap
+    : fitsLeft
+      ? e.clientX-gap-rect.width
+      : Math.max(pad,Math.min(e.clientX-(rect.width/2),window.innerWidth-rect.width-pad));
+  const fitsBelow=e.clientY+gap+rect.height<=window.innerHeight-pad;
+  const top=fitsBelow
+    ? e.clientY+gap
+    : Math.max(pad,Math.min(e.clientY-gap-rect.height,window.innerHeight-rect.height-pad));
+  els.tooltip.style.left=left+'px';
+  els.tooltip.style.top=top+'px';
 }
 
 function escapeHtml(v){ return String(v).replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }

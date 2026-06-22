@@ -347,7 +347,7 @@ async function run() {
       setMenuPage('inventory');
       renderAll();
       const anchor = document.querySelector(`#inventory [data-item-id="${candidate.id}"]`);
-      anchor?.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, clientX: 1080, clientY: 260 }));
+      anchor?.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, clientX: 1650, clientY: 260 }));
       showInventoryActionMenu(candidate, anchor);
       return {
         currentName: formatItemNameWithPlus(current),
@@ -370,6 +370,8 @@ async function run() {
       const tooltip = document.querySelector('#tooltip');
       const tooltipSections = Array.from(tooltip?.querySelectorAll('.inventory-tooltip-section') || []);
       const tooltipRect = tooltip?.getBoundingClientRect();
+      const sideRect = document.querySelector('.side-panel')?.getBoundingClientRect();
+      const footerRect = document.querySelector('.side-panel > .menu-footer')?.getBoundingClientRect();
       const includesSummary = (section, summary) => summary.split(' / ').every(part => section?.textContent.includes(part));
       return {
         columns: columns.length,
@@ -393,9 +395,21 @@ async function run() {
         tooltipSelectedComplete: Boolean(tooltipSections[0]?.textContent.includes(expected.selectedName)
           && includesSummary(tooltipSections[0], expected.selectedSummary)),
         tooltipSectionCount: tooltipSections.length,
+        tooltipAvoidsPointer: Boolean(tooltipRect && (1650 < tooltipRect.left || 1650 > tooltipRect.right
+          || 260 < tooltipRect.top || 260 > tooltipRect.bottom)),
+        tooltipPointerEvents: tooltip ? getComputedStyle(tooltip).pointerEvents : '',
         tooltipScrollbarColor: tooltip ? getComputedStyle(tooltip).scrollbarColor : '',
         tooltipFitsViewport: Boolean(tooltipRect && tooltipRect.left >= 0 && tooltipRect.top >= 0
           && tooltipRect.right <= window.innerWidth && tooltipRect.bottom <= window.innerHeight),
+        sideWithinViewport: Boolean(sideRect && sideRect.bottom <= window.innerHeight + 1),
+        footerVisibleInViewport: Boolean(footerRect && footerRect.height > 0 && footerRect.top < window.innerHeight
+          && footerRect.bottom <= window.innerHeight + 1),
+        sideRect: sideRect ? { top: sideRect.top, bottom: sideRect.bottom, height: sideRect.height } : null,
+        footerRect: footerRect ? { top: footerRect.top, bottom: footerRect.bottom, height: footerRect.height } : null,
+        layoutRect: (() => {
+          const rect = document.querySelector('.layout')?.getBoundingClientRect();
+          return rect ? { top: rect.top, bottom: rect.bottom, height: rect.height } : null;
+        })(),
       };
     }, inventoryFixture);
     if (inventoryUi.columns !== 2 || !inventoryUi.currentComplete || !inventoryUi.selectedComplete
@@ -405,7 +419,9 @@ async function run() {
       || inventoryUi.menuScrollbarColor === 'auto' || inventoryUi.menuScrollHeight <= inventoryUi.menuClientHeight
       || !inventoryUi.menuScrolled || inventoryUi.tooltipSectionCount !== 2
       || !inventoryUi.tooltipCurrentComplete || !inventoryUi.tooltipSelectedComplete
-      || inventoryUi.tooltipScrollbarColor === 'auto' || !inventoryUi.tooltipFitsViewport) {
+      || !inventoryUi.tooltipAvoidsPointer || inventoryUi.tooltipPointerEvents !== 'none'
+      || inventoryUi.tooltipScrollbarColor === 'auto' || !inventoryUi.tooltipFitsViewport
+      || !inventoryUi.sideWithinViewport || !inventoryUi.footerVisibleInViewport) {
       throw new Error(`倉庫スクロールまたは装備比較が不正です: ${JSON.stringify(inventoryUi)}`);
     }
     await page.evaluate(() => cancelInventoryActionMenu());
