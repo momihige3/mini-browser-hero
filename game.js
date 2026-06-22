@@ -236,6 +236,7 @@ function init(){
   state.inventory = [];
   loadGame();
   ensureStarterEquipment();
+  syncAllSpecialEquipmentParameters();
   sanitizeAllEquipmentDeathDanceChance();
   // v57: 音声は保存状態に関係なく、起動・リロード直後は必ずミュートON。
   state.mobileMuted = true;
@@ -2666,10 +2667,43 @@ function formatItemNameWithPlus(it){
 }
 
 function darkEquipLevelFromSource(levelOverride){
-  const raw = Math.max(1, Math.floor(Number(levelOverride) || Number(state?.enemy?.level) || Number(state?.darkSwordSaintLevel) || Number(state?.level) || 1));
-  // ver.0.6.5: 闇装備は暗黒剣聖の独立Lv1を通常敵Lv100相当として扱う。
-  // すでに通常敵Lv100以上が渡された場合はそのまま使う。
-  return raw < 100 ? raw * 100 : raw;
+  return Math.max(1, Math.floor(Number(levelOverride) || Number(state?.enemy?.level) || Number(state?.darkSwordSaintLevel) || Number(state?.level) || 1));
+}
+const SPECIAL_EQUIPMENT_BASE_LEVEL = Object.freeze({darkholy:500, holy:1000});
+function specialEquipmentParameterLevel(frame, quality){
+  const base=SPECIAL_EQUIPMENT_BASE_LEVEL[frame];
+  if(!base) return 0;
+  return base + Math.max(0,Math.floor(Number(quality)||0))*50;
+}
+function applySpecialEquipmentParameters(it){
+  if(!it || !SPECIAL_EQUIPMENT_BASE_LEVEL[it.specialFrame]) return it;
+  const lv=specialEquipmentParameterLevel(it.specialFrame,it.level);
+  const legendary=rarities.find(r=>r.id==='legendary') || {mult:3.2};
+  const m=legendary.mult;
+  if(it.specialFrame==='darkholy'){
+    if(it.slot==='武器') it.atk=Math.floor((34+lv*7)*m);
+    else if(it.slot==='盾'){ it.def=Math.floor((18+lv*5)*m); it.hp=Math.floor((70+lv*14)*m); }
+    else if(it.slot==='アミュレット') it.hp=Math.floor((90+lv*16)*m);
+    else if(it.slot==='鎧'){ it.def=Math.floor(26+lv*7); it.hp=Math.floor(190+lv*22); }
+    else if(it.slot==='腕'){ it.atk=Math.floor(22+lv*6); it.def=Math.floor(10+lv*3); }
+    else if(it.slot==='兜'){ it.def=Math.floor(14+lv*4); it.hp=Math.floor(80+lv*12); }
+    else if(it.slot==='足'){ it.def=Math.floor(10+lv*3); it.hp=Math.floor(70+lv*10); }
+  }else{
+    if(it.slot==='武器') it.atk=Math.floor((34+lv*7)*m);
+    else if(it.slot==='盾'){ it.def=Math.floor((20+lv*5)*m); it.hp=Math.floor((80+lv*14)*m); }
+    else if(it.slot==='兜'){ it.def=Math.floor((14+lv*4)*m); it.hp=Math.floor((45+lv*10)*m); }
+    else if(it.slot==='鎧'){ it.def=Math.floor((24+lv*6)*m); it.hp=Math.floor((120+lv*18)*m); }
+    else if(it.slot==='腕'){ it.def=Math.floor((12+lv*4)*m); it.hp=Math.floor((40+lv*9)*m); }
+    else if(it.slot==='足'){ it.def=Math.floor((12+lv*4)*m); it.hp=Math.floor((55+lv*10)*m); }
+    else if(it.slot==='アミュレット') it.hp=Math.floor((100+lv*16)*m);
+  }
+  it.parameterLevel=lv;
+  it.__dropPlusApplied=true;
+  return it;
+}
+function syncAllSpecialEquipmentParameters(){
+  Object.values(state?.equip||{}).forEach(applySpecialEquipmentParameters);
+  if(Array.isArray(state?.inventory)) state.inventory.forEach(applySpecialEquipmentParameters);
 }
 function makeDarkHolySword(levelOverride){
   const lv = darkEquipLevelFromSource(levelOverride);
@@ -2679,13 +2713,12 @@ function makeDarkHolySword(levelOverride){
   it.rarity = 'legendary';
   it.rarityName = 'レジェンダリー';
   it.specialFrame = 'darkholy';
-  it.atk = Math.floor((34 + lv * 7) * legendary.mult);
   it.crit = Math.max(it.crit||0, 0.08);
   it.heroDarkBleedChance = 0.10;
   it.skill = {id:'multi', name:'連続攻撃', chance:1, element:'physical'};
   it.flavor = '暗黒剣聖を超えた証。通常攻撃と剣舞の1ヒットごとに暗黒出血を刻む。';
-  it.itemLevel = lv; it.__dropPlusApplied = false; applyDropPlusToItem(it, lv);
-  return it;
+  it.itemLevel = lv;
+  return applySpecialEquipmentParameters(it);
 }
 
 function makeDarkShield(levelOverride){
@@ -2694,12 +2727,10 @@ function makeDarkShield(levelOverride){
   const it = makeItem('盾', legendary, {levelOverride: lv});
   it.name = '闇の盾';
   it.rarity = 'legendary'; it.rarityName = 'レジェンダリー'; it.specialFrame = 'darkholy';
-  it.def = Math.floor((18 + lv * 5) * legendary.mult);
-  it.hp = Math.floor((70 + lv * 14) * legendary.mult);
   it.darkShield = true;
   it.flavor = '毎ターン被ダメージ軽減+1%（最大50%）。受けたダメージの半分を回復。';
-  it.itemLevel = lv; it.__dropPlusApplied = false; applyDropPlusToItem(it, lv);
-  return it;
+  it.itemLevel = lv;
+  return applySpecialEquipmentParameters(it);
 }
 function makeDarkAmulet(levelOverride){
   const lv = darkEquipLevelFromSource(levelOverride);
@@ -2707,12 +2738,11 @@ function makeDarkAmulet(levelOverride){
   const it = makeItem('アミュレット', legendary, {levelOverride: lv});
   it.name = '闇のアミュレット';
   it.rarity = 'legendary'; it.rarityName = 'レジェンダリー'; it.specialFrame = 'darkholy';
-  it.hp = Math.floor((90 + lv * 16) * legendary.mult);
   it.deathDanceChance = 0.25;
   it.darkAmulet = true;
   it.flavor = '死線の剣舞発動率+25%。死線の剣舞効果時間2倍。';
-  it.itemLevel = lv; it.__dropPlusApplied = false; applyDropPlusToItem(it, lv);
-  return it;
+  it.itemLevel = lv;
+  return applySpecialEquipmentParameters(it);
 }
 function makeMasterAmulet(){
   const legendary = rarities.find(r=>r.id==='legendary') || {id:'legendary', name:'レジェンダリー', mult:3.2};
@@ -3106,6 +3136,7 @@ function itemSummary(it){
   const arr=[];
   if(it.itemLevel) arr.push(`ドロップLv${Math.floor(Number(it.itemLevel)||1)}`);
   arr.push(`品質+${Math.max(0, Math.floor(Number(it.level)||0))}`);
+  if(it.parameterLevel) arr.push(`性能Lv${Math.floor(Number(it.parameterLevel)||0)}相当`);
   if(it.atk)arr.push(`攻+${it.atk}`); if(it.def)arr.push(`防+${it.def}`); if(it.hp)arr.push(`HP+${it.hp}`);
   if(it.fireRes)arr.push(`火軽減${Math.round(it.fireRes*100)}%`);
   if(it.fireDamageHeal)arr.push(`火被ダメ回復${Math.round(it.fireDamageHeal*100)}%`);
@@ -4779,16 +4810,16 @@ init();
   }
   function defineMissingDarkMakers062(){
     if(typeof makeDarkArmor!=='function'){
-      window.makeDarkArmor=makeDarkArmor=function(levelOverride){ const lv=darkLevel062(levelOverride), it=baseDarkItem062('鎧','闇の鎧',lv); it.def=Math.floor(26+lv*7); it.hp=Math.floor(190+lv*22); it.fireRes=(it.fireRes||0)+0.10; it.darkArmor=true; it.flavor='被ダメージ軽減25%。火軽減10%。暗黒出血上限を20まで軽減。'; return applyLock062(it); };
+      window.makeDarkArmor=makeDarkArmor=function(levelOverride){ const lv=darkLevel062(levelOverride), it=baseDarkItem062('鎧','闇の鎧',lv); it.fireRes=(it.fireRes||0)+0.10; it.darkArmor=true; it.flavor='被ダメージ軽減25%。火軽減10%。暗黒出血上限を20まで軽減。'; return applyLock062(applySpecialEquipmentParameters(it)); };
     }
     if(typeof makeDarkGauntlets!=='function'){
-      window.makeDarkGauntlets=makeDarkGauntlets=function(levelOverride){ const lv=darkLevel062(levelOverride), it=baseDarkItem062('腕','闇の籠手',lv); it.atk=Math.floor(22+lv*6); it.def=Math.floor(10+lv*3); it.deathDanceCountBonus=2; it.darkGauntlets=true; it.flavor='死線の剣舞の連続回数+2。'; return applyLock062(it); };
+      window.makeDarkGauntlets=makeDarkGauntlets=function(levelOverride){ const lv=darkLevel062(levelOverride), it=baseDarkItem062('腕','闇の籠手',lv); it.deathDanceCountBonus=2; it.darkGauntlets=true; it.flavor='死線の剣舞の連続回数+2。'; return applyLock062(applySpecialEquipmentParameters(it)); };
     }
     if(typeof makeDarkHelm!=='function'){
-      window.makeDarkHelm=makeDarkHelm=function(levelOverride){ const lv=darkLevel062(levelOverride), it=baseDarkItem062('兜','闇の兜',lv); it.def=Math.floor(14+lv*4); it.hp=Math.floor(80+lv*12); it.deathDanceChance=0.10; it.darkHelm=true; it.flavor='死線の剣舞発動率+10%。剣舞中は状態異常無効。'; return applyLock062(it); };
+      window.makeDarkHelm=makeDarkHelm=function(levelOverride){ const lv=darkLevel062(levelOverride), it=baseDarkItem062('兜','闇の兜',lv); it.deathDanceChance=0.10; it.darkHelm=true; it.flavor='死線の剣舞発動率+10%。剣舞中は状態異常無効。'; return applyLock062(applySpecialEquipmentParameters(it)); };
     }
     if(typeof makeDarkBoots!=='function'){
-      window.makeDarkBoots=makeDarkBoots=function(levelOverride){ const lv=darkLevel062(levelOverride), it=baseDarkItem062('足','暗黒の靴',lv); it.def=Math.floor(10+lv*3); it.hp=Math.floor(70+lv*10); it.evasion=(it.evasion||0)+0.25; it.darkBoots=true; it.flavor='回避+25%。HP半分以下でさらに回避+25%。'; return applyLock062(it); };
+      window.makeDarkBoots=makeDarkBoots=function(levelOverride){ const lv=darkLevel062(levelOverride), it=baseDarkItem062('足','暗黒の靴',lv); it.evasion=(it.evasion||0)+0.25; it.darkBoots=true; it.flavor='回避+25%。HP半分以下でさらに回避+25%。'; return applyLock062(applySpecialEquipmentParameters(it)); };
     }
     ['makeDarkHolySword','makeDarkShield','makeDarkAmulet','makeDarkArmor','makeDarkGauntlets','makeDarkHelm','makeDarkBoots'].forEach(name=>{
       const old=window[name];
@@ -4995,14 +5026,14 @@ function makeHolyItem(slot, levelOverride){
   const legendary = rarities.find(r=>r.id==='legendary') || {id:'legendary', name:'レジェンダリー', mult:3.2};
   const it = makeItem(slot, legendary, {levelOverride:lv});
   it.rarity='legendary'; it.rarityName='レジェンダリー'; it.specialFrame='holy'; it.itemLevel=lv; it.level=0;
-  if(slot==='武器'){ it.name='聖剣エクシリア'; it.atk=Math.floor((34+lv*7)*legendary.mult); it.holyAtkSpeed=.10; it.skill={id:'heavy', name:'聖なる一閃', chance:.18, element:'physical'}; it.flavor='攻撃速度+10%。聖なる一閃で光の追加攻撃を放つ。'; }
-  if(slot==='盾'){ it.name='聖盾アークガード'; it.def=Math.floor((20+lv*5)*legendary.mult); it.hp=Math.floor((80+lv*14)*legendary.mult); it.holyDamageReduce=.05; it.flavor='被ダメージ軽減+5%。勇者を守る黄金の盾。'; }
-  if(slot==='兜'){ it.name='聖兜セラフィム'; it.def=Math.floor((14+lv*4)*legendary.mult); it.hp=Math.floor((45+lv*10)*legendary.mult); it.holyAilmentReduce=.50; it.flavor='状態異常の時間・ダメージ・デバフ量を50%軽減。重複は乗算。'; }
-  if(slot==='鎧'){ it.name='聖鎧オーレリア'; it.def=Math.floor((24+lv*6)*legendary.mult); it.hp=Math.floor((120+lv*18)*legendary.mult); it.holyDamageReduce=.10; it.holyRegenRate=.02; it.flavor='被ダメージ軽減+10%。10秒ごとにHP2%回復。'; }
-  if(slot==='腕'){ it.name='聖籠手グランツ'; it.def=Math.floor((12+lv*4)*legendary.mult); it.hp=Math.floor((40+lv*9)*legendary.mult); it.holyAtkSpeed=.20; it.flavor='攻撃速度+20%。神速の連撃を可能にする。'; }
-  if(slot==='足'){ it.name='聖靴ルミナス'; it.def=Math.floor((12+lv*4)*legendary.mult); it.hp=Math.floor((55+lv*10)*legendary.mult); it.guard=.15; it.flavor='回避/ガード+15%。光の歩法で攻撃をかわす。'; }
-  if(slot==='アミュレット'){ it.name='聖アミュレット'; it.hp=Math.floor((100+lv*16)*legendary.mult); it.holyRegenRate=.05; it.holyAilmentReduce=.50; it.flavor='10秒ごとにHP5%回復。状態異常の時間・ダメージ・デバフ量を50%軽減。'; }
-  it.__dropPlusApplied=false; applyDropPlusToItem(it, lv); return it;
+  if(slot==='武器'){ it.name='聖剣エクシリア'; it.holyAtkSpeed=.10; it.skill={id:'heavy', name:'聖なる一閃', chance:.18, element:'physical'}; it.flavor='攻撃速度+10%。聖なる一閃で光の追加攻撃を放つ。'; }
+  if(slot==='盾'){ it.name='聖盾アークガード'; it.holyDamageReduce=.05; it.flavor='被ダメージ軽減+5%。勇者を守る黄金の盾。'; }
+  if(slot==='兜'){ it.name='聖兜セラフィム'; it.holyAilmentReduce=.50; it.flavor='状態異常の時間・ダメージ・デバフ量を50%軽減。重複は乗算。'; }
+  if(slot==='鎧'){ it.name='聖鎧オーレリア'; it.holyDamageReduce=.10; it.holyRegenRate=.02; it.flavor='被ダメージ軽減+10%。10秒ごとにHP2%回復。'; }
+  if(slot==='腕'){ it.name='聖籠手グランツ'; it.holyAtkSpeed=.20; it.flavor='攻撃速度+20%。神速の連撃を可能にする。'; }
+  if(slot==='足'){ it.name='聖靴ルミナス'; it.guard=.15; it.flavor='回避/ガード+15%。光の歩法で攻撃をかわす。'; }
+  if(slot==='アミュレット'){ it.name='聖アミュレット'; it.holyRegenRate=.05; it.holyAilmentReduce=.50; it.flavor='10秒ごとにHP5%回復。状態異常の時間・ダメージ・デバフ量を50%軽減。'; }
+  return applySpecialEquipmentParameters(it);
 }
 function grantHolySet(){ ['武器','盾','兜','鎧','腕','足','アミュレット'].forEach(slot=>state.inventory.unshift(makeHolyItem(slot, state.level))); renderAll(); log('デバッグ：聖剣シリーズ7種を倉庫に追加。','good'); scheduleSave(); }
 function installHolyDebug066(){

@@ -207,6 +207,68 @@ async function run() {
       throw new Error(`バージョン表記が単一値へ同期していません: ${JSON.stringify({ expected: PROJECT_VERSION, versionState })}`);
     }
 
+    const specialEquipmentScaling = await page.evaluate(() => {
+      const multiplier = (rarities.find(r => r.id === 'legendary') || { mult: 3.2 }).mult;
+      const expectedStats = (frame, slot, level) => {
+        if (frame === 'darkholy') {
+          if (slot === '武器') return { atk: Math.floor((34 + level * 7) * multiplier) };
+          if (slot === '盾') return { def: Math.floor((18 + level * 5) * multiplier), hp: Math.floor((70 + level * 14) * multiplier) };
+          if (slot === 'アミュレット') return { hp: Math.floor((90 + level * 16) * multiplier) };
+          if (slot === '鎧') return { def: Math.floor(26 + level * 7), hp: Math.floor(190 + level * 22) };
+          if (slot === '腕') return { atk: Math.floor(22 + level * 6), def: Math.floor(10 + level * 3) };
+          if (slot === '兜') return { def: Math.floor(14 + level * 4), hp: Math.floor(80 + level * 12) };
+          if (slot === '足') return { def: Math.floor(10 + level * 3), hp: Math.floor(70 + level * 10) };
+        }
+        if (slot === '武器') return { atk: Math.floor((34 + level * 7) * multiplier) };
+        if (slot === '盾') return { def: Math.floor((20 + level * 5) * multiplier), hp: Math.floor((80 + level * 14) * multiplier) };
+        if (slot === '兜') return { def: Math.floor((14 + level * 4) * multiplier), hp: Math.floor((45 + level * 10) * multiplier) };
+        if (slot === '鎧') return { def: Math.floor((24 + level * 6) * multiplier), hp: Math.floor((120 + level * 18) * multiplier) };
+        if (slot === '腕') return { def: Math.floor((12 + level * 4) * multiplier), hp: Math.floor((40 + level * 9) * multiplier) };
+        if (slot === '足') return { def: Math.floor((12 + level * 4) * multiplier), hp: Math.floor((55 + level * 10) * multiplier) };
+        return { hp: Math.floor((100 + level * 16) * multiplier) };
+      };
+      const verify = (item, frame) => ({
+        frame,
+        slot: item.slot,
+        samples: [0, 1].map(quality => {
+          item.level = quality;
+          applySpecialEquipmentParameters(item);
+          const parameterLevel = frame === 'darkholy' ? 500 + quality * 50 : 1000 + quality * 50;
+          const expected = expectedStats(frame, item.slot, parameterLevel);
+          return {
+            quality,
+            expectedParameterLevel: parameterLevel,
+            parameterLevel: item.parameterLevel,
+            exact: Object.keys(expected).every(key => item[key] === expected[key]),
+            summary: itemSummary(item),
+          };
+        }),
+      });
+      const dark = [makeDarkHolySword, makeDarkShield, makeDarkAmulet, makeDarkArmor, makeDarkGauntlets, makeDarkHelm, makeDarkBoots]
+        .map(make => verify(make(1), 'darkholy'));
+      const holy = ['武器', '盾', '兜', '鎧', '腕', '足', 'アミュレット']
+        .map(slot => verify(makeHolyItem(slot, 1), 'holy'));
+      const legacy = makeHolyItem('武器', 1);
+      legacy.level = 2;
+      legacy.atk = 1;
+      delete legacy.parameterLevel;
+      state.inventory.push(legacy);
+      syncAllSpecialEquipmentParameters();
+      const migrated = {
+        parameterLevel: legacy.parameterLevel,
+        exact: legacy.atk === expectedStats('holy', '武器', 1100).atk,
+      };
+      state.inventory = state.inventory.filter(item => item !== legacy);
+      return { dark, holy, migrated };
+    });
+    const scalingSamples = [...specialEquipmentScaling.dark, ...specialEquipmentScaling.holy].flatMap(result => result.samples);
+    if (specialEquipmentScaling.dark.length !== 7 || specialEquipmentScaling.holy.length !== 7
+      || scalingSamples.some(sample => !sample.exact || sample.parameterLevel !== sample.expectedParameterLevel
+        || !sample.summary.includes(`性能Lv${sample.parameterLevel}相当`))
+      || specialEquipmentScaling.migrated.parameterLevel !== 1100 || !specialEquipmentScaling.migrated.exact) {
+      throw new Error(`special equipment scaling is invalid: ${JSON.stringify(specialEquipmentScaling)}`);
+    }
+
     await page.evaluate(() => showSharedCutin({
       img: 'assets/cutin_eye_1.jpg',
       quote: '切替前',
@@ -656,6 +718,7 @@ async function run() {
       masterAmulet,
       masterAmuletReload,
       versionState,
+      specialEquipmentScaling,
       cutinPending,
       cutinTransition,
       holyCutinLayout,
