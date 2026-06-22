@@ -16,7 +16,7 @@ const els = {
   heroCard:$('heroCard'), heroHpFill:$('heroHpFill'), heroHpText:$('heroHpText'), heroLevel:$('heroLevel'), deathDanceStatus:$('deathDanceStatus'), heroStatusList:$('heroStatusList'), enemyStatusList:$('enemyStatusList'),
   enemyEffectLayer:$('enemyEffectLayer'), enemyFloats:$('enemyFloats'), levelEffect:$('levelEffect'), centerBanner:$('centerBanner'), dropToast:$('dropToast'), audioHint:$('audioHint'), deathAura:$('deathAura'), downOverlay:$('downOverlay'), downCount:$('downCount'),
   statLv:$('statLv'), statXp:$('statXp'), statXpNext:$('statXpNext'), statXpGain:$('statXpGain'), statAtk:$('statAtk'), statDef:$('statDef'), statFireRes:$('statFireRes'), monsterRecords:$('monsterRecords'),
-  equipList:$('equipList'), upgradeBtn:$('upgradeBtn'), inventory:$('inventory'), tooltip:$('tooltip'), log:$('log'),
+  equipList:$('equipList'), upgradeBtn:$('upgradeBtn'), bestEquipBtnEquip:$('bestEquipBtnEquip'), inventory:$('inventory'), tooltip:$('tooltip'), log:$('log'),
   equipToggleBtn:$('equipToggleBtn'), sidePanel:document.querySelector('.side-panel'), volumeSlider:$('volumeSlider'), volumeText:$('volumeText'), debugBtn:$('debugBtn'), debugPanel:$('debugPanel'), debugAddChests:$('debugAddChests'), debugResetData:$('debugResetData'), debugBestSword:$('debugBestSword'), debugBestAccessory:$('debugBestAccessory'), debugKillEnemy:$('debugKillEnemy'), debugKillHero:$('debugKillHero'), debugDarkSwordSaint:$('debugDarkSwordSaint'), debugClose:$('debugClose'), openAllBtn:$('openAllBtn'), bestEquipBtn:$('bestEquipBtn'), sellSelectedBtn:$('sellSelectedBtn'), sellNormalChk:$('sellNormalChk'), sellRareChk:$('sellRareChk'), sellLegendaryChk:$('sellLegendaryChk'), creditBtn:$('creditBtn'), termsBtn:$('termsBtn'), privacyBtn:$('privacyBtn'), legalModal:$('legalModal'), legalModalTitle:$('legalModalTitle'), legalModalBody:$('legalModalBody'), legalModalClose:$('legalModalClose'), deathDanceCutin:$('deathDanceCutin'), deathDanceCutinImg:$('deathDanceCutinImg'), deathDanceCutinQuote:$('deathDanceCutinQuote'), deathDanceCutinTitle:document.querySelector('.death-dance-cutin-title'), mobileExpBar:$('mobileExpBar'), mobileExpLevel:$('mobileExpLevel'), mobileExpText:$('mobileExpText'), mobileExpFill:$('mobileExpFill')
 };
 
@@ -165,7 +165,13 @@ function setMenuPage(page){
   const target = document.querySelector(map[state.menuPage] || map.stats);
   if(target) target.classList.add('active-page');
 }
+function syncTopbarRealHeight(){
+  const topbar=document.querySelector('.topbar');
+  if(!topbar) return;
+  document.documentElement.style.setProperty('--mbh-topbar-real-h',Math.ceil(topbar.getBoundingClientRect().height)+'px');
+}
 function syncCompactLayout(){
+  syncTopbarRealHeight();
   updateMuteButton();
   if(els.equipToggleBtn) els.equipToggleBtn.textContent = isSpPortrait() ? (state.uiOpen ? '×' : '☰') : (state.uiOpen ? '閉じる' : 'メニュー');
   if(els.debugBtn) els.debugBtn.textContent = isSpPortrait() ? 'D' : 'デバッグ';
@@ -443,13 +449,17 @@ function bind(){
   [els.sellNormalChk, els.sellRareChk, els.sellLegendaryChk].filter(Boolean).forEach(chk=>chk.onchange=()=>updateSellButtonState());
 
   if(els.openAllBtn) els.openAllBtn.style.display='none';
-  els.bestEquipBtn.onclick = () => { playUiClick(); bestEquip(); };
+  const runBestEquip=()=>{ playUiClick(); bestEquip(); };
+  if(els.bestEquipBtn) els.bestEquipBtn.onclick=runBestEquip;
+  if(els.bestEquipBtnEquip) els.bestEquipBtnEquip.onclick=runBestEquip;
   els.sellSelectedBtn.onclick = () => { if(els.sellSelectedBtn.disabled) return; playUiClick(); sellSelectedRarities(); };
   els.upgradeBtn.onclick = () => { if(!els.upgradeBtn.disabled) playUiClick(); upgradeSelected(); };
   window.addEventListener('resize', syncMenuByWidth);
+  window.addEventListener('resize', syncTopbarRealHeight);
   window.addEventListener('orientationchange', syncCompactLayout);
   bindStatusCardPopupEvents();
   syncMenuByWidth();
+  syncTopbarRealHeight();
   setMenuPage(state.menuPage || 'stats');
   updateMuteButton();
   installVersionLabel();
@@ -3127,6 +3137,7 @@ function showTip(e,it){
   }else{
     html+='<div class="inventory-tooltip-section current"><strong>現在装備</strong><div>未装備</div></div>';
   }
+  if(els.tooltip.parentElement!==document.body) document.body.appendChild(els.tooltip);
   els.tooltip.innerHTML=html;
   els.tooltip.classList.remove('hidden');
   const rect=els.tooltip.getBoundingClientRect();
@@ -5418,7 +5429,7 @@ if(rawRenderStatusLists&&!rawRenderStatusLists.__tkLatest){
  renderStatusLists.__tkLatest=true;
 }
 function setTenseiNext(){state.debugForcedBossNext={id:'tensei_knight',level:Math.max(1,Math.floor(Number(state.tenseiKnightLevel)||1))};if(typeof banner==='function')banner('次の敵に天聖騎士をセット！',1400);if(typeof log==='function')log('デバッグ：天聖騎士を次の敵にセット。現在の敵を倒すと出現する。','danger');if(typeof scheduleSave==='function')scheduleSave();}
-function bindDebug(){const btn=document.getElementById('debugTenseiKnight');if(btn&&!btn.__tkLatest){btn.textContent='天聖騎士 次の敵';btn.onclick=function(e){if(e){e.preventDefault();e.stopPropagation();}if(typeof playUiClick==='function')safe(()=>playUiClick());setTenseiNext();return false;};btn.__tkLatest=true;}}
+function bindDebug(){const btn=document.getElementById('debugTenseiKnight');if(btn&&!btn.__tkLatest){btn.textContent='天聖騎士召喚';btn.onclick=function(e){if(e){e.preventDefault();e.stopPropagation();}if(typeof playUiClick==='function')safe(()=>playUiClick());setTenseiNext();return false;};btn.__tkLatest=true;}}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bindDebug,{once:true});else setTimeout(bindDebug,0);setTimeout(bindDebug,800);
 setTimeout(()=>safe(()=>{if(typeof renderStatusLists==='function')renderStatusLists();}),500);
 })();

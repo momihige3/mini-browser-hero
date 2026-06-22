@@ -330,11 +330,26 @@ async function run() {
       };
     });
     if (!wideMenuLayout.tabsVisible || wideMenuLayout.activePanelCount !== 1 || !wideMenuLayout.footerInside
-      || wideMenuLayout.recordsFooterGap > 40 || wideMenuLayout.recordsHeight < 300) {
+      || wideMenuLayout.recordsFooterGap > 20 || wideMenuLayout.recordsHeight < 300) {
       throw new Error(`横長メニューレイアウトが不正です: ${JSON.stringify(wideMenuLayout)}`);
     }
 
     await page.setViewportSize({ width: 1680, height: 710 });
+    await page.evaluate(() => setMenuPage('stats'));
+    const shortWideStatus = await page.evaluate(() => {
+      const records = document.querySelector('.hero-stats.active-page .monster-record-list');
+      const footer = document.querySelector('.side-panel > .menu-footer');
+      const recordsRect = records?.getBoundingClientRect();
+      const footerRect = footer?.getBoundingClientRect();
+      return {
+        footerGap: recordsRect && footerRect ? Math.round(footerRect.top - recordsRect.bottom) : 9999,
+        recordsHeight: Math.round(recordsRect?.height || 0),
+        recordsBeforeFooter: Boolean(recordsRect && footerRect && recordsRect.bottom <= footerRect.top),
+      };
+    });
+    if (shortWideStatus.footerGap > 20 || shortWideStatus.recordsHeight < 300 || !shortWideStatus.recordsBeforeFooter) {
+      throw new Error(`short wide monster records do not reach footer: ${JSON.stringify(shortWideStatus)}`);
+    }
     const inventoryFixture = await page.evaluate(() => {
       const current = makeDarkHolySword(state.level);
       const candidate = makeDebugSword();
@@ -395,6 +410,12 @@ async function run() {
         tooltipSelectedComplete: Boolean(tooltipSections[0]?.textContent.includes(expected.selectedName)
           && includesSummary(tooltipSections[0], expected.selectedSummary)),
         tooltipSectionCount: tooltipSections.length,
+        tooltipParentIsBody: tooltip?.parentElement === document.body,
+        tooltipAboveControls: (() => {
+          const tooltipZ = Number.parseInt(tooltip ? getComputedStyle(tooltip).zIndex : '0', 10) || 0;
+          const controls = [document.querySelector('.topbar'), document.querySelector('.side-panel > .mobile-menu-tabs')].filter(Boolean);
+          return controls.every(control => tooltipZ > (Number.parseInt(getComputedStyle(control).zIndex, 10) || 0));
+        })(),
         tooltipAvoidsPointer: Boolean(tooltipRect && (1650 < tooltipRect.left || 1650 > tooltipRect.right
           || 260 < tooltipRect.top || 260 > tooltipRect.bottom)),
         tooltipPointerEvents: tooltip ? getComputedStyle(tooltip).pointerEvents : '',
@@ -419,12 +440,62 @@ async function run() {
       || inventoryUi.menuScrollbarColor === 'auto' || inventoryUi.menuScrollHeight <= inventoryUi.menuClientHeight
       || !inventoryUi.menuScrolled || inventoryUi.tooltipSectionCount !== 2
       || !inventoryUi.tooltipCurrentComplete || !inventoryUi.tooltipSelectedComplete
+      || !inventoryUi.tooltipParentIsBody || !inventoryUi.tooltipAboveControls
       || !inventoryUi.tooltipAvoidsPointer || inventoryUi.tooltipPointerEvents !== 'none'
       || inventoryUi.tooltipScrollbarColor === 'auto' || !inventoryUi.tooltipFitsViewport
       || !inventoryUi.sideWithinViewport || !inventoryUi.footerVisibleInViewport) {
       throw new Error(`倉庫スクロールまたは装備比較が不正です: ${JSON.stringify(inventoryUi)}`);
     }
     await page.evaluate(() => cancelInventoryActionMenu());
+
+    const bestEquipFixture = await page.evaluate(() => {
+      const candidate = makeDebugSword();
+      candidate.atk = 999999;
+      state.equip[candidate.slot] = null;
+      state.inventory = [candidate];
+      setMenuPage('equip');
+      renderAll();
+      return { id: candidate.id, slot: candidate.slot };
+    });
+    const equipBestButton = page.locator('#bestEquipBtnEquip');
+    await equipBestButton.waitFor({ state: 'visible', timeout: 5000 });
+    const equipBestHit = await page.evaluate(() => {
+      const button = document.querySelector('#bestEquipBtnEquip');
+      const rect = button?.getBoundingClientRect();
+      const hit = rect ? document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2) : null;
+      const panel = button?.closest('.equip-panel');
+      const side = button?.closest('.side-panel');
+      return {
+        hit: hit?.id || hit?.className || hit?.tagName || '',
+        rect: rect ? { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom } : null,
+        buttonPointerEvents: button ? getComputedStyle(button).pointerEvents : '',
+        panelPointerEvents: panel ? getComputedStyle(panel).pointerEvents : '',
+        sidePointerEvents: side ? getComputedStyle(side).pointerEvents : '',
+      };
+    });
+    if (equipBestHit.hit !== 'bestEquipBtnEquip') throw new Error(`best-equip button hit target is invalid: ${JSON.stringify(equipBestHit)}`);
+    await equipBestButton.click();
+    const equipBestResult = await page.evaluate(expected => ({
+      buttonCount: document.querySelectorAll('#bestEquipBtnEquip').length,
+      buttonLabel: document.querySelector('#bestEquipBtnEquip')?.textContent?.trim() || '',
+      equippedId: state.equip[expected.slot]?.id || null,
+    }), bestEquipFixture);
+    if (equipBestResult.buttonCount !== 1 || equipBestResult.buttonLabel !== '最強装備'
+      || equipBestResult.equippedId !== bestEquipFixture.id) {
+      throw new Error(`equipment tab best-equip button is invalid: ${JSON.stringify(equipBestResult)}`);
+    }
+
+    const tenseiDebugButton = await page.evaluate(() => {
+      const button = document.querySelector('#debugTenseiKnight');
+      button?.click();
+      return {
+        label: button?.textContent?.trim() || '',
+        nextEnemyId: state.debugForcedBossNext?.id || '',
+      };
+    });
+    if (tenseiDebugButton.label !== '天聖騎士召喚' || tenseiDebugButton.nextEnemyId !== 'tensei_knight') {
+      throw new Error(`tensei summon debug button is invalid: ${JSON.stringify(tenseiDebugButton)}`);
+    }
 
     await page.evaluate(() => {
       grantHolySet();
@@ -526,6 +597,8 @@ async function run() {
       const contentRect = content?.getBoundingClientRect();
       const footerRect = footer?.getBoundingClientRect();
       const footerButtons = Array.from(footer?.querySelectorAll('button') || []);
+      const topbarRect = document.querySelector('.topbar')?.getBoundingClientRect();
+      const tabsRect = side?.querySelector(':scope > .mobile-menu-tabs')?.getBoundingClientRect();
       return {
         buttonCount: buttons.length,
         filterVisible: Boolean(barRect && barRect.width > 0 && barRect.height > 0),
@@ -545,12 +618,13 @@ async function run() {
         footerInsideViewport: Boolean(footerRect && footerRect.top >= 0 && footerRect.bottom <= window.innerHeight + 1),
         contentDoesNotCoverFooter: Boolean(contentRect && footerRect && contentRect.bottom <= footerRect.top + 1),
         menuDisplay: side ? getComputedStyle(side).display : '',
+        tabsBelowHeader: Boolean(topbarRect && tabsRect && tabsRect.top >= topbarRect.bottom + 4),
       };
     });
     if (holyMobile.buttonCount !== 11 || !holyMobile.filterVisible || !holyMobile.fitsViewport || !holyMobile.buttonsFitBar
       || !holyMobile.expHiddenWhileMenuOpen || holyMobile.footerButtonCount !== 3
       || !holyMobile.footerButtonsVisible || !holyMobile.footerInsideMenu || !holyMobile.footerInsideViewport
-      || !holyMobile.contentDoesNotCoverFooter || holyMobile.menuDisplay !== 'flex') {
+      || !holyMobile.contentDoesNotCoverFooter || holyMobile.menuDisplay !== 'flex' || !holyMobile.tabsBelowHeader) {
       throw new Error(`スマートフォン幅の聖剣フィルター配置が不正です: ${JSON.stringify(holyMobile)}`);
     }
 
@@ -587,7 +661,10 @@ async function run() {
       holyCutinLayout,
       holyCutinMobile,
       wideMenuLayout,
+      shortWideStatus,
       inventoryUi,
+      equipBestResult,
+      tenseiDebugButton,
       holyEquip,
       holyInventory,
       holyMobile,
