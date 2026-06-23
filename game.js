@@ -654,7 +654,7 @@ function processStatusDots(now){
       let totalHeal = 0;
       for(let i=0;i<ticks;i++){
         if(!(state.enemyHp > 0 && state.enemyHp < state.enemy.maxHp)) break;
-        const rate = state.enemyHp <= state.enemy.maxHp * 0.5 ? 0.02 : 0.01;
+        const rate = state.enemyHp <= state.enemy.maxHp * 0.5 ? 0.01 : 0.005;
         const heal = Math.max(1, Math.floor(state.enemy.maxHp * rate));
         state.enemyHp = Math.min(state.enemy.maxHp, state.enemyHp + heal);
         totalHeal += heal;
@@ -1034,7 +1034,7 @@ function statusTooltipHtml(kind, target){
   if(kind === 'darktechnique') return `<b>暗黒剣技</b><br>暗黒剣聖の通常攻撃で1ダメージが20回発生すると覚醒。<br>覚醒後は通常攻撃が暗黒剣技に置き換わる。<br>暗黒剣舞の回数にはカウントしない。<br>HP回復・闇オーラ回復・暗黒の剣付与はなし。<br>攻撃速度3倍、ガード無効、防御力50%無視。<br>攻撃ごとに出血50%、暗黒出血50%。<br>現在：${state.enemyStatuses?.darkTechniqueAwakened?'覚醒中':((state.enemyStatuses?.darkOneDamageCount||0)+' / 20')}。`;
   if(kind === 'darkdance') return `<b>暗黒剣舞</b><br>発動済み：${state.enemyStatuses?.darkDanceCount||0}回 / 10回<br>次回発動率：${darkDanceChanceForNext()}%<br>暗黒剣舞回数：${state.enemyStatuses?.darkDanceCount||0} / 10<br>HP0時に発動判定。カットイン後に5秒無敵、HPをゆっくり100%まで回復、闇オーラ10、暗黒の剣+1。<br>発動時、主人公の「死線の剣舞」の発動回数をリセットする。<br>連続攻撃は10秒間、攻撃速度3倍、ガード無効、防御力50%無視。<br>攻撃ごとに出血50%、暗黒出血50%。`;
   if(kind === 'acid_body') return `<b>酸ボディ</b><br>受けた直接ダメージの10%を跳ね返す。`;
-  if(kind === 'super_regen') return `<b>超再生</b><br>0.2秒ごとに最大HPの1%を回復する。<br>HP50%以下では0.2秒ごとに2%回復する。`;
+  if(kind === 'super_regen') return `<b>超再生</b><br>0.2秒ごとに最大HPの0.5%を回復する。<br>HP50%以下では0.2秒ごとに1%回復する。`;
   if(kind === 'dragon_breath') return `<b>火炎ブレス</b><br>発動まで：あと${dragonBreathTurnsLeft()}ターン<br>ドラゴンの行動5回ごとに発動。<br>ドラゴンの現在HPの1%分の火属性攻撃を10連続で行う。<br>火軽減20%未満の場合、確定で火傷を付与する。`;
   if(kind === 'boss_common') return `<b>ボス</b><br>強大な存在。<br>時間経過で能力が変化する。`;
   if(kind === 'apex') return `<b>種族の頂点</b><br>被ダメージ50%軽減。<br>出血ダメージ50%軽減。`;
@@ -2807,6 +2807,31 @@ function makeRandomItem(isBossDrop=false, levelOverride=null){
   const r=Math.random(); const rarity = r<.70?rarities[0]:r<.94?rarities[1]:rarities[2];
   return makeItem(slot, rarity, {isBossDrop, levelOverride});
 }
+const RING_EFFECT_POOL = Object.freeze([
+  {key:'crit', ranges:{normal:[2,4], rare:[4,6], legendary:[6,10]}},
+  {key:'lifeSteal', ranges:{normal:[1,3], rare:[3,5], legendary:[5,8]}},
+  {key:'guard', ranges:{normal:[2,4], rare:[4,7], legendary:[7,10]}},
+  {key:'fireRes', ranges:{normal:[2,5], rare:[5,8], legendary:[8,12]}},
+  {key:'fireDmg', ranges:{normal:[3,6], rare:[6,10], legendary:[10,15]}},
+  {key:'fireSkillChance', ranges:{normal:[2,4], rare:[4,7], legendary:[7,10]}},
+  {key:'thunderDmg', ranges:{normal:[3,6], rare:[6,10], legendary:[10,15]}},
+  {key:'thunderSkillChance', ranges:{normal:[2,4], rare:[4,7], legendary:[7,10]}},
+  {key:'deathDanceDefIgnore', ranges:{normal:[2,4], rare:[4,7], legendary:[7,12]}},
+]);
+function applyRandomRingEffects(it, rarity){
+  if(!it || it.slot !== 'リング') return it;
+  const rarityId = rarity?.id || it.rarity || 'normal';
+  const effectCount = rarityId === 'legendary' ? 3 : rarityId === 'rare' ? 2 : 1;
+  const candidates = [...RING_EFFECT_POOL];
+  for(let i=0; i<effectCount && candidates.length; i++){
+    const index = Math.floor(Math.random() * candidates.length);
+    const effect = candidates.splice(index, 1)[0];
+    const range = effect.ranges[rarityId] || effect.ranges.normal;
+    const value = randInt(range[0], range[1]) / 100;
+    it[effect.key] = +((it[effect.key] || 0) + value).toFixed(3);
+  }
+  return it;
+}
 function makeItem(slot, rarity, opts={}){
   const lv=getDropEnemyLevel(opts.levelOverride);
   const plus=rollDropPlusByEnemyLevel(lv);
@@ -2817,7 +2842,10 @@ function makeItem(slot, rarity, opts={}){
     it.atk=Math.floor((18+lv*4)*m);
     if(Math.random()<.35) it.crit=.03;
     if(Math.random()<.72) it.skill=randomWeaponSkill(rarity);
-  } else if(slot==='リング'||slot==='アミュレット'){
+  } else if(slot==='リング'){
+    it.hp=Math.floor((55+lv*12)*m);
+    applyRandomRingEffects(it, rarity);
+  } else if(slot==='アミュレット'){
     it.hp=Math.floor((55+lv*12)*m);
     if(Math.random()<.28) it.lifeSteal=.03;
     if(Math.random()<.22) it.guard=.03;
@@ -3174,12 +3202,13 @@ function itemSummary(it){
 
 function showTip(e,it){
   const current=state.equip[it.slot];
+  const isCurrentItem=!!current && (current===it || (current.id != null && it.id != null && String(current.id)===String(it.id)));
   const summaryHtml=(item)=>escapeHtml(itemSummary(item)||'追加能力なし').replace(/ \/ /g,'<br>');
-  let html=`<div class="inventory-tooltip-section"><strong>選択装備</strong><b style="color:${itemNameColor(it)}">${escapeHtml(formatItemNameWithPlus(it))}</b><small>${escapeHtml(it.slot)} / ${escapeHtml(it.rarityName||it.rarity)}</small><div>${summaryHtml(it)}</div></div>`;
-  if(current){
+  let html=`<div class="inventory-tooltip-section"><strong>${isCurrentItem?'現在装備':'選択装備'}</strong><b style="color:${itemNameColor(it)}">${escapeHtml(formatItemNameWithPlus(it))}</b><small>${escapeHtml(it.slot)} / ${escapeHtml(it.rarityName||it.rarity)}</small><div>${summaryHtml(it)}</div></div>`;
+  if(current && !isCurrentItem){
     const diff=Math.round(itemPower(it)-itemPower(current));
     html+=`<div class="inventory-tooltip-section current"><strong>現在装備</strong><b style="color:${itemNameColor(current)}">${escapeHtml(formatItemNameWithPlus(current))}</b><div>${summaryHtml(current)}</div><em>戦力差: ${diff>=0?'+':''}${diff}</em></div>`;
-  }else{
+  }else if(!current){
     html+='<div class="inventory-tooltip-section current"><strong>現在装備</strong><div>未装備</div></div>';
   }
   if(els.tooltip.parentElement!==document.body) document.body.appendChild(els.tooltip);

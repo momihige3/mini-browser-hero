@@ -146,6 +146,51 @@ async function run() {
       throw new Error(`戦闘進行を確認できませんでした: ${JSON.stringify({ initialBattle, currentBattle, consoleErrors, pageErrors, failedLocalRequests }, null, 2)}\n${error.message}`);
     }
 
+    const superRegen = await page.evaluate(() => {
+      const original = {
+        enemy: state.enemy,
+        enemyHp: state.enemyHp,
+        enemyStatuses: state.enemyStatuses,
+        down: state.down,
+      };
+      const runTick = hp => {
+        const now = performance.now();
+        state.enemy = { id:'super_regen_test', name:'超再生テスト', bossBuff:'super_regen', maxHp:10000, hp:10000 };
+        state.enemyHp = hp;
+        state.enemyStatuses = makeEmptyEnemyStatuses(now);
+        state.enemyStatuses.bossRegenLast = now - 200;
+        state.down = true;
+        processStatusDots(now);
+        return state.enemyHp - hp;
+      };
+      const highHpHeal = runTick(6000);
+      const lowHpHeal = runTick(4000);
+      const description = statusTooltipHtml('super_regen', 'enemy');
+      state.enemy = original.enemy;
+      state.enemyHp = original.enemyHp;
+      state.enemyStatuses = original.enemyStatuses;
+      state.down = original.down;
+      renderAll();
+      return { highHpHeal, lowHpHeal, description };
+    });
+    if (superRegen.highHpHeal !== 50 || superRegen.lowHpHeal !== 100
+      || !superRegen.description.includes('0.5%') || !superRegen.description.includes('1%')) {
+      throw new Error(`超再生の回復量が半減されていません: ${JSON.stringify(superRegen)}`);
+    }
+
+    const ringEffects = await page.evaluate(() => {
+      const effectKeys = ['crit','lifeSteal','guard','fireRes','fireDmg','fireSkillChance','thunderDmg','thunderSkillChance','deathDanceDefIgnore','deathDanceChance'];
+      return rarities.map(rarity => {
+        const item = makeItem('リング', rarity, { levelOverride: 100 });
+        const effects = effectKeys.filter(key => Number(item[key]) > 0);
+        return { rarity: rarity.id, effects, summary: itemSummary(item) };
+      });
+    });
+    const expectedRingEffects = { normal:1, rare:2, legendary:3 };
+    if (ringEffects.some(item => item.effects.length < expectedRingEffects[item.rarity])) {
+      throw new Error(`指輪の特殊効果が不足しています: ${JSON.stringify(ringEffects)}`);
+    }
+
     const masterAmulet = await page.evaluate(() => {
       const findMaster = () => Object.values(state.equip || {}).find(item => item?.name === '師匠のアミュレット')
         || (state.inventory || []).find(item => item?.name === '師匠のアミュレット');
@@ -626,6 +671,58 @@ async function run() {
       throw new Error(`equipment tab best-equip button is invalid: ${JSON.stringify(equipBestResult)}`);
     }
 
+    const equippedItemUi = await page.evaluate(async () => {
+      slots.forEach(slot => {
+        if(!state.equip[slot]) state.equip[slot] = makeItem(slot, rarities[2], { levelOverride: 100 });
+      });
+      setMenuPage('equip');
+      renderAll();
+      const list = document.querySelector('#equipList');
+      if(list) list.scrollTop = list.scrollHeight;
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      const rows = Array.from(document.querySelectorAll('#equipList .equip'));
+      const ring = rows.find(row => row.textContent.includes('リング:'));
+      const amulet = rows.find(row => row.textContent.includes('アミュレット:'));
+      const target = ring || amulet;
+      const targetRect = target?.getBoundingClientRect();
+      target?.dispatchEvent(new MouseEvent('mousemove', {
+        bubbles:true,
+        clientX:(targetRect?.left || 0) + 10,
+        clientY:(targetRect?.top || 0) + 10,
+      }));
+      const listRect = list?.getBoundingClientRect();
+      const footerRect = document.querySelector('.side-panel > .menu-footer')?.getBoundingClientRect();
+      const rectOf = element => {
+        const rect = element?.getBoundingClientRect();
+        return rect ? {top:rect.top, bottom:rect.bottom} : null;
+      };
+      const tooltip = document.querySelector('#tooltip');
+      const sections = Array.from(tooltip?.querySelectorAll('.inventory-tooltip-section') || []);
+      return {
+        expectedRowCount: slots.length,
+        rowCount: rows.length,
+        listRect: listRect ? {top:listRect.top, bottom:listRect.bottom} : null,
+        footerTop: footerRect?.top || 0,
+        ringRect: rectOf(ring),
+        amuletRect: rectOf(amulet),
+        scrollTop: list?.scrollTop || 0,
+        scrollHeight: list?.scrollHeight || 0,
+        clientHeight: list?.clientHeight || 0,
+        tooltipSectionCount: sections.length,
+        tooltipHeading: sections[0]?.querySelector('strong')?.textContent?.trim() || '',
+        tooltipHasComparison: Boolean(tooltip?.textContent.includes('戦力差')),
+      };
+    });
+    const accessoriesVisible = [equippedItemUi.ringRect, equippedItemUi.amuletRect].every(rect => rect
+      && equippedItemUi.listRect && rect.top >= equippedItemUi.listRect.top - 1
+      && rect.bottom <= equippedItemUi.listRect.bottom + 1
+      && rect.bottom <= equippedItemUi.footerTop + 1);
+    if (equippedItemUi.rowCount !== equippedItemUi.expectedRowCount || !accessoriesVisible
+      || equippedItemUi.tooltipSectionCount !== 1 || equippedItemUi.tooltipHeading !== '現在装備'
+      || equippedItemUi.tooltipHasComparison) {
+      throw new Error(`装備欄の表示またはツールチップが不正です: ${JSON.stringify(equippedItemUi)}`);
+    }
+
     const tenseiDebugButton = await page.evaluate(() => {
       const button = document.querySelector('#debugTenseiKnight');
       button?.click();
@@ -813,6 +910,8 @@ async function run() {
       url: page.url(),
       initialBattle,
       ...result,
+      superRegen,
+      ringEffects,
       masterAmulet,
       masterAmuletReload,
       versionState,
@@ -827,6 +926,7 @@ async function run() {
       shortWideStatus,
       inventoryUi,
       equipBestResult,
+      equippedItemUi,
       tenseiDebugButton,
       holyEquip,
       holyInventory,

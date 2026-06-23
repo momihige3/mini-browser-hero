@@ -4919,3 +4919,31 @@ html[data-build-version="0.6.15"] .monster-records,
     flex:none!important;
   }
 }
+
+/* Current equipment list containment: keep the final accessory rows above the footer. */
+@media (min-width:761px){
+  .equip-panel.active-page>.equip-layout,
+  .equip-panel.active-page .equip-left{
+    height:100%!important;
+    min-height:0!important;
+    overflow:hidden!important;
+  }
+  .equip-panel.active-page .equip-left{
+    display:flex!important;
+    flex-direction:column!important;
+  }
+  .equip-panel.active-page .equip-list{
+    flex:1 1 auto!important;
+    width:100%!important;
+    height:auto!important;
+    min-height:0!important;
+    max-height:100%!important;
+    overflow-y:auto!important;
+    overflow-x:hidden!important;
+    align-content:start!important;
+    padding-right:5px!important;
+    padding-bottom:8px!important;
+    scrollbar-gutter:stable!important;
+    overscroll-behavior:contain!important;
+  }
+}
