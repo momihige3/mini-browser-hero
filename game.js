@@ -1395,6 +1395,19 @@ function scheduleBossAfterNormalDefeat(e){
     state.pendingBossForNext = null;
   }
 }
+const ENEMY_LEVEL_GROWTH = Object.freeze({
+  normalHpPerLevel:1.01,
+  bossHpPerLevel:1.0125,
+  bossStatPerLevel:1.0025,
+});
+function enemyLevelGrowth(e){
+  const steps=Math.max(0,(Number(e?.level)||1)-1);
+  const isBoss=e?.type==='ボス' || e?.type==='裏ボス';
+  return {
+    hp:Math.pow(isBoss?ENEMY_LEVEL_GROWTH.bossHpPerLevel:ENEMY_LEVEL_GROWTH.normalHpPerLevel,steps),
+    stat:isBoss?Math.pow(ENEMY_LEVEL_GROWTH.bossStatPerLevel,steps):1,
+  };
+}
 function makeScaledEnemy(base, forceLevel=null){
   const e = {...base};
   if(e.id === 'dark_sword_saint' && forceLevel == null){ forceLevel = Math.max(1, Math.floor(state.darkSwordSaintLevel || 1)); }
@@ -1421,10 +1434,10 @@ function makeScaledEnemy(base, forceLevel=null){
   // ver.0.6.5: 敵ATK/DEFのレベル成長が弱すぎたため、HPとは別の成長係数へ分離。
   // HPは既存の伸びを維持し、攻撃力・防御力だけ敵Lvに応じてしっかり伸ばす。
   const statScale=1 + Math.max(0, (Number(e.level)||1)-1) * 0.08 + Math.floor(scaledDefeated/10)*.03;
-  const normalHpGrowth = e.type === '雑魚' ? Math.pow(1.01, Math.max(0, (Number(e.level)||1) - 1)) : 1;
-  e.maxHp=Math.max(1, Math.floor(e.hp * hpScale * 0.1 * normalHpGrowth));
-  e.atk=Math.max(1, Math.floor(e.atk*statScale));
-  e.def=Math.max(0, Math.floor(e.def*statScale));
+  const levelGrowth=enemyLevelGrowth(e);
+  e.maxHp=Math.max(1, Math.floor(e.hp * hpScale * 0.1 * levelGrowth.hp));
+  e.atk=Math.max(1, Math.floor(e.atk*statScale*levelGrowth.stat));
+  e.def=Math.max(0, Math.floor(e.def*statScale*levelGrowth.stat));
   e.xp=Math.floor(e.xp*(1+e.level*.045));
   if(e.id === 'tensei_knight'){ e.maxHp = Math.max(e.maxHp, Math.floor(e.maxHp * 1.20)); e.atk = Math.max(e.atk, Math.floor(e.atk * 1.15)); e.def = Math.max(e.def, Math.floor(e.def * 1.20)); }
   return e;

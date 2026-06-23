@@ -269,6 +269,59 @@ async function run() {
       throw new Error(`special equipment scaling is invalid: ${JSON.stringify(specialEquipmentScaling)}`);
     }
 
+    const enemyScaling = await page.evaluate(() => {
+      const saved = {
+        equip: state.equip,
+        defeated: state.defeated,
+        enemyLevelBase: state.enemyLevelBase,
+        enemyLevelBaseDefeated: state.enemyLevelBaseDefeated,
+      };
+      try {
+        state.equip = {};
+        state.defeated = 0;
+        state.enemyLevelBase = 1;
+        state.enemyLevelBaseDefeated = 0;
+        const normals = ENEMIES.filter(enemy => enemy.type === '雑魚');
+        const bosses = ENEMIES.filter(enemy => enemy.type === 'ボス');
+        const fields = ['maxHp', 'atk', 'def'];
+        const scaled = (enemy, level) => makeScaledEnemy(enemy, level);
+        const growth = (enemy, field, level) => {
+          const atOne = scaled(enemy, 1)[field];
+          const atLevel = scaled(enemy, level)[field];
+          return atLevel / Math.max(1, atOne);
+        };
+        const levels = [100, 500];
+        const comparisons = levels.map(level => ({
+          level,
+          fields: Object.fromEntries(fields.map(field => {
+            const maxNormalGrowth = Math.max(...normals.map(enemy => growth(enemy, field, level)));
+            const minBossGrowth = Math.min(...bosses.map(enemy => growth(enemy, field, level)));
+            const strongestNormal = Math.max(...normals.map(enemy => scaled(enemy, level)[field]));
+            const weakestBoss = Math.min(...bosses.map(enemy => scaled(enemy, level)[field]));
+            return [field, {
+              maxNormalGrowth,
+              minBossGrowth,
+              growthHigher: minBossGrowth > maxNormalGrowth,
+              actualHigher: weakestBoss > strongestNormal,
+            }];
+          })),
+        }));
+        return {
+          comparisons,
+          rates: { ...ENEMY_LEVEL_GROWTH },
+        };
+      } finally {
+        state.equip = saved.equip;
+        state.defeated = saved.defeated;
+        state.enemyLevelBase = saved.enemyLevelBase;
+        state.enemyLevelBaseDefeated = saved.enemyLevelBaseDefeated;
+      }
+    });
+    if (enemyScaling.comparisons.some(result => Object.values(result.fields)
+      .some(field => !field.growthHigher || !field.actualHigher))) {
+      throw new Error(`boss level scaling does not exceed normal enemies: ${JSON.stringify(enemyScaling)}`);
+    }
+
     await page.evaluate(() => showSharedCutin({
       img: 'assets/cutin_eye_1.jpg',
       quote: '切替前',
@@ -719,6 +772,7 @@ async function run() {
       masterAmuletReload,
       versionState,
       specialEquipmentScaling,
+      enemyScaling,
       cutinPending,
       cutinTransition,
       holyCutinLayout,
