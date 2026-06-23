@@ -409,6 +409,28 @@ async function run() {
       }, pageName);
     }
     await page.locator('.side-panel > .mobile-menu-tabs [data-menu-page="stats"]').click();
+    const monsterRecordCatalog = await page.evaluate(() => {
+      state.enemyRecords.dark_sword_saint = { seen: true, kills: 3, maxDefeatLevel: 123 };
+      state.enemyRecords.tensei_knight = { seen: true, kills: 2, maxDefeatLevel: 77 };
+      renderMonsterRecords();
+      const sanitized = sanitizeEnemyRecords({
+        dark_sword_saint: { seen: true, kills: 3, maxDefeatLevel: 123 },
+        tensei_knight: { seen: true, kills: 2, maxDefeatLevel: 77 },
+      });
+      const records = document.querySelector('#monsterRecords');
+      return {
+        expectedCount: MONSTER_RECORD_ENEMIES.length,
+        rowCount: records?.querySelectorAll('.monster-record-row').length || 0,
+        text: records?.textContent || '',
+        darkPreserved: sanitized.dark_sword_saint?.kills === 3 && sanitized.dark_sword_saint?.maxDefeatLevel === 123,
+        holyPreserved: sanitized.tensei_knight?.kills === 2 && sanitized.tensei_knight?.maxDefeatLevel === 77,
+      };
+    });
+    if (monsterRecordCatalog.rowCount !== monsterRecordCatalog.expectedCount
+      || !monsterRecordCatalog.text.includes('暗黒剣聖') || !monsterRecordCatalog.text.includes('天聖騎士')
+      || !monsterRecordCatalog.darkPreserved || !monsterRecordCatalog.holyPreserved) {
+      throw new Error(`特殊ボスの討伐記録が不正です: ${JSON.stringify(monsterRecordCatalog)}`);
+    }
     const wideMenuLayout = await page.evaluate(() => {
       const side = document.querySelector('.side-panel');
       const footer = document.querySelector('.side-panel > .menu-footer');
@@ -460,9 +482,13 @@ async function run() {
         footerGap: recordsRect && footerRect ? Math.round(footerRect.top - recordsRect.bottom) : 9999,
         recordsHeight: Math.round(recordsRect?.height || 0),
         recordsBeforeFooter: Boolean(recordsRect && footerRect && recordsRect.bottom <= footerRect.top),
+        recordsClientHeight: records?.clientHeight || 0,
+        recordsScrollHeight: records?.scrollHeight || 0,
+        hasInnerScrollbar: Boolean(records && records.scrollHeight > records.clientHeight + 1),
       };
     });
-    if (shortWideStatus.footerGap > 20 || shortWideStatus.recordsHeight < 300 || !shortWideStatus.recordsBeforeFooter) {
+    if (shortWideStatus.footerGap > 20 || shortWideStatus.recordsHeight < 300
+      || !shortWideStatus.recordsBeforeFooter || shortWideStatus.hasInnerScrollbar) {
       throw new Error(`short wide monster records do not reach footer: ${JSON.stringify(shortWideStatus)}`);
     }
     const inventoryFixture = await page.evaluate(() => {
@@ -743,6 +769,25 @@ async function run() {
       throw new Error(`スマートフォン幅の聖剣フィルター配置が不正です: ${JSON.stringify(holyMobile)}`);
     }
 
+    await page.locator('.side-panel > .mobile-menu-tabs [data-menu-page="stats"]').click();
+    const mobileMonsterRecords = await page.evaluate(() => {
+      const records = document.querySelector('.hero-stats.active-page .monster-record-list');
+      const style = records ? getComputedStyle(records) : null;
+      return {
+        rowCount: records?.querySelectorAll('.monster-record-row').length || 0,
+        expectedCount: MONSTER_RECORD_ENEMIES.length,
+        maxHeight: style?.maxHeight || '',
+        overflowY: style?.overflowY || '',
+        clientHeight: records?.clientHeight || 0,
+        scrollHeight: records?.scrollHeight || 0,
+      };
+    });
+    if (mobileMonsterRecords.rowCount !== mobileMonsterRecords.expectedCount
+      || mobileMonsterRecords.maxHeight !== 'none' || mobileMonsterRecords.overflowY !== 'visible'
+      || mobileMonsterRecords.scrollHeight > mobileMonsterRecords.clientHeight + 1) {
+      throw new Error(`スマートフォン幅の討伐記録が不正です: ${JSON.stringify(mobileMonsterRecords)}`);
+    }
+
     const result = await page.evaluate(() => ({
       brand: document.querySelector('.brand')?.textContent?.trim() || '',
       enemyName: document.querySelector('#enemyName')?.textContent?.trim() || '',
@@ -777,6 +822,7 @@ async function run() {
       cutinTransition,
       holyCutinLayout,
       holyCutinMobile,
+      monsterRecordCatalog,
       wideMenuLayout,
       shortWideStatus,
       inventoryUi,
@@ -785,6 +831,7 @@ async function run() {
       holyEquip,
       holyInventory,
       holyMobile,
+      mobileMonsterRecords,
       mobileExpBeforeMenu,
       consoleErrors,
       pageErrors,

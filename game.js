@@ -63,6 +63,7 @@ const ENEMIES = [
   {id:'dragon', name:'ドラゴン', type:'ボス', img:'assets/enemy_dragon.jpg', element:'fire', hp:11800, atk:155, def:45, xp:480, gold:900, bossChance:0.005, fireResist:.5, enemySkill:'炎のブレス', bossBuff:'apex'},
   {id:'fire_king', name:'火の精霊王', type:'ボス', img:'assets/enemy_fire_king.jpg', element:'fire', hp:14500, atk:180, def:50, xp:620, gold:1200, bossChance:0.005, fireAbsorb:true, enemySkill:'フレイムテンペスト', bossBuff:'spirit_king'},
 ];
+const MONSTER_RECORD_ENEMIES = Object.freeze([...ENEMIES, DARK_SWORD_SAINT, TENSEI_KNIGHT]);
 const normals = ENEMIES.filter(e => e.weight === 'normal');
 const BOSS_BY_NORMAL_ID = Object.freeze({
   slime: 'slime_king',
@@ -358,7 +359,7 @@ function clearGameStorage(){
 }
 function sanitizeEnemyRecords(records){
   const out={};
-  ENEMIES.forEach(e=>{
+  MONSTER_RECORD_ENEMIES.forEach(e=>{
     const r = records && records[e.id] ? records[e.id] : {};
     out[e.id] = { seen: !!r.seen, kills: Math.max(0, Number(r.kills)||0), maxDefeatLevel: Math.max(0, Number(r.maxDefeatLevel)||0) };
   });
@@ -3004,7 +3005,7 @@ function renderStats(){ const st=calcStats(); const need=effectiveXpNext(); els.
 function renderMonsterRecords(){
   if(!els.monsterRecords) return;
   if(!state.enemyRecords) state.enemyRecords = {};
-  els.monsterRecords.innerHTML = ENEMIES.map(e=>{
+  els.monsterRecords.innerHTML = MONSTER_RECORD_ENEMIES.map(e=>{
     const r = state.enemyRecords[e.id] || {seen:false,kills:0,maxDefeatLevel:0};
     const seen = !!r.seen;
     const name = seen ? e.name : '？？？';

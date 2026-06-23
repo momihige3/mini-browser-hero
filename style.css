@@ -4882,3 +4882,40 @@ html[data-build-version="0.6.15"] .monster-records,
     overflow-wrap:anywhere!important;
   }
 }
+
+/* Current monster record sizing: use the panel height before introducing an inner scrollbar. */
+.hero-stats.active-page .monster-record-list{
+  max-height:none!important;
+  align-content:start!important;
+}
+@media (min-width:761px){
+  .hero-stats.active-page>.status-layout,
+  .hero-stats.active-page .status-right,
+  .hero-stats.active-page .monster-records{
+    height:100%!important;
+    min-height:0!important;
+  }
+  .hero-stats.active-page .status-right,
+  .hero-stats.active-page .monster-records{
+    display:flex!important;
+    flex-direction:column!important;
+  }
+  .hero-stats.active-page .monster-record-list{
+    flex:1 1 auto!important;
+    height:auto!important;
+    min-height:0!important;
+    overflow-y:auto!important;
+  }
+}
+@media (max-width:760px){
+  .hero-stats.active-page .status-right,
+  .hero-stats.active-page .monster-records,
+  .hero-stats.active-page .monster-record-list{
+    height:auto!important;
+    max-height:none!important;
+    overflow:visible!important;
+  }
+  .hero-stats.active-page .monster-record-list{
+    flex:none!important;
+  }
+}
