@@ -2011,6 +2011,7 @@ body.mbh-menu-overlay-open .battle-panel .flee-btn{
     overflow-y:auto!important;
   }
 }
+
 @media(max-width:760px){
   .side-panel.open{
     top:58px!important;
@@ -2297,6 +2298,16 @@ body.mbh-menu-overlay-open .battle-panel .flee-btn{
     font-size:22px!important;
     max-width:280px!important;
   }
+}
+
+/* Current enemy variant identity colors. */
+.enemy-strong-name{
+  color:#9fd4ff!important;
+  text-shadow:0 0 9px rgba(60,150,255,.85),0 2px 4px #000!important;
+}
+.enemy-named-name{
+  color:#ffd08a!important;
+  text-shadow:0 0 10px rgba(255,120,20,.9),0 2px 4px #000!important;
 }
 
 

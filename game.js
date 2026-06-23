@@ -50,7 +50,7 @@ const DARK_SWORD_SAINT = {
 };
 const TENSEI_KNIGHT = {
   id:'tensei_knight', name:'天聖騎士', type:'裏ボス', img:'assets/enemy_tensei_knight.png', element:'holy',
-  hp:52000, atk:340, def:155, xp:4200, gold:9000, bossChance:0, enemySkill:'聖剣解放'
+  hp:520000, atk:340, def:155, xp:4200, gold:9000, bossChance:0, enemySkill:'聖剣解放'
 };
 
 const ENEMIES = [
@@ -525,7 +525,7 @@ function maxHp(){return calcStats().hp}
 function nowMs(){ return performance.now(); }
 
 function makeEmptyEnemyStatuses(t=0){
-  return {bleeds:[], darkBleeds:[], burnUntil:0, lastBleedTick:t, lastDarkBleedTick:t, darkAuraStacks:0, darkAuraLastTick:t, darkSwordBuffs:[], darkDanceCount:0, darkRevivingUntil:0, darkReviveStart:0, darkOneDamageCount:0, darkTechniqueAwakened:false, bossRegenLast:t, dragonBreathCount:0, bossBuffStart:t, bossPierceStart:t};
+  return {bleeds:[], darkBleeds:[], burnUntil:0, lastBleedTick:t, lastDarkBleedTick:t, darkAuraStacks:0, darkAuraLastTick:t, darkSwordBuffs:[], darkDanceCount:0, darkRevivingUntil:0, darkReviveStart:0, darkOneDamageCount:0, darkTechniqueAwakened:false, bossRegenLast:t, namedRegenLast:t, dragonBreathCount:0, bossBuffStart:t, bossPierceStart:t};
 }
 function isDarkSwordSaint(e=state.enemy){ return !!e && e.id === 'dark_sword_saint'; }
 function hasUnyieldingBuff(){ return (isDarkSwordSaint() || isTenseiKnight?.()) && !state.down; }
@@ -660,6 +660,16 @@ function processStatusDots(now){
         totalHeal += heal;
       }
       if(totalHeal > 0) showFloat(`+${totalHeal}`, 'heal');
+    }
+  }
+  if(state.enemy?.variant?.type === 'named' && state.enemyHp > 0 && state.enemyHp < state.enemy.maxHp){
+    if(!state.enemyStatuses.namedRegenLast) state.enemyStatuses.namedRegenLast = now;
+    const ticks = Math.min(20, Math.floor((now - state.enemyStatuses.namedRegenLast)/1000));
+    if(ticks > 0){
+      state.enemyStatuses.namedRegenLast += ticks*1000;
+      const heal = Math.max(1, Math.floor(state.enemy.maxHp * 0.02 * ticks));
+      state.enemyHp = Math.min(state.enemy.maxHp, state.enemyHp + heal);
+      showFloat(`+${heal.toLocaleString()}`, 'heal named-regen');
     }
   }
   if(!state.down && !state.deathDanceCutin && (calcStats().masterRegen || calcStats().holyRegenRate)){
@@ -1034,6 +1044,8 @@ function statusTooltipHtml(kind, target){
   if(kind === 'darktechnique') return `<b>暗黒剣技</b><br>暗黒剣聖の通常攻撃で1ダメージが20回発生すると覚醒。<br>覚醒後は通常攻撃が暗黒剣技に置き換わる。<br>暗黒剣舞の回数にはカウントしない。<br>HP回復・闇オーラ回復・暗黒の剣付与はなし。<br>攻撃速度3倍、ガード無効、防御力50%無視。<br>攻撃ごとに出血50%、暗黒出血50%。<br>現在：${state.enemyStatuses?.darkTechniqueAwakened?'覚醒中':((state.enemyStatuses?.darkOneDamageCount||0)+' / 20')}。`;
   if(kind === 'darkdance') return `<b>暗黒剣舞</b><br>発動済み：${state.enemyStatuses?.darkDanceCount||0}回 / 10回<br>次回発動率：${darkDanceChanceForNext()}%<br>暗黒剣舞回数：${state.enemyStatuses?.darkDanceCount||0} / 10<br>HP0時に発動判定。カットイン後に5秒無敵、HPをゆっくり100%まで回復、闇オーラ10、暗黒の剣+1。<br>発動時、主人公の「死線の剣舞」の発動回数をリセットする。<br>連続攻撃は10秒間、攻撃速度3倍、ガード無効、防御力50%無視。<br>攻撃ごとに出血50%、暗黒出血50%。`;
   if(kind === 'acid_body') return `<b>酸ボディ</b><br>受けた直接ダメージの10%を跳ね返す。`;
+  if(kind === 'strong_variant') return `<b>強個体</b><br>HP1.5倍。<br>攻撃力10%アップ。`;
+  if(kind === 'named_variant') return `<b>異名持ち</b><br>HP2倍。<br>攻撃力25%アップ。<br>防御力10%アップ。<br>毎秒最大HP2%回復。`;
   if(kind === 'super_regen') return `<b>超再生</b><br>0.2秒ごとに最大HPの0.5%を回復する。<br>HP50%以下では0.2秒ごとに1%回復する。`;
   if(kind === 'dragon_breath') return `<b>火炎ブレス</b><br>発動まで：あと${dragonBreathTurnsLeft()}ターン<br>ドラゴンの行動5回ごとに発動。<br>ドラゴンの現在HPの1%分の火属性攻撃を10連続で行う。<br>火軽減20%未満の場合、確定で火傷を付与する。`;
   if(kind === 'boss_common') return `<b>ボス</b><br>強大な存在。<br>時間経過で能力が変化する。`;
@@ -1297,6 +1309,9 @@ function renderStatusLists(){
   ensureStatusContainers(); cleanupStatuses();
   if(els.enemyStatusList){
     const parts=[];
+    const variantKind=state.enemy?.variant?.type || state.enemy?.variantType || '';
+    if(variantKind === 'named') parts.push(makeStatusBadge('異名持ち', 'named-variant', 'named_variant', 'enemy'));
+    else if(variantKind === 'strong') parts.push(makeStatusBadge('強個体', 'strong-variant', 'strong_variant', 'enemy'));
     if(isSpeciesBoss()){
       parts.push(makeStatusBadge(`👹ボス`, 'bossbuff', 'boss_common', 'enemy'));
     }
@@ -1401,8 +1416,49 @@ const ENEMY_LEVEL_GROWTH = Object.freeze({
   bossHpPerLevel:1.0125,
   bossStatPerLevel:1.0025,
 });
-function enemyLevelGrowth(e){
-  const steps=Math.max(0,(Number(e?.level)||1)-1);
+const ENEMY_VARIANT_PREFIXES = Object.freeze(['狡猾な','獰猛な','蛮勇な','エリート','頂点の','原点の','キラー']);
+function isEnemyVariantTarget(e){
+  return !!e && e.id !== 'dark_sword_saint' && e.id !== 'tensei_knight' && (e.type === '雑魚' || e.type === 'ボス');
+}
+function consumeForcedEnemyVariant(){
+  const kind=state.debugNextVariant054 || state.debugNextVariant031 || state.debugNextEnemyVariant;
+  state.debugNextVariant054=null;
+  state.debugNextVariant031=null;
+  state.debugNextEnemyVariant=null;
+  return kind === 'strong' || kind === 'named' ? kind : '';
+}
+function rollEnemyVariant(){
+  const forced=consumeForcedEnemyVariant();
+  if(forced) return forced;
+  const roll=Math.random();
+  if(roll < 0.05) return 'named';
+  if(roll < 0.15) return 'strong';
+  return '';
+}
+function applyEnemyVariant(e, kind){
+  if(!isEnemyVariantTarget(e) || (kind !== 'strong' && kind !== 'named')) return e;
+  e.baseName=e.baseName || e.name;
+  if(kind === 'named'){
+    const prefix=ENEMY_VARIANT_PREFIXES[Math.floor(Math.random()*ENEMY_VARIANT_PREFIXES.length)];
+    e.name=`${prefix}${e.baseName}`;
+    e.variant={type:'named', label:'異名持ち', prefix};
+    e.maxHp=Math.max(1,Math.floor(e.maxHp*2));
+    e.atk=Math.max(1,Math.floor(e.atk*1.25));
+    e.def=Math.max(0,Math.floor(e.def*1.10));
+  }else{
+    e.variant={type:'strong', label:'強個体'};
+    e.maxHp=Math.max(1,Math.floor(e.maxHp*1.5));
+    e.atk=Math.max(1,Math.floor(e.atk*1.10));
+  }
+  e.variantType=kind;
+  return e;
+}
+function enemyParameterLevel(e){
+  const displayLevel=Math.max(1,Math.floor(Number(e?.level)||1));
+  return e?.id === 'dark_sword_saint' || e?.id === 'tensei_knight' ? displayLevel*100 : displayLevel;
+}
+function enemyLevelGrowth(e, parameterLevel=enemyParameterLevel(e)){
+  const steps=Math.max(0,(Number(parameterLevel)||1)-1);
   const isBoss=e?.type==='ボス' || e?.type==='裏ボス';
   return {
     hp:Math.pow(isBoss?ENEMY_LEVEL_GROWTH.bossHpPerLevel:ENEMY_LEVEL_GROWTH.normalHpPerLevel,steps),
@@ -1430,18 +1486,27 @@ function makeScaledEnemy(base, forceLevel=null){
   }else{
     state.humbleEnemyFixedLevel = null;
   }
+  const parameterLevel=enemyParameterLevel(e);
+  if(e.id === 'dark_sword_saint' || e.id === 'tensei_knight') e.parameterLevel=parameterLevel;
   const scaledDefeated = state.enemyLevelBase != null ? Math.max(0, (state.defeated||0) - (state.enemyLevelBaseDefeated||0)) : (state.defeated||0);
-  const hpScale=1 + e.level*.035 + Math.floor(scaledDefeated/10)*.03;
+  const hpScale=1 + parameterLevel*.035 + Math.floor(scaledDefeated/10)*.03;
   // ver.0.6.5: 敵ATK/DEFのレベル成長が弱すぎたため、HPとは別の成長係数へ分離。
   // HPは既存の伸びを維持し、攻撃力・防御力だけ敵Lvに応じてしっかり伸ばす。
-  const statScale=1 + Math.max(0, (Number(e.level)||1)-1) * 0.08 + Math.floor(scaledDefeated/10)*.03;
-  const levelGrowth=enemyLevelGrowth(e);
+  const statScale=1 + Math.max(0, parameterLevel-1) * 0.08 + Math.floor(scaledDefeated/10)*.03;
+  const levelGrowth=enemyLevelGrowth(e, parameterLevel);
   e.maxHp=Math.max(1, Math.floor(e.hp * hpScale * 0.1 * levelGrowth.hp));
   e.atk=Math.max(1, Math.floor(e.atk*statScale*levelGrowth.stat));
   e.def=Math.max(0, Math.floor(e.def*statScale*levelGrowth.stat));
   e.xp=Math.floor(e.xp*(1+e.level*.045));
-  if(e.id === 'tensei_knight'){ e.maxHp = Math.max(e.maxHp, Math.floor(e.maxHp * 1.20)); e.atk = Math.max(e.atk, Math.floor(e.atk * 1.15)); e.def = Math.max(e.def, Math.floor(e.def * 1.20)); }
-  return e;
+  if(e.id === 'tensei_knight'){
+    e.maxHp=Math.max(1,Math.floor(e.maxHp*1.20));
+    e.atk=Math.max(1,Math.floor(e.atk*1.15));
+    e.def=Math.max(0,Math.floor(e.def*1.20));
+    e.maxHp=Math.max(1,Math.floor(e.maxHp*10));
+    e.atk=Math.max(1,Math.floor(e.atk*1.35));
+    e.def=Math.max(0,Math.floor(e.def*1.35));
+  }
+  return isEnemyVariantTarget(e) ? applyEnemyVariant(e, rollEnemyVariant()) : e;
 }
 function setEnemy(e){
   state.deathDanceBattleCount = 0;
@@ -1470,6 +1535,8 @@ function setEnemy(e){
   setTimeout(()=>els.enemyCard.classList.remove('enter'),600);
   renderBattle();
   log(`${e.name} が現れた。${e.type==='ボス'||e.type==='裏ボス'?'ボス出現！':''}`, e.type==='ボス'||e.type==='裏ボス'?'danger':'');
+  if(e.variant?.type === 'strong') log(`強個体：${e.name} が出現！`, 'danger');
+  if(e.variant?.type === 'named') log(`異名持ち：${e.name} が出現！`, 'danger');
 }
 function forceSpawnDarkSwordSaint(){
   // ver0.6.5: 即時召喚ではなく、次の敵として暗黒剣聖を予約する
@@ -3021,7 +3088,7 @@ function renderBattle(){
   updateMobileExpBar();
   installVersionLabel();
   const mh=maxHp(); els.heroLevel.textContent=`Lv.${state.level}`; els.heroHpFill.style.width=`${Math.max(0,state.hp/mh*100)}%`; els.heroHpText.textContent=`${Math.floor(state.hp)} / ${Math.floor(mh)}`;
-  if(state.enemy){ els.enemyName.textContent=state.enemy.name; if(els.enemyLevel) els.enemyLevel.textContent=`Lv.${state.enemy.level||1}`; els.enemyTag.textContent=state.enemy.type==='ボス'?'BOSS':''; els.enemyHpFill.style.width=`${Math.max(0,state.enemyHp/state.enemy.maxHp*100)}%`; els.enemyHpText.textContent=`${Math.floor(state.enemyHp)} / ${state.enemy.maxHp}`; }
+  if(state.enemy){ els.enemyName.textContent=state.enemy.name; els.enemyName.classList.toggle('enemy-strong-name', state.enemy.variant?.type==='strong'); els.enemyName.classList.toggle('enemy-named-name', state.enemy.variant?.type==='named'); if(els.enemyLevel) els.enemyLevel.textContent=`Lv.${state.enemy.level||1}`; els.enemyTag.textContent=state.enemy.type==='ボス'?'BOSS':''; els.enemyHpFill.style.width=`${Math.max(0,state.enemyHp/state.enemy.maxHp*100)}%`; els.enemyHpText.textContent=`${Math.floor(state.enemyHp)} / ${state.enemy.maxHp}`; }
   updateEnemyDebugStatsLine();
   if(els.chests) els.chests.textContent=state.chests; els.mats.textContent=state.mats;
   const need = effectiveXpNext();
@@ -3617,27 +3684,6 @@ init();
   }
 
   function patchEnemyVariant054(){
-    if(typeof makeScaledEnemy==='function' && !makeScaledEnemy.__mbh054){
-      const old=makeScaledEnemy;
-      makeScaledEnemy=function(base,forceLevel){
-        const e=old.apply(this,arguments);
-        safe(()=>{
-          if(!e || e.id==='dark_sword_saint' || typeof state==='undefined') return;
-          const kind=state.debugNextVariant054 || state.debugNextVariant031 || state.debugNextEnemyVariant;
-          if(kind!=='strong' && kind!=='named') return;
-          state.debugNextVariant054=null; state.debugNextVariant031=null; state.debugNextEnemyVariant=null;
-          e.variant={type:kind,label:kind==='named'?'異名持ち':'強個体'};
-          e.variantType=kind;
-          if(!e.__mbh054VariantApplied){
-            e.maxHp=Math.max(1,Math.floor((Number(e.maxHp)||1)*(kind==='named'?2.0:1.5)));
-            e.atk=Math.max(1,Math.floor((Number(e.atk)||1)*(kind==='named'?1.25:1.10)));
-            e.__mbh054VariantApplied=true;
-          }
-        });
-        return e;
-      };
-      makeScaledEnemy.__mbh054=true;
-    }
     if(typeof showFloat==='function' && !showFloat.__mbh054){
       const old=showFloat;
       showFloat=function(text,cls){
@@ -5169,32 +5215,6 @@ setTimeout(installHolyDebug066, 300);
     try{ return !!(e || state.enemy) && (e || state.enemy).id === 'tensei_knight'; }catch(_){ return false; }
   }
 
-  // 元データも10倍化。makeScaledEnemy側でも二重適用しないよう印を付ける。
-  safe(()=>{
-    if(typeof TENSEI_KNIGHT === 'object' && TENSEI_KNIGHT && !TENSEI_KNIGHT.__hp069){
-      TENSEI_KNIGHT.hp = Math.max(1, Math.floor((Number(TENSEI_KNIGHT.hp)||52000) * 10));
-      TENSEI_KNIGHT.__hp069 = true;
-    }
-  });
-
-  if(typeof makeScaledEnemy === 'function' && !makeScaledEnemy.__mbh069Wrapped){
-    const oldMakeScaledEnemy = makeScaledEnemy;
-    makeScaledEnemy = function(base, forceLevel){
-      const e = oldMakeScaledEnemy.apply(this, arguments);
-      if(isTensei069(e) && !e.__tenseiHp10Applied069){
-        // 旧版データのままでも必ず「0.6.8比で10倍」になるようにする。
-        // TENSEI_KNIGHT.hpが既に10倍ならここでは増やさない。
-        const sourceHp = Number(base && base.hp) || 0;
-        if(sourceHp < 100000){
-          e.maxHp = Math.max(1, Math.floor((Number(e.maxHp)||1) * 10));
-        }
-        e.__tenseiHp10Applied069 = true;
-      }
-      return e;
-    };
-    makeScaledEnemy.__mbh069Wrapped = true;
-  }
-
   function setCutinVisible069(kind, data){
     const token = showSharedCutin({
       img:(data && data.img) || (kind === 'release' ? 'assets/cutin_holy_sword_release.png' : 'assets/cutin_hero_awakening.png'),
@@ -5433,19 +5453,6 @@ function ensureTkStatus(){
  if(!s.holyRegenLast)s.holyRegenLast=now();
  if(s.holyAwakened==null)s.holyAwakened=false;
  return s;
-}
-const rawSetEnemy=typeof setEnemy==='function'?setEnemy:null;
-if(rawSetEnemy&&!rawSetEnemy.__tkLatest){
- setEnemy=function(e){
-  if(e&&e.id==='tensei_knight'){
-   e.maxHp=Math.max(e.maxHp||1,Math.floor((e.maxHp||e.hp||1)*10));
-   e.hp=e.maxHp;e.atk=Math.max(1,Math.floor((e.atk||1)*1.35));e.def=Math.max(0,Math.floor((e.def||0)*1.35));
-  }
-  const r=rawSetEnemy.apply(this,arguments);
-  if(isTK())ensureTkStatus();
-  return r;
- };
- setEnemy.__tkLatest=true;
 }
 const rawHasUnyieldingBuff=typeof hasUnyieldingBuff==='function'?hasUnyieldingBuff:null;
 hasUnyieldingBuff=function(){try{return isTK()||(rawHasUnyieldingBuff?rawHasUnyieldingBuff.apply(this,arguments):false);}catch(_){return isTK();}};

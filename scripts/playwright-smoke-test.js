@@ -320,8 +320,10 @@ async function run() {
         defeated: state.defeated,
         enemyLevelBase: state.enemyLevelBase,
         enemyLevelBaseDefeated: state.enemyLevelBaseDefeated,
+        random: Math.random,
       };
       try {
+        Math.random = () => 0.5;
         state.equip = {};
         state.defeated = 0;
         state.enemyLevelBase = 1;
@@ -360,11 +362,135 @@ async function run() {
         state.defeated = saved.defeated;
         state.enemyLevelBase = saved.enemyLevelBase;
         state.enemyLevelBaseDefeated = saved.enemyLevelBaseDefeated;
+        Math.random = saved.random;
       }
     });
     if (enemyScaling.comparisons.some(result => Object.values(result.fields)
       .some(field => !field.growthHigher || !field.actualHigher))) {
       throw new Error(`boss level scaling does not exceed normal enemies: ${JSON.stringify(enemyScaling)}`);
+    }
+
+    const enemyVariants = await page.evaluate(() => {
+      const saved = {
+        enemy: state.enemy,
+        enemyHp: state.enemyHp,
+        enemyStatuses: state.enemyStatuses,
+        down: state.down,
+        random: Math.random,
+        debugNextVariant054: state.debugNextVariant054,
+      };
+      try {
+        const base = ENEMIES.find(enemy => enemy.id === 'slime');
+        const create = roll => {
+          Math.random = () => roll;
+          return makeScaledEnemy(base, 20);
+        };
+        const plain = create(0.5);
+        const strong = create(0.10);
+        const named = create(0.01);
+        state.debugNextVariant054 = 'named';
+        const forcedNamed = create(0.5);
+        state.enemy = named;
+        state.enemyHp = Math.floor(named.maxHp * 0.5);
+        const beforeRegen = state.enemyHp;
+        const now = performance.now();
+        state.enemyStatuses = makeEmptyEnemyStatuses(now);
+        state.enemyStatuses.namedRegenLast = now - 1000;
+        state.down = true;
+        renderBattle();
+        processStatusDots(now);
+        const badge = document.querySelector('#enemyStatusList [data-status-kind="named_variant"]');
+        return {
+          plain: {variant:plain.variant?.type || '', name:plain.name, maxHp:plain.maxHp, atk:plain.atk, def:plain.def},
+          strong: {variant:strong.variant?.type || '', name:strong.name, maxHp:strong.maxHp, atk:strong.atk, def:strong.def},
+          named: {variant:named.variant?.type || '', name:named.name, baseName:named.baseName, maxHp:named.maxHp, atk:named.atk, def:named.def},
+          forcedNamed: forcedNamed.variant?.type || '',
+          forcedConsumed: !state.debugNextVariant054,
+          namedRegen: state.enemyHp - beforeRegen,
+          expectedNamedRegen: Math.max(1, Math.floor(named.maxHp * 0.02)),
+          badgeText: badge?.textContent?.trim() || '',
+          nameHasClass: document.querySelector('#enemyName')?.classList.contains('enemy-named-name') || false,
+          tooltip: statusTooltipHtml('named_variant', 'enemy'),
+        };
+      } finally {
+        state.enemy = saved.enemy;
+        state.enemyHp = saved.enemyHp;
+        state.enemyStatuses = saved.enemyStatuses;
+        state.down = saved.down;
+        state.debugNextVariant054 = saved.debugNextVariant054;
+        Math.random = saved.random;
+        renderAll();
+      }
+    });
+    if (enemyVariants.plain.variant || enemyVariants.strong.variant !== 'strong' || enemyVariants.named.variant !== 'named'
+      || enemyVariants.strong.maxHp !== Math.floor(enemyVariants.plain.maxHp * 1.5)
+      || enemyVariants.strong.atk !== Math.floor(enemyVariants.plain.atk * 1.10)
+      || enemyVariants.named.maxHp !== Math.floor(enemyVariants.plain.maxHp * 2)
+      || enemyVariants.named.atk !== Math.floor(enemyVariants.plain.atk * 1.25)
+      || enemyVariants.named.def !== Math.floor(enemyVariants.plain.def * 1.10)
+      || enemyVariants.named.name === enemyVariants.named.baseName || enemyVariants.forcedNamed !== 'named'
+      || !enemyVariants.forcedConsumed || enemyVariants.namedRegen !== enemyVariants.expectedNamedRegen
+      || enemyVariants.badgeText !== '異名持ち' || !enemyVariants.nameHasClass
+      || !enemyVariants.tooltip.includes('毎秒最大HP2%回復')) {
+      throw new Error(`強個体・異名持ちの生成が不正です: ${JSON.stringify(enemyVariants)}`);
+    }
+
+    const specialBossParameterScaling = await page.evaluate(() => {
+      const saved = {
+        equip: state.equip,
+        defeated: state.defeated,
+        enemyLevelBase: state.enemyLevelBase,
+        enemyLevelBaseDefeated: state.enemyLevelBaseDefeated,
+      };
+      try {
+        state.equip = {};
+        state.defeated = 0;
+        state.enemyLevelBase = 1;
+        state.enemyLevelBaseDefeated = 0;
+        const expected = (base, level) => {
+          const parameterLevel = level * 100;
+          const hpGrowth = Math.pow(ENEMY_LEVEL_GROWTH.bossHpPerLevel, parameterLevel - 1);
+          const statGrowth = Math.pow(ENEMY_LEVEL_GROWTH.bossStatPerLevel, parameterLevel - 1);
+          const hpScale = 1 + parameterLevel * 0.035;
+          const statScale = 1 + (parameterLevel - 1) * 0.08;
+          let maxHp = Math.max(1, Math.floor(base.hp * hpScale * 0.1 * hpGrowth));
+          let atk = Math.max(1, Math.floor(base.atk * statScale * statGrowth));
+          let def = Math.max(0, Math.floor(base.def * statScale * statGrowth));
+          if(base.id === 'tensei_knight'){
+            maxHp = Math.max(1, Math.floor(maxHp * 1.20));
+            atk = Math.max(1, Math.floor(atk * 1.15));
+            def = Math.max(0, Math.floor(def * 1.20));
+            maxHp = Math.max(1, Math.floor(maxHp * 10));
+            atk = Math.max(1, Math.floor(atk * 1.35));
+            def = Math.max(0, Math.floor(def * 1.35));
+          }
+          return { parameterLevel, maxHp, atk, def };
+        };
+        const sample = (base, level) => {
+          const enemy = makeScaledEnemy(base, level);
+          const target = expected(base, level);
+          return {
+            id: enemy.id,
+            level: enemy.level,
+            parameterLevel: enemy.parameterLevel,
+            expectedParameterLevel: target.parameterLevel,
+            exact: enemy.maxHp === target.maxHp && enemy.atk === target.atk && enemy.def === target.def,
+            maxHp: enemy.maxHp,
+            atk: enemy.atk,
+            def: enemy.def,
+          };
+        };
+        return [DARK_SWORD_SAINT, TENSEI_KNIGHT].flatMap(base => [1, 2].map(level => sample(base, level)));
+      } finally {
+        state.equip = saved.equip;
+        state.defeated = saved.defeated;
+        state.enemyLevelBase = saved.enemyLevelBase;
+        state.enemyLevelBaseDefeated = saved.enemyLevelBaseDefeated;
+      }
+    });
+    if (specialBossParameterScaling.length !== 4 || specialBossParameterScaling.some(sample => !sample.exact
+      || sample.parameterLevel !== sample.expectedParameterLevel || sample.parameterLevel !== sample.level * 100)) {
+      throw new Error(`特殊ボスの能力レベル換算が不正です: ${JSON.stringify(specialBossParameterScaling)}`);
     }
 
     await page.evaluate(() => showSharedCutin({
@@ -917,6 +1043,8 @@ async function run() {
       versionState,
       specialEquipmentScaling,
       enemyScaling,
+      enemyVariants,
+      specialBossParameterScaling,
       cutinPending,
       cutinTransition,
       holyCutinLayout,
